@@ -15,8 +15,18 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 #include "embedder.h"
+
+intptr_t g_baton;
+bool must_vsync = false;
+pthread_mutex_t baton_mutex;
+
+pthread_mutex_t vsync_mutex;
+
+sem_t vsync_semaphore;
 
 struct tinywl_server {
 	struct wl_display* wl_display;
@@ -36,6 +46,7 @@ struct tinywl_output {
 	struct tinywl_server* server;
 	struct wlr_output* wlr_output;
 	struct wl_listener frame;
+	FlutterEngine engine;
 };
 
 struct tinywl_view {
@@ -50,6 +61,71 @@ struct tinywl_view {
 };
 
 FlutterEngine RunFlutter(struct tinywl_server* server);
+
+void p(void* userdata) {
+	struct tinywl_output* output = userdata;
+	struct wlr_renderer* renderer = output->server->renderer;
+	EGLContext context = wlr_gles2_renderer_get_egl(renderer)->context;
+	EGLDisplay display = wlr_gles2_renderer_get_egl(renderer)->display;
+
+
+	if (output->wlr_output->back_buffer == NULL) {
+//			printf("\nF\n");
+		if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+			return;
+		}
+	}
+
+	int width, height;
+	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
+//	pthread_mutex_lock(&vsync_mutex);
+	wlr_renderer_begin(renderer, width, height);
+
+//	struct wlr_egl* context;
+//	context = wlr_gles2_renderer_get_egl(renderer);
+//	bool a = wlr_egl_is_current(context);
+//	bool b = wlr_egl_make_current(context);
+//	printf("\n%d\n", a);
+//	fflush(stdout);
+//	printf("\n%d\n", b);
+//	fflush(stdout);
+
+	pthread_mutex_lock(&baton_mutex);
+	uint64_t start = FlutterEngineGetCurrentTime();
+	FlutterEngineOnVsync(output->engine, g_baton, start, start + 1000000000ull / 144);
+	pthread_mutex_unlock(&baton_mutex);
+}
+
+static void output_frame(struct wl_listener* listener, void* data) {
+	printf("\nOUTPUT FRAME\n\n");
+	fflush(stdout);
+
+	/* This function is called every time an output is ready to display a frame,
+	 * generally at the output's refresh rate (e.g. 60Hz). */
+	struct tinywl_output* output =
+		  wl_container_of(listener, output, frame);
+	struct wlr_renderer* renderer = output->server->renderer;
+
+
+
+
+//	struct timespec now;
+//	clock_gettime(CLOCK_MONOTONIC, &now);
+
+	FlutterEnginePostRenderThreadTask(output->engine, p, output);
+	sem_wait(&vsync_semaphore);
+
+	/* wlr_output_attach_render makes the OpenGL context current. */
+//	flutter_make_current()
+
+
+
+//	float color[4] = {0.3, 0.3, 0.3, 1.0};
+//	wlr_renderer_clear(renderer, color);
+
+
+}
 
 static void server_new_output(struct wl_listener* listener, void* data) {
 	struct tinywl_server* server =
@@ -67,32 +143,32 @@ static void server_new_output(struct wl_listener* listener, void* data) {
 	output->wlr_output = wlr_output;
 	output->server = server;
 
-//	output->frame.notify = output_frame;
-//	wl_signal_add(&wlr_output->events.frame, &output->frame);
+	output->frame.notify = output_frame;
+	wl_signal_add(&wlr_output->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
 
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
-//	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
-//		printf("NOOOO\n");
-//		return;
-//	}
+	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+		printf("NOOOO\n");
+		return;
+	}
 
 	/* The "effective" resolution can change if you rotate your outputs. */
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
 	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
-//	wlr_renderer_begin(server->renderer, width, height);
+	wlr_renderer_begin(server->renderer, width, height);
 
-//	float color[4] = {0.6, 0.3, 0.3, 1.0};
-//	wlr_renderer_clear(server->renderer, color);
+	float color[4] = {0.6, 0.3, 0.3, 1.0};
+	wlr_renderer_clear(server->renderer, color);
 
 //	glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
 //	glClear(GL_COLOR_BUFFER_BIT);
 
-//	wlr_renderer_end(server->renderer);
-//	wlr_output_commit(output->wlr_output);
+	wlr_renderer_end(server->renderer);
+	wlr_output_commit(output->wlr_output);
 
 //	printf("HAHA ");
 
@@ -104,23 +180,30 @@ static void server_new_output(struct wl_listener* listener, void* data) {
 //	printf("%zu %zu ", event.width, event.height);
 
 	FlutterEngine engine = RunFlutter(server);
+	output->engine = engine;
 
 	FlutterEngineSendWindowMetricsEvent(engine, &event);
 }
 
 static void xdg_surface_map(struct wl_listener* listener, void* data) {
+	printf("MAP SURFACE\n");
+	fflush(stdout);
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct tinywl_view* view = wl_container_of(listener, view, map);
 	view->mapped = true;
 }
 
 static void xdg_surface_unmap(struct wl_listener* listener, void* data) {
+	printf("UNMAP SURFACE\n");
+	fflush(stdout);
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	struct tinywl_view* view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
 }
 
 static void xdg_surface_destroy(struct wl_listener* listener, void* data) {
+	printf("DESTROY SURFACE\n");
+	fflush(stdout);
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct tinywl_view* view = wl_container_of(listener, view, destroy);
 	wl_list_remove(&view->link);
@@ -128,6 +211,8 @@ static void xdg_surface_destroy(struct wl_listener* listener, void* data) {
 }
 
 static void server_new_xdg_surface(struct wl_listener* listener, void* data) {
+//	pthread_mutex_lock(&vsync_mutex);
+
 	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
 	 * client, either a toplevel (application window) or popup. */
 	struct tinywl_server* server =
@@ -155,27 +240,28 @@ static void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 	wl_list_insert(&server->views, &view->link);
 
 	printf("\nNEW CLIENT\n\n");
+//	pthread_mutex_unlock(&vsync_mutex);
 }
 
 bool flutter_make_current(void* userdata) {
-//	printf("MAKE_CURRENT\n");
-//	fflush(stdout);
+	printf("MAKE_CURRENT\n");
+	fflush(stdout);
 
 	struct tinywl_server* server = userdata;
 	struct tinywl_output* output;
 
-	wl_list_for_each(output, &server->outputs, link) {
-		if (output->wlr_output->back_buffer == NULL) {
-//			printf("\nF\n");
-			if (!wlr_output_attach_render(output->wlr_output, NULL)) {
-				return false;
-			}
-			int width, height;
-			wlr_output_effective_resolution(output->wlr_output, &width, &height);
-			/* Begin the renderer (calls glViewport and some other GL sanity checks) */
-			wlr_renderer_begin(server->renderer, width, height);
-		}
-	}
+//	wl_list_for_each(output, &server->outputs, link) {
+//		if (output->wlr_output->back_buffer == NULL) {
+////			printf("\nF\n");
+//			if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+//				return false;
+//			}
+//			int width, height;
+//			wlr_output_effective_resolution(output->wlr_output, &width, &height);
+//			/* Begin the renderer (calls glViewport and some other GL sanity checks) */
+//			wlr_renderer_begin(server->renderer, width, height);
+//		}
+//	}
 
 	return wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
 
@@ -203,8 +289,8 @@ bool flutter_make_current(void* userdata) {
 }
 
 bool flutter_clear_current(void* userdata) {
-//	printf("CLEAR_CURRENT\n");
-//	fflush(stdout);
+	printf("CLEAR_CURRENT\n");
+	fflush(stdout);
 	struct tinywl_server* server = userdata;
 	struct tinywl_output* output;
 //	wl_list_for_each(output, &server->outputs, link) {
@@ -218,8 +304,9 @@ bool flutter_clear_current(void* userdata) {
 }
 
 bool flutter_present(void* userdata) {
-//	printf("PRESENT\n");
-//	fflush(stdout);
+	printf("PRESENT\n");
+	fflush(stdout);
+
 	struct tinywl_server* server = userdata;
 	struct tinywl_output* output;
 	wl_list_for_each(output, &server->outputs, link) {
@@ -227,18 +314,20 @@ bool flutter_present(void* userdata) {
 		wlr_renderer_end(renderer);
 		if (!output->wlr_output->frame_pending) {
 			wlr_output_commit(output->wlr_output);
+			sem_post(&vsync_semaphore);
+			//			pthread_mutex_unlock(&vsync_mutex);
 		}
 
-		if (output->wlr_output->back_buffer == NULL) {
-//			printf("\nF\n");
-			if (!wlr_output_attach_render(output->wlr_output, NULL)) {
-				return false;
-			}
-		}
-		int width, height;
-		wlr_output_effective_resolution(output->wlr_output, &width, &height);
-		/* Begin the renderer (calls glViewport and some other GL sanity checks) */
-		wlr_renderer_begin(server->renderer, width, height);
+//		if (output->wlr_output->back_buffer == NULL) {
+////			printf("\nF\n");
+//			if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+//				return false;
+//			}
+//		}
+//		int width, height;
+//		wlr_output_effective_resolution(output->wlr_output, &width, &height);
+//		/* Begin the renderer (calls glViewport and some other GL sanity checks) */
+//		wlr_renderer_begin(server->renderer, width, height);
 	}
 	return true;
 }
@@ -266,6 +355,16 @@ FlutterTransformation flutter_surface_transformation(void* userdata) {
 	return transformation;
 }
 
+void vsync_callback(void* userdata, intptr_t baton) {
+	printf("\nVSYNC CALLBACK\n\n");
+	fflush(stdout);
+
+	pthread_mutex_lock(&baton_mutex);
+	g_baton = baton;
+	must_vsync = true;
+	pthread_mutex_unlock(&baton_mutex);
+}
+
 FlutterEngine RunFlutter(struct tinywl_server* server) {
 	FlutterRendererConfig config = {};
 	config.type = kOpenGL;
@@ -281,6 +380,7 @@ FlutterEngine RunFlutter(struct tinywl_server* server) {
 		  .struct_size = sizeof(FlutterProjectArgs),
 		  .assets_path = BUNDLE "/flutter_assets", // This directory is generated by `flutter build bundle`
 		  .icu_data_path = BUNDLE "/icudtl.dat", // Find this in your bin/cache directory.
+		  .vsync_callback = vsync_callback,
 	};
 	FlutterEngine engine = NULL;
 	int result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config, // renderer
@@ -296,6 +396,10 @@ FlutterEngine RunFlutter(struct tinywl_server* server) {
 }
 
 int main(int argc, const char* argv[]) {
+	pthread_mutex_init(&baton_mutex, NULL);
+	pthread_mutex_init(&vsync_mutex, NULL);
+	sem_init(&vsync_semaphore, 0, 0);
+
 	wlr_log_init(WLR_DEBUG, NULL);
 
 	struct tinywl_server server;

@@ -6,4 +6,4 @@ LIBS=\
 	 $(shell pkg-config --cflags --libs xkbcommon)
 
 all:
-	gcc main.c -g -lGL $(LIBS) -DWLR_USE_UNSTABLE -I . -L . -lflutter_engine -o embedder
+	gcc main.c -g -lGL -lpthread $(LIBS) -DWLR_USE_UNSTABLE -I . -L . -lflutter_engine -o embedder
