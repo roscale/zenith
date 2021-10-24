@@ -12,7 +12,9 @@
 #include <wlr/backend/drm.h>
 #include <wlr/render/gles2.h>
 #include <wlr/render/egl.h>
+#include <wlr/types/wlr_xdg_shell.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "embedder.h"
 
@@ -20,10 +22,13 @@ struct tinywl_server {
 	struct wl_display* wl_display;
 	struct wlr_backend* backend;
 	struct wlr_renderer* renderer;
+	struct wlr_xdg_shell* xdg_shell;
 
 	struct wlr_output_layout* output_layout;
 	struct wl_list outputs;
 	struct wl_listener new_output;
+	struct wl_listener new_xdg_surface;
+	struct wl_list views;
 };
 
 struct tinywl_output {
@@ -31,6 +36,17 @@ struct tinywl_output {
 	struct tinywl_server* server;
 	struct wlr_output* wlr_output;
 	struct wl_listener frame;
+};
+
+struct tinywl_view {
+	struct wl_list link;
+	struct tinywl_server* server;
+	struct wlr_xdg_surface* xdg_surface;
+	struct wl_listener map;
+	struct wl_listener unmap;
+	struct wl_listener destroy;
+	bool mapped;
+	int x, y;
 };
 
 FlutterEngine RunFlutter(struct tinywl_server* server);
@@ -92,67 +108,54 @@ static void server_new_output(struct wl_listener* listener, void* data) {
 	FlutterEngineSendWindowMetricsEvent(engine, &event);
 }
 
-//static const size_t kInitialWindowWidth = 800;
-//static const size_t kInitialWindowHeight = 600;
+static void xdg_surface_map(struct wl_listener* listener, void* data) {
+	/* Called when the surface is mapped, or ready to display on-screen. */
+	struct tinywl_view* view = wl_container_of(listener, view, map);
+	view->mapped = true;
+}
 
-//void GLFWcursorPositionCallbackAtPhase(GLFWwindow* window,
-//                                       FlutterPointerPhase phase, double x,
-//                                       double y) {
-//	FlutterPointerEvent event = {};
-//	event.struct_size = sizeof(event);
-//	event.phase = phase;
-//	event.x = x;
-//	event.y = y;
-//	event.timestamp =
-//		  std::chrono::duration_cast<std::chrono::microseconds>(
-//				std::chrono::high_resolution_clock::now().time_since_epoch())
-//				.count();
-//	FlutterEngineSendPointerEvent(
-//		  reinterpret_cast<FlutterEngine>(glfwGetWindowUserPointer(window)), &event,
-//		  1);
-//}
+static void xdg_surface_unmap(struct wl_listener* listener, void* data) {
+	/* Called when the surface is unmapped, and should no longer be shown. */
+	struct tinywl_view* view = wl_container_of(listener, view, unmap);
+	view->mapped = false;
+}
 
-//void GLFWcursorPositionCallback(GLFWwindow* window, double x, double y) {
-//	GLFWcursorPositionCallbackAtPhase(window, FlutterPointerPhase::kMove, x, y);
-//}
+static void xdg_surface_destroy(struct wl_listener* listener, void* data) {
+	/* Called when the surface is destroyed and should never be shown again. */
+	struct tinywl_view* view = wl_container_of(listener, view, destroy);
+	wl_list_remove(&view->link);
+	free(view);
+}
 
-//void GLFWmouseButtonCallback(GLFWwindow* window, int key, int action,
-//                             int mods) {
-//	if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
-//		double x, y;
-//		glfwGetCursorPos(window, &x, &y);
-//		GLFWcursorPositionCallbackAtPhase(window, FlutterPointerPhase::kDown, x, y);
-//		glfwSetCursorPosCallback(window, GLFWcursorPositionCallback);
-//	}
-//
-//	if (key == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
-//		double x, y;
-//		glfwGetCursorPos(window, &x, &y);
-//		GLFWcursorPositionCallbackAtPhase(window, FlutterPointerPhase::kUp, x, y);
-//		glfwSetCursorPosCallback(window, nullptr);
-//	}
-//}
+static void server_new_xdg_surface(struct wl_listener* listener, void* data) {
+	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
+	 * client, either a toplevel (application window) or popup. */
+	struct tinywl_server* server =
+		  wl_container_of(listener, server, new_xdg_surface);
+	struct wlr_xdg_surface* xdg_surface = data;
+	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+		return;
+	}
 
-//static void GLFWKeyCallback(GLFWwindow* window, int key, int scancode,
-//                            int action, int mods) {
-//	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-//		glfwSetWindowShouldClose(window, GLFW_TRUE);
-//	}
-//}
+	/* Allocate a tinywl_view for this surface */
+	struct tinywl_view* view =
+		  calloc(1, sizeof(struct tinywl_view));
+	view->server = server;
+	view->xdg_surface = xdg_surface;
 
-//void GLFWwindowSizeCallback(GLFWwindow* window, int width, int height) {
-//	FlutterWindowMetricsEvent event = {};
-//	event.struct_size = sizeof(event);
-//	event.width = width;
-//	event.height = height;
-//
-//	event.pixel_ratio = 1.0;
-//	FlutterEngineSendWindowMetricsEvent(
-//		  reinterpret_cast<FlutterEngine>(glfwGetWindowUserPointer(window)),
-//		  &event);
-//}
+	/* Listen to the various events it can emit */
+	view->map.notify = xdg_surface_map;
+	wl_signal_add(&xdg_surface->events.map, &view->map);
+	view->unmap.notify = xdg_surface_unmap;
+	wl_signal_add(&xdg_surface->events.unmap, &view->unmap);
+	view->destroy.notify = xdg_surface_destroy;
+	wl_signal_add(&xdg_surface->events.destroy, &view->destroy);
 
-bool made_current = true;
+	/* Add it to the list of views. */
+	wl_list_insert(&server->views, &view->link);
+
+	printf("\nNEW CLIENT\n\n");
+}
 
 bool flutter_make_current(void* userdata) {
 //	printf("MAKE_CURRENT\n");
@@ -237,7 +240,6 @@ bool flutter_present(void* userdata) {
 		/* Begin the renderer (calls glViewport and some other GL sanity checks) */
 		wlr_renderer_begin(server->renderer, width, height);
 	}
-	made_current = false;
 	return true;
 }
 
@@ -274,11 +276,11 @@ FlutterEngine RunFlutter(struct tinywl_server* server) {
 	config.open_gl.fbo_callback = flutter_fbo_callback;
 	config.open_gl.surface_transformation = flutter_surface_transformation;
 
-#define MY_PROJECT "/home/roscale/CLionProjects/flutter_embedder/data"
+#define BUNDLE "build/linux/x64/debug/bundle/data"
 	FlutterProjectArgs args = {
 		  .struct_size = sizeof(FlutterProjectArgs),
-		  .assets_path = MY_PROJECT "/flutter_assets", // This directory is generated by `flutter build bundle`
-		  .icu_data_path = MY_PROJECT "/icudtl.dat", // Find this in your bin/cache directory.
+		  .assets_path = BUNDLE "/flutter_assets", // This directory is generated by `flutter build bundle`
+		  .icu_data_path = BUNDLE "/icudtl.dat", // Find this in your bin/cache directory.
 	};
 	FlutterEngine engine = NULL;
 	int result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config, // renderer
@@ -292,8 +294,6 @@ FlutterEngine RunFlutter(struct tinywl_server* server) {
 
 	return engine;
 }
-
-#include <signal.h>
 
 int main(int argc, const char* argv[]) {
 	wlr_log_init(WLR_DEBUG, NULL);
@@ -313,6 +313,12 @@ int main(int argc, const char* argv[]) {
 	server.new_output.notify = server_new_output;
 	wl_signal_add(&server.backend->events.new_output, &server.new_output);
 
+	wl_list_init(&server.views);
+	server.xdg_shell = wlr_xdg_shell_create(server.wl_display);
+	server.new_xdg_surface.notify = server_new_xdg_surface;
+	wl_signal_add(&server.xdg_shell->events.new_surface,
+	              &server.new_xdg_surface);
+
 	const char* socket = wl_display_add_socket_auto(server.wl_display);
 	if (!socket) {
 		wlr_backend_destroy(server.backend);
@@ -325,26 +331,19 @@ int main(int argc, const char* argv[]) {
 		return 1;
 	}
 
+	/* Set the WAYLAND_DISPLAY environment variable to our socket and run the startup command if requested. */
+	setenv("WAYLAND_DISPLAY", socket, true);
+	setenv("XDG_SESSION_TYPE", "wayland", true);
+	if (fork() == 0) {
+		execl("/bin/sh", "/bin/sh", "-c", "kate", (void*) NULL);
+	}
+
 	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s",
 	        socket);
 	wl_display_run(server.wl_display);
 
 	wl_display_destroy_clients(server.wl_display);
 	wl_display_destroy(server.wl_display);
-
-//	glfwSetKeyCallback(window, GLFWKeyCallback);
-//
-//	glfwSetWindowSizeCallback(window, GLFWwindowSizeCallback);
-//
-//	glfwSetMouseButtonCallback(window, GLFWmouseButtonCallback);
-//
-//	while (!glfwWindowShouldClose(window)) {
-//    std::cout << "Looping..." << std::endl;
-//		glfwWaitEvents();
-//	}
-
-//	glfwDestroyWindow(window);
-//	glfwTerminate();
 
 	return EXIT_SUCCESS;
 }
