@@ -13,6 +13,7 @@
 #include <wlr/render/gles2.h>
 #include <wlr/render/egl.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/render/wlr_texture.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -21,10 +22,7 @@
 #include "embedder.h"
 
 intptr_t g_baton;
-bool must_vsync = false;
 pthread_mutex_t baton_mutex;
-
-pthread_mutex_t vsync_mutex;
 
 sem_t vsync_semaphore;
 
@@ -35,7 +33,8 @@ struct tinywl_server {
 	struct wlr_xdg_shell* xdg_shell;
 
 	struct wlr_output_layout* output_layout;
-	struct wl_list outputs;
+	struct tinywl_output* output;
+//	struct wl_list outputs;
 	struct wl_listener new_output;
 	struct wl_listener new_xdg_surface;
 	struct wl_list views;
@@ -69,11 +68,8 @@ void p(void* userdata) {
 	EGLDisplay display = wlr_gles2_renderer_get_egl(renderer)->display;
 
 
-	if (output->wlr_output->back_buffer == NULL) {
-//			printf("\nF\n");
-		if (!wlr_output_attach_render(output->wlr_output, NULL)) {
-			return;
-		}
+	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+		return;
 	}
 
 	int width, height;
@@ -107,9 +103,6 @@ static void output_frame(struct wl_listener* listener, void* data) {
 		  wl_container_of(listener, output, frame);
 	struct wlr_renderer* renderer = output->server->renderer;
 
-
-
-
 //	struct timespec now;
 //	clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -120,9 +113,23 @@ static void output_frame(struct wl_listener* listener, void* data) {
 //	flutter_make_current()
 
 
-
-//	float color[4] = {0.3, 0.3, 0.3, 1.0};
-//	wlr_renderer_clear(renderer, color);
+//	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+//		return;
+//	}
+//	/* The "effective" resolution can change if you rotate your outputs. */
+//	int width, height;
+//	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+//
+//	wlr_renderer_begin(output->server->renderer, width, height);
+//
+//	float color[4] = {0.6, 0.3, 0.3, 1.0};
+//	wlr_renderer_clear(output->server->renderer, color);
+//
+////	glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+////	glClear(GL_COLOR_BUFFER_BIT);
+//
+//	wlr_renderer_end(output->server->renderer);
+//	wlr_output_commit(output->wlr_output);
 
 
 }
@@ -132,10 +139,18 @@ static void server_new_output(struct wl_listener* listener, void* data) {
 		  wl_container_of(listener, server, new_output);
 	struct wlr_output* wlr_output = data;
 
+	if (server->output != NULL) {
+		return;
+	}
+
 	if (!wl_list_empty(&wlr_output->modes)) {
 		struct wlr_output_mode* mode = wlr_output_preferred_mode(wlr_output);
 		wlr_output_set_mode(wlr_output, mode);
 		wlr_output_enable(wlr_output, true);
+
+		if (!wlr_output_commit(wlr_output)) {
+			return;
+		}
 	}
 
 	/* Allocates and configures our state for this output */
@@ -145,39 +160,40 @@ static void server_new_output(struct wl_listener* listener, void* data) {
 
 	output->frame.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
-	wl_list_insert(&server->outputs, &output->link);
+	server->output = output;
+//	wl_list_insert(&server->outputs, &output->link);
 
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
-	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
-		printf("NOOOO\n");
-		return;
-	}
-
-	/* The "effective" resolution can change if you rotate your outputs. */
+//	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+//		printf("NOOOO\n");
+//		return;
+//	}
+//
+//	/* The "effective" resolution can change if you rotate your outputs. */
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
-
-	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
-	wlr_renderer_begin(server->renderer, width, height);
-
-	float color[4] = {0.6, 0.3, 0.3, 1.0};
-	wlr_renderer_clear(server->renderer, color);
-
-//	glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
-//	glClear(GL_COLOR_BUFFER_BIT);
-
-	wlr_renderer_end(server->renderer);
-	wlr_output_commit(output->wlr_output);
-
-//	printf("HAHA ");
-
+//
+//	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
+//	wlr_renderer_begin(server->renderer, width, height);
+//
+//	float color[4] = {0.6, 0.3, 0.3, 1.0};
+//	wlr_renderer_clear(server->renderer, color);
+//
+////	glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+////	glClear(GL_COLOR_BUFFER_BIT);
+//
+//	wlr_renderer_end(server->renderer);
+//	wlr_output_commit(output->wlr_output);
+//
+////	printf("HAHA ");
+//
 	FlutterWindowMetricsEvent event = {};
 	event.struct_size = sizeof(event);
 	event.width = width;
 	event.height = height;
 	event.pixel_ratio = 1.0;
-//	printf("%zu %zu ", event.width, event.height);
+	printf("%zu %zu ", event.width, event.height);
 
 	FlutterEngine engine = RunFlutter(server);
 	output->engine = engine;
@@ -308,26 +324,11 @@ bool flutter_present(void* userdata) {
 	fflush(stdout);
 
 	struct tinywl_server* server = userdata;
-	struct tinywl_output* output;
-	wl_list_for_each(output, &server->outputs, link) {
-		struct wlr_renderer* renderer = output->server->renderer;
-		wlr_renderer_end(renderer);
-		if (!output->wlr_output->frame_pending) {
-			wlr_output_commit(output->wlr_output);
-			sem_post(&vsync_semaphore);
-			//			pthread_mutex_unlock(&vsync_mutex);
-		}
-
-//		if (output->wlr_output->back_buffer == NULL) {
-////			printf("\nF\n");
-//			if (!wlr_output_attach_render(output->wlr_output, NULL)) {
-//				return false;
-//			}
-//		}
-//		int width, height;
-//		wlr_output_effective_resolution(output->wlr_output, &width, &height);
-//		/* Begin the renderer (calls glViewport and some other GL sanity checks) */
-//		wlr_renderer_begin(server->renderer, width, height);
+	struct wlr_renderer* renderer = server->renderer;
+	wlr_renderer_end(renderer);
+	if (!server->output->wlr_output->frame_pending) {
+		wlr_output_commit(server->output->wlr_output);
+		sem_post(&vsync_semaphore);
 	}
 	return true;
 }
@@ -341,17 +342,15 @@ uint32_t flutter_fbo_callback(void* userdata) {
 
 FlutterTransformation flutter_surface_transformation(void* userdata) {
 	struct tinywl_server* server = userdata;
-	struct tinywl_output* output;
 	FlutterTransformation transformation;
 
-	wl_list_for_each(output, &server->outputs, link) {
-		int width, height;
-		wlr_output_effective_resolution(output->wlr_output, &width, &height);
-		transformation.scaleX = 1;
-		transformation.scaleY = -1;
-		transformation.pers2 = 1;
-		transformation.transY = height;
-	}
+	int width, height;
+	wlr_output_effective_resolution(server->output->wlr_output, &width, &height);
+	transformation.scaleX = 1;
+	transformation.scaleY = -1;
+	transformation.pers2 = 1;
+	transformation.transY = height;
+
 	return transformation;
 }
 
@@ -361,7 +360,6 @@ void vsync_callback(void* userdata, intptr_t baton) {
 
 	pthread_mutex_lock(&baton_mutex);
 	g_baton = baton;
-	must_vsync = true;
 	pthread_mutex_unlock(&baton_mutex);
 }
 
@@ -373,7 +371,7 @@ FlutterEngine RunFlutter(struct tinywl_server* server) {
 	config.open_gl.clear_current = flutter_clear_current;
 	config.open_gl.present = flutter_present;
 	config.open_gl.fbo_callback = flutter_fbo_callback;
-	config.open_gl.surface_transformation = flutter_surface_transformation;
+//	config.open_gl.surface_transformation = flutter_surface_transformation;
 
 #define BUNDLE "build/linux/x64/debug/bundle/data"
 	FlutterProjectArgs args = {
@@ -397,12 +395,12 @@ FlutterEngine RunFlutter(struct tinywl_server* server) {
 
 int main(int argc, const char* argv[]) {
 	pthread_mutex_init(&baton_mutex, NULL);
-	pthread_mutex_init(&vsync_mutex, NULL);
 	sem_init(&vsync_semaphore, 0, 0);
 
 	wlr_log_init(WLR_DEBUG, NULL);
 
 	struct tinywl_server server;
+	server.output = NULL;
 	server.wl_display = wl_display_create();
 	server.backend = wlr_backend_autocreate(server.wl_display);
 	server.renderer = wlr_backend_get_renderer(server.backend);
@@ -413,7 +411,6 @@ int main(int argc, const char* argv[]) {
 
 	server.output_layout = wlr_output_layout_create();
 
-	wl_list_init(&server.outputs);
 	server.new_output.notify = server_new_output;
 	wl_signal_add(&server.backend->events.new_output, &server.new_output);
 
