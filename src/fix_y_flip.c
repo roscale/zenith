@@ -22,6 +22,7 @@ static const char* fragmentShaderSource = "precision mediump float;\n"
 
 static float vertices[] = {
 	  // pos_x, pos_y, pos_z, tex_x, tex_y
+	  // Last column has the y-flip fix.
 	  1.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // top right
 	  1.0f, -1.0f, 0.0f, 1.0f, 1.0f,   // bottom right
 	  -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,   // bottom left
@@ -36,7 +37,7 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	int success;
 	char infoLog[512];
 
-	// vertex shader
+	// Create vertex shader.
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 	glCompileShader(vertexShader);
@@ -48,7 +49,7 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 		exit(1);
 	}
 
-	// fragment shader
+	// Create fragment shader.
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
 	glCompileShader(fragmentShader);
@@ -60,7 +61,7 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 		exit(1);
 	}
 
-	// linkage
+	// Link the program.
 	GLuint shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
@@ -80,7 +81,7 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	// vbo & ebo
+	// Upload the quad on the GPU.
 	unsigned int vbo, ebo;
 
 	glGenBuffers(1, &vbo);
@@ -92,10 +93,12 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+	// Create the intermediate framebuffer.
 	GLuint offscreen_framebuffer;
 	glGenFramebuffers(1, &offscreen_framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, offscreen_framebuffer);
 
+	// Create a texture and attach it to the framebuffer.
 	GLuint framebuffer_texture;
 	glGenTextures(1, &framebuffer_texture);
 
@@ -106,6 +109,8 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer_texture, 0);
+
+	// Abort if the framebuffer was not correctly created.
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
 		fprintf(stderr, "Incomplete framebuffer: %d\n", status);

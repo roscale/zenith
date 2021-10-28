@@ -1,5 +1,11 @@
 #pragma once
 
+/*
+ * OpenGL rendering is done upside down for some reason. To fix this, we render to a texture
+ * attached to an intermediate framebuffer and then we blit this texture to a quad on the final
+ * framebuffer in the right orientation.
+ */
+
 #include <GLES2/gl2.h>
 
 struct fix_y_flip_state {
