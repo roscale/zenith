@@ -1,0 +1,173 @@
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "fix_y_flip.h"
+
+static const char* vertexShaderSource = "attribute vec3 position;\n"
+                                        "attribute vec2 texcoord;\n"
+                                        "varying vec2 vtexcoord;\n"
+                                        "void main()\n"
+                                        "{\n"
+                                        "   gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
+                                        "   vtexcoord = texcoord;\n"
+                                        "}\0";
+
+static const char* fragmentShaderSource = "precision mediump float;\n"
+                                          "uniform sampler2D tex;\n"
+                                          "varying vec2 vtexcoord;\n"
+                                          "void main()\n"
+                                          "{\n"
+                                          "   gl_FragColor = texture2D(tex, vtexcoord);\n"
+                                          "}\n\0";
+
+static float vertices[] = {
+	  // pos_x, pos_y, pos_z, tex_x, tex_y
+	  1.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // top right
+	  1.0f, -1.0f, 0.0f, 1.0f, 1.0f,   // bottom right
+	  -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,   // bottom left
+	  -1.0f, 1.0f, 0.0f, 0.0f, 0.0f    // top left
+};
+static unsigned int indices[] = {
+	  0, 1, 3,
+	  1, 2, 3,
+};
+
+struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
+	int success;
+	char infoLog[512];
+
+	// vertex shader
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		fprintf(stderr, "%s", infoLog);
+		exit(1);
+	}
+
+	// fragment shader
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		fprintf(stderr, "%s", infoLog);
+		exit(1);
+	}
+
+	// linkage
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+
+	glBindAttribLocation(shaderProgram, 0, "position");
+	glBindAttribLocation(shaderProgram, 1, "texcoord");
+
+	glLinkProgram(shaderProgram);
+
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		fprintf(stderr, "%s", infoLog);
+		exit(1);
+	}
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	// vbo & ebo
+	unsigned int vbo, ebo;
+
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ebo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	GLuint offscreen_framebuffer;
+	glGenFramebuffers(1, &offscreen_framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, offscreen_framebuffer);
+
+	GLuint framebuffer_texture;
+	glGenTextures(1, &framebuffer_texture);
+
+	glBindTexture(GL_TEXTURE_2D, framebuffer_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer_texture, 0);
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		fprintf(stderr, "Incomplete framebuffer: %d\n", status);
+		exit(1);
+	}
+
+	struct fix_y_flip_state state = {
+		  .program = shaderProgram,
+		  .vbo = vbo,
+		  .ebo = ebo,
+		  .offscreen_framebuffer = offscreen_framebuffer,
+		  .framebuffer_texture = framebuffer_texture,
+	};
+	return state;
+}
+
+void bind_offscreen_framebuffer(struct fix_y_flip_state* state) {
+	glBindFramebuffer(GL_FRAMEBUFFER, state->offscreen_framebuffer);
+}
+
+void render_to_fbo(struct fix_y_flip_state* state, unsigned int fbo) {
+	// Backup context state.
+	GLint framebuffer_binding;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
+	GLint vbo_binding;
+	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vbo_binding);
+	GLint ebo_binding;
+	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &ebo_binding);
+	GLint current_program;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
+	GLint active_texture;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
+	GLint texture_binding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture_binding);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, state->vbo);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) 0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (3 * sizeof(float)));
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->ebo);
+
+	glUseProgram(state->program);
+
+	GLint tex = glGetUniformLocation(state->program, "tex");
+	glUniform1i(tex, 0);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+	// Restore context state.
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_binding);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_binding);
+	glUseProgram(current_program);
+	glActiveTexture(active_texture);
+	glBindTexture(GL_TEXTURE_2D, texture_binding);
+}

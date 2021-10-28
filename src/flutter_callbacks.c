@@ -58,18 +58,27 @@ bool flutter_present(void* userdata) {
 
 	struct flutland_output* output = userdata;
 	struct wlr_renderer* renderer = output->server->renderer;
+
+	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
+
+//	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+//	glClear(GL_COLOR_BUFFER_BIT);
+
+	render_to_fbo(&output->fix_y_flip_state, output_fbo);
+
 	wlr_renderer_end(renderer);
-	if (!output->wlr_output->frame_pending) {
-		wlr_output_commit(output->wlr_output);
-		sem_post(&output->vsync_semaphore);
-	}
+	wlr_output_commit(output->wlr_output);
+
+	sem_post(&output->vsync_semaphore);
 	return true;
 }
 
 uint32_t flutter_fbo_callback(void* userdata) {
 	struct flutland_output* output = userdata;
-	uint32_t fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
-	return fbo;
+	uint32_t fb = output->fix_y_flip_state.offscreen_framebuffer;
+
+//		uint32_t fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
+	return fb;
 }
 
 void vsync_callback(void* userdata, intptr_t baton) {
@@ -94,6 +103,8 @@ void start_rendering(void* userdata) {
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
 	wlr_renderer_begin(renderer, width, height);
+
+	bind_offscreen_framebuffer(&output->fix_y_flip_state);
 
 	pthread_mutex_lock(&output->baton_mutex);
 	uint64_t start = FlutterEngineGetCurrentTime();

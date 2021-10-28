@@ -11,6 +11,8 @@
 #include <semaphore.h>
 #include <malloc.h>
 #include <pthread.h>
+#include <wlr/render/egl.h>
+#include <wlr/render/gles2.h>
 
 void server_new_output(struct wl_listener* listener, void* data) {
 	struct flutland_server* server = wl_container_of(listener, server, new_output);
@@ -47,6 +49,10 @@ void server_new_output(struct wl_listener* listener, void* data) {
 
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+
+	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+	output->fix_y_flip_state = fix_y_flip_init_state(width, height);
+	wlr_egl_unset_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 
 	FlutterWindowMetricsEvent event = {};
 	event.struct_size = sizeof(event);

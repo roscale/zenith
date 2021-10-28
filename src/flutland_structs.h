@@ -1,6 +1,7 @@
 #pragma once
 
 #include "embedder.h"
+#include "fix_y_flip.h"
 
 #include <wayland-server.h>
 
@@ -31,6 +32,7 @@ struct flutland_output {
 	intptr_t baton;
 	pthread_mutex_t baton_mutex;
 	sem_t vsync_semaphore;
+	struct fix_y_flip_state fix_y_flip_state;
 };
 
 struct flutland_view {
