@@ -5,14 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class Window extends StatefulWidget {
-  const Window({Key? key}) : super(key: key);
+  final int textureId;
+
+  const Window({Key? key, required this.textureId}) : super(key: key);
 
   @override
   _WindowState createState() => _WindowState();
 }
 
 class _WindowState extends State<Window> {
-  var windowState = WindowState("Window", const Rect.fromLTWH(100, 100, 500, 300));
+  late WindowState windowState;
+
+  @override
+  void initState() {
+    super.initState();
+    windowState = WindowState(
+        "Window", const Rect.fromLTWH(100, 100, 500, 300), widget.textureId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +32,21 @@ class _WindowState extends State<Window> {
 
         return Positioned(
           child: GestureDetector(
-            onPanDown: (_) => context.read<DesktopState>().activateWindow(widget),
+            onPanDown: (_) =>
+                context.read<DesktopState>().activateWindow(widget),
             child: Card(
               clipBehavior: Clip.antiAlias,
               elevation: 20,
               child: Column(
-                children: const [
-                  TitleBar(),
+                children: [
+                  const TitleBar(),
+                  SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: Texture(textureId: windowState.textureId),
+                  ),
+                  if (windowState.textureId != 0)
+                    Texture(textureId: windowState.textureId),
                 ],
               ),
             ),

@@ -9,6 +9,10 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <assert.h>
+#include <GL/gl.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #define BUNDLE "build/linux/x64/debug/bundle/data"
 
@@ -20,12 +24,25 @@ FlutterEngine run_flutter(struct flutland_output* output) {
 	config.open_gl.clear_current = flutter_clear_current;
 	config.open_gl.present = flutter_present;
 	config.open_gl.fbo_callback = flutter_fbo_callback;
+	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
+
+//	FlutterTaskRunnerDescription description = {
+//		  .struct_size = sizeof(FlutterTaskRunnerDescription),
+//		  .identifier = 1,
+//		  .runs_task_on_current_thread_callback
+//	};
+//
+//	FlutterCustomTaskRunners customTaskRunners = {
+//		  .struct_size = sizeof(FlutterCustomTaskRunners),
+//		  .platform_task_runner =
+//	};
 
 	FlutterProjectArgs args = {
 		  .struct_size = sizeof(FlutterProjectArgs),
 		  .assets_path = BUNDLE "/flutter_assets",
 		  .icu_data_path = BUNDLE "/icudtl.dat",
 		  .vsync_callback = vsync_callback,
+		  .platform_message_callback = flutter_platform_message_callback,
 	};
 
 	FlutterEngine engine = NULL;
@@ -91,6 +108,23 @@ void vsync_callback(void* userdata, intptr_t baton) {
 	pthread_mutex_unlock(&output->baton_mutex);
 }
 
+bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
+                                                FlutterOpenGLTexture* texture_out) {
+	printf("\nWW_EXTERNAL_TEXTURE_FRAME\n\n");
+	fflush(stdout);
+
+	struct flutland_output* output = userdata;
+	struct wlr_texture* texture = (struct wlr_texture*) texture_id;
+	texture_out->target = GL_TEXTURE_2D;
+	texture_out->name = texture_id;
+	texture_out->width = texture->width;
+	texture_out->height = texture->height;
+//	struct wlr_gles2_texture_attribs attribs;
+//	wlr_gles2_texture_get_attribs(texture, &attribs);
+	texture_out->format = GL_RGBA8;
+	return true;
+}
+
 void start_rendering(void* userdata) {
 	struct flutland_output* output = userdata;
 	struct wlr_renderer* renderer = output->server->renderer;
@@ -110,4 +144,25 @@ void start_rendering(void* userdata) {
 	uint64_t start = FlutterEngineGetCurrentTime();
 	FlutterEngineOnVsync(output->engine, output->baton, start, start + 1000000000ull / 144);
 	pthread_mutex_unlock(&output->baton_mutex);
+}
+
+void flutter_execute_platform_tasks(void* data) {
+	__FlutterEngineFlushPendingTasksNow();
+}
+
+void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata) {
+	printf("MESSAGE\n");
+	printf("%s\n", message->channel);
+	printf("%s\n", message->message);
+
+	if (strncmp(&message->message[2], "listen", strlen("listen")) == 0) {
+		printf("LISTENED\n");
+
+		/* Set the WAYLAND_DISPLAY environment variable to our socket and run the startup command if requested. */
+		setenv("WAYLAND_DISPLAY", "wayland-0", true);
+		setenv("XDG_SESSION_TYPE", "wayland", true);
+		if (fork() == 0) {
+			execl("/bin/sh", "/bin/sh", "-c", "kate", (void*) NULL);
+		}
+	}
 }

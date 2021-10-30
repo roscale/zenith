@@ -2,36 +2,12 @@
 #include "flutland_structs.h"
 
 #include <wayland-util.h>
+#include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/render/wlr_texture.h>
 
 #include <stdio.h>
 #include <stdbool.h>
 #include <malloc.h>
-#include <wlr/types/wlr_xdg_shell.h>
-
-void xdg_surface_map(struct wl_listener* listener, void* data) {
-	printf("MAP SURFACE\n");
-	fflush(stdout);
-	/* Called when the surface is mapped, or ready to display on-screen. */
-	struct flutland_view* view = wl_container_of(listener, view, map);
-	view->mapped = true;
-}
-
-void xdg_surface_unmap(struct wl_listener* listener, void* data) {
-	printf("UNMAP SURFACE\n");
-	fflush(stdout);
-	/* Called when the surface is unmapped, and should no longer be shown. */
-	struct flutland_view* view = wl_container_of(listener, view, unmap);
-	view->mapped = false;
-}
-
-void xdg_surface_destroy(struct wl_listener* listener, void* data) {
-	printf("DESTROY SURFACE\n");
-	fflush(stdout);
-	/* Called when the surface is destroyed and should never be shown again. */
-	struct flutland_view* view = wl_container_of(listener, view, destroy);
-	wl_list_remove(&view->link);
-	free(view);
-}
 
 void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
@@ -61,4 +37,39 @@ void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 	wl_list_insert(&server->views, &view->link);
 
 	printf("\nNEW CLIENT\n\n");
+}
+
+void xdg_surface_map(struct wl_listener* listener, void* data) {
+	printf("MAP SURFACE\n");
+	fflush(stdout);
+	/* Called when the surface is mapped, or ready to display on-screen. */
+	struct flutland_view* view = wl_container_of(listener, view, map);
+	view->mapped = true;
+
+	struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+	FlutterEngineRegisterExternalTexture(view->server->output->engine, (int64_t) texture);
+	FlutterPlatformMessage message;
+	message.channel = "new_texture_id";
+	message.struct_size = sizeof(FlutterPlatformMessage);
+	message.message = (const uint8_t*) texture;
+	message.message_size = 8;
+	FlutterEngineResult r = FlutterEngineSendPlatformMessage(view->server->output->engine, &message);
+	printf("result: %d\n", r);
+}
+
+void xdg_surface_unmap(struct wl_listener* listener, void* data) {
+	printf("UNMAP SURFACE\n");
+	fflush(stdout);
+	/* Called when the surface is unmapped, and should no longer be shown. */
+	struct flutland_view* view = wl_container_of(listener, view, unmap);
+	view->mapped = false;
+}
+
+void xdg_surface_destroy(struct wl_listener* listener, void* data) {
+	printf("DESTROY SURFACE\n");
+	fflush(stdout);
+	/* Called when the surface is destroyed and should never be shown again. */
+	struct flutland_view* view = wl_container_of(listener, view, destroy);
+	wl_list_remove(&view->link);
+	free(view);
 }

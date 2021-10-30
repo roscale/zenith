@@ -13,6 +13,8 @@
 #include <pthread.h>
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
+#include <wlr/types/wlr_surface.h>
+#include <wlr/types/wlr_xdg_shell.h>
 
 void server_new_output(struct wl_listener* listener, void* data) {
 	struct flutland_server* server = wl_container_of(listener, server, new_output);
@@ -75,7 +77,27 @@ void output_frame(struct wl_listener* listener, void* data) {
 	 * generally at the output's refresh rate (e.g. 60Hz). */
 	struct flutland_output* output = wl_container_of(listener, output, frame);
 
+	//
+//	struct flutland_view* view;
+//	wl_list_for_each_reverse(view, &output->server->views, link) {
+//		if (!view->mapped) {
+//			/* An unmapped view should not be rendered. */
+//			continue;
+//		}
+////		struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+////		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
+//////		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, 42);
+////		printf("heh %ld\n", (int64_t) texture);
+////
+////		struct timespec now;
+////		clock_gettime(CLOCK_MONOTONIC, &now);
+////		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
+//	}
+
 	// Rendering can only be started on the flutter render thread because the context is current on that thread.
 	FlutterEnginePostRenderThreadTask(output->engine, start_rendering, output);
 	sem_wait(&output->vsync_semaphore);
+
+	// Execute all platform tasks while waiting for the next frame event.
+	wl_event_loop_add_idle(wl_display_get_event_loop(output->server->wl_display), flutter_execute_platform_tasks, NULL);
 }
