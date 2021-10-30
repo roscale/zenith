@@ -5,7 +5,6 @@
 
 #include <wayland-server.h>
 
-#include <stdint.h>
 #include <semaphore.h>
 
 struct flutland_server {

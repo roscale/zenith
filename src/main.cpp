@@ -3,8 +3,6 @@
 #include "xdg_surface_callbacks.hpp"
 
 extern "C" {
-#include <stdlib.h>
-#include <unistd.h>
 #include <poll.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -20,13 +18,14 @@ extern "C" {
 #include <wlr/render/egl.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/render/wlr_texture.h>
+#undef static
 }
 
 int main(int argc, const char* argv[]) {
-	wlr_log_init(WLR_DEBUG, NULL);
+	wlr_log_init(WLR_DEBUG, nullptr);
 
 	struct flutland_server server;
-	server.output = NULL;
+	server.output = nullptr;
 	server.wl_display = wl_display_create();
 	server.backend = wlr_backend_autocreate(server.wl_display);
 	server.renderer = wlr_backend_get_renderer(server.backend);

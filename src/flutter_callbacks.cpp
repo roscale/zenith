@@ -6,20 +6,16 @@ extern "C" {
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_output.h>
+#undef static
 }
 
-#include <stdio.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <assert.h>
 #include <GL/gl.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <cassert>
+#include <iostream>
 
 #define BUNDLE "build/linux/x64/debug/bundle/data"
 
-FlutterEngine run_flutter(struct flutland_output* output) {
+FlutterEngine run_flutter(flutland_output* output) {
 	FlutterRendererConfig config = {};
 	config.type = kOpenGL;
 	config.open_gl.struct_size = sizeof(config.open_gl);
@@ -48,35 +44,32 @@ FlutterEngine run_flutter(struct flutland_output* output) {
 		  .vsync_callback = vsync_callback,
 	};
 
-	FlutterEngine engine = NULL;
+	FlutterEngine engine = nullptr;
 	int result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config, &args, output, &engine);
-	assert(result == kSuccess && engine != NULL);
+	assert(result == kSuccess && engine != nullptr);
 
 	return engine;
 }
 
 bool flutter_make_current(void* userdata) {
-	printf("MAKE_CURRENT\n");
-	fflush(stdout);
+	std::clog << "MAKE_CURRENT" << std::endl;
 
-	struct flutland_output* output = static_cast<flutland_output*>(userdata);
+	auto* output = static_cast<flutland_output*>(userdata);
 
 	return wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 }
 
 bool flutter_clear_current(void* userdata) {
-	printf("CLEAR_CURRENT\n");
-	fflush(stdout);
-	struct flutland_output* output = static_cast<flutland_output*>(userdata);
+	std::clog << "CLEAR_CURRENT" << std::endl;
+	auto* output = static_cast<flutland_output*>(userdata);
 
 	return wlr_egl_unset_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 }
 
 bool flutter_present(void* userdata) {
-	printf("PRESENT\n");
-	fflush(stdout);
+	std::clog << "PRESENT" << std::endl;
 
-	struct flutland_output* output = static_cast<flutland_output*>(userdata);
+	auto* output = static_cast<flutland_output*>(userdata);
 	struct wlr_renderer* renderer = output->server->renderer;
 
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
@@ -94,7 +87,7 @@ bool flutter_present(void* userdata) {
 }
 
 uint32_t flutter_fbo_callback(void* userdata) {
-	struct flutland_output* output = static_cast<flutland_output*>(userdata);
+	auto* output = static_cast<flutland_output*>(userdata);
 	uint32_t fb = output->fix_y_flip_state.offscreen_framebuffer;
 
 //		uint32_t fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
@@ -102,9 +95,8 @@ uint32_t flutter_fbo_callback(void* userdata) {
 }
 
 void vsync_callback(void* userdata, intptr_t baton) {
-	struct flutland_output* output = static_cast<flutland_output*>(userdata);
-	printf("\nVSYNC CALLBACK\n\n");
-	fflush(stdout);
+	auto* output = static_cast<flutland_output*>(userdata);
+	std::clog << "VSYNC_CALLBACK" << std::endl;
 
 	pthread_mutex_lock(&output->baton_mutex);
 	output->baton = baton;
@@ -113,11 +105,10 @@ void vsync_callback(void* userdata, intptr_t baton) {
 
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
-	printf("\nWW_EXTERNAL_TEXTURE_FRAME\n\n");
-	fflush(stdout);
+	std::clog << "WW_EXTERNAL_TEXTURE_FRAME" << std::endl;
 
-	struct flutland_output* output = static_cast<flutland_output*>(userdata);
-	struct wlr_texture* texture = (struct wlr_texture*) texture_id;
+	auto* output = static_cast<flutland_output*>(userdata);
+	auto* texture = (struct wlr_texture*) texture_id;
 	texture_out->target = GL_TEXTURE_2D;
 	texture_out->name = texture_id;
 	texture_out->width = texture->width;
@@ -129,10 +120,10 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 }
 
 void start_rendering(void* userdata) {
-	struct flutland_output* output = static_cast<flutland_output*>(userdata);
+	auto* output = static_cast<flutland_output*>(userdata);
 	struct wlr_renderer* renderer = output->server->renderer;
 
-	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
 		return;
 	}
 
@@ -154,9 +145,9 @@ void flutter_execute_platform_tasks(void* data) {
 }
 
 void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata) {
-	printf("MESSAGE\n");
-	printf("%s\n", message->channel);
-	printf("%s\n", message->message);
+	std::clog << "MESSAGE" << std::endl;
+	std::clog << message->channel << std::endl;
+	std::clog << message->message << std::endl;
 
 //	if (strncmp(&message->message[2], "listen", strlen("listen")) == 0) {
 //		printf("LISTENED\n");
@@ -165,7 +156,7 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 //		setenv("WAYLAND_DISPLAY", "wayland-0", true);
 //		setenv("XDG_SESSION_TYPE", "wayland", true);
 //		if (fork() == 0) {
-//			execl("/bin/sh", "/bin/sh", "-c", "kate", (void*) NULL);
+//			execl("/bin/sh", "/bin/sh", "-c", "kate", (void*) nullptr);
 //		}
 //	}
 }

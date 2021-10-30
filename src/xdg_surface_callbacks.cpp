@@ -6,9 +6,8 @@ extern "C" {
 #include <wayland-util.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/render/wlr_texture.h>
+#undef static
 
-#include <stdio.h>
-#include <stdbool.h>
 #include <malloc.h>
 }
 
@@ -17,13 +16,13 @@ void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 	 * client, either a toplevel (application window) or popup. */
 	struct flutland_server* server =
 		  wl_container_of(listener, server, new_xdg_surface);
-	struct wlr_xdg_surface* xdg_surface = static_cast<wlr_xdg_surface*>(data);
+	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
 	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
 		return;
 	}
 
 	/* Allocate a flutland_view for this surface */
-	struct flutland_view* view = static_cast<flutland_view*>(calloc(1, sizeof(struct flutland_view)));
+	auto* view = static_cast<flutland_view*>(calloc(1, sizeof(struct flutland_view)));
 	view->server = server;
 	view->xdg_surface = xdg_surface;
 

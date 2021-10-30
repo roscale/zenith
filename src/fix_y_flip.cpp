@@ -1,7 +1,6 @@
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "fix_y_flip.hpp"
+#include <cstdlib>
+#include <iostream>
 
 static const char* vertexShaderSource = "attribute vec3 position;\n"
                                         "attribute vec2 texcoord;\n"
@@ -39,25 +38,25 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 
 	// Create vertex shader.
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
 	glCompileShader(vertexShader);
 
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
 	if (!success) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		fprintf(stderr, "%s", infoLog);
+		glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
+		std::cerr << infoLog;
 		exit(1);
 	}
 
 	// Create fragment shader.
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
 	glCompileShader(fragmentShader);
 
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 	if (!success) {
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		fprintf(stderr, "%s", infoLog);
+		glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
+		std::cerr << infoLog;
 		exit(1);
 	}
 
@@ -73,8 +72,8 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		fprintf(stderr, "%s", infoLog);
+		glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
+		std::cerr << infoLog;
 		exit(1);
 	}
 
@@ -103,7 +102,7 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	glGenTextures(1, &framebuffer_texture);
 
 	glBindTexture(GL_TEXTURE_2D, framebuffer_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -113,11 +112,11 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	// Abort if the framebuffer was not correctly created.
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
-		fprintf(stderr, "Incomplete framebuffer: %d\n", status);
+		std::cerr << "Incomplete framebuffer: " << status << std::endl;
 		exit(1);
 	}
 
-	struct fix_y_flip_state state = {
+	fix_y_flip_state state = {
 		  .program = shaderProgram,
 		  .vbo = vbo,
 		  .ebo = ebo,
@@ -127,11 +126,11 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	return state;
 }
 
-void bind_offscreen_framebuffer(struct fix_y_flip_state* state) {
+void bind_offscreen_framebuffer(fix_y_flip_state* state) {
 	glBindFramebuffer(GL_FRAMEBUFFER, state->offscreen_framebuffer);
 }
 
-void render_to_fbo(struct fix_y_flip_state* state, unsigned int fbo) {
+void render_to_fbo(fix_y_flip_state* state, unsigned int fbo) {
 	// Backup context state.
 	GLint framebuffer_binding;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
@@ -151,7 +150,7 @@ void render_to_fbo(struct fix_y_flip_state* state, unsigned int fbo) {
 	glBindBuffer(GL_ARRAY_BUFFER, state->vbo);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
 
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (3 * sizeof(float)));
@@ -166,7 +165,7 @@ void render_to_fbo(struct fix_y_flip_state* state, unsigned int fbo) {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
 
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 	// Restore context state.
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);

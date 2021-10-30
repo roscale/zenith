@@ -9,7 +9,6 @@ extern "C" {
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
 
-#include <stdio.h>
 #include <semaphore.h>
 #include <malloc.h>
 #include <pthread.h>
@@ -17,13 +16,14 @@ extern "C" {
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#undef static
 }
 
 void server_new_output(struct wl_listener* listener, void* data) {
 	struct flutland_server* server = wl_container_of(listener, server, new_output);
 	struct wlr_output* wlr_output = static_cast<struct wlr_output*>(data);
 
-	if (server->output != NULL) {
+	if (server->output != nullptr) {
 		// Allow only one output at the moment.
 		return;
 	}
@@ -43,7 +43,7 @@ void server_new_output(struct wl_listener* listener, void* data) {
 	output->wlr_output = wlr_output;
 	output->server = server;
 
-	pthread_mutex_init(&output->baton_mutex, NULL);
+	pthread_mutex_init(&output->baton_mutex, nullptr);
 	sem_init(&output->vsync_semaphore, 0, 0);
 
 	output->frame.notify = output_frame;
@@ -102,5 +102,5 @@ void output_frame(struct wl_listener* listener, void* data) {
 	sem_wait(&output->vsync_semaphore);
 
 	// Execute all platform tasks while waiting for the next frame event.
-	wl_event_loop_add_idle(wl_display_get_event_loop(output->server->wl_display), flutter_execute_platform_tasks, NULL);
+	wl_event_loop_add_idle(wl_display_get_event_loop(output->server->wl_display), flutter_execute_platform_tasks, nullptr);
 }
