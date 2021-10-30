@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "fix_y_flip.h"
+#include "fix_y_flip.hpp"
 
 static const char* vertexShaderSource = "attribute vec3 position;\n"
                                         "attribute vec2 texcoord;\n"

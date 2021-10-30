@@ -1,7 +1,7 @@
 #pragma once
 
 #include "embedder.h"
-#include "fix_y_flip.h"
+#include "fix_y_flip.hpp"
 
 #include <wayland-server.h>
 

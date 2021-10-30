@@ -1,8 +1,10 @@
-#include "output_callbacks.h"
+#include "output_callbacks.hpp"
 #include "embedder.h"
-#include "flutland_structs.h"
-#include "flutter_callbacks.h"
+#include "flutland_structs.hpp"
+#include "flutter_callbacks.hpp"
 
+extern "C" {
+#define static
 #include <wayland-util.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -15,10 +17,11 @@
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
+}
 
 void server_new_output(struct wl_listener* listener, void* data) {
 	struct flutland_server* server = wl_container_of(listener, server, new_output);
-	struct wlr_output* wlr_output = data;
+	struct wlr_output* wlr_output = static_cast<struct wlr_output*>(data);
 
 	if (server->output != NULL) {
 		// Allow only one output at the moment.
@@ -36,7 +39,7 @@ void server_new_output(struct wl_listener* listener, void* data) {
 	}
 
 	/* Allocates and configures our state for this output */
-	struct flutland_output* output = calloc(1, sizeof(struct flutland_output));
+	struct flutland_output* output = static_cast<flutland_output*>(calloc(1, sizeof(struct flutland_output)));
 	output->wlr_output = wlr_output;
 	output->server = server;
 

@@ -1,9 +1,12 @@
-#include "flutter_callbacks.h"
-#include "flutland_structs.h"
+#include "flutter_callbacks.hpp"
+#include "flutland_structs.hpp"
 
+extern "C" {
+#define static
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_output.h>
+}
 
 #include <stdio.h>
 #include <pthread.h>
@@ -41,8 +44,8 @@ FlutterEngine run_flutter(struct flutland_output* output) {
 		  .struct_size = sizeof(FlutterProjectArgs),
 		  .assets_path = BUNDLE "/flutter_assets",
 		  .icu_data_path = BUNDLE "/icudtl.dat",
-		  .vsync_callback = vsync_callback,
 		  .platform_message_callback = flutter_platform_message_callback,
+		  .vsync_callback = vsync_callback,
 	};
 
 	FlutterEngine engine = NULL;
@@ -56,7 +59,7 @@ bool flutter_make_current(void* userdata) {
 	printf("MAKE_CURRENT\n");
 	fflush(stdout);
 
-	struct flutland_output* output = userdata;
+	struct flutland_output* output = static_cast<flutland_output*>(userdata);
 
 	return wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 }
@@ -64,7 +67,7 @@ bool flutter_make_current(void* userdata) {
 bool flutter_clear_current(void* userdata) {
 	printf("CLEAR_CURRENT\n");
 	fflush(stdout);
-	struct flutland_output* output = userdata;
+	struct flutland_output* output = static_cast<flutland_output*>(userdata);
 
 	return wlr_egl_unset_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 }
@@ -73,7 +76,7 @@ bool flutter_present(void* userdata) {
 	printf("PRESENT\n");
 	fflush(stdout);
 
-	struct flutland_output* output = userdata;
+	struct flutland_output* output = static_cast<flutland_output*>(userdata);
 	struct wlr_renderer* renderer = output->server->renderer;
 
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
@@ -91,7 +94,7 @@ bool flutter_present(void* userdata) {
 }
 
 uint32_t flutter_fbo_callback(void* userdata) {
-	struct flutland_output* output = userdata;
+	struct flutland_output* output = static_cast<flutland_output*>(userdata);
 	uint32_t fb = output->fix_y_flip_state.offscreen_framebuffer;
 
 //		uint32_t fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
@@ -99,7 +102,7 @@ uint32_t flutter_fbo_callback(void* userdata) {
 }
 
 void vsync_callback(void* userdata, intptr_t baton) {
-	struct flutland_output* output = userdata;
+	struct flutland_output* output = static_cast<flutland_output*>(userdata);
 	printf("\nVSYNC CALLBACK\n\n");
 	fflush(stdout);
 
@@ -113,7 +116,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 	printf("\nWW_EXTERNAL_TEXTURE_FRAME\n\n");
 	fflush(stdout);
 
-	struct flutland_output* output = userdata;
+	struct flutland_output* output = static_cast<flutland_output*>(userdata);
 	struct wlr_texture* texture = (struct wlr_texture*) texture_id;
 	texture_out->target = GL_TEXTURE_2D;
 	texture_out->name = texture_id;
@@ -126,7 +129,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 }
 
 void start_rendering(void* userdata) {
-	struct flutland_output* output = userdata;
+	struct flutland_output* output = static_cast<flutland_output*>(userdata);
 	struct wlr_renderer* renderer = output->server->renderer;
 
 	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
@@ -155,14 +158,14 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 	printf("%s\n", message->channel);
 	printf("%s\n", message->message);
 
-	if (strncmp(&message->message[2], "listen", strlen("listen")) == 0) {
-		printf("LISTENED\n");
-
-		/* Set the WAYLAND_DISPLAY environment variable to our socket and run the startup command if requested. */
-		setenv("WAYLAND_DISPLAY", "wayland-0", true);
-		setenv("XDG_SESSION_TYPE", "wayland", true);
-		if (fork() == 0) {
-			execl("/bin/sh", "/bin/sh", "-c", "kate", (void*) NULL);
-		}
-	}
+//	if (strncmp(&message->message[2], "listen", strlen("listen")) == 0) {
+//		printf("LISTENED\n");
+//
+//		/* Set the WAYLAND_DISPLAY environment variable to our socket and run the startup command if requested. */
+//		setenv("WAYLAND_DISPLAY", "wayland-0", true);
+//		setenv("XDG_SESSION_TYPE", "wayland", true);
+//		if (fork() == 0) {
+//			execl("/bin/sh", "/bin/sh", "-c", "kate", (void*) NULL);
+//		}
+//	}
 }

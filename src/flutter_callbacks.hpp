@@ -1,6 +1,6 @@
 #pragma once
 
-#include "flutland_structs.h"
+#include "flutland_structs.hpp"
 #include "embedder.h"
 
 #include <stdbool.h>

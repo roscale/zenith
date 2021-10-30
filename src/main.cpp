@@ -1,7 +1,14 @@
-#include "flutland_structs.h"
-#include "output_callbacks.h"
-#include "xdg_surface_callbacks.h"
+#include "flutland_structs.hpp"
+#include "output_callbacks.hpp"
+#include "xdg_surface_callbacks.hpp"
 
+extern "C" {
+#include <stdlib.h>
+#include <unistd.h>
+#include <poll.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#define static
 #include <wlr/backend.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_data_device.h>
@@ -13,12 +20,7 @@
 #include <wlr/render/egl.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/render/wlr_texture.h>
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <poll.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+}
 
 int main(int argc, const char* argv[]) {
 	wlr_log_init(WLR_DEBUG, NULL);
