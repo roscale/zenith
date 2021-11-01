@@ -85,22 +85,44 @@ void server_new_output(struct wl_listener* listener, void* data) {
 	// This handler is necessary because flutter expects to be able to call listen() and cancel() on the platform even
 	// though we don't care because this channel will always be open.
 	auto& codec = flutter::StandardMethodCodec::GetInstance();
-	flutter::EventChannel eventChannel(&output->messenger, "new_texture_id", &codec);
 
-	auto handler = std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
-		  [](
-				const flutter::EncodableValue* arguments,
-				std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events)
-				-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+	output->window_mapped_event_channel = std::make_unique<flutter::EventChannel<>>(&output->messenger, "window_mapped",
+	                                                                                &codec);
+	output->window_mapped_event_channel->SetStreamHandler(
+		  std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
+				[](
+					  const flutter::EncodableValue* arguments,
+					  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events)
+					  -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
 
-			  std::cout << "LISTENING NEW_TEXTURE" << std::endl;
-			  return nullptr;
-		  },
-		  [](const flutter::EncodableValue* arguments)
-				-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
-			  return nullptr;
-		  });
-	eventChannel.SetStreamHandler(std::move(handler));
+					std::cout << "LISTENING WINDOW_MAPPED" << std::endl;
+					return nullptr;
+				},
+				[](const flutter::EncodableValue* arguments)
+					  -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+
+					return nullptr;
+				}
+		  ));
+
+	output->window_unmapped_event_channel = std::make_unique<flutter::EventChannel<>>(&output->messenger,
+	                                                                                  "window_unmapped", &codec);
+	output->window_unmapped_event_channel->SetStreamHandler(
+		  std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
+				[](
+					  const flutter::EncodableValue* arguments,
+					  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events)
+					  -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+
+					std::cout << "LISTENING WINDOW_UNMAPPED" << std::endl;
+					return nullptr;
+				},
+				[](const flutter::EncodableValue* arguments)
+					  -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+
+					return nullptr;
+				}
+		  ));
 
 	FlutterEngineSendWindowMetricsEvent(engine, &event);
 }
@@ -112,9 +134,21 @@ void output_frame(struct wl_listener* listener, void* data) {
 	 * generally at the output's refresh rate (e.g. 60Hz). */
 	struct flutland_output* output = wl_container_of(listener, output, frame);
 
-	if (!output->new_baton) {
-		return;
+	while (true) {
+		pthread_mutex_lock(&output->baton_mutex);
+		if (output->new_baton) {
+			pthread_mutex_unlock(&output->baton_mutex);
+			break;
+		}
+		pthread_mutex_unlock(&output->baton_mutex);
 	}
+//	pthread_mutex_lock(&output->baton_mutex);
+//	while (!output->new_baton);
+//	if (!output->new_baton) {
+//		pthread_mutex_unlock(&output->baton_mutex);
+//		return;
+//	}
+//	pthread_mutex_unlock(&output->baton_mutex);
 
 	struct flutland_view* view;
 	wl_list_for_each_reverse(view, &output->server->views, link) {
@@ -132,6 +166,18 @@ void output_frame(struct wl_listener* listener, void* data) {
 
 	// Rendering can only be started on the flutter render thread because the context is current on that thread.
 	FlutterEnginePostRenderThreadTask(output->engine, start_rendering, output);
+
+	pthread_mutex_lock(&output->baton_mutex);
+	intptr_t baton = output->baton;
+	output->new_baton = false;
+	pthread_mutex_unlock(&output->baton_mutex);
+
+//	output->new_baton = false;
+	uint64_t start = FlutterEngineGetCurrentTime();
+	std::cout << "BATON "<< baton << std::endl;
+	FlutterEngineOnVsync(output->engine, baton, start, start + 1000000000ull / 144);
+
+
 	sem_wait(&output->vsync_semaphore);
 
 	// Execute all platform tasks while waiting for the next frame event.

@@ -67,28 +67,27 @@ int main(int argc, const char* argv[]) {
 //		execl("/bin/sh", "/bin/sh", "-c", "firefox www.ddg.gg", nullptr);
 //	}
 
-//	struct wl_event_loop* event_loop = wl_display_get_event_loop(server.wl_display);
-//	int fd = wl_event_loop_get_fd(event_loop);
-//	wl_event_loop_add_idle()
+	struct wl_event_loop* event_loop = wl_display_get_event_loop(server.wl_display);
+	int fd = wl_event_loop_get_fd(event_loop);
 
-//#pragma clang diagnostic push
-//#pragma ide diagnostic ignored "EndlessLoop"
-//	while (true) {
-//		struct pollfd pfd = {
-//			  .fd = fd,
-//			  .events = POLLIN,
-//		};
-//
-//		poll(&pfd, 1, 0);
-//		if (pfd.revents & POLLIN) {
-//			wl_event_loop_dispatch(event_loop, 0);
-//			wl_display_flush_clients(server.wl_display);
-////			printf("\nb\n");
-//		}
-//	}
-//#pragma clang diagnostic pop
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
+	while (true) {
+		struct pollfd pfd = {
+			  .fd = fd,
+			  .events = POLLIN,
+		};
 
-	wl_display_run(server.wl_display);
+		poll(&pfd, 1, 0);
+		if (pfd.revents & POLLIN) {
+			wl_event_loop_dispatch(event_loop, 0);
+			wl_display_flush_clients(server.wl_display);
+//			printf("\nb\n");
+		}
+	}
+#pragma clang diagnostic pop
+
+//	wl_display_run(server.wl_display);
 
 	wl_display_destroy_clients(server.wl_display);
 	wl_display_destroy(server.wl_display);

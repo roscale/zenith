@@ -50,9 +50,14 @@ void xdg_surface_map(struct wl_listener* listener, void* data) {
 	struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 	FlutterEngineRegisterExternalTexture(view->server->output->engine, (int64_t) texture);
 
-	auto value = flutter::EncodableValue((int64_t) texture);
-	auto result = flutter::StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-	view->server->output->messenger.Send("new_texture_id", result->data(), result->size());
+	using namespace flutter;
+	auto value = EncodableValue(EncodableMap{
+		  {EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
+		  {EncodableValue("width"),      EncodableValue(texture->width)},
+		  {EncodableValue("height"),     EncodableValue(texture->height)},
+	});
+	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+	view->server->output->messenger.Send("window_mapped", result->data(), result->size());
 }
 
 void xdg_surface_unmap(struct wl_listener* listener, void* data) {
@@ -61,6 +66,21 @@ void xdg_surface_unmap(struct wl_listener* listener, void* data) {
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	struct flutland_view* view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
+
+	struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+
+//	auto value = flutter::EncodableValue((int64_t) texture);
+//	auto result = flutter::StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+//	view->server->output->messenger.Send("window_unmapped", result->data(), result->size());
+
+	using namespace flutter;
+	auto value = EncodableValue(EncodableMap{
+		  {EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
+	});
+	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+	view->server->output->messenger.Send("window_unmapped", result->data(), result->size());
+
+	FlutterEngineUnregisterExternalTexture(view->server->output->engine, (int64_t) texture);
 }
 
 void xdg_surface_destroy(struct wl_listener* listener, void* data) {

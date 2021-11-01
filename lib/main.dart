@@ -38,7 +38,7 @@ class _DesktopState extends State<Desktop> {
     var desktopState = context.watch<DesktopState>();
 
     return Container(
-      color: Colors.white,
+      color: Colors.grey,
       child: Stack(
         children: [...desktopState.windows, const CircularProgressIndicator()],
       ),

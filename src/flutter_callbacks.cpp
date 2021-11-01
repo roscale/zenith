@@ -141,12 +141,6 @@ void start_rendering(void* userdata) {
 	wlr_renderer_begin(renderer, width, height);
 
 	bind_offscreen_framebuffer(&output->fix_y_flip_state);
-
-	pthread_mutex_lock(&output->baton_mutex);
-	uint64_t start = FlutterEngineGetCurrentTime();
-	output->new_baton = false;
-	FlutterEngineOnVsync(output->engine, output->baton, start, start + 1000000000ull / 144);
-	pthread_mutex_unlock(&output->baton_mutex);
 }
 
 void flutter_execute_platform_tasks(void* data) {
@@ -165,4 +159,6 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 
 	output->message_dispatcher.HandleMessage(
 		  *message, [] {}, [] {});
+
+	std::cout << "Dispatching" << std::endl;
 }

@@ -22,4 +22,5 @@ add_executable(flutter_embedder
 
 target_include_directories(flutter_embedder PRIVATE src/third_party/rapidjson/include)
 
-set(CMAKE_CXX_FLAGS "-lGL -lpthread -I/usr/include/libdrm -I/usr/include/pixman-1 -lwlroots  -lwayland-server  -lxkbcommon  -DWLR_USE_UNSTABLE -I ${PROJECT_SOURCE_DIR} -L ${PROJECT_SOURCE_DIR} -lflutter_engine")
+set(CMAKE_CXX_FLAGS "-g -lGL -lpthread -I/usr/include/libdrm -I/usr/include/pixman-1 -lwlroots  -lwayland-server  -lxkbcommon  -DWLR_USE_UNSTABLE -I ${PROJECT_SOURCE_DIR} -L ${PROJECT_SOURCE_DIR} -lflutter_engine")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")

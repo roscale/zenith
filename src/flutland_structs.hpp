@@ -36,8 +36,8 @@ struct flutland_output {
 	BinaryMessenger messenger;
 	IncomingMessageDispatcher message_dispatcher;
 
-	std::unique_ptr<flutter::EventChannel<>> new_texture_event_channel;
-	std::unique_ptr<NewTextureStreamHandler<>> new_texture_stream_handler;
+	std::unique_ptr<flutter::EventChannel<>> window_mapped_event_channel;
+	std::unique_ptr<flutter::EventChannel<>> window_unmapped_event_channel;
 
 	bool new_baton = false;
 	intptr_t baton;
