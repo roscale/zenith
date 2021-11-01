@@ -13,20 +13,20 @@ class DesktopState with ChangeNotifier {
 
   DesktopState() {
     _newTextureIdEvent.receiveBroadcastStream().listen((event) {
-      _test.invokeMethod("NEW_WINDOW", [1, 2, 3]);
 
-      print("MERGE");
       int textureId = event;
+      print("MERGE $textureId");
+
       windows.add(Window(key: GlobalKey(), textureId: textureId));
       notifyListeners();
     });
 
-    Future.delayed(Duration(seconds: 1)).then((value) async {
-      while (true) {
-        await Future.delayed(Duration(seconds: 1));
-        _test.invokeMethod("THIS_IS_A_METHOD", [1, 2, 3]);
-      }
-    });
+    // Future.delayed(Duration(seconds: 1)).then((value) async {
+    //   while (true) {
+    //     await Future.delayed(Duration(seconds: 1));
+    //     _test.invokeMethod("THIS_IS_A_METHOD", [1, 2, 3]);
+    //   }
+    // });
   }
 
   void activateWindow(Window window) {

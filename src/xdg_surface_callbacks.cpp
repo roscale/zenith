@@ -49,13 +49,10 @@ void xdg_surface_map(struct wl_listener* listener, void* data) {
 
 	struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 	FlutterEngineRegisterExternalTexture(view->server->output->engine, (int64_t) texture);
-	FlutterPlatformMessage message;
-	message.channel = "new_texture_id";
-	message.struct_size = sizeof(FlutterPlatformMessage);
-	message.message = (const uint8_t*) texture;
-	message.message_size = 8;
-	FlutterEngineResult r = FlutterEngineSendPlatformMessage(view->server->output->engine, &message);
-	printf("result: %d\n", r);
+
+	auto value = flutter::EncodableValue((int64_t) texture);
+	auto result = flutter::StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+	view->server->output->messenger.Send("new_texture_id", result->data(), result->size());
 }
 
 void xdg_surface_unmap(struct wl_listener* listener, void* data) {

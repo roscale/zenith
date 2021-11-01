@@ -2,10 +2,15 @@
 
 #include "embedder.h"
 #include "fix_y_flip.hpp"
+#include "new_texture_stream_handler.hpp"
 
 #include <wayland-server.h>
 
 #include <semaphore.h>
+#include <src/platform_channels/binary_messenger.hpp>
+#include <src/platform_channels/incoming_message_dispatcher.hpp>
+#include <src/platform_channels/standard_method_codec.h>
+#include <src/platform_channels/event_channel.h>
 
 struct flutland_server {
 	struct wl_display* wl_display;
@@ -28,6 +33,12 @@ struct flutland_output {
 	struct wl_listener frame;
 
 	FlutterEngine engine;
+	BinaryMessenger messenger;
+	IncomingMessageDispatcher message_dispatcher;
+
+	std::unique_ptr<flutter::EventChannel<>> new_texture_event_channel;
+	std::unique_ptr<NewTextureStreamHandler<>> new_texture_stream_handler;
+
 	intptr_t baton;
 	pthread_mutex_t baton_mutex;
 	sem_t vsync_semaphore;

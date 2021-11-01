@@ -1,7 +1,10 @@
+#include <iostream>
 #include "output_callbacks.hpp"
 #include "embedder.h"
 #include "flutland_structs.hpp"
 #include "flutter_callbacks.hpp"
+#include "platform_channels/event_channel.h"
+#include <src/platform_channels/event_stream_handler_functions.h>
 
 extern "C" {
 #define static
@@ -68,39 +71,67 @@ void server_new_output(struct wl_listener* listener, void* data) {
 
 	FlutterEngine engine = run_flutter(output);
 	output->engine = engine;
+	output->messenger = BinaryMessenger(engine);
+	output->message_dispatcher = IncomingMessageDispatcher(&output->messenger);
+	output->messenger.SetMessageDispatcher(&output->message_dispatcher);
+
+//	output->new_texture_event_channel = std::make_unique<flutter::EventChannel<>>(&output->messenger, "new_texture_id",
+//	                                                                              &flutter::StandardMethodCodec::GetInstance());
+//	output->new_texture_stream_handler = std::make_unique<NewTextureStreamHandler<>>();
+//	output->new_texture_event_channel->SetStreamHandler(output->new_texture_stream_handler);
+//	output->new_texture_event_channel->SetStreamHandler()
+
+
+	// This handler is necessary because flutter expects to be able to call listen() and cancel() on the platform even
+	// though we don't care because this channel will always be open.
+	auto& codec = flutter::StandardMethodCodec::GetInstance();
+	flutter::EventChannel eventChannel(&output->messenger, "new_texture_id", &codec);
+
+	auto handler = std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
+		  [](
+				const flutter::EncodableValue* arguments,
+				std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events)
+				-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+
+			  std::cout << "LISTENING NEW_TEXTURE" << std::endl;
+			  return nullptr;
+		  },
+		  [](const flutter::EncodableValue* arguments)
+				-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+			  return nullptr;
+		  });
+	eventChannel.SetStreamHandler(std::move(handler));
 
 	FlutterEngineSendWindowMetricsEvent(engine, &event);
 }
 
 void output_frame(struct wl_listener* listener, void* data) {
-	printf("\nOUTPUT FRAME\n\n");
-	fflush(stdout);
+	std::clog << "OUTPUT FRAME" << std::endl;
 
 	/* This function is called every time an output is ready to display a frame,
 	 * generally at the output's refresh rate (e.g. 60Hz). */
 	struct flutland_output* output = wl_container_of(listener, output, frame);
 
 	//
-//	struct flutland_view* view;
-//	wl_list_for_each_reverse(view, &output->server->views, link) {
-//		if (!view->mapped) {
-//			/* An unmapped view should not be rendered. */
-//			continue;
-//		}
-////		struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
-////		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
-//////		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, 42);
-////		printf("heh %ld\n", (int64_t) texture);
-////
-////		struct timespec now;
-////		clock_gettime(CLOCK_MONOTONIC, &now);
-////		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
-//	}
+	struct flutland_view* view;
+	wl_list_for_each_reverse(view, &output->server->views, link) {
+		if (!view->mapped) {
+			/* An unmapped view should not be rendered. */
+			continue;
+		}
+		struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
+
+		struct timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
+	}
 
 	// Rendering can only be started on the flutter render thread because the context is current on that thread.
 	FlutterEnginePostRenderThreadTask(output->engine, start_rendering, output);
 	sem_wait(&output->vsync_semaphore);
 
 	// Execute all platform tasks while waiting for the next frame event.
-	wl_event_loop_add_idle(wl_display_get_event_loop(output->server->wl_display), flutter_execute_platform_tasks, nullptr);
+	wl_event_loop_add_idle(wl_display_get_event_loop(output->server->wl_display), flutter_execute_platform_tasks,
+	                       nullptr);
 }

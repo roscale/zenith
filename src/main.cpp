@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "flutland_structs.hpp"
 #include "output_callbacks.hpp"
 #include "xdg_surface_callbacks.hpp"
@@ -57,6 +58,14 @@ int main(int argc, const char* argv[]) {
 	}
 
 	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
+
+
+	/* Set the WAYLAND_DISPLAY environment variable to our socket and run the startup command if requested. */
+	setenv("WAYLAND_DISPLAY", socket, true);
+	setenv("XDG_SESSION_TYPE", "wayland", true);
+	if (fork() == 0) {
+		execl("/bin/sh", "/bin/sh", "-c", "kate", nullptr);
+	}
 
 //	struct wl_event_loop* event_loop = wl_display_get_event_loop(server.wl_display);
 //	int fd = wl_event_loop_get_fd(event_loop);

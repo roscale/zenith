@@ -67,7 +67,7 @@ bool flutter_clear_current(void* userdata) {
 }
 
 bool flutter_present(void* userdata) {
-	std::clog << "PRESENT" << std::endl;
+	std::clog << "PRESENT\n" << std::endl;
 
 	auto* output = static_cast<flutland_output*>(userdata);
 	struct wlr_renderer* renderer = output->server->renderer;
@@ -116,6 +116,10 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 //	struct wlr_gles2_texture_attribs attribs;
 //	wlr_gles2_texture_get_attribs(texture, &attribs);
 	texture_out->format = GL_RGBA8;
+
+	std::cout << "Texture width: " << texture->width << std::endl;
+	std::cout << "Texture height: " << texture->height << std::endl;
+
 	return true;
 }
 
@@ -145,18 +149,15 @@ void flutter_execute_platform_tasks(void* data) {
 }
 
 void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata) {
-	std::clog << "MESSAGE" << std::endl;
-	std::clog << message->channel << std::endl;
-	std::clog << message->message << std::endl;
+	auto* output = static_cast<flutland_output*>(userdata);
 
-//	if (strncmp(&message->message[2], "listen", strlen("listen")) == 0) {
-//		printf("LISTENED\n");
-//
-//		/* Set the WAYLAND_DISPLAY environment variable to our socket and run the startup command if requested. */
-//		setenv("WAYLAND_DISPLAY", "wayland-0", true);
-//		setenv("XDG_SESSION_TYPE", "wayland", true);
-//		if (fork() == 0) {
-//			execl("/bin/sh", "/bin/sh", "-c", "kate", (void*) nullptr);
-//		}
-//	}
+	if (message->struct_size != sizeof(FlutterPlatformMessage)) {
+		std::cerr << "ERROR: Invalid message size received. Expected: "
+		          << sizeof(FlutterPlatformMessage) << " but received "
+		          << message->struct_size;
+		return;
+	}
+
+	output->message_dispatcher.HandleMessage(
+		  *message, [] {}, [] {});
 }
