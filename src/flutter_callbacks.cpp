@@ -99,6 +99,7 @@ void vsync_callback(void* userdata, intptr_t baton) {
 	std::clog << "VSYNC_CALLBACK" << std::endl;
 
 	pthread_mutex_lock(&output->baton_mutex);
+	output->new_baton = true;
 	output->baton = baton;
 	pthread_mutex_unlock(&output->baton_mutex);
 }
@@ -110,11 +111,14 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 	auto* output = static_cast<flutland_output*>(userdata);
 	auto* texture = (struct wlr_texture*) texture_id;
 	texture_out->target = GL_TEXTURE_2D;
-	texture_out->name = texture_id;
+
+	struct wlr_gles2_texture_attribs attribs{};
+	wlr_gles2_texture_get_attribs(texture, &attribs);
+	texture_out->name = attribs.tex;
+
 	texture_out->width = texture->width;
 	texture_out->height = texture->height;
-//	struct wlr_gles2_texture_attribs attribs;
-//	wlr_gles2_texture_get_attribs(texture, &attribs);
+
 	texture_out->format = GL_RGBA8;
 
 	std::cout << "Texture width: " << texture->width << std::endl;
@@ -140,6 +144,7 @@ void start_rendering(void* userdata) {
 
 	pthread_mutex_lock(&output->baton_mutex);
 	uint64_t start = FlutterEngineGetCurrentTime();
+	output->new_baton = false;
 	FlutterEngineOnVsync(output->engine, output->baton, start, start + 1000000000ull / 144);
 	pthread_mutex_unlock(&output->baton_mutex);
 }

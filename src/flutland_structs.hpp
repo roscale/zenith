@@ -39,6 +39,7 @@ struct flutland_output {
 	std::unique_ptr<flutter::EventChannel<>> new_texture_event_channel;
 	std::unique_ptr<NewTextureStreamHandler<>> new_texture_stream_handler;
 
+	bool new_baton = false;
 	intptr_t baton;
 	pthread_mutex_t baton_mutex;
 	sem_t vsync_semaphore;

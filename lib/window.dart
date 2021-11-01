@@ -20,7 +20,7 @@ class _WindowState extends State<Window> {
   void initState() {
     super.initState();
     windowState = WindowState(
-        "Window", const Rect.fromLTWH(100, 100, 500, 300), widget.textureId);
+        "Window", const Rect.fromLTWH(100, 100, 806, 633), widget.textureId);
   }
 
   @override
@@ -40,13 +40,15 @@ class _WindowState extends State<Window> {
               child: Column(
                 children: [
                   const TitleBar(),
-                  SizedBox(
-                    width: 100,
-                    height: 100,
-                    child: Texture(textureId: windowState.textureId),
-                  ),
                   if (windowState.textureId != 0)
-                    Texture(textureId: windowState.textureId),
+                    SizedBox(
+                      width: windowState.rect.width,
+                      height: windowState.rect.height,
+                      child: Texture(
+                        filterQuality: FilterQuality.none,
+                        textureId: windowState.textureId,
+                      ),
+                    ),
                 ],
               ),
             ),

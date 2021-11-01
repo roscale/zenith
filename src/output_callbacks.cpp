@@ -112,7 +112,10 @@ void output_frame(struct wl_listener* listener, void* data) {
 	 * generally at the output's refresh rate (e.g. 60Hz). */
 	struct flutland_output* output = wl_container_of(listener, output, frame);
 
-	//
+	if (!output->new_baton) {
+		return;
+	}
+
 	struct flutland_view* view;
 	wl_list_for_each_reverse(view, &output->server->views, link) {
 		if (!view->mapped) {
