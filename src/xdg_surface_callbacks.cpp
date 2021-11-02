@@ -20,7 +20,6 @@ void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
 		return;
 	}
-
 	/* Allocate a flutland_view for this surface */
 	auto* view = static_cast<flutland_view*>(calloc(1, sizeof(struct flutland_view)));
 	view->server = server;
@@ -37,7 +36,7 @@ void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 	/* Add it to the list of views. */
 	wl_list_insert(&server->views, &view->link);
 
-	printf("\nNEW CLIENT\n\n");
+//	printf("\nNEW CLIENT\n\n");
 }
 
 void xdg_surface_map(struct wl_listener* listener, void* data) {

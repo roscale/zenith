@@ -24,6 +24,17 @@ struct flutland_server {
 	struct wl_listener new_output;
 	struct wl_listener new_xdg_surface;
 	struct wl_list views;
+
+	struct wlr_cursor *cursor;
+	struct wlr_xcursor_manager *cursor_mgr;
+	struct wl_listener cursor_motion;
+	struct wl_listener cursor_motion_absolute;
+	struct wl_listener cursor_button;
+	struct wl_listener cursor_axis;
+	struct wl_listener cursor_frame;
+
+	struct wlr_seat *seat;
+	struct wl_listener new_input;
 };
 
 struct flutland_output {
@@ -35,6 +46,7 @@ struct flutland_output {
 	FlutterEngine engine;
 	BinaryMessenger messenger;
 	IncomingMessageDispatcher message_dispatcher;
+	struct wlr_egl* platform_thread_egl_context;
 
 	std::unique_ptr<flutter::EventChannel<>> window_mapped_event_channel;
 	std::unique_ptr<flutter::EventChannel<>> window_unmapped_event_channel;

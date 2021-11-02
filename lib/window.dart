@@ -3,7 +3,6 @@ import 'package:elinux_app/title_bar.dart';
 import 'package:elinux_app/window_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:math';
 
 class Window extends StatefulWidget {
   final int initialWidth;
@@ -21,8 +20,25 @@ class Window extends StatefulWidget {
   _WindowState createState() => _WindowState();
 }
 
-class _WindowState extends State<Window> {
+class _WindowState extends State<Window> with TickerProviderStateMixin {
   late WindowState windowState;
+
+  late final AnimationController _controller = AnimationController(
+    duration: const Duration(milliseconds: 300),
+    vsync: this,
+  )..repeat(reverse: true);
+  late final Animation<double> _animation = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.fastOutSlowIn,
+  );
+
+  double scale = 1.0;
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
 
   @override
   void initState() {
@@ -49,32 +65,42 @@ class _WindowState extends State<Window> {
           child: GestureDetector(
             onPanDown: (_) =>
                 context.read<DesktopState>().activateWindow(widget),
-            child: Material(
-              elevation: 20,
-              child: SizedBox(
-                width: windowState.rect.width,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const TitleBar(),
-                    if (windowState.textureId != 0)
-                      SizedBox(
-                        width: windowState.rect.width,
-                        height: windowState.rect.height,
-                        child: Texture(
-                          filterQuality: FilterQuality.none,
-                          textureId: windowState.textureId,
-                        ),
+            child: TweenAnimationBuilder(
+              duration: const Duration(milliseconds: 200),
+              tween: Tween(begin: 0.0, end: 1.0),
+              curve: Curves.easeOutCubic,
+              builder: (BuildContext context, double value, Widget? child) {
+                return Transform.scale(
+                  scale: value,
+                  child: Material(
+                    elevation: 20,
+                    child: SizedBox(
+                      width: windowState.rect.width,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const TitleBar(),
+                          if (windowState.textureId != 0)
+                            SizedBox(
+                              width: windowState.rect.width,
+                              height: windowState.rect.height,
+                              child: Texture(
+                                filterQuality: FilterQuality.none,
+                                textureId: windowState.textureId,
+                              ),
+                            ),
+                          if (windowState.textureId == 0)
+                            SizedBox(
+                              width: windowState.rect.width,
+                              height: windowState.rect.height,
+                              child: Container(color: Colors.red),
+                            ),
+                        ],
                       ),
-                    if (windowState.textureId == 0)
-                      SizedBox(
-                        width: windowState.rect.width,
-                        height: windowState.rect.height,
-                        child: Container(color: Colors.red),
-                      ),
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           left: windowState.rect.left,

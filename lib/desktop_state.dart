@@ -26,12 +26,12 @@ class DesktopState with ChangeNotifier {
       notifyListeners();
     });
 
-    Future.delayed(Duration(seconds: 1)).then((value) async {
-      while (true) {
-        await Future.delayed(Duration(seconds: 1));
-        print("sec");
-      }
-    });
+    // Future.delayed(Duration(seconds: 1)).then((value) async {
+    //   while (true) {
+    //     await Future.delayed(Duration(seconds: 1));
+    //     print("sec");
+    //   }
+    // });
 
     _windowUnmappedEvent.receiveBroadcastStream().listen((event) {
       int textureId = event["texture_id"];

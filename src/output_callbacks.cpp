@@ -4,17 +4,17 @@
 #include "flutland_structs.hpp"
 #include "flutter_callbacks.hpp"
 #include "platform_channels/event_channel.h"
+#include "create_shared_egl_context.hpp"
 #include <src/platform_channels/event_stream_handler_functions.h>
 
 extern "C" {
+#include <semaphore.h>
+#include <malloc.h>
+#include <pthread.h>
 #define static
 #include <wayland-util.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
-
-#include <semaphore.h>
-#include <malloc.h>
-#include <pthread.h>
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_surface.h>
@@ -58,9 +58,18 @@ void server_new_output(struct wl_listener* listener, void* data) {
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
-	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+
+
+	struct wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
+	output->platform_thread_egl_context = create_shared_egl_context(egl);
+	std::cout << "SHARED CONTEXT " << output->platform_thread_egl_context << std::endl;
+
+	wlr_egl_make_current(output->platform_thread_egl_context);
 	output->fix_y_flip_state = fix_y_flip_init_state(width, height);
-	wlr_egl_unset_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+	wlr_egl_unset_current(output->platform_thread_egl_context);
+
+
+
 
 	FlutterWindowMetricsEvent event = {};
 	event.struct_size = sizeof(event);
@@ -128,7 +137,7 @@ void server_new_output(struct wl_listener* listener, void* data) {
 }
 
 void output_frame(struct wl_listener* listener, void* data) {
-	std::clog << "OUTPUT FRAME" << std::endl;
+//	std::clog << "OUTPUT FRAME" << std::endl;
 
 	/* This function is called every time an output is ready to display a frame,
 	 * generally at the output's refresh rate (e.g. 60Hz). */
@@ -174,7 +183,7 @@ void output_frame(struct wl_listener* listener, void* data) {
 
 //	output->new_baton = false;
 	uint64_t start = FlutterEngineGetCurrentTime();
-	std::cout << "BATON "<< baton << std::endl;
+//	std::clog << "BATON "<< baton << std::endl;
 	FlutterEngineOnVsync(output->engine, baton, start, start + 1000000000ull / 144);
 
 

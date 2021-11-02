@@ -6,6 +6,7 @@ extern "C" {
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/types/wlr_xcursor_manager.h>
 #undef static
 }
 
@@ -52,22 +53,24 @@ FlutterEngine run_flutter(flutland_output* output) {
 }
 
 bool flutter_make_current(void* userdata) {
-	std::clog << "MAKE_CURRENT" << std::endl;
+//	std::clog << "MAKE_CURRENT" << std::endl;
 
 	auto* output = static_cast<flutland_output*>(userdata);
 
 	return wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+//	return wlr_egl_make_current(output->platform_thread_egl_context);
 }
 
 bool flutter_clear_current(void* userdata) {
-	std::clog << "CLEAR_CURRENT" << std::endl;
+//	std::clog << "CLEAR_CURRENT" << std::endl;
 	auto* output = static_cast<flutland_output*>(userdata);
 
 	return wlr_egl_unset_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+//	return wlr_egl_unset_current(output->platform_thread_egl_context);
 }
 
 bool flutter_present(void* userdata) {
-	std::clog << "PRESENT\n" << std::endl;
+//	std::clog << "PRESENT\n" << std::endl;
 
 	auto* output = static_cast<flutland_output*>(userdata);
 	struct wlr_renderer* renderer = output->server->renderer;
@@ -96,7 +99,7 @@ uint32_t flutter_fbo_callback(void* userdata) {
 
 void vsync_callback(void* userdata, intptr_t baton) {
 	auto* output = static_cast<flutland_output*>(userdata);
-	std::clog << "VSYNC_CALLBACK" << std::endl;
+//	std::clog << "VSYNC_CALLBACK" << std::endl;
 
 	pthread_mutex_lock(&output->baton_mutex);
 	output->new_baton = true;
@@ -106,7 +109,7 @@ void vsync_callback(void* userdata, intptr_t baton) {
 
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
-	std::clog << "WW_EXTERNAL_TEXTURE_FRAME" << std::endl;
+//	std::clog << "WW_EXTERNAL_TEXTURE_FRAME" << std::endl;
 
 	auto* output = static_cast<flutland_output*>(userdata);
 	auto* texture = (struct wlr_texture*) texture_id;
@@ -121,8 +124,8 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 
 	texture_out->format = GL_RGBA8;
 
-	std::cout << "Texture width: " << texture->width << std::endl;
-	std::cout << "Texture height: " << texture->height << std::endl;
+//	std::clog << "Texture width: " << texture->width << std::endl;
+//	std::clog << "Texture height: " << texture->height << std::endl;
 
 	return true;
 }
@@ -160,5 +163,5 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 	output->message_dispatcher.HandleMessage(
 		  *message, [] {}, [] {});
 
-	std::cout << "Dispatching" << std::endl;
+//	std::clog << "Dispatching" << std::endl;
 }
