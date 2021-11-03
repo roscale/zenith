@@ -1,7 +1,10 @@
 import 'package:elinux_app/desktop_state.dart';
-import 'package:elinux_app/window.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
+
+import 'custom_stack.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,14 +36,41 @@ class Desktop extends StatefulWidget {
 }
 
 class _DesktopState extends State<Desktop> {
+  Offset pointerPosition = Offset.zero;
+
+  void cursorMoved(PointerEvent event) {
+    setState(() {
+      pointerPosition = event.position;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     var desktopState = context.watch<DesktopState>();
-
+    // WidgetsBinding.instance.window.onPointerDataPacket
     return Container(
       color: Colors.grey,
-      child: Stack(
-        children: [...desktopState.windows, const CircularProgressIndicator()],
+      child: CustomStack(
+        children: [
+          ...desktopState.windows,
+          const IgnorePointer(
+            child: Positioned(
+              left: 0,
+              top: 0,
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          Positioned(
+            child: Container(color: Colors.black, width: 10, height: 10),
+            left: pointerPosition.dx,
+            top: pointerPosition.dy,
+          ),
+          Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerHover: cursorMoved,
+            onPointerMove: cursorMoved,
+          ),
+        ],
       ),
     );
   }

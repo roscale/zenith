@@ -20,7 +20,9 @@ extern "C" {
 #undef static
 }
 
-void process_cursor_motion(struct flutland_server *server, uint32_t time) {
+bool a = true;
+
+void process_cursor_motion(struct flutland_server* server, uint32_t time) {
 	/* If the mode is non-passthrough, delegate to those functions. */
 //	if (server->cursor_mode == TINYWL_CURSOR_MOVE) {
 ////		process_cursor_move(server, time);
@@ -32,29 +34,41 @@ void process_cursor_motion(struct flutland_server *server, uint32_t time) {
 
 	/* Otherwise, find the view under the pointer and send the event along. */
 	double sx, sy;
-	struct wlr_seat *seat = server->seat;
-	struct wlr_surface *surface = NULL;
+	struct wlr_seat* seat = server->seat;
+	struct wlr_surface* surface = NULL;
 //	struct flutland_view *view = desktop_view_at(server,
 //	                                           server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 //	if (!view) {
-		/* If there's no view under the cursor, set the cursor image to a
-		 * default. This is what makes the cursor image appear when you move it
-		 * around the screen, not over any views. */
-		wlr_xcursor_manager_set_cursor_image(
-			  server->cursor_mgr, "left_ptr", server->cursor);
+	/* If there's no view under the cursor, set the cursor image to a
+	 * default. This is what makes the cursor image appear when you move it
+	 * around the screen, not over any views. */
+//	FlutterEnginePostRenderThreadTask(server->output->engine, [](void* userdata){
+//		auto* server = static_cast<struct flutland_server*>(userdata);
+//		wlr_xcursor_manager_set_cursor_image(
+//			  server->cursor_mgr, "left_ptr", server->cursor);
+//	}, server);
+//	wlr_egl_context saved;
+//	wlr_egl_save_context(&saved);
+//	wlr_egl_restore_context(server->output->platform_thread_egl_context)
+
+
+//	glBindTexture(GL_TEXTURE_2D, 0);
+
+
+
 //	}
 //	if (surface) {
-		/*
-		 * Send pointer enter and motion events.
-		 *
-		 * The enter event gives the surface "pointer focus", which is distinct
-		 * from keyboard focus. You get pointer focus by moving the pointer over
-		 * a window.
-		 *
-		 * Note that wlroots will avoid sending duplicate enter/motion events if
-		 * the surface has already has pointer focus or if the client is already
-		 * aware of the coordinates passed.
-		 */
+	/*
+	 * Send pointer enter and motion events.
+	 *
+	 * The enter event gives the surface "pointer focus", which is distinct
+	 * from keyboard focus. You get pointer focus by moving the pointer over
+	 * a window.
+	 *
+	 * Note that wlroots will avoid sending duplicate enter/motion events if
+	 * the surface has already has pointer focus or if the client is already
+	 * aware of the coordinates passed.
+	 */
 //		wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
 //		wlr_seat_pointer_notify_motion(seat, time, sx, sy);
 //	} else {
@@ -83,10 +97,23 @@ void server_new_input(struct wl_listener* listener, void* data) {
 //		case WLR_INPUT_DEVICE_KEYBOARD:
 //			server_new_keyboard(server, device);
 //			break;
-		case WLR_INPUT_DEVICE_POINTER:
+		case WLR_INPUT_DEVICE_POINTER: {
 			std::clog << "new pointer" << std::endl;
 			server_new_pointer(server, device);
+
+//			FlutterPointerEvent e = {
+//				  .struct_size = sizeof(FlutterPointerEvent),
+//				  .phase = kAdd,
+//				  .timestamp = FlutterEngineGetCurrentTime(),
+//				  .x = event->x,
+//				  .y = event->y,
+//				  .signal_kind = kFlutterPointerSignalKindNone,
+//				  .device_kind = kFlutterPointerDeviceKindMouse,
+//			};
+//			FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
+
 			break;
+		}
 		default:
 			break;
 	}
@@ -99,6 +126,8 @@ void server_new_input(struct wl_listener* listener, void* data) {
 //	}
 	wlr_seat_set_capabilities(server->seat, caps);
 }
+
+bool pressed = false;
 
 void server_cursor_motion(struct wl_listener* listener, void* data) {
 	/* This event is forwarded by the cursor when a pointer emits a _relative_
@@ -117,11 +146,22 @@ void server_cursor_motion(struct wl_listener* listener, void* data) {
 	std::clog << "Motion: " << event->delta_x << " " << event->delta_y << "\n";
 
 	process_cursor_motion(server, event->time_msec);
+
+	FlutterPointerEvent e = {
+		  .struct_size = sizeof(FlutterPointerEvent),
+		  .phase = pressed ? kMove : kHover,
+		  .timestamp = FlutterEngineGetCurrentTime(),
+		  .x = server->cursor->x,
+		  .y = server->cursor->y,
+//		  .signal_kind = kFlutterPointerSignalKindNone,
+//		  .device_kind = kFlutterPointerDeviceKindMouse,
+	};
+	FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 }
 
 void server_cursor_motion_absolute(
 	  struct wl_listener* listener, void* data) {
-	std::clog << "Absolute motion" << "\n";
+//	std::clog << "Absolute motion" << "\n";
 
 	/* This event is forwarded by the cursor when a pointer emits an _absolute_
 	 * motion event, from 0..1 on each axis. This happens, for example, when
@@ -134,6 +174,19 @@ void server_cursor_motion_absolute(
 	struct wlr_event_pointer_motion_absolute* event = static_cast<struct wlr_event_pointer_motion_absolute*>(data);
 	wlr_cursor_warp_absolute(server->cursor, event->device, event->x, event->y);
 	process_cursor_motion(server, event->time_msec);
+
+	std::clog << "Cursor pos " << event->x << event->y << std::endl;
+
+	FlutterPointerEvent e = {
+		  .struct_size = sizeof(FlutterPointerEvent),
+		  .phase = pressed ? kMove : kHover,
+		  .timestamp = FlutterEngineGetCurrentTime(),
+		  .x = event->x * 1024,
+		  .y = event->y * 768,
+//		  .signal_kind = kFlutterPointerSignalKindNone,
+//		  .device_kind = kFlutterPointerDeviceKindMouse,
+	};
+	FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 }
 
 void server_cursor_button(struct wl_listener* listener, void* data) {
@@ -153,11 +206,37 @@ void server_cursor_button(struct wl_listener* listener, void* data) {
 //	struct flutland_view* view = desktop_view_at(server,
 //	                                             server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 	if (event->state == WLR_BUTTON_RELEASED) {
+		pressed = false;
+		FlutterPointerEvent e = {
+			  .struct_size = sizeof(FlutterPointerEvent),
+			  .phase = kUp,
+			  .timestamp = FlutterEngineGetCurrentTime(),
+			  .x = server->cursor->x,
+			  .y = server->cursor->y,
+//			  .signal_kind = kFlutterPointerSignalKindNone,
+//			  .device_kind = kFlutterPointerDeviceKindMouse,
+//			  .buttons = kFlutterPointerButtonMousePrimary,
+		};
+		FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
+		std::clog << "Release" << std::endl;
 		/* If you released any buttons, we exit interactive move/resize mode. */
 //		server->cursor_mode = TINYWL_CURSOR_PASSTHROUGH;
 	} else {
+		pressed = true;
+		FlutterPointerEvent e = {
+			  .struct_size = sizeof(FlutterPointerEvent),
+			  .phase = kDown,
+			  .timestamp = FlutterEngineGetCurrentTime(),
+			  .x = server->cursor->x,
+			  .y = server->cursor->y,
+//			  .signal_kind = kFlutterPointerSignalKindNone,
+//			  .device_kind = kFlutterPointerDeviceKindMouse,
+//			  .buttons = kFlutterPointerButtonMousePrimary,
+		};
+		FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 		/* Focus that client if the button was _pressed_ */
 //		focus_view(view, surface);
+		std::clog << "Press " << server->cursor->x << std::endl;
 	}
 }
 

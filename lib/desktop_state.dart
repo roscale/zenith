@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 class DesktopState with ChangeNotifier {
   List<Window> windows = [
-    Window(textureId: 0, initialWidth: 300, initialHeight: 300)
+    Window(key: GlobalKey(), textureId: 0, initialWidth: 300, initialHeight: 300)
   ];
 
   static const EventChannel _windowMappedEvent = EventChannel('window_mapped');

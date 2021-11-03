@@ -119,11 +119,12 @@ int main(int argc, const char* argv[]) {
 
 
 	/* Set the WAYLAND_DISPLAY environment variable to our socket and run the startup command if requested. */
-//	setenv("WAYLAND_DISPLAY", socket, true);
-//	setenv("XDG_SESSION_TYPE", "wayland", true);
-//	if (fork() == 0) {
-//		execl("/bin/sh", "/bin/sh", "-c", "firefox www.ddg.gg", nullptr);
-//	}
+	setenv("KDE_FULL_SESSION", "1", true);
+	setenv("WAYLAND_DISPLAY", socket, true);
+	setenv("XDG_SESSION_TYPE", "wayland", true);
+	if (fork() == 0) {
+		execl("/bin/sh", "/bin/sh", "-c", "konsole", nullptr);
+	}
 
 	struct wl_event_loop* event_loop = wl_display_get_event_loop(server.wl_display);
 	int fd = wl_event_loop_get_fd(event_loop);

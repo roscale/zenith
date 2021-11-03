@@ -82,8 +82,22 @@ bool flutter_present(void* userdata) {
 
 	render_to_fbo(&output->fix_y_flip_state, output_fbo);
 
+//	wlr_output_lock_software_cursors(output->wlr_output, true);
+//	wlr_output_render_software_cursors(output->wlr_output, nullptr);
+
 	wlr_renderer_end(renderer);
+
+//	wlr_xcursor_manager_set_cursor_image(
+//		  output->server->cursor_mgr, "left_ptr", output->server->cursor);
+
+
 	wlr_output_commit(output->wlr_output);
+
+//	GLint texture_binding;
+//	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture_binding);
+//
+//	glUseProgram(0);
+//	glBindTexture(GL_TEXTURE_2D, texture_binding);
 
 	sem_post(&output->vsync_semaphore);
 	return true;
