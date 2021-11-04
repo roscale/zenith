@@ -5,6 +5,7 @@
 #include "flutter_callbacks.hpp"
 #include "platform_channels/event_channel.h"
 #include "create_shared_egl_context.hpp"
+#include "input_callbacks.hpp"
 #include <src/platform_channels/event_stream_handler_functions.h>
 
 extern "C" {
@@ -139,18 +140,20 @@ void server_new_output(struct wl_listener* listener, void* data) {
 					int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
 					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
 
-					if (view->server->active_view == view) {
-						// View already active. Noop.
-						result->Success();
-						return;
-					}
+					focus_view(view);
 
-					if (view->server->active_view != nullptr) {
-						wlr_xdg_toplevel_set_activated(view->server->active_view->xdg_surface, false);
-					}
-
-					wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
-					view->server->active_view = view;
+//					if (view->server->active_view == view) {
+//						// View already active. Noop.
+//						result->Success();
+//						return;
+//					}
+//
+//					if (view->server->active_view != nullptr) {
+//						wlr_xdg_toplevel_set_activated(view->server->active_view->xdg_surface, false);
+//					}
+//
+//					wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
+//					view->server->active_view = view;
 
 					result->Success();
 					return;

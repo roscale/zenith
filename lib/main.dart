@@ -47,18 +47,16 @@ class _DesktopState extends State<Desktop> {
   @override
   Widget build(BuildContext context) {
     var desktopState = context.watch<DesktopState>();
-    // WidgetsBinding.instance.window.onPointerDataPacket
+
     return Container(
       color: Colors.grey,
       child: CustomStack(
         children: [
           ...desktopState.windows,
-          const IgnorePointer(
-            child: Positioned(
-              left: 0,
-              top: 0,
-              child: CircularProgressIndicator(),
-            ),
+          const Positioned(
+            left: 0,
+            top: 0,
+            child: IgnorePointer(child: CircularProgressIndicator()),
           ),
           Positioned(
             child: Container(color: Colors.black, width: 10, height: 10),

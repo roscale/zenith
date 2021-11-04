@@ -37,12 +37,20 @@ FlutterEngine run_flutter(flutland_output* output) {
 //		  .platform_task_runner =
 //	};
 
+//	FlutterEngineAOTDataSource data_source = {
+//			.type = kFlutterEngineAOTDataSourceTypeElfPath,
+//			.elf_path = "/home/roscale/CLionProjects/flutter_embedder/build/linux/x64/release/bundle/lib/libapp.so",
+//	};
+//	FlutterEngineAOTData data;
+//	FlutterEngineCreateAOTData(&data_source, &data);
+
 	FlutterProjectArgs args = {
-		  .struct_size = sizeof(FlutterProjectArgs),
-		  .assets_path = BUNDLE "/flutter_assets",
-		  .icu_data_path = BUNDLE "/icudtl.dat",
-		  .platform_message_callback = flutter_platform_message_callback,
-		  .vsync_callback = vsync_callback,
+			.struct_size = sizeof(FlutterProjectArgs),
+			.assets_path = BUNDLE "/flutter_assets",
+			.icu_data_path = BUNDLE "/icudtl.dat",
+			.platform_message_callback = flutter_platform_message_callback,
+			.vsync_callback = vsync_callback,
+//			.aot_data = data,
 	};
 
 	FlutterEngine engine = nullptr;
@@ -175,7 +183,7 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 	}
 
 	output->message_dispatcher.HandleMessage(
-		  *message, [] {}, [] {});
+			*message, [] {}, [] {});
 
 //	std::clog << "Dispatching" << std::endl;
 }

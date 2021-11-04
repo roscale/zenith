@@ -1,6 +1,7 @@
 #include <src/platform_channels/method_channel.h>
 #include "xdg_surface_callbacks.hpp"
 #include "flutland_structs.hpp"
+#include "input_callbacks.hpp"
 
 extern "C" {
 #define static
@@ -16,7 +17,7 @@ void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
 	 * client, either a toplevel (application window) or popup. */
 	struct flutland_server* server =
-		  wl_container_of(listener, server, new_xdg_surface);
+			wl_container_of(listener, server, new_xdg_surface);
 	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
 	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
 		return;
@@ -46,16 +47,17 @@ void xdg_surface_map(struct wl_listener* listener, void* data) {
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct flutland_view* view = wl_container_of(listener, view, map);
 	view->mapped = true;
+	focus_view(view);
 
 	struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 	FlutterEngineRegisterExternalTexture(view->server->output->engine, (int64_t) texture);
 
 	using namespace flutter;
 	auto value = EncodableValue(EncodableMap{
-		  {EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
-		  {EncodableValue("view_ptr"), EncodableValue((int64_t) view)},
-		  {EncodableValue("width"),      EncodableValue(texture->width)},
-		  {EncodableValue("height"),     EncodableValue(texture->height)},
+			{EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
+			{EncodableValue("view_ptr"),   EncodableValue((int64_t) view)},
+			{EncodableValue("width"),      EncodableValue(texture->width)},
+			{EncodableValue("height"),     EncodableValue(texture->height)},
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	view->server->output->messenger.Send("window_mapped", result->data(), result->size());
@@ -76,7 +78,7 @@ void xdg_surface_unmap(struct wl_listener* listener, void* data) {
 
 	using namespace flutter;
 	auto value = EncodableValue(EncodableMap{
-		  {EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
+			{EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	view->server->output->messenger.Send("window_unmapped", result->data(), result->size());

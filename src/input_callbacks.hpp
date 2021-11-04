@@ -14,3 +14,9 @@ void server_cursor_button(struct wl_listener *listener, void *data);
 void server_cursor_axis(struct wl_listener *listener, void *data);
 
 void server_cursor_frame(struct wl_listener *listener, void *data);
+
+void keyboard_handle_modifiers(struct wl_listener *listener, void *data);
+
+void keyboard_handle_key(struct wl_listener* listener, void* data);
+
+void focus_view(struct flutland_view *view);
