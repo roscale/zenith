@@ -19,7 +19,9 @@ add_executable(flutter_embedder
         src/platform_channels/event_stream_handler.h
         src/platform_channels/standard_codec.cc
         src/new_texture_stream_handler.hpp
-        src/input_callbacks.hpp src/input_callbacks.cpp src/create_shared_egl_context.cpp src/create_shared_egl_context.hpp)
+        src/input_callbacks.hpp src/input_callbacks.cpp
+        src/create_shared_egl_context.cpp src/create_shared_egl_context.hpp
+        src/mouse_button_tracker.cpp src/mouse_button_tracker.hpp)
 
 target_include_directories(flutter_embedder PRIVATE src/third_party/rapidjson/include)
 

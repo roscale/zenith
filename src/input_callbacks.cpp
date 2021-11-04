@@ -1,5 +1,7 @@
 #include "input_callbacks.hpp"
 #include "flutland_structs.hpp"
+#include "mouse_button_tracker.hpp"
+#include <bitset>
 
 extern "C" {
 #define static
@@ -9,7 +11,6 @@ extern "C" {
 
 #include <semaphore.h>
 #include <malloc.h>
-#include <pthread.h>
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_surface.h>
@@ -20,7 +21,7 @@ extern "C" {
 #undef static
 }
 
-bool a = true;
+MouseButtonTracker mouse_button_tracker;
 
 void process_cursor_motion(struct flutland_server* server, uint32_t time) {
 	/* If the mode is non-passthrough, delegate to those functions. */
@@ -127,8 +128,6 @@ void server_new_input(struct wl_listener* listener, void* data) {
 	wlr_seat_set_capabilities(server->seat, caps);
 }
 
-bool pressed = false;
-
 void server_cursor_motion(struct wl_listener* listener, void* data) {
 	/* This event is forwarded by the cursor when a pointer emits a _relative_
 	 * pointer motion event (i.e. a delta) */
@@ -149,12 +148,12 @@ void server_cursor_motion(struct wl_listener* listener, void* data) {
 
 	FlutterPointerEvent e = {
 		  .struct_size = sizeof(FlutterPointerEvent),
-		  .phase = pressed ? kMove : kHover,
+		  .phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover,
 		  .timestamp = FlutterEngineGetCurrentTime(),
 		  .x = server->cursor->x,
 		  .y = server->cursor->y,
-//		  .signal_kind = kFlutterPointerSignalKindNone,
-//		  .device_kind = kFlutterPointerDeviceKindMouse,
+		  .device_kind = kFlutterPointerDeviceKindMouse,
+		  .buttons = mouse_button_tracker.get_flutter_mouse_state(),
 	};
 	FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 }
@@ -179,12 +178,12 @@ void server_cursor_motion_absolute(
 
 	FlutterPointerEvent e = {
 		  .struct_size = sizeof(FlutterPointerEvent),
-		  .phase = pressed ? kMove : kHover,
+		  .phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover,
 		  .timestamp = FlutterEngineGetCurrentTime(),
 		  .x = event->x * 1024,
 		  .y = event->y * 768,
-//		  .signal_kind = kFlutterPointerSignalKindNone,
-//		  .device_kind = kFlutterPointerDeviceKindMouse,
+		  .device_kind = kFlutterPointerDeviceKindMouse,
+		  .buttons = mouse_button_tracker.get_flutter_mouse_state(),
 	};
 	FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 }
@@ -199,43 +198,45 @@ void server_cursor_button(struct wl_listener* listener, void* data) {
 	wlr_seat_pointer_notify_button(server->seat,
 	                               event->time_msec, event->button, event->state);
 
-	std::clog << "Button: " << event->button << "\n";
+	std::clog << "Button: " << std::bitset<32>(event->button) << "\n";
 
 	double sx, sy;
 	struct wlr_surface* surface;
 //	struct flutland_view* view = desktop_view_at(server,
 //	                                             server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 	if (event->state == WLR_BUTTON_RELEASED) {
-		pressed = false;
+		mouse_button_tracker.release_button(event->button);
+
 		FlutterPointerEvent e = {
 			  .struct_size = sizeof(FlutterPointerEvent),
-			  .phase = kUp,
+			  .phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kUp,
 			  .timestamp = FlutterEngineGetCurrentTime(),
 			  .x = server->cursor->x,
 			  .y = server->cursor->y,
-//			  .signal_kind = kFlutterPointerSignalKindNone,
-//			  .device_kind = kFlutterPointerDeviceKindMouse,
-//			  .buttons = kFlutterPointerButtonMousePrimary,
+			  .device_kind = kFlutterPointerDeviceKindMouse,
+			  .buttons = mouse_button_tracker.get_flutter_mouse_state(),
 		};
 		FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 		std::clog << "Release" << std::endl;
 		/* If you released any buttons, we exit interactive move/resize mode. */
 //		server->cursor_mode = TINYWL_CURSOR_PASSTHROUGH;
 	} else {
-		pressed = true;
+		bool are_any_buttons_pressed = mouse_button_tracker.are_any_buttons_pressed();
+		mouse_button_tracker.press_button(event->button);
+
 		FlutterPointerEvent e = {
 			  .struct_size = sizeof(FlutterPointerEvent),
-			  .phase = kDown,
+			  .phase = are_any_buttons_pressed ? kMove : kDown,
 			  .timestamp = FlutterEngineGetCurrentTime(),
 			  .x = server->cursor->x,
 			  .y = server->cursor->y,
-//			  .signal_kind = kFlutterPointerSignalKindNone,
-//			  .device_kind = kFlutterPointerDeviceKindMouse,
-//			  .buttons = kFlutterPointerButtonMousePrimary,
+			  .device_kind = kFlutterPointerDeviceKindMouse,
+			  .buttons = mouse_button_tracker.get_flutter_mouse_state(),
 		};
 		FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 		/* Focus that client if the button was _pressed_ */
 //		focus_view(view, surface);
+
 		std::clog << "Press " << server->cursor->x << std::endl;
 	}
 }
