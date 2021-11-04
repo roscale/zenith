@@ -11,6 +11,7 @@
 #include <src/platform_channels/incoming_message_dispatcher.hpp>
 #include <src/platform_channels/standard_method_codec.h>
 #include <src/platform_channels/event_channel.h>
+#include <src/platform_channels/method_channel.h>
 
 struct flutland_server {
 	struct wl_display* wl_display;
@@ -24,6 +25,7 @@ struct flutland_server {
 	struct wl_listener new_output;
 	struct wl_listener new_xdg_surface;
 	struct wl_list views;
+	struct flutland_view* active_view;
 
 	struct wlr_cursor *cursor;
 	struct wlr_xcursor_manager *cursor_mgr;
@@ -50,6 +52,7 @@ struct flutland_output {
 
 	std::unique_ptr<flutter::EventChannel<>> window_mapped_event_channel;
 	std::unique_ptr<flutter::EventChannel<>> window_unmapped_event_channel;
+	std::unique_ptr<flutter::MethodChannel<>> platform_method_channel;
 
 	bool new_baton = false;
 	intptr_t baton;

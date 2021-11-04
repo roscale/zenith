@@ -48,6 +48,8 @@ int main(int argc, const char* argv[]) {
 	server.new_xdg_surface.notify = server_new_xdg_surface;
 	wl_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
 
+	server.active_view = nullptr;
+
 	/*
 	 * Creates a cursor, which is a wlroots utility for tracking the cursor
 	 * image shown on screen.
@@ -125,9 +127,12 @@ int main(int argc, const char* argv[]) {
 	if (fork() == 0) {
 		execl("/bin/sh", "/bin/sh", "-c", "konsole", nullptr);
 	}
+	if (fork() == 0) {
+		execl("/bin/sh", "/bin/sh", "-c", "kate", nullptr);
+	}
 
-	struct wl_event_loop* event_loop = wl_display_get_event_loop(server.wl_display);
-	int fd = wl_event_loop_get_fd(event_loop);
+//	struct wl_event_loop* event_loop = wl_display_get_event_loop(server.wl_display);
+//	int fd = wl_event_loop_get_fd(event_loop);
 
 //#pragma clang diagnostic push
 //#pragma ide diagnostic ignored "EndlessLoop"

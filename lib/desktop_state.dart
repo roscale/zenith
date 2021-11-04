@@ -3,23 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class DesktopState with ChangeNotifier {
-  List<Window> windows = [
-    Window(key: GlobalKey(), textureId: 0, initialWidth: 300, initialHeight: 300)
-  ];
+  List<Window> windows = [];
 
-  static const EventChannel _windowMappedEvent = EventChannel('window_mapped');
-  static const EventChannel _windowUnmappedEvent =
-      EventChannel('window_unmapped');
+  static const EventChannel windowMappedEvent = EventChannel('window_mapped');
+  static const EventChannel windowUnmappedEvent = EventChannel('window_unmapped');
+  static const MethodChannel platform = MethodChannel('platform');
 
   DesktopState() {
-    _windowMappedEvent.receiveBroadcastStream().listen((event) {
+    windowMappedEvent.receiveBroadcastStream().listen((event) {
       int textureId = event["texture_id"];
+      int viewPtr = event["view_ptr"];
       int width = event["width"];
       int height = event["height"];
 
       windows.add(Window(
         key: GlobalKey(),
         textureId: textureId,
+        viewPtr: viewPtr,
         initialWidth: width,
         initialHeight: height,
       ));
@@ -33,7 +33,7 @@ class DesktopState with ChangeNotifier {
     //   }
     // });
 
-    _windowUnmappedEvent.receiveBroadcastStream().listen((event) {
+    windowUnmappedEvent.receiveBroadcastStream().listen((event) {
       int textureId = event["texture_id"];
       print("before $textureId");
       // try {
@@ -51,6 +51,7 @@ class DesktopState with ChangeNotifier {
     var index = windows.indexOf(window);
     windows.removeAt(index);
     windows.add(window);
+    platform.invokeMethod('activate_window', window.viewPtr);
     notifyListeners();
   }
 

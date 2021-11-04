@@ -59,7 +59,6 @@ void server_new_output(struct wl_listener* listener, void* data) {
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
 
-
 	struct wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
 	output->platform_thread_egl_context = create_shared_egl_context(egl);
 	std::cout << "SHARED CONTEXT " << output->platform_thread_egl_context << std::endl;
@@ -67,8 +66,6 @@ void server_new_output(struct wl_listener* listener, void* data) {
 	wlr_egl_make_current(output->platform_thread_egl_context);
 	output->fix_y_flip_state = fix_y_flip_init_state(width, height);
 	wlr_egl_unset_current(output->platform_thread_egl_context);
-
-
 
 
 	FlutterWindowMetricsEvent event = {};
@@ -93,45 +90,73 @@ void server_new_output(struct wl_listener* listener, void* data) {
 
 	// This handler is necessary because flutter expects to be able to call listen() and cancel() on the platform even
 	// though we don't care because this channel will always be open.
-	auto& codec = flutter::StandardMethodCodec::GetInstance();
+	auto &codec = flutter::StandardMethodCodec::GetInstance();
 
 	output->window_mapped_event_channel = std::make_unique<flutter::EventChannel<>>(&output->messenger, "window_mapped",
 	                                                                                &codec);
 	output->window_mapped_event_channel->SetStreamHandler(
-		  std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
-				[](
-					  const flutter::EncodableValue* arguments,
-					  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events)
-					  -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+			std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
+					[](
+							const flutter::EncodableValue* arguments,
+							std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> &&events)
+							-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
 
-					std::cout << "LISTENING WINDOW_MAPPED" << std::endl;
-					return nullptr;
-				},
-				[](const flutter::EncodableValue* arguments)
-					  -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+						std::cout << "LISTENING WINDOW_MAPPED" << std::endl;
+						return nullptr;
+					},
+					[](const flutter::EncodableValue* arguments)
+							-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
 
-					return nullptr;
-				}
-		  ));
+						return nullptr;
+					}
+			));
 
 	output->window_unmapped_event_channel = std::make_unique<flutter::EventChannel<>>(&output->messenger,
 	                                                                                  "window_unmapped", &codec);
 	output->window_unmapped_event_channel->SetStreamHandler(
-		  std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
-				[](
-					  const flutter::EncodableValue* arguments,
-					  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events)
-					  -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+			std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
+					[](
+							const flutter::EncodableValue* arguments,
+							std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> &&events)
+							-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
 
-					std::cout << "LISTENING WINDOW_UNMAPPED" << std::endl;
-					return nullptr;
-				},
-				[](const flutter::EncodableValue* arguments)
-					  -> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
+						std::cout << "LISTENING WINDOW_UNMAPPED" << std::endl;
+						return nullptr;
+					},
+					[](const flutter::EncodableValue* arguments)
+							-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
 
-					return nullptr;
+						return nullptr;
+					}
+			));
+
+	output->platform_method_channel = std::make_unique<flutter::MethodChannel<>>(&output->messenger,
+	                                                                             "platform", &codec);
+
+	output->platform_method_channel->SetMethodCallHandler(
+			[](const flutter::MethodCall<> &call, std::unique_ptr<flutter::MethodResult<>> result) {
+				if (call.method_name() == "activate_window") {
+					int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
+					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
+
+					if (view->server->active_view == view) {
+						// View already active. Noop.
+						result->Success();
+						return;
+					}
+
+					if (view->server->active_view != nullptr) {
+						wlr_xdg_toplevel_set_activated(view->server->active_view->xdg_surface, false);
+					}
+
+					wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
+					view->server->active_view = view;
+
+					result->Success();
+					return;
 				}
-		  ));
+				result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
+			});
 
 	FlutterEngineSendWindowMetricsEvent(engine, &event);
 }

@@ -1,3 +1,4 @@
+#include <src/platform_channels/method_channel.h>
 #include "xdg_surface_callbacks.hpp"
 #include "flutland_structs.hpp"
 
@@ -52,6 +53,7 @@ void xdg_surface_map(struct wl_listener* listener, void* data) {
 	using namespace flutter;
 	auto value = EncodableValue(EncodableMap{
 		  {EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
+		  {EncodableValue("view_ptr"), EncodableValue((int64_t) view)},
 		  {EncodableValue("width"),      EncodableValue(texture->width)},
 		  {EncodableValue("height"),     EncodableValue(texture->height)},
 	});

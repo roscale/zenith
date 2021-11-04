@@ -8,10 +8,12 @@ class Window extends StatefulWidget {
   final int initialWidth;
   final int initialHeight;
   final int textureId;
+  final int viewPtr;
 
   const Window({
     Key? key,
     required this.textureId,
+    required this.viewPtr,
     required this.initialWidth,
     required this.initialHeight,
   }) : super(key: key);
