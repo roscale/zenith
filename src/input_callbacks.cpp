@@ -210,8 +210,7 @@ void server_cursor_button(struct wl_listener* listener, void* data) {
 			wl_container_of(listener, server, cursor_button);
 	struct wlr_event_pointer_button* event = static_cast<struct wlr_event_pointer_button*>(data);
 	/* Notify the client with pointer focus that a button press has occurred */
-	wlr_seat_pointer_notify_button(server->seat,
-	                               event->time_msec, event->button, event->state);
+	wlr_seat_pointer_notify_button(server->seat, event->time_msec, event->button, event->state);
 
 	std::clog << "Button: " << std::bitset<32>(event->button) << "\n";
 
@@ -310,8 +309,8 @@ void keyboard_handle_key(struct wl_listener* listener, void* data) {
 	bool handled = false;
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
 //	if ((modifiers & WLR_MODIFIER_ALT) && event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-		/* If alt is held down and this button was _pressed_, we attempt to
-		 * process it as a compositor keybinding. */
+	/* If alt is held down and this button was _pressed_, we attempt to
+	 * process it as a compositor keybinding. */
 //		for (int i = 0; i < nsyms; i++) {
 //			handled = handle_keybinding(server, syms[i]);
 //		}
@@ -324,14 +323,14 @@ void keyboard_handle_key(struct wl_listener* listener, void* data) {
 	}
 }
 
-void focus_view(struct flutland_view *view) {
+void focus_view(struct flutland_view* view) {
 	/* Note: this function only deals with keyboard focus. */
 	if (view == nullptr) {
 		return;
 	}
-	struct flutland_server *server = view->server;
-	struct wlr_seat *seat = server->seat;
-	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+	struct flutland_server* server = view->server;
+	struct wlr_seat* seat = server->seat;
+	struct wlr_surface* prev_surface = seat->keyboard_state.focused_surface;
 	if (prev_surface == view->xdg_surface->surface) {
 		/* Don't re-focus an already focused surface. */
 		return;
@@ -342,11 +341,11 @@ void focus_view(struct flutland_view *view) {
 		 * it no longer has focus and the client will repaint accordingly, e.g.
 		 * stop displaying a caret.
 		 */
-		struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(
+		struct wlr_xdg_surface* previous = wlr_xdg_surface_from_wlr_surface(
 				seat->keyboard_state.focused_surface);
 		wlr_xdg_toplevel_set_activated(previous, false);
 	}
-	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
+	struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
 	/* Move the view to the front */
 	wl_list_remove(&view->link);
 	wl_list_insert(&server->views, &view->link);

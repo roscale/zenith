@@ -1,6 +1,7 @@
 import 'package:elinux_app/desktop_state.dart';
 import 'package:elinux_app/title_bar.dart';
 import 'package:elinux_app/window_state.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -102,9 +103,35 @@ class LocalWindowState extends State<Window> with TickerProviderStateMixin {
                                   SizedBox(
                                     width: windowState.rect.width,
                                     height: windowState.rect.height,
-                                    child: Texture(
-                                      filterQuality: FilterQuality.none,
-                                      textureId: windowState.textureId,
+                                    child: Listener(
+                                      onPointerHover: (PointerHoverEvent event) {
+                                        DesktopState.platform.invokeMethod(
+                                          "pointer_hover",
+                                          {
+                                            "x": event.localPosition.dx,
+                                            "y": event.localPosition.dy,
+                                            "view_ptr": widget.viewPtr,
+                                          },
+                                        );
+                                      },
+                                      onPointerMove: (PointerMoveEvent event) {
+                                        DesktopState.platform.invokeMethod(
+                                          "pointer_hover",
+                                          {
+                                            "x": event.localPosition.dx,
+                                            "y": event.localPosition.dy,
+                                            "view_ptr": widget.viewPtr,
+                                          },
+                                        );
+                                      },
+                                      child: MouseRegion(
+                                        onEnter: (PointerEnterEvent event) => print("enter"),
+                                        onExit: (PointerExitEvent event) => print("exit"),
+                                        child: Texture(
+                                          filterQuality: FilterQuality.none,
+                                          textureId: windowState.textureId,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 if (windowState.textureId == 0)

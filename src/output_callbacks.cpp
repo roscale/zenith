@@ -157,6 +157,19 @@ void server_new_output(struct wl_listener* listener, void* data) {
 
 					result->Success();
 					return;
+				} else if (call.method_name() == "pointer_hover") {
+					flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+
+					double x = std::get<double>(args[flutter::EncodableValue("x")]);
+					double y = std::get<double>(args[flutter::EncodableValue("y")]);
+					int64_t view_ptr_int = std::get<int64_t>(args[flutter::EncodableValue("view_ptr")]);
+
+					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
+
+					wlr_seat_pointer_notify_enter(view->server->seat, view->xdg_surface->surface, x, y);
+					wlr_seat_pointer_notify_motion(view->server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
+					result->Success();
+					return;
 				}
 				result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			});
