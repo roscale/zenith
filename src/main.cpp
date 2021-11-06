@@ -61,8 +61,8 @@ int main(int argc, const char* argv[]) {
 	 * Xcursor themes to source cursor images from and makes sure that cursor
 	 * images are available at all scale factors on the screen (necessary for
 	 * HiDPI support). We add a cursor theme at scale factor 1 to begin with. */
-	server.cursor_mgr = wlr_xcursor_manager_create(nullptr, 24);
-	wlr_xcursor_manager_load(server.cursor_mgr, 1);
+//	server.cursor_mgr = wlr_xcursor_manager_create(nullptr, 24);
+//	wlr_xcursor_manager_load(server.cursor_mgr, 1);
 
 	/*
 	 * wlr_cursor *only* displays an image on screen. It does not move around

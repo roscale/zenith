@@ -7,6 +7,9 @@ class WindowState with ChangeNotifier {
   Rect _rect;
   int _textureId;
 
+  double scale = 1.0;
+  double opacity = 1.0;
+
   String get title => _title;
 
   set title(String value) {
@@ -25,6 +28,12 @@ class WindowState with ChangeNotifier {
 
   set textureId(int value) {
     _textureId = value;
+    notifyListeners();
+  }
+
+  void close() {
+    scale = 0.9;
+    opacity = 0.0;
     notifyListeners();
   }
 }

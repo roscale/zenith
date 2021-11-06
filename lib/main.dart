@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
-import 'custom_stack.dart';
+import 'window_stack.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,8 +49,8 @@ class _DesktopState extends State<Desktop> {
     var desktopState = context.watch<DesktopState>();
 
     return Container(
-      color: Colors.grey,
-      child: CustomStack(
+      color: Colors.grey.shade200,
+      child: WindowStack(
         children: [
           ...desktopState.windows,
           const Positioned(
@@ -59,7 +59,7 @@ class _DesktopState extends State<Desktop> {
             child: IgnorePointer(child: CircularProgressIndicator()),
           ),
           Positioned(
-            child: Container(color: Colors.black, width: 10, height: 10),
+            child: IgnorePointer(child: Container(color: Colors.black, width: 10, height: 10)),
             left: pointerPosition.dx,
             top: pointerPosition.dy,
           ),

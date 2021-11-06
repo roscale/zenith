@@ -23,29 +23,10 @@ class Window extends StatefulWidget {
 }
 
 class _WindowState extends State<Window> with TickerProviderStateMixin {
-  late WindowState windowState;
-
-  late final AnimationController _controller = AnimationController(
-    duration: const Duration(milliseconds: 300),
-    vsync: this,
-  )..repeat(reverse: true);
-  late final Animation<double> _animation = CurvedAnimation(
-    parent: _controller,
-    curve: Curves.fastOutSlowIn,
-  );
-
-  double scale = 1.0;
-
   @override
-  void dispose() {
-    super.dispose();
-    _controller.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    windowState = WindowState(
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => WindowState(
         "Window",
         Rect.fromLTWH(
           100,
@@ -53,56 +34,74 @@ class _WindowState extends State<Window> with TickerProviderStateMixin {
           widget.initialWidth.toDouble(),
           widget.initialHeight.toDouble(),
         ),
-        widget.textureId);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: windowState,
+        widget.textureId,
+      ),
       child: Builder(builder: (context) {
         var windowState = context.watch<WindowState>();
+        var desktopState = context.read<DesktopState>();
 
         return Positioned(
           child: GestureDetector(
-            onPanDown: (_) =>
-                context.read<DesktopState>().activateWindow(widget),
+            onPanDown: (_) => context.read<DesktopState>().activateWindow(widget),
             child: TweenAnimationBuilder(
               duration: const Duration(milliseconds: 200),
-              tween: Tween(begin: 0.0, end: 1.0),
-              curve: Curves.easeOutCubic,
+              tween: Tween(begin: 0.9, end: 1.0),
+              curve: Curves.linearToEaseOut,
               builder: (BuildContext context, double value, Widget? child) {
                 return Transform.scale(
                   scale: value,
-                  child: Material(
-                    elevation: 20,
-                    child: SizedBox(
-                      width: windowState.rect.width,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const TitleBar(),
-                          if (windowState.textureId != 0)
-                            SizedBox(
-                              width: windowState.rect.width,
-                              height: windowState.rect.height,
-                              child: Texture(
-                                filterQuality: FilterQuality.none,
-                                textureId: windowState.textureId,
+                  child: child,
+                );
+              },
+              child: TweenAnimationBuilder(
+                duration: const Duration(milliseconds: 200),
+                tween: Tween(begin: 0.0, end: 1.0),
+                curve: Curves.linearToEaseOut,
+                builder: (BuildContext context, double value, Widget? child) {
+                  return Opacity(
+                    opacity: value,
+                    child: child,
+                  );
+                },
+                child: AnimatedOpacity(
+                  curve: Curves.linearToEaseOut,
+                  opacity: windowState.opacity,
+                  duration: const Duration(milliseconds: 200),
+                  child: AnimatedScale(
+                    curve: Curves.linearToEaseOut,
+                    scale: windowState.scale,
+                    duration: const Duration(milliseconds: 200),
+                    onEnd: () => desktopState.destroyWindow(widget),
+                    child: Material(
+                      elevation: 20,
+                      child: SizedBox(
+                        width: windowState.rect.width,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const TitleBar(),
+                            if (windowState.textureId != 0)
+                              SizedBox(
+                                width: windowState.rect.width,
+                                height: windowState.rect.height,
+                                child: Texture(
+                                  filterQuality: FilterQuality.none,
+                                  textureId: windowState.textureId,
+                                ),
                               ),
-                            ),
-                          if (windowState.textureId == 0)
-                            SizedBox(
-                              width: windowState.rect.width,
-                              height: windowState.rect.height,
-                              child: Container(color: Colors.red),
-                            ),
-                        ],
+                            if (windowState.textureId == 0)
+                              SizedBox(
+                                width: windowState.rect.width,
+                                height: windowState.rect.height,
+                                child: Container(color: Colors.red),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
           left: windowState.rect.left,

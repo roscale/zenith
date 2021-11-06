@@ -1,5 +1,6 @@
 import 'package:elinux_app/desktop_state.dart';
 import 'package:elinux_app/window.dart';
+import 'package:elinux_app/window_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,10 +13,13 @@ class ActionButtons extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () {
-            var window = context.findAncestorWidgetOfExactType<Window>();
-            if (window != null) {
-              context.read<DesktopState>().destroyWindow(window);
-            }
+            var windowState = context.read<WindowState>();
+            windowState.close();
+
+            // var window = context.findAncestorWidgetOfExactType<Window>();
+            // if (window != null) {
+            //   context.read<DesktopState>().destroyWindow(window);
+            // }
           },
           icon: const Icon(Icons.close, color: Colors.white),
           splashRadius: 25,
