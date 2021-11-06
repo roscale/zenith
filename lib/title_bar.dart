@@ -1,6 +1,4 @@
 import 'package:elinux_app/action_buttons.dart';
-import 'package:elinux_app/desktop_state.dart';
-import 'package:elinux_app/window.dart';
 import 'package:elinux_app/window_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

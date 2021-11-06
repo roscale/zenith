@@ -10,32 +10,37 @@ class Window extends StatefulWidget {
   final int textureId;
   final int viewPtr;
 
-  const Window({
-    Key? key,
+  Window({
     required this.textureId,
     required this.viewPtr,
     required this.initialWidth,
     required this.initialHeight,
-  }) : super(key: key);
+  }) : super(key: GlobalKey<LocalWindowState>());
 
   @override
-  _WindowState createState() => _WindowState();
+  LocalWindowState createState() => LocalWindowState();
+
+  WindowState getWindowState() {
+    return (key! as GlobalKey<LocalWindowState>).currentState!.windowState;
+  }
 }
 
-class _WindowState extends State<Window> with TickerProviderStateMixin {
+class LocalWindowState extends State<Window> with TickerProviderStateMixin {
+  late var windowState = WindowState(
+    "Window",
+    Rect.fromLTWH(
+      100,
+      100,
+      widget.initialWidth.toDouble(),
+      widget.initialHeight.toDouble(),
+    ),
+    widget.textureId,
+  )..activate();
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => WindowState(
-        "Window",
-        Rect.fromLTWH(
-          100,
-          100,
-          widget.initialWidth.toDouble(),
-          widget.initialHeight.toDouble(),
-        ),
-        widget.textureId,
-      ),
+    return ChangeNotifierProvider.value(
+      value: windowState,
       child: Builder(builder: (context) {
         var windowState = context.watch<WindowState>();
         var desktopState = context.read<DesktopState>();
@@ -72,30 +77,45 @@ class _WindowState extends State<Window> with TickerProviderStateMixin {
                     scale: windowState.scale,
                     duration: const Duration(milliseconds: 200),
                     onEnd: () => desktopState.destroyWindow(widget),
-                    child: Material(
-                      elevation: 20,
-                      child: SizedBox(
-                        width: windowState.rect.width,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const TitleBar(),
-                            if (windowState.textureId != 0)
-                              SizedBox(
-                                width: windowState.rect.width,
-                                height: windowState.rect.height,
-                                child: Texture(
-                                  filterQuality: FilterQuality.none,
-                                  textureId: windowState.textureId,
-                                ),
-                              ),
-                            if (windowState.textureId == 0)
-                              SizedBox(
-                                width: windowState.rect.width,
-                                height: windowState.rect.height,
-                                child: Container(color: Colors.red),
-                              ),
-                          ],
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 100),
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            spreadRadius: -10,
+                            blurRadius: windowState.shadowBlurRadius,
+                            offset: const Offset(0, 0),
+                          )
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
+                        clipBehavior: Clip.antiAliasWithSaveLayer,
+                        child: Material(
+                          child: SizedBox(
+                            width: windowState.rect.width,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const TitleBar(),
+                                if (windowState.textureId != 0)
+                                  SizedBox(
+                                    width: windowState.rect.width,
+                                    height: windowState.rect.height,
+                                    child: Texture(
+                                      filterQuality: FilterQuality.none,
+                                      textureId: windowState.textureId,
+                                    ),
+                                  ),
+                                if (windowState.textureId == 0)
+                                  SizedBox(
+                                    width: windowState.rect.width,
+                                    height: windowState.rect.height,
+                                    child: Container(color: Colors.red),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),

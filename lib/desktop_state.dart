@@ -16,13 +16,18 @@ class DesktopState with ChangeNotifier {
       int width = event["width"];
       int height = event["height"];
 
-      windows.add(Window(
-        key: GlobalKey(),
-        textureId: textureId,
-        viewPtr: viewPtr,
-        initialWidth: width,
-        initialHeight: height,
-      ));
+      if (windows.isNotEmpty) {
+        windows.last.getWindowState().deactivate();
+      }
+
+      windows.add(
+        Window(
+          textureId: textureId,
+          viewPtr: viewPtr,
+          initialWidth: width,
+          initialHeight: height,
+        ),
+      );
       notifyListeners();
     });
 
@@ -48,9 +53,16 @@ class DesktopState with ChangeNotifier {
   }
 
   void activateWindow(Window window) {
+    // Deactivate current active window.
+    if (windows.isNotEmpty) {
+      windows.last.getWindowState().deactivate();
+    }
+
     var index = windows.indexOf(window);
     windows.removeAt(index);
     windows.add(window);
+    window.getWindowState().activate();
+
     platform.invokeMethod('activate_window', window.viewPtr);
     notifyListeners();
   }
