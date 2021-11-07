@@ -1,3 +1,4 @@
+import 'package:elinux_app/custom_box_decoration.dart';
 import 'package:elinux_app/desktop_state.dart';
 import 'package:elinux_app/title_bar.dart';
 import 'package:elinux_app/window_state.dart';
@@ -80,12 +81,12 @@ class LocalWindowState extends State<Window> with TickerProviderStateMixin {
                     onEnd: () => desktopState.destroyWindow(widget),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 100),
-                      decoration: BoxDecoration(
+                      decoration: CustomBoxDecoration(
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
                         boxShadow: [
                           BoxShadow(
-                            spreadRadius: -10,
+                            // spreadRadius: -10,
                             blurRadius: windowState.shadowBlurRadius,
-                            offset: const Offset(0, 0),
                           )
                         ],
                       ),
@@ -93,6 +94,7 @@ class LocalWindowState extends State<Window> with TickerProviderStateMixin {
                         borderRadius: const BorderRadius.all(Radius.circular(10)),
                         clipBehavior: Clip.antiAliasWithSaveLayer,
                         child: Material(
+                          type: MaterialType.transparency,
                           child: SizedBox(
                             width: windowState.rect.width,
                             child: Column(

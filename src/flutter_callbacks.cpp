@@ -114,8 +114,7 @@ bool flutter_present(void* userdata) {
 uint32_t flutter_fbo_callback(void* userdata) {
 	auto* output = static_cast<flutland_output*>(userdata);
 	uint32_t fb = output->fix_y_flip_state.offscreen_framebuffer;
-
-//		uint32_t fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
+//	uint32_t fb = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
 	return fb;
 }
 

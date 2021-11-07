@@ -9,7 +9,7 @@ class WindowState with ChangeNotifier {
 
   double scale = 1.0;
   double opacity = 1.0;
-  double shadowBlurRadius = 20;
+  double shadowBlurRadius = 10;
 
   String get title => _title;
 
@@ -39,12 +39,12 @@ class WindowState with ChangeNotifier {
   }
   
   void activate() {
-    shadowBlurRadius = 40;
+    shadowBlurRadius = 30;
     notifyListeners();
   }
   
   void deactivate() {
-    shadowBlurRadius = 20;
+    shadowBlurRadius = 10;
     notifyListeners();
   }
 }
