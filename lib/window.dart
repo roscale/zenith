@@ -78,21 +78,21 @@ class LocalWindowState extends State<Window> with TickerProviderStateMixin {
                     curve: Curves.linearToEaseOut,
                     scale: windowState.scale,
                     duration: const Duration(milliseconds: 200),
-                    onEnd: () => desktopState.destroyWindow(widget),
+                    onEnd: windowState.windowClosed.complete,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 100),
-                      decoration: CustomBoxDecoration(
-                        borderRadius: const BorderRadius.all(Radius.circular(10)),
-                        boxShadow: [
-                          BoxShadow(
-                            // spreadRadius: -10,
-                            blurRadius: windowState.shadowBlurRadius,
-                          )
-                        ],
-                      ),
+                      // decoration: CustomBoxDecoration(
+                      //   borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      //   boxShadow: [
+                      //     BoxShadow(
+                      //       // spreadRadius: -10,
+                      //       blurRadius: windowState.shadowBlurRadius,
+                      //     )
+                      //   ],
+                      // ),
                       child: ClipRRect(
                         borderRadius: const BorderRadius.all(Radius.circular(10)),
-                        clipBehavior: Clip.antiAliasWithSaveLayer,
+                        // clipBehavior: Clip.antiAliasWithSaveLayer,
                         child: Material(
                           type: MaterialType.transparency,
                           child: SizedBox(
@@ -127,11 +127,12 @@ class LocalWindowState extends State<Window> with TickerProviderStateMixin {
                                         );
                                       },
                                       child: MouseRegion(
-                                        onEnter: (PointerEnterEvent event) => print("enter"),
-                                        onExit: (PointerExitEvent event) => print("exit"),
+                                        // onEnter: (PointerEnterEvent event) => print("enter"),
+                                        // onExit: (PointerExitEvent event) => print("exit"),
                                         child: Texture(
                                           filterQuality: FilterQuality.none,
                                           textureId: windowState.textureId,
+                                          // freeze: true,
                                         ),
                                       ),
                                     ),

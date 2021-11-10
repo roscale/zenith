@@ -19,9 +19,9 @@ void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 	struct flutland_server* server =
 			wl_container_of(listener, server, new_xdg_surface);
 	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
-	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		return;
-	}
+//	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+//		return;
+//	}
 	/* Allocate a flutland_view for this surface */
 	auto* view = static_cast<flutland_view*>(calloc(1, sizeof(struct flutland_view)));
 	view->server = server;
@@ -82,8 +82,6 @@ void xdg_surface_unmap(struct wl_listener* listener, void* data) {
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	view->server->output->messenger.Send("window_unmapped", result->data(), result->size());
-
-	FlutterEngineUnregisterExternalTexture(view->server->output->engine, (int64_t) texture);
 }
 
 void xdg_surface_destroy(struct wl_listener* listener, void* data) {
@@ -91,6 +89,10 @@ void xdg_surface_destroy(struct wl_listener* listener, void* data) {
 	fflush(stdout);
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct flutland_view* view = wl_container_of(listener, view, destroy);
+
+	struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+	FlutterEngineUnregisterExternalTexture(view->server->output->engine, (int64_t) texture);
+
 	wl_list_remove(&view->link);
 	free(view);
 }

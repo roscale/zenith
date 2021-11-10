@@ -15,6 +15,7 @@ extern "C" {
 #include <iostream>
 
 #define BUNDLE "build/linux/x64/debug/bundle/data"
+//#define BUNDLE "build/linux/x64/release/bundle/data"
 
 FlutterEngine run_flutter(flutland_output* output) {
 	FlutterRendererConfig config = {};
@@ -132,12 +133,11 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
                                                 FlutterOpenGLTexture* texture_out) {
 //	std::clog << "WW_EXTERNAL_TEXTURE_FRAME" << std::endl;
 
-	auto* output = static_cast<flutland_output*>(userdata);
 	auto* texture = (struct wlr_texture*) texture_id;
-	texture_out->target = GL_TEXTURE_2D;
 
 	struct wlr_gles2_texture_attribs attribs{};
 	wlr_gles2_texture_get_attribs(texture, &attribs);
+	texture_out->target = attribs.target;
 	texture_out->name = attribs.tex;
 
 	texture_out->width = texture->width;

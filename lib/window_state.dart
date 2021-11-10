@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class WindowState with ChangeNotifier {
@@ -7,9 +9,11 @@ class WindowState with ChangeNotifier {
   Rect _rect;
   int _textureId;
 
+  bool isClosing = false;
   double scale = 1.0;
   double opacity = 1.0;
   double shadowBlurRadius = 10;
+  var windowClosed = Completer<void>();
 
   String get title => _title;
 
@@ -32,10 +36,12 @@ class WindowState with ChangeNotifier {
     notifyListeners();
   }
 
-  void close() {
+  Future close() {
+    isClosing = true;
     scale = 0.9;
     opacity = 0.0;
     notifyListeners();
+    return windowClosed.future;
   }
   
   void activate() {

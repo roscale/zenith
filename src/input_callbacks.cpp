@@ -101,7 +101,7 @@ static void server_new_keyboard(struct flutland_server* server, struct wlr_input
 	wlr_keyboard_set_keymap(device->keyboard, keymap);
 	xkb_keymap_unref(keymap);
 	xkb_context_unref(context);
-	wlr_keyboard_set_repeat_info(device->keyboard, 25, 600);
+	wlr_keyboard_set_repeat_info(device->keyboard, 25, 300);
 
 	/* Here we set up listeners for keyboard events. */
 	keyboard->modifiers.notify = keyboard_handle_modifiers;
@@ -328,8 +328,18 @@ void focus_view(struct flutland_view* view) {
 	if (view == nullptr) {
 		return;
 	}
+
 	struct flutland_server* server = view->server;
 	struct wlr_seat* seat = server->seat;
+	struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
+
+	if (view->xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+		wlr_seat_keyboard_notify_enter(seat, view->xdg_surface->surface,
+		                               keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+		return;
+	}
+
+
 	struct wlr_surface* prev_surface = seat->keyboard_state.focused_surface;
 	if (prev_surface == view->xdg_surface->surface) {
 		/* Don't re-focus an already focused surface. */
@@ -345,7 +355,6 @@ void focus_view(struct flutland_view* view) {
 				seat->keyboard_state.focused_surface);
 		wlr_xdg_toplevel_set_activated(previous, false);
 	}
-	struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
 	/* Move the view to the front */
 	wl_list_remove(&view->link);
 	wl_list_insert(&server->views, &view->link);

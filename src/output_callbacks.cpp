@@ -23,9 +23,16 @@ extern "C" {
 #undef static
 }
 
+//int ouputs = 0;
+
 void server_new_output(struct wl_listener* listener, void* data) {
 	struct flutland_server* server = wl_container_of(listener, server, new_output);
 	struct wlr_output* wlr_output = static_cast<struct wlr_output*>(data);
+
+//	ouputs += 1;
+//	if (ouputs != 2) {
+//		return;
+//	}
 
 	if (server->output != nullptr) {
 		// Allow only one output at the moment.

@@ -38,7 +38,7 @@ class DesktopState with ChangeNotifier {
     //   }
     // });
 
-    windowUnmappedEvent.receiveBroadcastStream().listen((event) {
+    windowUnmappedEvent.receiveBroadcastStream().listen((event) async {
       int textureId = event["texture_id"];
       print("before $textureId");
       // try {
@@ -46,7 +46,9 @@ class DesktopState with ChangeNotifier {
       // } on Exception catch(e) {
       //   print("WRONG");
       // }
-      windows.removeWhere((element) => element.textureId == textureId);
+      var window = windows.singleWhere((element) => element.textureId == textureId);
+      await window.getWindowState().close();
+      windows.remove(window);
       notifyListeners();
       print("after");
     });
