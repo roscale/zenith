@@ -10,8 +10,8 @@ class WindowState with ChangeNotifier {
   int _textureId;
 
   bool isClosing = false;
-  double scale = 1.0;
-  double opacity = 1.0;
+  double scale = 0.9;
+  double opacity = 0.5;
   double shadowBlurRadius = 10;
   var windowClosed = Completer<void>();
 
@@ -36,7 +36,13 @@ class WindowState with ChangeNotifier {
     notifyListeners();
   }
 
-  Future close() {
+  void animateOpening() {
+    scale = 1.0;
+    opacity = 1.0;
+    notifyListeners();
+  }
+
+  Future animateClosing() {
     isClosing = true;
     scale = 0.9;
     opacity = 0.0;

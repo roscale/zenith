@@ -14,7 +14,7 @@ class ActionButtons extends StatelessWidget {
         IconButton(
           onPressed: () {
             var windowState = context.read<WindowState>();
-            windowState.close();
+            windowState.animateClosing();
 
             // var window = context.findAncestorWidgetOfExactType<Window>();
             // if (window != null) {

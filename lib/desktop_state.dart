@@ -47,10 +47,10 @@ class DesktopState with ChangeNotifier {
       //   print("WRONG");
       // }
       var window = windows.singleWhere((element) => element.textureId == textureId);
-      await window.getWindowState().close();
+      await window.getWindowState().animateClosing();
       windows.remove(window);
       notifyListeners();
-      print("after");
+      print("after ${windows.length}");
     });
   }
 
