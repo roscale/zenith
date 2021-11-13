@@ -13,13 +13,10 @@ class ActionButtons extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () {
-            var windowState = context.read<WindowState>();
-            windowState.animateClosing();
-
-            // var window = context.findAncestorWidgetOfExactType<Window>();
-            // if (window != null) {
-            //   context.read<DesktopState>().destroyWindow(window);
-            // }
+            var window = context.findAncestorWidgetOfExactType<Window>();
+            if (window != null) {
+              DesktopState.platform.invokeMethod("close_window", window.surfacePtr);
+            }
           },
           icon: const Icon(Icons.close, color: Colors.white),
           splashRadius: 25,

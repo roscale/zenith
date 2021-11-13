@@ -179,10 +179,25 @@ void server_new_output(struct wl_listener* listener, void* data) {
 						return;
 					}
 
-					auto* view = server->views[surface];
+					auto* view = view_it->second;
 
 					wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
 					wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
+					result->Success();
+					return;
+				} else if (call.method_name() == "close_window") {
+					int64_t surface_ptr_int = std::get<int64_t>(call.arguments()[0]);
+					auto* surface = reinterpret_cast<wlr_surface*>(surface_ptr_int);
+
+					auto view_it = server->views.find(surface);
+					if (view_it == server->views.end()) {
+						result->Success();
+						return;
+					}
+
+					auto* view = view_it->second;
+					wlr_xdg_toplevel_send_close(view->xdg_surface);
+
 					result->Success();
 					return;
 				}

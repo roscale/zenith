@@ -123,7 +123,12 @@ class _WindowAnimations extends StatelessWidget {
         curve: Curves.linearToEaseOut,
         scale: scale,
         duration: const Duration(milliseconds: 200),
-        onEnd: context.read<WindowState>().windowClosed.complete,
+        onEnd: () {
+          var windowState = context.read<WindowState>();
+          if (windowState.isClosing) {
+            windowState.windowClosed.complete();
+          }
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           // decoration: CustomBoxDecoration(
