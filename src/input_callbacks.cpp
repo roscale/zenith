@@ -334,11 +334,8 @@ void focus_view(struct flutland_view* view) {
 	struct wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
 
 	if (view->xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		wlr_seat_keyboard_notify_enter(seat, view->xdg_surface->surface,
-		                               keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
 		return;
 	}
-
 
 	struct wlr_surface* prev_surface = seat->keyboard_state.focused_surface;
 	if (prev_surface == view->xdg_surface->surface) {
@@ -356,8 +353,10 @@ void focus_view(struct flutland_view* view) {
 		wlr_xdg_toplevel_set_activated(previous, false);
 	}
 	/* Move the view to the front */
-	wl_list_remove(&view->link);
-	wl_list_insert(&server->views, &view->link);
+	server->views.erase(server->views.find(view->xdg_surface->surface));
+//	wl_list_remove(&view->link);
+	server->views.insert(std::make_pair(view->xdg_surface->surface, view));
+//	wl_list_insert(&server->views, &view->link);
 	/* Activate the new surface */
 	wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
 	/*

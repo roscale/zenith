@@ -28,7 +28,7 @@ extern "C" {
 int main(int argc, const char* argv[]) {
 	wlr_log_init(WLR_DEBUG, nullptr);
 
-	struct flutland_server server;
+	struct flutland_server server{};
 	server.output = nullptr;
 	server.wl_display = wl_display_create();
 	server.backend = wlr_backend_autocreate(server.wl_display);
@@ -43,7 +43,8 @@ int main(int argc, const char* argv[]) {
 	server.new_output.notify = server_new_output;
 	wl_signal_add(&server.backend->events.new_output, &server.new_output);
 
-	wl_list_init(&server.views);
+
+//	wl_list_init(&server.views);
 	server.xdg_shell = wlr_xdg_shell_create(server.wl_display);
 	server.new_xdg_surface.notify = server_new_xdg_surface;
 	wl_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);

@@ -1,18 +1,36 @@
+import 'package:elinux_app/popup.dart';
 import 'package:elinux_app/window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+extension GlobalKeyExtension on GlobalKey {
+  Rect? get globalPaintBounds {
+    final renderObject = currentContext?.findRenderObject();
+    final translation = renderObject?.getTransformTo(null).getTranslation();
+    if (translation != null && renderObject?.paintBounds != null) {
+      final offset = Offset(translation.x, translation.y);
+      return renderObject!.paintBounds.shift(offset);
+    } else {
+      return null;
+    }
+  }
+}
+
 class DesktopState with ChangeNotifier {
   List<Window> windows = [];
+  List<Popup> popups = [];
 
   static const EventChannel windowMappedEvent = EventChannel('window_mapped');
   static const EventChannel windowUnmappedEvent = EventChannel('window_unmapped');
+  static const EventChannel popupMappedEvent = EventChannel('popup_mapped');
+  static const EventChannel popupUnmappedEvent = EventChannel('popup_unmapped');
   static const MethodChannel platform = MethodChannel('platform');
 
   DesktopState() {
     windowMappedEvent.receiveBroadcastStream().listen((event) {
       int textureId = event["texture_id"];
       int viewPtr = event["view_ptr"];
+      int surfacePtr = event["surface_ptr"];
       int width = event["width"];
       int height = event["height"];
 
@@ -24,6 +42,7 @@ class DesktopState with ChangeNotifier {
         Window(
           textureId: textureId,
           viewPtr: viewPtr,
+          surfacePtr: surfacePtr,
           initialWidth: width,
           initialHeight: height,
         ),
@@ -51,6 +70,54 @@ class DesktopState with ChangeNotifier {
       windows.remove(window);
       notifyListeners();
       print("after ${windows.length}");
+    });
+
+    popupMappedEvent.receiveBroadcastStream().listen((event) {
+      int textureId = event["texture_id"];
+      int viewPtr = event["view_ptr"];
+      int surfacePtr = event["surface_ptr"];
+      int parentSurfacePtr = event["parent_surface_ptr"];
+      int x = event["x"];
+      int y = event["y"];
+      int width = event["width"];
+      int height = event["height"];
+
+      // Parent can be either a window or another popup.
+      Rect rect;
+      var windowIndex = windows.indexWhere((element) => element.surfacePtr == parentSurfacePtr);
+      if (windowIndex != -1) {
+        rect = windows[windowIndex].frameGlobalKey.globalPaintBounds!;
+      } else {
+        var popupIndex = popups.indexWhere((element) => element.surfacePtr == parentSurfacePtr);
+        rect = popups[popupIndex].frameGlobalKey.globalPaintBounds!;
+      }
+
+      // var parentWindow = windows.singleWhere((element) => element.surfacePtr == parentSurfacePtr);
+
+      var popup = Popup(
+        x: x + rect.left.toInt(),
+        y: y + rect.top.toInt(),
+        width: width,
+        height: height,
+        textureId: textureId,
+        viewPtr: viewPtr,
+        parentSurfacePtr: parentSurfacePtr,
+        surfacePtr: surfacePtr,
+      );
+      // var parentWindow = windows.singleWhere((element) => element.surfacePtr == parentSurfacePtr);
+      popups.add(popup);
+      notifyListeners();
+      // parentWindow.getWindowState().popups.add(popup);
+      // parentWindow.getWindowState().notifyListeners();
+    });
+
+    popupUnmappedEvent.receiveBroadcastStream().listen((event) {
+      int viewPtr = event["view_ptr"];
+
+      popups.removeWhere((element) => element.viewPtr == viewPtr);
+      notifyListeners();
+      // parentWindow.getWindowState().popups.removeWhere((popup) => popup.viewPtr == viewPtr);
+      // parentWindow.getWindowState().notifyListeners();
     });
   }
 

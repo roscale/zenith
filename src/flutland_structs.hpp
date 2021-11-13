@@ -24,7 +24,7 @@ struct flutland_server {
 
 	struct wl_listener new_output;
 	struct wl_listener new_xdg_surface;
-	struct wl_list views;
+	std::map<struct wlr_surface*, struct flutland_view*> views;
 	struct flutland_view* active_view;
 
 	struct wlr_cursor* cursor;

@@ -142,7 +142,7 @@ void server_new_output(struct wl_listener* listener, void* data) {
 	                                                                             "platform", &codec);
 
 	output->platform_method_channel->SetMethodCallHandler(
-			[](const flutter::MethodCall<> &call, std::unique_ptr<flutter::MethodResult<>> result) {
+			[server](const flutter::MethodCall<> &call, std::unique_ptr<flutter::MethodResult<>> result) {
 				if (call.method_name() == "activate_window") {
 					int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
 					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
@@ -169,12 +169,20 @@ void server_new_output(struct wl_listener* listener, void* data) {
 
 					double x = std::get<double>(args[flutter::EncodableValue("x")]);
 					double y = std::get<double>(args[flutter::EncodableValue("y")]);
-					int64_t view_ptr_int = std::get<int64_t>(args[flutter::EncodableValue("view_ptr")]);
+					int64_t surface_ptr_int = std::get<int64_t>(args[flutter::EncodableValue("surface_ptr")]);
 
-					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
+					auto* surface = reinterpret_cast<wlr_surface*>(surface_ptr_int);
 
-					wlr_seat_pointer_notify_enter(view->server->seat, view->xdg_surface->surface, x, y);
-					wlr_seat_pointer_notify_motion(view->server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
+					auto view_it = server->views.find(surface);
+					if (view_it == server->views.end()) {
+						result->Success();
+						return;
+					}
+
+					auto* view = server->views[surface];
+
+					wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
+					wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
 					result->Success();
 					return;
 				}
@@ -207,8 +215,9 @@ void output_frame(struct wl_listener* listener, void* data) {
 //	}
 //	pthread_mutex_unlock(&output->baton_mutex);
 
-	struct flutland_view* view;
-	wl_list_for_each_reverse(view, &output->server->views, link) {
+//	struct flutland_view* view;
+	for (auto pair: output->server->views) {
+		auto* view = pair.second;
 		if (!view->mapped) {
 			/* An unmapped view should not be rendered. */
 			continue;
@@ -220,6 +229,19 @@ void output_frame(struct wl_listener* listener, void* data) {
 		clock_gettime(CLOCK_MONOTONIC, &now);
 		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
 	}
+
+//	wl_list_for_each_reverse(view, &output->server->views, link) {
+//		if (!view->mapped) {
+//			/* An unmapped view should not be rendered. */
+//			continue;
+//		}
+//		struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+//		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
+//
+//		struct timespec now;
+//		clock_gettime(CLOCK_MONOTONIC, &now);
+//		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
+//	}
 
 	// Rendering can only be started on the flutter render thread because the context is current on that thread.
 	FlutterEnginePostRenderThreadTask(output->engine, start_rendering, output);

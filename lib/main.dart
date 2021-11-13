@@ -53,13 +53,14 @@ class _DesktopState extends State<Desktop> {
       child: WindowStack(
         children: [
           ...desktopState.windows,
+          ...desktopState.popups,
           const Positioned(
             left: 0,
             top: 0,
             child: IgnorePointer(child: CircularProgressIndicator()),
           ),
           Positioned(
-            child: IgnorePointer(child: Container(color: Colors.black, width: 10, height: 10)),
+            child: IgnorePointer(child: Container(color: Colors.white, width: 10, height: 10)),
             left: pointerPosition.dx,
             top: pointerPosition.dy,
           ),

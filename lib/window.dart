@@ -1,4 +1,3 @@
-import 'package:elinux_app/custom_box_decoration.dart';
 import 'package:elinux_app/desktop_state.dart';
 import 'package:elinux_app/title_bar.dart';
 import 'package:elinux_app/window_state.dart';
@@ -6,46 +5,41 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class Window extends StatefulWidget {
+class Window extends StatelessWidget {
   final int initialWidth;
   final int initialHeight;
   final int textureId;
   final int viewPtr;
+  final int surfacePtr;
+  final GlobalKey frameGlobalKey = GlobalKey();
 
-  Window({
-    required this.textureId,
-    required this.viewPtr,
-    required this.initialWidth,
-    required this.initialHeight,
-  }) : super(key: GlobalKey<LocalWindowState>());
-
-  @override
-  LocalWindowState createState() => LocalWindowState();
-
-  WindowState getWindowState() {
-    return (key! as GlobalKey<LocalWindowState>).currentState!.windowState;
-  }
-}
-
-class LocalWindowState extends State<Window> with TickerProviderStateMixin {
-  late var windowState = WindowState(
+  late final WindowState windowState = WindowState(
     "Window",
     Rect.fromLTWH(
       100,
       100,
-      widget.initialWidth.toDouble(),
-      widget.initialHeight.toDouble(),
+      initialWidth.toDouble(),
+      initialHeight.toDouble(),
     ),
-    widget.textureId,
+    textureId,
   )..activate();
 
-  @override
-  void initState() {
-    super.initState();
-    // Start window animations when this widget is created.
+  Window({
+    required this.textureId,
+    required this.viewPtr,
+    required this.surfacePtr,
+    required this.initialWidth,
+    required this.initialHeight,
+  }) : super(key: GlobalKey()) {
+    print("instantiate window");
+
     WidgetsBinding.instance!.addPostFrameCallback((_) {
       windowState.animateOpening();
     });
+  }
+
+  WindowState getWindowState() {
+    return windowState;
   }
 
   @override
@@ -55,9 +49,10 @@ class LocalWindowState extends State<Window> with TickerProviderStateMixin {
       child: Builder(builder: (_) {
         return _GestureDetector(
           child: _WindowAnimations(
-            child: _WindowFrame(
-              viewPtr: widget.viewPtr,
-              textureId: widget.textureId,
+            child: WindowFrame(
+              frameGlobalKey: frameGlobalKey,
+              surfacePtr: surfacePtr,
+              textureId: textureId,
             ),
           ),
         );
@@ -65,6 +60,22 @@ class LocalWindowState extends State<Window> with TickerProviderStateMixin {
     );
   }
 }
+
+// class LocalWindowState extends State<Window> {
+//   @override
+//   void initState() {
+//     super.initState();
+//     // Start window animations when this widget is created.
+//     WidgetsBinding.instance!.addPostFrameCallback((_) {
+//       windowState.animateOpening();
+//     });
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return
+//   }
+// }
 
 class _GestureDetector extends StatelessWidget {
   final Widget child;
@@ -77,8 +88,8 @@ class _GestureDetector extends StatelessWidget {
     var isClosing = context.select((WindowState state) => state.isClosing);
 
     return Positioned(
-      left: rect.left,
-      top: rect.top,
+      left: rect.left.roundToDouble(),
+      top: rect.top.roundToDouble(),
       child: IgnorePointer(
         ignoring: isClosing,
         child: GestureDetector(
@@ -102,6 +113,7 @@ class _WindowAnimations extends StatelessWidget {
   Widget build(BuildContext context) {
     var opacity = context.select((WindowState state) => state.opacity);
     var scale = context.select((WindowState state) => state.scale);
+    var shadowBlurRadius = context.select((WindowState state) => state.shadowBlurRadius);
 
     return AnimatedOpacity(
       curve: Curves.linearToEaseOut,
@@ -119,7 +131,7 @@ class _WindowAnimations extends StatelessWidget {
           //   boxShadow: [
           //     BoxShadow(
           //       // spreadRadius: -10,
-          //       blurRadius: windowState.shadowBlurRadius,
+          //       blurRadius: shadowBlurRadius,
           //     )
           //   ],
           // ),
@@ -130,16 +142,22 @@ class _WindowAnimations extends StatelessWidget {
   }
 }
 
-class _WindowFrame extends StatelessWidget {
-  final int viewPtr;
+class WindowFrame extends StatelessWidget {
+  final int surfacePtr;
   final int textureId;
+  final GlobalKey frameGlobalKey;
 
-  const _WindowFrame({required this.viewPtr, required this.textureId});
+  const WindowFrame({Key? key, required this.surfacePtr, required this.textureId, required this.frameGlobalKey})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    var rect = context.select((WindowState state) => state.rect);
+    var size = context.select((WindowState state) => state.rect.size);
     var textureId = context.select((WindowState state) => state.textureId);
+// var windowState = context.watch<WindowState>();
+    // var popups = context.select((WindowState state) => state.popups);
+
+    // print(windowState.popups);
 
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -147,14 +165,14 @@ class _WindowFrame extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: SizedBox(
-          width: rect.width,
+          width: size.width,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const TitleBar(),
               SizedBox(
-                width: rect.width,
-                height: rect.height,
+                width: size.width,
+                height: size.height,
                 child: Listener(
                   onPointerHover: (PointerHoverEvent event) => pointerMoved(event),
                   onPointerMove: (PointerMoveEvent event) => pointerMoved(event),
@@ -162,6 +180,7 @@ class _WindowFrame extends StatelessWidget {
                     // onEnter: (PointerEnterEvent event) => print("enter"),
                     // onExit: (PointerExitEvent event) => print("exit"),
                     child: Texture(
+                      key: frameGlobalKey,
                       filterQuality: FilterQuality.none,
                       textureId: textureId,
                     ),
@@ -181,7 +200,7 @@ class _WindowFrame extends StatelessWidget {
       {
         "x": event.localPosition.dx,
         "y": event.localPosition.dy,
-        "view_ptr": viewPtr,
+        "surface_ptr": surfacePtr,
       },
     );
   }

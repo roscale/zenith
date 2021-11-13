@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 class WindowStack extends Stack {
-  WindowStack({Key? key, children}) : super(key: key, children: children);
+  WindowStack({Key? key, Clip clipBehavior = Clip.hardEdge, children})
+      : super(key: key, clipBehavior: clipBehavior, children: children);
 
   @override
   WindowRenderStack createRenderObject(BuildContext context) {

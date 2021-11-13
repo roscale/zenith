@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:elinux_app/popup.dart';
 import 'package:flutter/material.dart';
 
 class WindowState with ChangeNotifier {
@@ -14,6 +15,8 @@ class WindowState with ChangeNotifier {
   double opacity = 0.5;
   double shadowBlurRadius = 10;
   var windowClosed = Completer<void>();
+
+  // var popups = <Popup>[];
 
   String get title => _title;
 
