@@ -52,7 +52,7 @@ class Popup extends StatelessWidget {
       {
         "x": event.localPosition.dx,
         "y": event.localPosition.dy,
-        "surface_ptr": surfacePtr,
+        "view_ptr": viewPtr,
       },
     );
   }

@@ -353,9 +353,9 @@ void focus_view(struct flutland_view* view) {
 		wlr_xdg_toplevel_set_activated(previous, false);
 	}
 	/* Move the view to the front */
-	server->views.erase(server->views.find(view->xdg_surface->surface));
+//	server->views.erase(view);
 //	wl_list_remove(&view->link);
-	server->views.insert(std::make_pair(view->xdg_surface->surface, view));
+//	server->views.insert(view);
 //	wl_list_insert(&server->views, &view->link);
 	/* Activate the new surface */
 	wlr_xdg_toplevel_set_activated(view->xdg_surface, true);

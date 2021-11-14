@@ -51,7 +51,7 @@ class Window extends StatelessWidget {
           child: _WindowAnimations(
             child: WindowFrame(
               frameGlobalKey: frameGlobalKey,
-              surfacePtr: surfacePtr,
+              viewPtr: viewPtr,
               textureId: textureId,
             ),
           ),
@@ -148,11 +148,11 @@ class _WindowAnimations extends StatelessWidget {
 }
 
 class WindowFrame extends StatelessWidget {
-  final int surfacePtr;
+  final int viewPtr;
   final int textureId;
   final GlobalKey frameGlobalKey;
 
-  const WindowFrame({Key? key, required this.surfacePtr, required this.textureId, required this.frameGlobalKey})
+  const WindowFrame({Key? key, required this.viewPtr, required this.textureId, required this.frameGlobalKey})
       : super(key: key);
 
   @override
@@ -205,7 +205,7 @@ class WindowFrame extends StatelessWidget {
       {
         "x": event.localPosition.dx,
         "y": event.localPosition.dy,
-        "surface_ptr": surfacePtr,
+        "view_ptr": viewPtr,
       },
     );
   }

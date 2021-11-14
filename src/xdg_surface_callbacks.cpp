@@ -37,7 +37,7 @@ void server_new_xdg_surface(struct wl_listener* listener, void* data) {
 
 
 	/* Add it to the list of views. */
-	server->views.insert(std::make_pair(view->xdg_surface->surface, view));
+	server->views.insert(view);
 //	wl_list_insert(&server->views, &view->link);
 
 //	printf("\nNEW CLIENT\n\n");
@@ -129,7 +129,7 @@ void xdg_surface_destroy(struct wl_listener* listener, void* data) {
 	FlutterEngineUnregisterExternalTexture(view->server->output->engine, (int64_t) texture);
 
 
-	view->server->views.erase(view->server->views.find(view->xdg_surface->surface));
+	view->server->views.erase(view);
 //	wlr_xdg_popup_get_toplevel_coords(view->xdg_surface->popup,)
 	//	wl_list_remove(&view->link);
 	free(view);

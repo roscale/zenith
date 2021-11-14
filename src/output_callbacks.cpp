@@ -147,6 +147,11 @@ void server_new_output(struct wl_listener* listener, void* data) {
 					int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
 					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
 
+					if (server->views.find(view) == server->views.end()) {
+						result->Success();
+						return;
+					}
+
 					focus_view(view);
 
 //					if (view->server->active_view == view) {
@@ -169,33 +174,28 @@ void server_new_output(struct wl_listener* listener, void* data) {
 
 					double x = std::get<double>(args[flutter::EncodableValue("x")]);
 					double y = std::get<double>(args[flutter::EncodableValue("y")]);
-					int64_t surface_ptr_int = std::get<int64_t>(args[flutter::EncodableValue("surface_ptr")]);
+					int64_t view_ptr_int = std::get<int64_t>(args[flutter::EncodableValue("view_ptr")]);
 
-					auto* surface = reinterpret_cast<wlr_surface*>(surface_ptr_int);
+					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
 
-					auto view_it = server->views.find(surface);
-					if (view_it == server->views.end()) {
+					if (server->views.find(view) == server->views.end()) {
 						result->Success();
 						return;
 					}
-
-					auto* view = view_it->second;
 
 					wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
 					wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
 					result->Success();
 					return;
 				} else if (call.method_name() == "close_window") {
-					int64_t surface_ptr_int = std::get<int64_t>(call.arguments()[0]);
-					auto* surface = reinterpret_cast<wlr_surface*>(surface_ptr_int);
+					int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
+					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
 
-					auto view_it = server->views.find(surface);
-					if (view_it == server->views.end()) {
+					if (server->views.find(view) == server->views.end()) {
 						result->Success();
 						return;
 					}
 
-					auto* view = view_it->second;
 					wlr_xdg_toplevel_send_close(view->xdg_surface);
 
 					result->Success();
@@ -231,8 +231,7 @@ void output_frame(struct wl_listener* listener, void* data) {
 //	pthread_mutex_unlock(&output->baton_mutex);
 
 //	struct flutland_view* view;
-	for (auto pair: output->server->views) {
-		auto* view = pair.second;
+	for (auto* view: output->server->views) {
 		if (!view->mapped) {
 			/* An unmapped view should not be rendered. */
 			continue;

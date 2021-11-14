@@ -15,22 +15,22 @@ class ActionButtons extends StatelessWidget {
           onPressed: () {
             var window = context.findAncestorWidgetOfExactType<Window>();
             if (window != null) {
-              DesktopState.platform.invokeMethod("close_window", window.surfacePtr);
+              DesktopState.platform.invokeMethod("close_window", window.viewPtr);
             }
           },
           icon: const Icon(Icons.close, color: Colors.white),
           splashRadius: 25,
         ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.crop_square, color: Colors.white),
-          splashRadius: 25,
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.minimize, color: Colors.white),
-          splashRadius: 25,
-        ),
+        // IconButton(
+        //   onPressed: () {},
+        //   icon: const Icon(Icons.crop_square, color: Colors.white),
+        //   splashRadius: 25,
+        // ),
+        // IconButton(
+        //   onPressed: () {},
+        //   icon: const Icon(Icons.minimize, color: Colors.white),
+        //   splashRadius: 25,
+        // ),
       ],
     );
   }
