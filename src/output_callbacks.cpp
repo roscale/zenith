@@ -6,6 +6,7 @@
 #include "platform_channels/event_channel.h"
 #include "create_shared_egl_context.hpp"
 #include "input_callbacks.hpp"
+#include "platform_methods.hpp"
 #include <src/platform_channels/event_stream_handler_functions.h>
 
 extern "C" {
@@ -23,25 +24,19 @@ extern "C" {
 #undef static
 }
 
-//int ouputs = 0;
-
-void server_new_output(struct wl_listener* listener, void* data) {
-	struct flutland_server* server = wl_container_of(listener, server, new_output);
-	struct wlr_output* wlr_output = static_cast<struct wlr_output*>(data);
-
-//	ouputs += 1;
-//	if (ouputs != 2) {
-//		return;
-//	}
+void server_new_output(wl_listener* listener, void* data) {
+	FlutlandServer* server = wl_container_of(listener, server, new_output);
+	auto* wlr_output = static_cast<struct wlr_output*>(data);
 
 	if (server->output != nullptr) {
-		// Allow only one output at the moment.
+		// Allow only one output for the time being.
 		return;
 	}
 
 	if (!wl_list_empty(&wlr_output->modes)) {
+		// Set the preferred resolution and refresh rate of the monitor which will probably be the highest one.
 		wlr_output_enable(wlr_output, true);
-		struct wlr_output_mode* mode = wlr_output_preferred_mode(wlr_output);
+		wlr_output_mode* mode = wlr_output_preferred_mode(wlr_output);
 		wlr_output_set_mode(wlr_output, mode);
 
 		if (!wlr_output_commit(wlr_output)) {
@@ -49,231 +44,104 @@ void server_new_output(struct wl_listener* listener, void* data) {
 		}
 	}
 
-	/* Allocates and configures our state for this output */
-	struct flutland_output* output = static_cast<flutland_output*>(calloc(1, sizeof(struct flutland_output)));
-	output->wlr_output = wlr_output;
+	// Allocates and configures our state for this output.
+	auto* output = static_cast<FlutlandOutput*>(calloc(1, sizeof(FlutlandOutput)));
 	output->server = server;
+	server->output = output;
+
+	output->wlr_output = wlr_output;
 
 	pthread_mutex_init(&output->baton_mutex, nullptr);
 	sem_init(&output->vsync_semaphore, 0, 0);
 
 	output->frame.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
-	server->output = output;
 
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
+	wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
+	wlr_egl_make_current(egl);
+	output->fix_y_flip = fix_y_flip_init_state(width, height);
+	// The Flutter engine will use the wlr renderer and its egl context on the render thread, therefore it must be
+	// unset in this thread because a context cannot be bound to multiple threads at once.
+	wlr_egl_unset_current(egl);
 
-	struct wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
-	output->platform_thread_egl_context = create_shared_egl_context(egl);
-	std::cout << "SHARED CONTEXT " << output->platform_thread_egl_context << std::endl;
-
-	wlr_egl_make_current(output->platform_thread_egl_context);
-	output->fix_y_flip_state = fix_y_flip_init_state(width, height);
-	wlr_egl_unset_current(output->platform_thread_egl_context);
-
-
-	FlutterWindowMetricsEvent event = {};
-	event.struct_size = sizeof(event);
-	event.width = width;
-	event.height = height;
-	event.pixel_ratio = 1.0;
-	printf("%zu %zu ", event.width, event.height);
-
+	// Create the Flutter engine for this output.
 	FlutterEngine engine = run_flutter(output);
 	output->engine = engine;
 	output->messenger = BinaryMessenger(engine);
 	output->message_dispatcher = IncomingMessageDispatcher(&output->messenger);
 	output->messenger.SetMessageDispatcher(&output->message_dispatcher);
 
-//	output->new_texture_event_channel = std::make_unique<flutter::EventChannel<>>(&output->messenger, "new_texture_id",
-//	                                                                              &flutter::StandardMethodCodec::GetInstance());
-//	output->new_texture_stream_handler = std::make_unique<NewTextureStreamHandler<>>();
-//	output->new_texture_event_channel->SetStreamHandler(output->new_texture_stream_handler);
-//	output->new_texture_event_channel->SetStreamHandler()
-
-
-	// This handler is necessary because flutter expects to be able to call listen() and cancel() on the platform even
-	// though we don't care because this channel will always be open.
 	auto &codec = flutter::StandardMethodCodec::GetInstance();
 
-	output->window_mapped_event_channel = std::make_unique<flutter::EventChannel<>>(&output->messenger, "window_mapped",
-	                                                                                &codec);
-	output->window_mapped_event_channel->SetStreamHandler(
-			std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
-					[](
-							const flutter::EncodableValue* arguments,
-							std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> &&events)
-							-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
-
-						std::cout << "LISTENING WINDOW_MAPPED" << std::endl;
-						return nullptr;
-					},
-					[](const flutter::EncodableValue* arguments)
-							-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
-
-						return nullptr;
-					}
-			));
-
-	output->window_unmapped_event_channel = std::make_unique<flutter::EventChannel<>>(&output->messenger,
-	                                                                                  "window_unmapped", &codec);
-	output->window_unmapped_event_channel->SetStreamHandler(
-			std::make_unique<flutter::StreamHandlerFunctions<flutter::EncodableValue>>(
-					[](
-							const flutter::EncodableValue* arguments,
-							std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> &&events)
-							-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
-
-						std::cout << "LISTENING WINDOW_UNMAPPED" << std::endl;
-						return nullptr;
-					},
-					[](const flutter::EncodableValue* arguments)
-							-> std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> {
-
-						return nullptr;
-					}
-			));
-
-	output->platform_method_channel = std::make_unique<flutter::MethodChannel<>>(&output->messenger,
-	                                                                             "platform", &codec);
+	output->platform_method_channel = std::make_unique<flutter::MethodChannel<>>(
+			&output->messenger, "platform", &codec);
 
 	output->platform_method_channel->SetMethodCallHandler(
-			[server](const flutter::MethodCall<> &call, std::unique_ptr<flutter::MethodResult<>> result) {
+			[output](const flutter::MethodCall<> &call, std::unique_ptr<flutter::MethodResult<>> result) {
 				if (call.method_name() == "activate_window") {
-					int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
-					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
-
-					if (server->views.find(view) == server->views.end()) {
-						result->Success();
-						return;
-					}
-
-					focus_view(view);
-
-//					if (view->server->active_view == view) {
-//						// View already active. Noop.
-//						result->Success();
-//						return;
-//					}
-//
-//					if (view->server->active_view != nullptr) {
-//						wlr_xdg_toplevel_set_activated(view->server->active_view->xdg_surface, false);
-//					}
-//
-//					wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
-//					view->server->active_view = view;
-
-					result->Success();
-					return;
+					activate_window(output, call, std::move(result));
 				} else if (call.method_name() == "pointer_hover") {
-					flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
-
-					double x = std::get<double>(args[flutter::EncodableValue("x")]);
-					double y = std::get<double>(args[flutter::EncodableValue("y")]);
-					int64_t view_ptr_int = std::get<int64_t>(args[flutter::EncodableValue("view_ptr")]);
-
-					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
-
-					if (server->views.find(view) == server->views.end()) {
-						result->Success();
-						return;
-					}
-
-					wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
-					wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
-					result->Success();
-					return;
+					pointer_hover(output, call, std::move(result));
 				} else if (call.method_name() == "close_window") {
-					int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
-					auto* view = reinterpret_cast<flutland_view*>(view_ptr_int);
-
-					if (server->views.find(view) == server->views.end()) {
-						result->Success();
-						return;
-					}
-
-					wlr_xdg_toplevel_send_close(view->xdg_surface);
-
-					result->Success();
-					return;
+					close_window(output, call, std::move(result));
+				} else {
+					result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 				}
-				result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			});
 
-	FlutterEngineSendWindowMetricsEvent(engine, &event);
+	FlutterWindowMetricsEvent window_metrics = {};
+	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
+	window_metrics.width = width;
+	window_metrics.height = height;
+	window_metrics.pixel_ratio = 1.0;
+
+	FlutterEngineSendWindowMetricsEvent(engine, &window_metrics);
 }
 
-void output_frame(struct wl_listener* listener, void* data) {
-//	std::clog << "OUTPUT FRAME" << std::endl;
+void output_frame(wl_listener* listener, void* data) {
+	FlutlandOutput* output = wl_container_of(listener, output, frame);
 
-	/* This function is called every time an output is ready to display a frame,
-	 * generally at the output's refresh rate (e.g. 60Hz). */
-	struct flutland_output* output = wl_container_of(listener, output, frame);
-
+	// TODO: Avoid busy looping.
+	intptr_t baton;
 	while (true) {
 		pthread_mutex_lock(&output->baton_mutex);
 		if (output->new_baton) {
+			baton = output->baton;
+			output->new_baton = false;
 			pthread_mutex_unlock(&output->baton_mutex);
 			break;
 		}
 		pthread_mutex_unlock(&output->baton_mutex);
 	}
-//	pthread_mutex_lock(&output->baton_mutex);
-//	while (!output->new_baton);
-//	if (!output->new_baton) {
-//		pthread_mutex_unlock(&output->baton_mutex);
-//		return;
-//	}
-//	pthread_mutex_unlock(&output->baton_mutex);
 
-//	struct flutland_view* view;
 	for (auto* view: output->server->views) {
 		if (!view->mapped) {
 			/* An unmapped view should not be rendered. */
 			continue;
 		}
-		struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+		wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
 
-		struct timespec now;
+		timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);
 		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
 	}
 
-//	wl_list_for_each_reverse(view, &output->server->views, link) {
-//		if (!view->mapped) {
-//			/* An unmapped view should not be rendered. */
-//			continue;
-//		}
-//		struct wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
-//		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
-//
-//		struct timespec now;
-//		clock_gettime(CLOCK_MONOTONIC, &now);
-//		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
-//	}
-
 	// Rendering can only be started on the flutter render thread because the context is current on that thread.
 	FlutterEnginePostRenderThreadTask(output->engine, start_rendering, output);
 
-	pthread_mutex_lock(&output->baton_mutex);
-	intptr_t baton = output->baton;
-	output->new_baton = false;
-	pthread_mutex_unlock(&output->baton_mutex);
-
-//	output->new_baton = false;
 	uint64_t start = FlutterEngineGetCurrentTime();
-//	std::clog << "BATON "<< baton << std::endl;
-	FlutterEngineOnVsync(output->engine, baton, start, start + 1000000000ull / 144);
+	FlutterEngineOnVsync(output->engine, baton, start, start + 1'000'000'000ull / 60);
 
-
+	// Wait for Flutter to finish rendering the frame.
 	sem_wait(&output->vsync_semaphore);
 
 	// Execute all platform tasks while waiting for the next frame event.
-	wl_event_loop_add_idle(wl_display_get_event_loop(output->server->wl_display), flutter_execute_platform_tasks,
+	wl_event_loop_add_idle(wl_display_get_event_loop(output->server->display), flutter_execute_platform_tasks,
 	                       nullptr);
 }

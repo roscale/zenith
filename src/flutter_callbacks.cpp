@@ -6,7 +6,6 @@ extern "C" {
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_output.h>
-#include <wlr/types/wlr_xcursor_manager.h>
 #undef static
 }
 
@@ -17,7 +16,7 @@ extern "C" {
 #define BUNDLE "build/linux/x64/debug/bundle/data"
 //#define BUNDLE "build/linux/x64/release/bundle/data"
 
-FlutterEngine run_flutter(flutland_output* output) {
+FlutterEngine run_flutter(FlutlandOutput* output) {
 	FlutterRendererConfig config = {};
 	config.type = kOpenGL;
 	config.open_gl.struct_size = sizeof(config.open_gl);
@@ -62,66 +61,37 @@ FlutterEngine run_flutter(flutland_output* output) {
 }
 
 bool flutter_make_current(void* userdata) {
-//	std::clog << "MAKE_CURRENT" << std::endl;
-
-	auto* output = static_cast<flutland_output*>(userdata);
-
+	auto* output = static_cast<FlutlandOutput*>(userdata);
 	return wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
-//	return wlr_egl_make_current(output->platform_thread_egl_context);
 }
 
 bool flutter_clear_current(void* userdata) {
-//	std::clog << "CLEAR_CURRENT" << std::endl;
-	auto* output = static_cast<flutland_output*>(userdata);
-
+	auto* output = static_cast<FlutlandOutput*>(userdata);
 	return wlr_egl_unset_current(wlr_gles2_renderer_get_egl(output->server->renderer));
-//	return wlr_egl_unset_current(output->platform_thread_egl_context);
 }
 
 bool flutter_present(void* userdata) {
-//	std::clog << "PRESENT\n" << std::endl;
-
-	auto* output = static_cast<flutland_output*>(userdata);
-	struct wlr_renderer* renderer = output->server->renderer;
+	auto* output = static_cast<FlutlandOutput*>(userdata);
+	wlr_renderer* renderer = output->server->renderer;
 
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
 
-//	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-//	glClear(GL_COLOR_BUFFER_BIT);
-
-	render_to_fbo(&output->fix_y_flip_state, output_fbo);
-
-//	wlr_output_lock_software_cursors(output->wlr_output, true);
-//	wlr_output_render_software_cursors(output->wlr_output, nullptr);
+	render_to_fbo(&output->fix_y_flip, output_fbo);
 
 	wlr_renderer_end(renderer);
-
-//	wlr_xcursor_manager_set_cursor_image(
-//		  output->server->cursor_mgr, "left_ptr", output->server->cursor);
-
-
 	wlr_output_commit(output->wlr_output);
-
-//	GLint texture_binding;
-//	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture_binding);
-//
-//	glUseProgram(0);
-//	glBindTexture(GL_TEXTURE_2D, texture_binding);
 
 	sem_post(&output->vsync_semaphore);
 	return true;
 }
 
 uint32_t flutter_fbo_callback(void* userdata) {
-	auto* output = static_cast<flutland_output*>(userdata);
-	uint32_t fb = output->fix_y_flip_state.offscreen_framebuffer;
-//	uint32_t fb = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
-	return fb;
+	auto* output = static_cast<FlutlandOutput*>(userdata);
+	return output->fix_y_flip.offscreen_framebuffer;
 }
 
 void vsync_callback(void* userdata, intptr_t baton) {
-	auto* output = static_cast<flutland_output*>(userdata);
-//	std::clog << "VSYNC_CALLBACK" << std::endl;
+	auto* output = static_cast<FlutlandOutput*>(userdata);
 
 	pthread_mutex_lock(&output->baton_mutex);
 	output->new_baton = true;
@@ -131,11 +101,9 @@ void vsync_callback(void* userdata, intptr_t baton) {
 
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
-//	std::clog << "WW_EXTERNAL_TEXTURE_FRAME" << std::endl;
+	auto* texture = (wlr_texture*) texture_id;
 
-	auto* texture = (struct wlr_texture*) texture_id;
-
-	struct wlr_gles2_texture_attribs attribs{};
+	wlr_gles2_texture_attribs attribs{};
 	wlr_gles2_texture_get_attribs(texture, &attribs);
 	texture_out->target = attribs.target;
 	texture_out->name = attribs.tex;
@@ -145,15 +113,12 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 
 	texture_out->format = GL_RGBA8;
 
-//	std::clog << "Texture width: " << texture->width << std::endl;
-//	std::clog << "Texture height: " << texture->height << std::endl;
-
 	return true;
 }
 
 void start_rendering(void* userdata) {
-	auto* output = static_cast<flutland_output*>(userdata);
-	struct wlr_renderer* renderer = output->server->renderer;
+	auto* output = static_cast<FlutlandOutput*>(userdata);
+	wlr_renderer* renderer = output->server->renderer;
 
 	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
 		return;
@@ -164,7 +129,7 @@ void start_rendering(void* userdata) {
 
 	wlr_renderer_begin(renderer, width, height);
 
-	bind_offscreen_framebuffer(&output->fix_y_flip_state);
+	bind_offscreen_framebuffer(&output->fix_y_flip);
 }
 
 void flutter_execute_platform_tasks(void* data) {
@@ -172,7 +137,7 @@ void flutter_execute_platform_tasks(void* data) {
 }
 
 void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata) {
-	auto* output = static_cast<flutland_output*>(userdata);
+	auto* output = static_cast<FlutlandOutput*>(userdata);
 
 	if (message->struct_size != sizeof(FlutterPlatformMessage)) {
 		std::cerr << "ERROR: Invalid message size received. Expected: "
@@ -183,6 +148,4 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 
 	output->message_dispatcher.HandleMessage(
 			*message, [] {}, [] {});
-
-//	std::clog << "Dispatching" << std::endl;
 }

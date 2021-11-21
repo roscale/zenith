@@ -1,20 +1,8 @@
 import 'package:elinux_app/popup.dart';
+import 'package:elinux_app/util.dart';
 import 'package:elinux_app/window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-extension GlobalKeyExtension on GlobalKey {
-  Rect? get globalPaintBounds {
-    final renderObject = currentContext?.findRenderObject();
-    final translation = renderObject?.getTransformTo(null).getTranslation();
-    if (translation != null && renderObject?.paintBounds != null) {
-      final offset = Offset(translation.x, translation.y);
-      return renderObject!.paintBounds.shift(offset);
-    } else {
-      return null;
-    }
-  }
-}
 
 class DesktopState with ChangeNotifier {
   List<Window> windows = [];

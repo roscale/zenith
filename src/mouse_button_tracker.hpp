@@ -15,5 +15,6 @@ public:
 
 	bool are_any_buttons_pressed();
 
+	/// Returns a bitmap of pressed mouse buttons directly understood by the Flutter engine.
 	int64_t get_flutter_mouse_state();
 };

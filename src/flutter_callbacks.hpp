@@ -3,7 +3,7 @@
 #include "flutland_structs.hpp"
 #include "embedder.h"
 
-FlutterEngine run_flutter(flutland_output* output);
+FlutterEngine run_flutter(FlutlandOutput* output);
 
 bool flutter_make_current(void* userdata);
 
