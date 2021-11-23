@@ -19,17 +19,17 @@ static const char* fragmentShaderSource = "precision mediump float;\n"
                                           "   gl_FragColor = texture2D(tex, vtexcoord);\n"
                                           "}\n\0";
 
-static float vertices[] = {
-	  // pos_x, pos_y, pos_z, tex_x, tex_y
-	  // Last column has the y-flip fix.
-	  1.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // top right
-	  1.0f, -1.0f, 0.0f, 1.0f, 1.0f,   // bottom right
-	  -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,   // bottom left
-	  -1.0f, 1.0f, 0.0f, 0.0f, 0.0f    // top left
+static const float vertices[] = {
+		// pos_x, pos_y, pos_z, tex_x, tex_y
+		// Last column has the y-flip fix.
+		1.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // top right
+		1.0f, -1.0f, 0.0f, 1.0f, 1.0f,   // bottom right
+		-1.0f, -1.0f, 0.0f, 0.0f, 1.0f,   // bottom left
+		-1.0f, 1.0f, 0.0f, 0.0f, 0.0f,    // top left
 };
-static unsigned int indices[] = {
-	  0, 1, 3,
-	  1, 2, 3,
+static const unsigned int indices[] = {
+		0, 1, 3,
+		1, 2, 3,
 };
 
 struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
@@ -117,11 +117,11 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	}
 
 	fix_y_flip_state state = {
-		  .program = shaderProgram,
-		  .vbo = vbo,
-		  .ebo = ebo,
-		  .offscreen_framebuffer = offscreen_framebuffer,
-		  .framebuffer_texture = framebuffer_texture,
+			.program = shaderProgram,
+			.vbo = vbo,
+			.ebo = ebo,
+			.offscreen_framebuffer = offscreen_framebuffer,
+			.framebuffer_texture = framebuffer_texture,
 	};
 	return state;
 }
