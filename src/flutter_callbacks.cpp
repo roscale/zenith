@@ -12,9 +12,7 @@ extern "C" {
 #include <GL/gl.h>
 #include <cassert>
 #include <iostream>
-
-#define BUNDLE "build/linux/x64/debug/bundle/data"
-//#define BUNDLE "build/linux/x64/release/bundle/data"
+#include <filesystem>
 
 FlutterEngine run_flutter(FlutlandOutput* output) {
 	FlutterRendererConfig config = {};
@@ -26,32 +24,34 @@ FlutterEngine run_flutter(FlutlandOutput* output) {
 	config.open_gl.fbo_callback = flutter_fbo_callback;
 	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
 
-//	FlutterTaskRunnerDescription description = {
-//		  .struct_size = sizeof(FlutterTaskRunnerDescription),
-//		  .identifier = 1,
-//		  .runs_task_on_current_thread_callback
-//	};
-//
-//	FlutterCustomTaskRunners customTaskRunners = {
-//		  .struct_size = sizeof(FlutterCustomTaskRunners),
-//		  .platform_task_runner =
-//	};
+#ifdef DEBUG
+	FlutterProjectArgs args = {
+		  .struct_size = sizeof(FlutterProjectArgs),
+		  .assets_path = "data/flutter_assets",
+		  .icu_data_path = "data/icudtl.dat",
+		  .platform_message_callback = flutter_platform_message_callback,
+		  .vsync_callback = vsync_callback,
+	};
+#else
+	auto absolute_path = std::filesystem::canonical("lib/libapp.so");
 
-//	FlutterEngineAOTDataSource data_source = {
-//			.type = kFlutterEngineAOTDataSourceTypeElfPath,
-//			.elf_path = "/home/roscale/CLionProjects/flutter_embedder/build/linux/x64/release/bundle/lib/libapp.so",
-//	};
-//	FlutterEngineAOTData data;
-//	FlutterEngineCreateAOTData(&data_source, &data);
+	FlutterEngineAOTDataSource data_source = {
+		  .type = kFlutterEngineAOTDataSourceTypeElfPath,
+		  .elf_path = absolute_path.c_str(),
+	};
+	
+	FlutterEngineAOTData data;
+	FlutterEngineCreateAOTData(&data_source, &data);
 
 	FlutterProjectArgs args = {
-			.struct_size = sizeof(FlutterProjectArgs),
-			.assets_path = BUNDLE "/flutter_assets",
-			.icu_data_path = BUNDLE "/icudtl.dat",
-			.platform_message_callback = flutter_platform_message_callback,
-			.vsync_callback = vsync_callback,
-//			.aot_data = data,
+		  .struct_size = sizeof(FlutterProjectArgs),
+		  .assets_path = "data/flutter_assets",
+		  .icu_data_path = "data/icudtl.dat",
+		  .platform_message_callback = flutter_platform_message_callback,
+		  .vsync_callback = vsync_callback,
+		  .aot_data = data,
 	};
+#endif
 
 	FlutterEngine engine = nullptr;
 	int result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config, &args, output, &engine);
@@ -147,5 +147,5 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 	}
 
 	output->message_dispatcher.HandleMessage(
-			*message, [] {}, [] {});
+		  *message, [] {}, [] {});
 }

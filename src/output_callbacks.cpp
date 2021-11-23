@@ -4,8 +4,6 @@
 #include "flutland_structs.hpp"
 #include "flutter_callbacks.hpp"
 #include "platform_channels/event_channel.h"
-#include "create_shared_egl_context.hpp"
-#include "input_callbacks.hpp"
 #include "platform_methods.hpp"
 #include <src/platform_channels/event_stream_handler_functions.h>
 
@@ -76,23 +74,23 @@ void server_new_output(wl_listener* listener, void* data) {
 	output->message_dispatcher = IncomingMessageDispatcher(&output->messenger);
 	output->messenger.SetMessageDispatcher(&output->message_dispatcher);
 
-	auto &codec = flutter::StandardMethodCodec::GetInstance();
+	auto& codec = flutter::StandardMethodCodec::GetInstance();
 
 	output->platform_method_channel = std::make_unique<flutter::MethodChannel<>>(
-			&output->messenger, "platform", &codec);
+		  &output->messenger, "platform", &codec);
 
 	output->platform_method_channel->SetMethodCallHandler(
-			[output](const flutter::MethodCall<> &call, std::unique_ptr<flutter::MethodResult<>> result) {
-				if (call.method_name() == "activate_window") {
-					activate_window(output, call, std::move(result));
-				} else if (call.method_name() == "pointer_hover") {
-					pointer_hover(output, call, std::move(result));
-				} else if (call.method_name() == "close_window") {
-					close_window(output, call, std::move(result));
-				} else {
-					result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
-				}
-			});
+		  [output](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
+			  if (call.method_name() == "activate_window") {
+				  activate_window(output, call, std::move(result));
+			  } else if (call.method_name() == "pointer_hover") {
+				  pointer_hover(output, call, std::move(result));
+			  } else if (call.method_name() == "close_window") {
+				  close_window(output, call, std::move(result));
+			  } else {
+				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
+			  }
+		  });
 
 	FlutterWindowMetricsEvent window_metrics = {};
 	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);

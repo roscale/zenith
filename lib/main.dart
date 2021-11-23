@@ -54,15 +54,15 @@ class _DesktopState extends State<Desktop> {
         children: [
           ...desktopState.windows,
           ...desktopState.popups,
+          Positioned(
+            child: IgnorePointer(child: Container(color: Colors.red, width: 10, height: 10)),
+            left: pointerPosition.dx,
+            top: pointerPosition.dy,
+          ),
           const Positioned(
             left: 0,
             top: 0,
             child: IgnorePointer(child: CircularProgressIndicator()),
-          ),
-          Positioned(
-            child: IgnorePointer(child: Container(color: Colors.white, width: 10, height: 10)),
-            left: pointerPosition.dx,
-            top: pointerPosition.dy,
           ),
           Listener(
             behavior: HitTestBehavior.translucent,
