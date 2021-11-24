@@ -1,5 +1,5 @@
 #include "flutter_callbacks.hpp"
-#include "flutland_structs.hpp"
+#include "zenith_structs.hpp"
 
 extern "C" {
 #define static
@@ -14,7 +14,7 @@ extern "C" {
 #include <iostream>
 #include <filesystem>
 
-FlutterEngine run_flutter(FlutlandOutput* output) {
+FlutterEngine run_flutter(ZenithOutput* output) {
 	FlutterRendererConfig config = {};
 	config.type = kOpenGL;
 	config.open_gl.struct_size = sizeof(config.open_gl);
@@ -36,20 +36,20 @@ FlutterEngine run_flutter(FlutlandOutput* output) {
 	auto absolute_path = std::filesystem::canonical("lib/libapp.so");
 
 	FlutterEngineAOTDataSource data_source = {
-		  .type = kFlutterEngineAOTDataSourceTypeElfPath,
-		  .elf_path = absolute_path.c_str(),
+			.type = kFlutterEngineAOTDataSourceTypeElfPath,
+			.elf_path = absolute_path.c_str(),
 	};
-	
-	FlutterEngineAOTData data;
-	FlutterEngineCreateAOTData(&data_source, &data);
+
+	FlutterEngineAOTData aot_data;
+	FlutterEngineCreateAOTData(&data_source, &aot_data);
 
 	FlutterProjectArgs args = {
-		  .struct_size = sizeof(FlutterProjectArgs),
-		  .assets_path = "data/flutter_assets",
-		  .icu_data_path = "data/icudtl.dat",
-		  .platform_message_callback = flutter_platform_message_callback,
-		  .vsync_callback = vsync_callback,
-		  .aot_data = data,
+			.struct_size = sizeof(FlutterProjectArgs),
+			.assets_path = "data/flutter_assets",
+			.icu_data_path = "data/icudtl.dat",
+			.platform_message_callback = flutter_platform_message_callback,
+			.vsync_callback = vsync_callback,
+			.aot_data = aot_data,
 	};
 #endif
 
@@ -61,17 +61,17 @@ FlutterEngine run_flutter(FlutlandOutput* output) {
 }
 
 bool flutter_make_current(void* userdata) {
-	auto* output = static_cast<FlutlandOutput*>(userdata);
+	auto* output = static_cast<ZenithOutput*>(userdata);
 	return wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 }
 
 bool flutter_clear_current(void* userdata) {
-	auto* output = static_cast<FlutlandOutput*>(userdata);
+	auto* output = static_cast<ZenithOutput*>(userdata);
 	return wlr_egl_unset_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 }
 
 bool flutter_present(void* userdata) {
-	auto* output = static_cast<FlutlandOutput*>(userdata);
+	auto* output = static_cast<ZenithOutput*>(userdata);
 	wlr_renderer* renderer = output->server->renderer;
 
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
@@ -86,12 +86,12 @@ bool flutter_present(void* userdata) {
 }
 
 uint32_t flutter_fbo_callback(void* userdata) {
-	auto* output = static_cast<FlutlandOutput*>(userdata);
+	auto* output = static_cast<ZenithOutput*>(userdata);
 	return output->fix_y_flip.offscreen_framebuffer;
 }
 
 void vsync_callback(void* userdata, intptr_t baton) {
-	auto* output = static_cast<FlutlandOutput*>(userdata);
+	auto* output = static_cast<ZenithOutput*>(userdata);
 
 	pthread_mutex_lock(&output->baton_mutex);
 	output->new_baton = true;
@@ -117,7 +117,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 }
 
 void start_rendering(void* userdata) {
-	auto* output = static_cast<FlutlandOutput*>(userdata);
+	auto* output = static_cast<ZenithOutput*>(userdata);
 	wlr_renderer* renderer = output->server->renderer;
 
 	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
@@ -137,7 +137,7 @@ void flutter_execute_platform_tasks(void* data) {
 }
 
 void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata) {
-	auto* output = static_cast<FlutlandOutput*>(userdata);
+	auto* output = static_cast<ZenithOutput*>(userdata);
 
 	if (message->struct_size != sizeof(FlutterPlatformMessage)) {
 		std::cerr << "ERROR: Invalid message size received. Expected: "

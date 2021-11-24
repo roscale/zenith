@@ -1,5 +1,5 @@
 #include "input_callbacks.hpp"
-#include "flutland_structs.hpp"
+#include "zenith_structs.hpp"
 #include "mouse_button_tracker.hpp"
 
 extern "C" {
@@ -25,12 +25,12 @@ MouseButtonTracker mouse_button_tracker;
  * opportunity to do libinput configuration on the device to set
  * acceleration, etc.
  */
-static void server_new_pointer(FlutlandServer* server, wlr_input_device* device) {
+static void server_new_pointer(ZenithServer* server, wlr_input_device* device) {
 	wlr_cursor_attach_input_device(server->cursor, device);
 }
 
-static void server_new_keyboard(FlutlandServer* server, wlr_input_device* device) {
-	FlutlandKeyboard* keyboard = static_cast<FlutlandKeyboard*>(calloc(1, sizeof(FlutlandKeyboard)));
+static void server_new_keyboard(ZenithServer* server, wlr_input_device* device) {
+	ZenithKeyboard* keyboard = static_cast<ZenithKeyboard*>(calloc(1, sizeof(ZenithKeyboard)));
 	keyboard->server = server;
 	keyboard->device = device;
 
@@ -58,7 +58,7 @@ static void server_new_keyboard(FlutlandServer* server, wlr_input_device* device
 
 void server_new_input(wl_listener* listener, void* data) {
 	// TODO: Offset of on non-standard-layout type
-	FlutlandServer* server = wl_container_of(listener, server, new_input);
+	ZenithServer* server = wl_container_of(listener, server, new_input);
 	auto* device = static_cast<wlr_input_device*>(data);
 
 	switch (device->type) {
@@ -84,7 +84,7 @@ void server_new_input(wl_listener* listener, void* data) {
 }
 
 void server_cursor_motion(wl_listener* listener, void* data) {
-	FlutlandServer* server = wl_container_of(listener, server, cursor_motion);
+	ZenithServer* server = wl_container_of(listener, server, cursor_motion);
 	auto* event = static_cast<wlr_event_pointer_motion*>(data);
 	/* The cursor doesn't move unless we tell it to. The cursor automatically
 	 * handles constraining the motion to the output layout, as well as any
@@ -106,7 +106,7 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 }
 
 void server_cursor_motion_absolute(wl_listener* listener, void* data) {
-	FlutlandServer* server = wl_container_of(listener, server, cursor_motion_absolute);
+	ZenithServer* server = wl_container_of(listener, server, cursor_motion_absolute);
 	auto* event = static_cast<wlr_event_pointer_motion_absolute*>(data);
 
 	wlr_cursor_warp_absolute(server->cursor, event->device, event->x, event->y);
@@ -124,7 +124,7 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 }
 
 void server_cursor_button(wl_listener* listener, void* data) {
-	FlutlandServer* server = wl_container_of(listener, server, cursor_button);
+	ZenithServer* server = wl_container_of(listener, server, cursor_button);
 	auto* event = static_cast<wlr_event_pointer_button*>(data);
 
 	/* Notify the client with pointer focus that a button press has occurred */
@@ -161,7 +161,7 @@ void server_cursor_button(wl_listener* listener, void* data) {
 }
 
 void server_cursor_axis(wl_listener* listener, void* data) {
-	FlutlandServer* server = wl_container_of(listener, server, cursor_axis);
+	ZenithServer* server = wl_container_of(listener, server, cursor_axis);
 	auto* event = static_cast<wlr_event_pointer_axis*>(data);
 
 	/* Notify the client with pointer focus of the axis event. */
@@ -171,14 +171,14 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 }
 
 void server_cursor_frame(wl_listener* listener, void* data) {
-	FlutlandServer* server = wl_container_of(listener, server, cursor_frame);
+	ZenithServer* server = wl_container_of(listener, server, cursor_frame);
 
 	/* Notify the client with pointer focus of the frame event. */
 	wlr_seat_pointer_notify_frame(server->seat);
 }
 
 void keyboard_handle_modifiers(wl_listener* listener, void* data) {
-	FlutlandKeyboard* keyboard = wl_container_of(listener, keyboard, modifiers);
+	ZenithKeyboard* keyboard = wl_container_of(listener, keyboard, modifiers);
 	/*
 	 * A seat can only have one keyboard, but this is a limitation of the
 	 * Wayland protocol - not wlroots. We assign all connected keyboards to the
@@ -191,8 +191,8 @@ void keyboard_handle_modifiers(wl_listener* listener, void* data) {
 }
 
 void keyboard_handle_key(wl_listener* listener, void* data) {
-	FlutlandKeyboard* keyboard = wl_container_of(listener, keyboard, key);
-	FlutlandServer* server = keyboard->server;
+	ZenithKeyboard* keyboard = wl_container_of(listener, keyboard, key);
+	ZenithServer* server = keyboard->server;
 
 	auto* event = static_cast<wlr_event_keyboard_key*>(data);
 	wlr_seat* seat = server->seat;
@@ -202,7 +202,7 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 	wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
 }
 
-void focus_view(FlutlandView* view) {
+void focus_view(ZenithView* view) {
 	if (view == nullptr || view->xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
 		// Popups cannot get focus.
 		return;

@@ -1,15 +1,15 @@
 #pragma once
 
-#include "flutland_structs.hpp"
+#include "zenith_structs.hpp"
 
-void activate_window(FlutlandOutput* output,
+void activate_window(ZenithOutput* output,
                      const flutter::MethodCall<> &call,
                      std::unique_ptr<flutter::MethodResult<>> result);
 
-void pointer_hover(FlutlandOutput* output,
+void pointer_hover(ZenithOutput* output,
                    const flutter::MethodCall<> &call,
                    std::unique_ptr<flutter::MethodResult<>> result);
 
-void close_window(FlutlandOutput* output,
+void close_window(ZenithOutput* output,
                   const flutter::MethodCall<> &call,
                   std::unique_ptr<flutter::MethodResult<>> result);

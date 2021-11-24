@@ -1,4 +1,4 @@
-TARGET_EXEC := flutland
+TARGET_EXEC := zenith
 SRC_DIRS := ./src
 
 DBG_BUILD_DIR := ./build/$(TARGET_EXEC)/debug
@@ -30,6 +30,8 @@ REL_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -O2
 
 DBG_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_debug
 REL_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_release
+
+all: debug_bundle release_bundle
 
 debug_bundle: $(DBG_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	mkdir -p $(dir $<)/lib/
@@ -80,7 +82,7 @@ $(REL_BUILD_DIR)/%.cc.o: %.cc
 	mkdir -p $(dir $@)
 	$(CXX) $(REL_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: clean debug_bundle release_bundle
+.PHONY: clean all debug_bundle release_bundle
 
 clean:
 	-rm -r $(DBG_BUILD_DIR)

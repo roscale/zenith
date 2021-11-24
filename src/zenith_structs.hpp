@@ -20,23 +20,23 @@ extern "C" {
 #undef static
 }
 
-struct FlutlandOutput;
+struct ZenithOutput;
 
-struct FlutlandView;
+struct ZenithView;
 
-struct FlutlandServer {
+struct ZenithServer {
 	wl_display* display;
 	wlr_backend* backend;
 	wlr_renderer* renderer;
 	wlr_xdg_shell* xdg_shell;
 
 	wlr_output_layout* output_layout;
-	FlutlandOutput* output;
+	ZenithOutput* output;
 
 	wl_listener new_output;
 	wl_listener new_xdg_surface;
-	std::set<FlutlandView*> views;
-	FlutlandView* active_view;
+	std::set<ZenithView*> views;
+	ZenithView* active_view;
 
 	wlr_cursor* cursor;
 	wlr_xcursor_manager* cursor_mgr;
@@ -51,9 +51,9 @@ struct FlutlandServer {
 	wl_list keyboards;
 };
 
-struct FlutlandOutput {
+struct ZenithOutput {
 	wl_list link;
-	FlutlandServer* server;
+	ZenithServer* server;
 	struct wlr_output* wlr_output;
 	wl_listener frame;
 
@@ -72,9 +72,9 @@ struct FlutlandOutput {
 	fix_y_flip_state fix_y_flip;
 };
 
-struct FlutlandView {
+struct ZenithView {
 	wl_list link;
-	FlutlandServer* server;
+	ZenithServer* server;
 	wlr_xdg_surface* xdg_surface;
 	wl_listener map;
 	wl_listener unmap;
@@ -83,9 +83,9 @@ struct FlutlandView {
 	int x, y;
 };
 
-struct FlutlandKeyboard {
+struct ZenithKeyboard {
 	wl_list link;
-	FlutlandServer* server;
+	ZenithServer* server;
 	wlr_input_device* device;
 
 	wl_listener modifiers;

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:elinux_app/popup.dart';
+import 'package:zenith/popup.dart';
 import 'package:flutter/material.dart';
 
 class WindowState with ChangeNotifier {

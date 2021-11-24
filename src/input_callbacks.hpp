@@ -1,6 +1,6 @@
 #pragma once
 
-#include "flutland_structs.hpp"
+#include "zenith_structs.hpp"
 
 /*
  * This event is raised by the backend when a new input device becomes available.
@@ -54,4 +54,4 @@ void keyboard_handle_key(wl_listener* listener, void* data);
 /*
  * Activates a view and make the keyboard enter the surface of the view.
  */
-void focus_view(FlutlandView* view);
+void focus_view(ZenithView* view);

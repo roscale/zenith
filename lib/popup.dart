@@ -1,4 +1,4 @@
-import 'package:elinux_app/desktop_state.dart';
+import 'package:zenith/desktop_state.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 

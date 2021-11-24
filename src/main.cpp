@@ -1,4 +1,4 @@
-#include "flutland_structs.hpp"
+#include "zenith_structs.hpp"
 #include "output_callbacks.hpp"
 #include "xdg_surface_callbacks.hpp"
 #include "input_callbacks.hpp"
@@ -27,7 +27,7 @@ extern "C" {
 int main() {
 	wlr_log_init(WLR_DEBUG, nullptr);
 
-	FlutlandServer server{};
+	ZenithServer server{};
 	server.display = wl_display_create();
 	server.backend = wlr_backend_autocreate(server.display);
 	server.renderer = wlr_backend_get_renderer(server.backend);

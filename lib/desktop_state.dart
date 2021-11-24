@@ -1,6 +1,6 @@
-import 'package:elinux_app/popup.dart';
-import 'package:elinux_app/util.dart';
-import 'package:elinux_app/window.dart';
+import 'package:zenith/popup.dart';
+import 'package:zenith/util.dart';
+import 'package:zenith/window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

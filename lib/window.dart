@@ -1,6 +1,6 @@
-import 'package:elinux_app/desktop_state.dart';
-import 'package:elinux_app/title_bar.dart';
-import 'package:elinux_app/window_state.dart';
+import 'package:zenith/desktop_state.dart';
+import 'package:zenith/title_bar.dart';
+import 'package:zenith/window_state.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "flutland_structs.hpp"
+#include "zenith_structs.hpp"
 #include "embedder.h"
 
-FlutterEngine run_flutter(FlutlandOutput* output);
+FlutterEngine run_flutter(ZenithOutput* output);
 
 bool flutter_make_current(void* userdata);
 

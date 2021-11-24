@@ -1,6 +1,6 @@
 #include <src/platform_channels/method_channel.h>
 #include "xdg_surface_callbacks.hpp"
-#include "flutland_structs.hpp"
+#include "zenith_structs.hpp"
 #include "input_callbacks.hpp"
 
 extern "C" {
@@ -13,11 +13,11 @@ extern "C" {
 }
 
 void server_new_xdg_surface(wl_listener* listener, void* data) {
-	FlutlandServer* server = wl_container_of(listener, server, new_xdg_surface);
+	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface);
 	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
 
-	/* Allocate a FlutlandView for this surface */
-	auto* view = static_cast<FlutlandView*>(calloc(1, sizeof(FlutlandView)));
+	/* Allocate a ZenithView for this surface */
+	auto* view = static_cast<ZenithView*>(calloc(1, sizeof(ZenithView)));
 	view->server = server;
 	view->xdg_surface = xdg_surface;
 
@@ -36,7 +36,7 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 }
 
 void xdg_surface_map(wl_listener* listener, void* data) {
-	FlutlandView* view = wl_container_of(listener, view, map);
+	ZenithView* view = wl_container_of(listener, view, map);
 	view->mapped = true;
 	focus_view(view);
 
@@ -82,7 +82,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 }
 
 void xdg_surface_unmap(wl_listener* listener, void* data) {
-	FlutlandView* view = wl_container_of(listener, view, unmap);
+	ZenithView* view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
 
 	wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
@@ -117,7 +117,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 }
 
 void xdg_surface_destroy(wl_listener* listener, void* data) {
-	FlutlandView* view = wl_container_of(listener, view, destroy);
+	ZenithView* view = wl_container_of(listener, view, destroy);
 	wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 
 	FlutterEngineUnregisterExternalTexture(view->server->output->engine, (int64_t) texture);

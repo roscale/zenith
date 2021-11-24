@@ -1,5 +1,5 @@
-import 'package:elinux_app/action_buttons.dart';
-import 'package:elinux_app/window_state.dart';
+import 'package:zenith/action_buttons.dart';
+import 'package:zenith/window_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

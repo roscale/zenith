@@ -8,13 +8,13 @@ extern "C" {
 #undef static
 }
 
-void activate_window(FlutlandOutput* output,
+void activate_window(ZenithOutput* output,
                      const flutter::MethodCall<> &call,
                      std::unique_ptr<flutter::MethodResult<>> result) {
 
 	int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
-	auto* view = reinterpret_cast<FlutlandView*>(view_ptr_int);
-	FlutlandServer* server = output->server;
+	auto* view = reinterpret_cast<ZenithView*>(view_ptr_int);
+	ZenithServer* server = output->server;
 
 	bool view_doesnt_exist = server->views.find(view) == server->views.end();
 	if (view_doesnt_exist) {
@@ -27,7 +27,7 @@ void activate_window(FlutlandOutput* output,
 	result->Success();
 }
 
-void pointer_hover(FlutlandOutput* output,
+void pointer_hover(ZenithOutput* output,
                    const flutter::MethodCall<> &call,
                    std::unique_ptr<flutter::MethodResult<>> result) {
 
@@ -37,8 +37,8 @@ void pointer_hover(FlutlandOutput* output,
 	double y = std::get<double>(args[flutter::EncodableValue("y")]);
 	int64_t view_ptr_int = std::get<int64_t>(args[flutter::EncodableValue("view_ptr")]);
 
-	auto* view = reinterpret_cast<FlutlandView*>(view_ptr_int);
-	FlutlandServer* server = output->server;
+	auto* view = reinterpret_cast<ZenithView*>(view_ptr_int);
+	ZenithServer* server = output->server;
 
 	bool view_doesnt_exist = server->views.find(view) == server->views.end();
 	if (view_doesnt_exist) {
@@ -52,13 +52,13 @@ void pointer_hover(FlutlandOutput* output,
 	result->Success();
 }
 
-void close_window(FlutlandOutput* output,
+void close_window(ZenithOutput* output,
                   const flutter::MethodCall<> &call,
                   std::unique_ptr<flutter::MethodResult<>> result) {
 
 	int64_t view_ptr_int = std::get<int64_t>(call.arguments()[0]);
-	auto* view = reinterpret_cast<FlutlandView*>(view_ptr_int);
-	FlutlandServer* server = output->server;
+	auto* view = reinterpret_cast<ZenithView*>(view_ptr_int);
+	ZenithServer* server = output->server;
 
 	bool view_doesnt_exist = server->views.find(view) == server->views.end();
 	if (view_doesnt_exist) {
