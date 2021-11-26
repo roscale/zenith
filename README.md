@@ -1,16 +1,52 @@
 # Zenith
 
-A new Flutter project.
+A Wayland compositor that uses Flutter for rendering.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- [x] Render top level surfaces
+- [x] Render popups
+- [x] Move windows
+- [ ] Resize windows
 
-A few resources to get you started if this is your first Flutter project:
+## Dependencies
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+### Arch Linux
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials, samples, guidance on mobile development, and a
-full API reference.
+Install Flutter, `wayland`, and `wayland-protocols`.
+
+Make sure `flutter` is in PATH.
+
+## Compiling
+
+- cd into the project directory
+- `./download_flutter_engine.sh` to download the precompiled flutter engine
+- `flutter pub get` to download Flutter project dependencies
+
+### Debug
+
+```
+flutter build linux --debug
+make debug_bundle
+```
+
+### Release
+
+```
+flutter build linux --release
+make release_bundle
+```
+
+The bundle is compiled at `build/zenith/[debug|release]/bundle/`.
+
+## Running
+
+Switch to another TTY.
+
+```
+cd build/zenith/[debug|release]/bundle/
+./zenith
+```
+
+For development purposes you can also start Zenith in an existing X11 or Wayland compositor and it will show up as a
+window.
