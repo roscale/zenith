@@ -34,9 +34,11 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Download flutter engine
+      - name: Download platform-agnostic Flutter engine
+        run: ./download_flutter_engine.sh
+
+      - name: Compile the code and make bundles
         run: |
-          ./download_flutter_engine.sh
           flutter config --enable-linux-desktop
 
           flutter build linux --debug

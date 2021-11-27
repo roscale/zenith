@@ -44,6 +44,32 @@ release_bundle: $(REL_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	cp build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
 	cp -r build/linux/x64/release/bundle/data $(dir $<)
 
+docker_build_image:
+	docker build -t archlinux-flutter .
+
+docker_run_container:
+	docker run -t -d --name archlinux-flutter -v "`pwd`:/home/zenith" -w "/home/zenith" archlinux-flutter
+
+docker_debug_bundle:
+	docker exec archlinux-flutter cp ../libflutter_engine_debug.so ./
+	docker exec archlinux-flutter cp ../libflutter_engine_release.so ./
+
+	docker exec archlinux-flutter flutter config --enable-linux-desktop
+
+	docker exec archlinux-flutter flutter pub get
+	docker exec archlinux-flutter flutter build linux --debug
+	docker exec archlinux-flutter make debug_bundle -j6
+
+docker_release_bundle:
+	docker exec archlinux-flutter cp ../libflutter_engine_debug.so ./
+	docker exec archlinux-flutter cp ../libflutter_engine_release.so ./
+
+	docker exec archlinux-flutter flutter config --enable-linux-desktop
+
+	docker exec archlinux-flutter flutter pub get
+	docker exec archlinux-flutter flutter build linux --release
+	docker exec archlinux-flutter make release_bundle -j6
+
 $(DBG_BUILD_DIR)/bundle/$(TARGET_EXEC): $(DBG_OBJS)
 	mkdir -p $(dir $@)
 	$(CXX) $(DBG_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(DBG_LDFLAGS)
@@ -82,7 +108,7 @@ $(REL_BUILD_DIR)/%.cc.o: %.cc
 	mkdir -p $(dir $@)
 	$(CXX) $(REL_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: clean all debug_bundle release_bundle
+.PHONY: clean all debug_bundle release_bundle docker_debug_bundle docker_release_bundle docker_build_image docker_run_container
 
 clean:
 	-rm -r $(DBG_BUILD_DIR)
