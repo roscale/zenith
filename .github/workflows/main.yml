@@ -1,0 +1,70 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build bundles
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - run: pacman --noconfirm -Syu nodejs zip unzip git cmake ninja clang gtk3 wlroots
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: 'stable'
+
+      - name: Download flutter engine
+        run: |
+          ./download_flutter_engine.sh
+          flutter config --enable-linux-desktop
+
+          flutter build linux --debug
+          make debug_bundle -j6
+
+          flutter build linux --release
+          make release_bundle -j6
+
+      - name: Archive debug bundle
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          directory: 'build/zenith/debug/bundle/'
+          filename: 'debug_bundle.zip'
+
+      - name: Archive release bundle
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          directory: 'build/zenith/release/bundle/'
+          filename: 'release_bundle.zip'
+
+      - name: Create a release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          files: |
+            build/zenith/debug/bundle/debug_bundle.zip
+            build/zenith/release/bundle/release_bundle.zip

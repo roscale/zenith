@@ -13,7 +13,13 @@ A Wayland compositor that uses Flutter for rendering.
 
 ### Arch Linux
 
-Install Flutter, `wayland`, and `wayland-protocols`.
+Install Flutter, `curl`, `unzip`, `make`, `wayland`, `wayland-protocols`.
+
+### Ubuntu
+
+Install Flutter
+
+`sudo apt install curl unzip make g++ libegl-dev libwlroots-dev `
 
 Make sure `flutter` is in PATH.
 
@@ -21,20 +27,20 @@ Make sure `flutter` is in PATH.
 
 - cd into the project directory
 - `./download_flutter_engine.sh` to download the precompiled flutter engine
-- `flutter pub get` to download Flutter project dependencies
+- `flutter config --enable-linux-desktop`
 
 ### Debug
 
 ```
 flutter build linux --debug
-make debug_bundle
+make debug_bundle -j6
 ```
 
 ### Release
 
 ```
 flutter build linux --release
-make release_bundle
+make release_bundle -j6
 ```
 
 The bundle is compiled at `build/zenith/[debug|release]/bundle/`.
