@@ -35,14 +35,16 @@ all: debug_bundle release_bundle
 
 debug_bundle: $(DBG_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	mkdir -p $(dir $<)/lib/
-	cp libflutter_engine_debug.so $(dir $<)/lib/libflutter_engine.so
-	cp -r build/linux/x64/debug/bundle/data $(dir $<)
+	rsync libflutter_engine_debug.so $(dir $<)/lib/libflutter_engine.so
+	rsync -r build/linux/x64/debug/bundle/data $(dir $<)
+	ldd $< | grep -e "wlroots" | awk '{print $$3}' | xargs -I '{}' rsync -v '{}' $(dir $<)/lib/
 
 release_bundle: $(REL_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	mkdir -p $(dir $<)/lib/
-	cp libflutter_engine_release.so $(dir $<)/lib/libflutter_engine.so
-	cp build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
-	cp -r build/linux/x64/release/bundle/data $(dir $<)
+	rsync libflutter_engine_release.so $(dir $<)/lib/libflutter_engine.so
+	rsync build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
+	rsync -r build/linux/x64/release/bundle/data $(dir $<)
+	ldd $< | grep -e "wlroots" | awk '{print $$3}' | xargs -I '{}' rsync -v '{}' $(dir $<)/lib/
 
 docker_build_image:
 	docker build -t archlinux-flutter .
@@ -51,8 +53,8 @@ docker_run_container:
 	docker run -t -d --name archlinux-flutter -v "`pwd`:/home/zenith" -w "/home/zenith" archlinux-flutter
 
 docker_debug_bundle:
-	docker exec archlinux-flutter cp ../libflutter_engine_debug.so ./
-	docker exec archlinux-flutter cp ../libflutter_engine_release.so ./
+	docker exec archlinux-flutter rsync ../libflutter_engine_debug.so ./
+	docker exec archlinux-flutter rsync ../libflutter_engine_release.so ./
 
 	docker exec archlinux-flutter flutter config --enable-linux-desktop
 
@@ -61,8 +63,8 @@ docker_debug_bundle:
 	docker exec archlinux-flutter make debug_bundle -j6
 
 docker_release_bundle:
-	docker exec archlinux-flutter cp ../libflutter_engine_debug.so ./
-	docker exec archlinux-flutter cp ../libflutter_engine_release.so ./
+	docker exec archlinux-flutter rsync ../libflutter_engine_debug.so ./
+	docker exec archlinux-flutter rsync ../libflutter_engine_release.so ./
 
 	docker exec archlinux-flutter flutter config --enable-linux-desktop
 

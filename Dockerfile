@@ -1,6 +1,6 @@
 FROM archlinux:base-devel
 
-RUN pacman --noconfirm -Syu unzip git cmake ninja clang gtk3 wlroots
+RUN pacman --noconfirm -Syu unzip git cmake ninja clang gtk3 wlroots rsync
 
 WORKDIR "/home"
 
