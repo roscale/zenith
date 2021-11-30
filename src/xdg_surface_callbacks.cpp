@@ -48,11 +48,11 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 	switch (view->xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
 			auto value = EncodableValue(EncodableMap{
-					{EncodableValue("texture_id"),  EncodableValue((int64_t) texture)},
-					{EncodableValue("view_ptr"),    EncodableValue((int64_t) view)},
-					{EncodableValue("surface_ptr"), EncodableValue((int64_t) view->xdg_surface->surface)},
-					{EncodableValue("width"),       EncodableValue(texture->width)},
-					{EncodableValue("height"),      EncodableValue(texture->height)},
+				  {EncodableValue("texture_id"),  EncodableValue((int64_t) texture)},
+				  {EncodableValue("view_ptr"),    EncodableValue((int64_t) view)},
+				  {EncodableValue("surface_ptr"), EncodableValue((int64_t) view->xdg_surface->surface)},
+				  {EncodableValue("width"),       EncodableValue(texture->width)},
+				  {EncodableValue("height"),      EncodableValue(texture->height)},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
@@ -62,14 +62,14 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
 			wlr_xdg_popup* popup = view->xdg_surface->popup;
 			auto value = EncodableValue(EncodableMap{
-					{EncodableValue("texture_id"),         EncodableValue((int64_t) texture)},
-					{EncodableValue("view_ptr"),           EncodableValue((int64_t) view)},
-					{EncodableValue("surface_ptr"),        EncodableValue((int64_t) view->xdg_surface->surface)},
-					{EncodableValue("parent_surface_ptr"), EncodableValue((int64_t) popup->parent)},
-					{EncodableValue("x"),                  EncodableValue(popup->geometry.x)},
-					{EncodableValue("y"),                  EncodableValue(popup->geometry.y)},
-					{EncodableValue("width"),              EncodableValue(popup->geometry.width)},
-					{EncodableValue("height"),             EncodableValue(popup->geometry.height)},
+				  {EncodableValue("texture_id"),         EncodableValue((int64_t) texture)},
+				  {EncodableValue("view_ptr"),           EncodableValue((int64_t) view)},
+				  {EncodableValue("surface_ptr"),        EncodableValue((int64_t) view->xdg_surface->surface)},
+				  {EncodableValue("parent_surface_ptr"), EncodableValue((int64_t) popup->parent)},
+				  {EncodableValue("x"),                  EncodableValue(popup->geometry.x)},
+				  {EncodableValue("y"),                  EncodableValue(popup->geometry.y)},
+				  {EncodableValue("width"),              EncodableValue(popup->geometry.width)},
+				  {EncodableValue("height"),             EncodableValue(popup->geometry.height)},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
@@ -92,7 +92,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 	switch (view->xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
 			auto value = EncodableValue(EncodableMap{
-					{EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
+				  {EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
@@ -103,8 +103,8 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 			wlr_xdg_popup* popup = view->xdg_surface->popup;
 
 			auto value = EncodableValue(EncodableMap{
-					{EncodableValue("view_ptr"),           EncodableValue((int64_t) view)},
-					{EncodableValue("parent_surface_ptr"), EncodableValue((int64_t) popup->parent)},
+				  {EncodableValue("view_ptr"),           EncodableValue((int64_t) view)},
+				  {EncodableValue("parent_surface_ptr"), EncodableValue((int64_t) popup->parent)},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 

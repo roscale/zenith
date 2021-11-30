@@ -18,10 +18,6 @@ A Wayland compositor that uses Flutter for rendering.
 
 Make sure `flutter` is in PATH.
 
-### Any distribution
-
-Install `make` and `docker`.
-
 ## Compiling
 
 ### Arch Linux
@@ -46,20 +42,6 @@ make release_bundle -j6
 ```
 
 The bundle is compiled at `build/zenith/[debug|release]/bundle/`.
-
-### Any distribution
-
-- cd into the project directory
-- `make docker_build_image`
-- `make docker_run_container`
-
-#### Debug
-
-`make docker_debug_bundle`
-
-#### Release
-
-`make docker_release_bundle`
 
 ## Running
 
