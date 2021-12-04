@@ -5,6 +5,7 @@
 #include "flutter_callbacks.hpp"
 #include "platform_channels/event_channel.h"
 #include "platform_methods.hpp"
+#include "create_shared_egl_context.hpp"
 #include <src/platform_channels/event_stream_handler_functions.h>
 
 extern "C" {
@@ -43,7 +44,9 @@ void server_new_output(wl_listener* listener, void* data) {
 	}
 
 	// Allocates and configures our state for this output.
-	auto* output = static_cast<ZenithOutput*>(calloc(1, sizeof(ZenithOutput)));
+
+	auto* output = new ZenithOutput(BinaryMessenger(nullptr), IncomingMessageDispatcher(nullptr));
+//	auto* output = static_cast<ZenithOutput*>(calloc(1, sizeof(ZenithOutput)));
 	output->server = server;
 	server->output = output;
 
@@ -61,11 +64,17 @@ void server_new_output(wl_listener* listener, void* data) {
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
+
+	output->async_flutter_gl_context = create_shared_egl_context(egl);
+
 	wlr_egl_make_current(egl);
 	output->fix_y_flip = fix_y_flip_init_state(width, height);
+	output->render_to_texture_shader = std::make_unique<RenderToTextureShader>();
 	// The Flutter engine will use the wlr renderer and its egl context on the render thread, therefore it must be
 	// unset in this thread because a context cannot be bound to multiple threads at once.
 	wlr_egl_unset_current(egl);
+
+	output->surface_framebuffers = std::map<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>>();
 
 	// Create the Flutter engine for this output.
 	FlutterEngine engine = run_flutter(output);
@@ -74,23 +83,23 @@ void server_new_output(wl_listener* listener, void* data) {
 	output->message_dispatcher = IncomingMessageDispatcher(&output->messenger);
 	output->messenger.SetMessageDispatcher(&output->message_dispatcher);
 
-	auto &codec = flutter::StandardMethodCodec::GetInstance();
+	auto& codec = flutter::StandardMethodCodec::GetInstance();
 
 	output->platform_method_channel = std::make_unique<flutter::MethodChannel<>>(
-			&output->messenger, "platform", &codec);
+		  &output->messenger, "platform", &codec);
 
 	output->platform_method_channel->SetMethodCallHandler(
-			[output](const flutter::MethodCall<> &call, std::unique_ptr<flutter::MethodResult<>> result) {
-				if (call.method_name() == "activate_window") {
-					activate_window(output, call, std::move(result));
-				} else if (call.method_name() == "pointer_hover") {
-					pointer_hover(output, call, std::move(result));
-				} else if (call.method_name() == "close_window") {
-					close_window(output, call, std::move(result));
-				} else {
-					result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
-				}
-			});
+		  [output](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
+			  if (call.method_name() == "activate_window") {
+				  activate_window(output, call, std::move(result));
+			  } else if (call.method_name() == "pointer_hover") {
+				  pointer_hover(output, call, std::move(result));
+			  } else if (call.method_name() == "close_window") {
+				  close_window(output, call, std::move(result));
+			  } else {
+				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
+			  }
+		  });
 
 	FlutterWindowMetricsEvent window_metrics = {};
 	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
@@ -123,7 +132,34 @@ void output_frame(wl_listener* listener, void* data) {
 			continue;
 		}
 		wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
-		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
+
+		wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
+		wlr_egl_make_current(egl);
+
+		output->surface_framebuffers_mutex.lock();
+
+		auto surface_framebuffer_it = output->surface_framebuffers.find(texture);
+		if (surface_framebuffer_it == output->surface_framebuffers.end()) {
+			auto inserted_pair = output->surface_framebuffers.insert(
+				  std::pair<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>>(
+						texture,
+						std::make_unique<SurfaceFramebuffer>(texture->width, texture->height)
+				  )
+			);
+			surface_framebuffer_it = inserted_pair.first;
+		}
+
+		wlr_gles2_texture_attribs attribs{};
+		wlr_gles2_texture_get_attribs(texture, &attribs);
+
+		output->render_to_texture_shader->render(attribs.tex, texture->width, texture->height,
+		                                         surface_framebuffer_it->second->framebuffer);
+
+		wlr_egl_unset_current(egl);
+
+		output->surface_framebuffers_mutex.unlock();
+
+		//		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
 
 		timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);

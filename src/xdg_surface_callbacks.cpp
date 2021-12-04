@@ -120,7 +120,13 @@ void xdg_surface_destroy(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, destroy);
 	wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 
-	FlutterEngineUnregisterExternalTexture(view->server->output->engine, (int64_t) texture);
+	view->server->output->surface_framebuffers_mutex.lock();
+
+	view->server->output->surface_framebuffers.erase(texture);
+
+	view->server->output->surface_framebuffers_mutex.unlock();
+
+//	FlutterEngineUnregisterExternalTexture(view->server->output->engine, (int64_t) texture);
 
 	view->server->views.erase(view);
 	free(view);

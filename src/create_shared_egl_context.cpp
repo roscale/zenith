@@ -1,12 +1,14 @@
 #include "create_shared_egl_context.hpp"
 
-extern "C" {
-#include <EGL/egl.h>
-#include <wlr/render/egl.h>
-}
-
 #include <cstring>
 #include <iostream>
+
+extern "C" {
+//#include <EGL/egl.h>
+//#define static
+#include <wlr/render/egl.h>
+//#undef static
+}
 
 static const EGLint config_attribs[] = {
 		EGL_SURFACE_TYPE, EGL_WINDOW_BIT,

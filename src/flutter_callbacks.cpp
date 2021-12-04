@@ -23,6 +23,7 @@ FlutterEngine run_flutter(ZenithOutput* output) {
 	config.open_gl.present = flutter_present;
 	config.open_gl.fbo_callback = flutter_fbo_callback;
 	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
+//	config.open_gl.make_resource_current = flutter_make_resource_current;
 
 #ifdef DEBUG
 	FlutterProjectArgs args = {
@@ -36,20 +37,20 @@ FlutterEngine run_flutter(ZenithOutput* output) {
 	auto absolute_path = std::filesystem::canonical("lib/libapp.so");
 
 	FlutterEngineAOTDataSource data_source = {
-			.type = kFlutterEngineAOTDataSourceTypeElfPath,
-			.elf_path = absolute_path.c_str(),
+		  .type = kFlutterEngineAOTDataSourceTypeElfPath,
+		  .elf_path = absolute_path.c_str(),
 	};
 
 	FlutterEngineAOTData aot_data;
 	FlutterEngineCreateAOTData(&data_source, &aot_data);
 
 	FlutterProjectArgs args = {
-			.struct_size = sizeof(FlutterProjectArgs),
-			.assets_path = "data/flutter_assets",
-			.icu_data_path = "data/icudtl.dat",
-			.platform_message_callback = flutter_platform_message_callback,
-			.vsync_callback = vsync_callback,
-			.aot_data = aot_data,
+		  .struct_size = sizeof(FlutterProjectArgs),
+		  .assets_path = "data/flutter_assets",
+		  .icu_data_path = "data/icudtl.dat",
+		  .platform_message_callback = flutter_platform_message_callback,
+		  .vsync_callback = vsync_callback,
+		  .aot_data = aot_data,
 	};
 #endif
 
@@ -101,17 +102,40 @@ void vsync_callback(void* userdata, intptr_t baton) {
 
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
+	auto* output = static_cast<ZenithOutput*>(userdata);
 	auto* texture = (wlr_texture*) texture_id;
+
+	output->surface_framebuffers_mutex.lock();
+//
+	auto surface_framebuffer_it = output->surface_framebuffers.find(texture);
+//	if (surface_framebuffer_it == output->surface_framebuffers.end()) {
+//		auto inserted_pair = output->surface_framebuffers.insert(
+//			  std::pair<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>>(
+//					texture,
+//					std::make_unique<SurfaceFramebuffer>(texture->width, texture->height)
+//			  )
+//		);
+//		surface_framebuffer_it = inserted_pair.first;
+//	}
+//
+
+	std::cout << "framee" << std::endl;
 
 	wlr_gles2_texture_attribs attribs{};
 	wlr_gles2_texture_get_attribs(texture, &attribs);
+//
+//	output->render_to_texture_shader->render(attribs.tex, texture->width, texture->height,
+//	                                         surface_framebuffer_it->second->framebuffer);
+
 	texture_out->target = attribs.target;
-	texture_out->name = attribs.tex;
+	texture_out->name = surface_framebuffer_it->second->texture;
 
 	texture_out->width = texture->width;
 	texture_out->height = texture->height;
 
 	texture_out->format = GL_RGBA8;
+
+	output->surface_framebuffers_mutex.unlock();
 
 	return true;
 }
@@ -148,4 +172,10 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 
 	output->message_dispatcher.HandleMessage(
 		  *message, [] {}, [] {});
+}
+
+bool flutter_make_resource_current(void* userdata) {
+	auto* output = static_cast<ZenithOutput*>(userdata);
+	wlr_egl_make_current(output->async_flutter_gl_context);
+	return true;
 }

@@ -7,12 +7,16 @@
 #include <src/platform_channels/method_channel.h>
 #include "embedder.h"
 #include "fix_y_flip.hpp"
+#include "surface_framebuffer.hpp"
+#include "render_to_texture_shader.hpp"
+#include <mutex>
 
 extern "C" {
 #include <semaphore.h>
 #include <wayland-server.h>
 #define static
 #include <wlr/backend.h>
+#include <wlr/render/egl.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_cursor.h>
@@ -52,6 +56,11 @@ struct ZenithServer {
 };
 
 struct ZenithOutput {
+	ZenithOutput(BinaryMessenger messenger, IncomingMessageDispatcher messageDispatcher)
+		  : message_dispatcher(messageDispatcher), messenger(messenger) {
+
+	}
+
 	wl_list link;
 	ZenithServer* server;
 	struct wlr_output* wlr_output;
@@ -61,6 +70,7 @@ struct ZenithOutput {
 	/// Send messages to Dart code.
 	BinaryMessenger messenger;
 	IncomingMessageDispatcher message_dispatcher;
+	wlr_egl* async_flutter_gl_context;
 
 	/// Allow Dart code to call C++ methods though this channel.
 	std::unique_ptr<flutter::MethodChannel<>> platform_method_channel;
@@ -70,6 +80,10 @@ struct ZenithOutput {
 	pthread_mutex_t baton_mutex;
 	sem_t vsync_semaphore;
 	fix_y_flip_state fix_y_flip;
+
+	std::unique_ptr<RenderToTextureShader> render_to_texture_shader;
+	std::mutex surface_framebuffers_mutex;
+	std::map<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers;
 };
 
 struct ZenithView {

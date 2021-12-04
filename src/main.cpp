@@ -112,10 +112,9 @@ int main() {
 	if (fork() == 0) {
 		execl("/bin/sh", "/bin/sh", "-c", "konsole", nullptr);
 	}
-	if (fork() == 0) {
-		execl("/bin/sh", "/bin/sh", "-c", "kate", nullptr);
-	}
-
+//	if (fork() == 0) {
+//		execl("/bin/sh", "/bin/sh", "-c", "kate", nullptr);
+//	}
 	wl_display_run(server.display);
 
 	wl_display_destroy_clients(server.display);

@@ -23,3 +23,5 @@ void start_rendering(void* userdata);
 void flutter_execute_platform_tasks(void* data);
 
 void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata);
+
+bool flutter_make_resource_current(void* userdata);
