@@ -122,9 +122,11 @@ void RenderToTextureShader::render(GLuint texture, size_t width, size_t height, 
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+	// position
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
 
+	// texture coordinates
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) (3 * sizeof(float)));
 
@@ -138,7 +140,16 @@ void RenderToTextureShader::render(GLuint texture, size_t width, size_t height, 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
+	// Required before rendering a texture.
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
 	glViewport(0, 0, width, height);
+
+	// Clear with transparency.
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 	// Restore context state.

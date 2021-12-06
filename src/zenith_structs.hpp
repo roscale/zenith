@@ -64,13 +64,14 @@ struct ZenithOutput {
 	wl_list link;
 	ZenithServer* server;
 	struct wlr_output* wlr_output;
-	wl_listener frame;
+	wl_listener frame_listener;
 
 	FlutterEngine engine;
 	/// Send messages to Dart code.
 	BinaryMessenger messenger;
 	IncomingMessageDispatcher message_dispatcher;
-	wlr_egl* async_flutter_gl_context;
+	wlr_egl* flutter_gl_context;
+	wlr_egl* flutter_resource_gl_context;
 
 	/// Allow Dart code to call C++ methods though this channel.
 	std::unique_ptr<flutter::MethodChannel<>> platform_method_channel;
@@ -84,6 +85,8 @@ struct ZenithOutput {
 	std::unique_ptr<RenderToTextureShader> render_to_texture_shader;
 	std::mutex surface_framebuffers_mutex;
 	std::map<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers;
+	std::mutex flip_mutex;
+	std::unique_ptr<SurfaceFramebuffer> present_fbo;
 };
 
 struct ZenithView {

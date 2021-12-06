@@ -1,7 +1,7 @@
 #pragma once
 
 #include <set>
-#include <stdint.h>
+#include <cstdint>
 
 class MouseButtonTracker {
 	std::set<uint32_t> pressed_buttons;

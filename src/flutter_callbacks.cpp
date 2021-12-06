@@ -23,7 +23,7 @@ FlutterEngine run_flutter(ZenithOutput* output) {
 	config.open_gl.present = flutter_present;
 	config.open_gl.fbo_callback = flutter_fbo_callback;
 	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
-//	config.open_gl.make_resource_current = flutter_make_resource_current;
+	config.open_gl.make_resource_current = flutter_make_resource_current;
 
 #ifdef DEBUG
 	FlutterProjectArgs args = {
@@ -63,26 +63,36 @@ FlutterEngine run_flutter(ZenithOutput* output) {
 
 bool flutter_make_current(void* userdata) {
 	auto* output = static_cast<ZenithOutput*>(userdata);
-	return wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+	return wlr_egl_make_current(output->flutter_gl_context);
 }
 
 bool flutter_clear_current(void* userdata) {
 	auto* output = static_cast<ZenithOutput*>(userdata);
-	return wlr_egl_unset_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+	return wlr_egl_unset_current(output->flutter_gl_context);
 }
 
 bool flutter_present(void* userdata) {
 	auto* output = static_cast<ZenithOutput*>(userdata);
-	wlr_renderer* renderer = output->server->renderer;
+//	wlr_renderer* renderer = output->server->renderer;
 
-	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
+//	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
 
-	render_to_fbo(&output->fix_y_flip, output_fbo);
+//	static uint8_t buf[4 * 1024 * 768];
+//	glReadPixels(0, 0, 1024, 768, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
-	wlr_renderer_end(renderer);
-	wlr_output_commit(output->wlr_output);
+//	static uint8_t buf;
+//	glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &buf);
 
-	sem_post(&output->vsync_semaphore);
+	output->flip_mutex.lock();
+	render_to_fbo(&output->fix_y_flip, output->present_fbo->framebuffer);
+	output->flip_mutex.unlock();
+
+	glFlush();
+
+//	wlr_renderer_end(renderer);
+//	wlr_output_commit(output->wlr_output);
+
+//	sem_post(&output->vsync_semaphore);
 	return true;
 }
 
@@ -95,6 +105,7 @@ void vsync_callback(void* userdata, intptr_t baton) {
 	auto* output = static_cast<ZenithOutput*>(userdata);
 
 	pthread_mutex_lock(&output->baton_mutex);
+	assert(output->new_baton == false);
 	output->new_baton = true;
 	output->baton = baton;
 	pthread_mutex_unlock(&output->baton_mutex);
@@ -109,6 +120,11 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 //
 	auto surface_framebuffer_it = output->surface_framebuffers.find(texture);
 //	if (surface_framebuffer_it == output->surface_framebuffers.end()) {
+//		output->surface_framebuffers_mutex.unlock();
+//		return false;
+//	}
+
+	//	if (surface_framebuffer_it == output->surface_framebuffers.end()) {
 //		auto inserted_pair = output->surface_framebuffers.insert(
 //			  std::pair<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>>(
 //					texture,
@@ -119,41 +135,23 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 //	}
 //
 
-	std::cout << "framee" << std::endl;
-
-	wlr_gles2_texture_attribs attribs{};
-	wlr_gles2_texture_get_attribs(texture, &attribs);
+//	wlr_gles2_texture_attribs attribs{};
+//	wlr_gles2_texture_get_attribs(texture, &attribs);
 //
 //	output->render_to_texture_shader->render(attribs.tex, texture->width, texture->height,
 //	                                         surface_framebuffer_it->second->framebuffer);
 
-	texture_out->target = attribs.target;
+	texture_out->target = GL_TEXTURE_2D;
 	texture_out->name = surface_framebuffer_it->second->texture;
 
-	texture_out->width = texture->width;
-	texture_out->height = texture->height;
+	texture_out->width = surface_framebuffer_it->second->width;
+	texture_out->height = surface_framebuffer_it->second->height;
 
 	texture_out->format = GL_RGBA8;
 
 	output->surface_framebuffers_mutex.unlock();
 
 	return true;
-}
-
-void start_rendering(void* userdata) {
-	auto* output = static_cast<ZenithOutput*>(userdata);
-	wlr_renderer* renderer = output->server->renderer;
-
-	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
-		return;
-	}
-
-	int width, height;
-	wlr_output_effective_resolution(output->wlr_output, &width, &height);
-
-	wlr_renderer_begin(renderer, width, height);
-
-	bind_offscreen_framebuffer(&output->fix_y_flip);
 }
 
 void flutter_execute_platform_tasks(void* data) {
@@ -176,6 +174,5 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 
 bool flutter_make_resource_current(void* userdata) {
 	auto* output = static_cast<ZenithOutput*>(userdata);
-	wlr_egl_make_current(output->async_flutter_gl_context);
-	return true;
+	return wlr_egl_make_current(output->flutter_resource_gl_context);
 }

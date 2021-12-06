@@ -55,8 +55,8 @@ void server_new_output(wl_listener* listener, void* data) {
 	pthread_mutex_init(&output->baton_mutex, nullptr);
 	sem_init(&output->vsync_semaphore, 0, 0);
 
-	output->frame.notify = output_frame;
-	wl_signal_add(&wlr_output->events.frame, &output->frame);
+	output->frame_listener.notify = output_frame;
+	wl_signal_add(&wlr_output->events.frame, &output->frame_listener);
 
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
@@ -65,14 +65,22 @@ void server_new_output(wl_listener* listener, void* data) {
 
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
 
-	output->async_flutter_gl_context = create_shared_egl_context(egl);
+	wlr_egl_make_current(egl);
+	output->flutter_gl_context = create_shared_egl_context(egl);
+	output->flutter_resource_gl_context = create_shared_egl_context(egl);
+	wlr_egl_unset_current(egl);
+
+	// FBOs cannot be shared between GL contexts. Since these FBOs will be used by a Flutter thread, create these
+	// resources using the Flutter's context.
+	wlr_egl_make_current(output->flutter_gl_context);
+	output->fix_y_flip = fix_y_flip_init_state(width, height);
+	output->present_fbo = std::make_unique<SurfaceFramebuffer>(width, height);
+	wlr_egl_unset_current(output->flutter_gl_context);
 
 	wlr_egl_make_current(egl);
-	output->fix_y_flip = fix_y_flip_init_state(width, height);
 	output->render_to_texture_shader = std::make_unique<RenderToTextureShader>();
 	// The Flutter engine will use the wlr renderer and its egl context on the render thread, therefore it must be
 	// unset in this thread because a context cannot be bound to multiple threads at once.
-	wlr_egl_unset_current(egl);
 
 	output->surface_framebuffers = std::map<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>>();
 
@@ -111,20 +119,10 @@ void server_new_output(wl_listener* listener, void* data) {
 }
 
 void output_frame(wl_listener* listener, void* data) {
-	ZenithOutput* output = wl_container_of(listener, output, frame);
+	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 
-	// TODO: Avoid busy looping.
-	intptr_t baton;
-	while (true) {
-		pthread_mutex_lock(&output->baton_mutex);
-		if (output->new_baton) {
-			baton = output->baton;
-			output->new_baton = false;
-			pthread_mutex_unlock(&output->baton_mutex);
-			break;
-		}
-		pthread_mutex_unlock(&output->baton_mutex);
-	}
+	wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
+	wlr_egl_make_current(egl);
 
 	for (auto* view: output->server->views) {
 		if (!view->mapped) {
@@ -132,9 +130,6 @@ void output_frame(wl_listener* listener, void* data) {
 			continue;
 		}
 		wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
-
-		wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
-		wlr_egl_make_current(egl);
 
 		output->surface_framebuffers_mutex.lock();
 
@@ -154,26 +149,43 @@ void output_frame(wl_listener* listener, void* data) {
 
 		output->render_to_texture_shader->render(attribs.tex, texture->width, texture->height,
 		                                         surface_framebuffer_it->second->framebuffer);
-
-		wlr_egl_unset_current(egl);
-
 		output->surface_framebuffers_mutex.unlock();
 
-		//		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
+		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
 
 		timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);
 		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
 	}
 
-	// Rendering can only be started on the flutter render thread because the context is current on that thread.
-	FlutterEnginePostRenderThreadTask(output->engine, start_rendering, output);
+	intptr_t baton;
+	pthread_mutex_lock(&output->baton_mutex);
+	if (output->new_baton) {
+		baton = output->baton;
+		output->new_baton = false;
 
-	uint64_t start = FlutterEngineGetCurrentTime();
-	FlutterEngineOnVsync(output->engine, baton, start, start + 1'000'000'000ull / 60);
+		uint64_t start = FlutterEngineGetCurrentTime();
+		FlutterEngineOnVsync(output->engine, baton, start, start + 1'000'000'000ull / 60);
+	}
+	pthread_mutex_unlock(&output->baton_mutex);
 
-	// Wait for Flutter to finish rendering the frame.
-	sem_wait(&output->vsync_semaphore);
+	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
+		return;
+	}
+
+	int width, height;
+	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+
+	wlr_renderer_begin(output->server->renderer, width, height);
+
+	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
+
+	output->flip_mutex.lock();
+	output->render_to_texture_shader->render(output->present_fbo->texture, width, height, output_fbo);
+	output->flip_mutex.unlock();
+
+	wlr_renderer_end(output->server->renderer);
+	wlr_output_commit(output->wlr_output);
 
 	// Execute all platform tasks while waiting for the next frame event.
 	wl_event_loop_add_idle(wl_display_get_event_loop(output->server->display), flutter_execute_platform_tasks,

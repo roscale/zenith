@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:zenith/desktop_state.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,10 @@ class _DesktopState extends State<Desktop> {
 
   void cursorMoved(PointerEvent event) {
     setState(() {
-      pointerPosition = event.position;
+      pointerPosition = Offset(
+        event.position.dx.floorToDouble(),
+        event.position.dy.floorToDouble(),
+      );
     });
   }
 
@@ -50,7 +54,13 @@ class _DesktopState extends State<Desktop> {
 
     return Container(
       color: Colors.grey.shade200,
-      child: WindowStack(
+      // decoration: const BoxDecoration(
+      //   image: DecorationImage(
+      //     image: AssetImage("assets/images/background.png"),
+      //     fit: BoxFit.cover,
+      //   ),
+      // ),
+      child: Stack(
         children: [
           ...desktopState.windows,
           ...desktopState.popups,
