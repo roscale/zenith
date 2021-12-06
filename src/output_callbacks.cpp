@@ -82,8 +82,6 @@ void server_new_output(wl_listener* listener, void* data) {
 	// The Flutter engine will use the wlr renderer and its egl context on the render thread, therefore it must be
 	// unset in this thread because a context cannot be bound to multiple threads at once.
 
-	output->surface_framebuffers = std::map<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>>();
-
 	// Create the Flutter engine for this output.
 	FlutterEngine engine = run_flutter(output);
 	output->engine = engine;
@@ -124,20 +122,23 @@ void output_frame(wl_listener* listener, void* data) {
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
 	wlr_egl_make_current(egl);
 
-	for (auto* view: output->server->views) {
+	for (auto pair: output->server->views) {
+		size_t view_id = pair.first;
+		ZenithView* view = pair.second;
+
 		if (!view->mapped) {
 			/* An unmapped view should not be rendered. */
 			continue;
 		}
 		wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 
-		output->surface_framebuffers_mutex.lock();
+		output->server->surface_framebuffers_mutex.lock();
 
-		auto surface_framebuffer_it = output->surface_framebuffers.find(texture);
-		if (surface_framebuffer_it == output->surface_framebuffers.end()) {
-			auto inserted_pair = output->surface_framebuffers.insert(
-				  std::pair<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>>(
-						texture,
+		auto surface_framebuffer_it = output->server->surface_framebuffers.find(view_id);
+		if (surface_framebuffer_it == output->server->surface_framebuffers.end()) {
+			auto inserted_pair = output->server->surface_framebuffers.insert(
+				  std::pair<size_t, std::unique_ptr<SurfaceFramebuffer>>(
+						view_id,
 						std::make_unique<SurfaceFramebuffer>(texture->width, texture->height)
 				  )
 			);
@@ -149,9 +150,9 @@ void output_frame(wl_listener* listener, void* data) {
 
 		output->render_to_texture_shader->render(attribs.tex, texture->width, texture->height,
 		                                         surface_framebuffer_it->second->framebuffer);
-		output->surface_framebuffers_mutex.unlock();
+		output->server->surface_framebuffers_mutex.unlock();
 
-		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) texture);
+		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) view_id);
 
 		timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);

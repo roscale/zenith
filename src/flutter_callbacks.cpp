@@ -111,14 +111,13 @@ void vsync_callback(void* userdata, intptr_t baton) {
 	pthread_mutex_unlock(&output->baton_mutex);
 }
 
-bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
+bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
 	auto* output = static_cast<ZenithOutput*>(userdata);
-	auto* texture = (wlr_texture*) texture_id;
 
-	output->surface_framebuffers_mutex.lock();
+	output->server->surface_framebuffers_mutex.lock();
 //
-	auto surface_framebuffer_it = output->surface_framebuffers.find(texture);
+	auto surface_framebuffer_it = output->server->surface_framebuffers.find(view_id);
 //	if (surface_framebuffer_it == output->surface_framebuffers.end()) {
 //		output->surface_framebuffers_mutex.unlock();
 //		return false;
@@ -149,7 +148,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 
 	texture_out->format = GL_RGBA8;
 
-	output->surface_framebuffers_mutex.unlock();
+	output->server->surface_framebuffers_mutex.unlock();
 
 	return true;
 }

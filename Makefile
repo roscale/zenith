@@ -53,32 +53,32 @@ $(REL_BUILD_DIR)/bundle/$(TARGET_EXEC): $(REL_OBJS)
 	$(CXX) $(REL_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(REL_LDFLAGS)
 
 # Build step for C source
-$(DBG_BUILD_DIR)/%.c.o: %.c
+$(DBG_BUILD_DIR)/%.c.o: %.c Makefile
 	mkdir -p $(dir $@)
 	$(CC) $(DBG_CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 # Build step for C source
-$(REL_BUILD_DIR)/%.c.o: %.c
+$(REL_BUILD_DIR)/%.c.o: %.c Makefile
 	mkdir -p $(dir $@)
 	$(CC) $(REL_CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 # Build step for C++ source
-$(DBG_BUILD_DIR)/%.cpp.o: %.cpp
+$(DBG_BUILD_DIR)/%.cpp.o: %.cpp Makefile
 	mkdir -p $(dir $@)
 	$(CXX) $(DBG_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 # Build step for C++ source
-$(REL_BUILD_DIR)/%.cpp.o: %.cpp
+$(REL_BUILD_DIR)/%.cpp.o: %.cpp Makefile
 	mkdir -p $(dir $@)
 	$(CXX) $(REL_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 # Build step for C++ source
-$(DBG_BUILD_DIR)/%.cc.o: %.cc
+$(DBG_BUILD_DIR)/%.cc.o: %.cc Makefile
 	mkdir -p $(dir $@)
 	$(CXX) $(DBG_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 # Build step for C++ source
-$(REL_BUILD_DIR)/%.cc.o: %.cc
+$(REL_BUILD_DIR)/%.cc.o: %.cc Makefile
 	mkdir -p $(dir $@)
 	$(CXX) $(REL_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 

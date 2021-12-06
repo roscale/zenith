@@ -12,12 +12,15 @@ extern "C" {
 #undef static
 }
 
+size_t next_view_id = 1;
+
 void server_new_xdg_surface(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface);
 	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
 
 	/* Allocate a ZenithView for this surface */
 	auto* view = static_cast<ZenithView*>(calloc(1, sizeof(ZenithView)));
+	view->id = next_view_id++;
 	view->server = server;
 	view->xdg_surface = xdg_surface;
 
@@ -32,7 +35,7 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 	wl_signal_add(&xdg_surface->events.destroy, &view->destroy);
 
 	/* Add it to the list of views. */
-	server->views.insert(view);
+	server->views.insert(std::make_pair(view->id, view));
 }
 
 void xdg_surface_map(wl_listener* listener, void* data) {
@@ -41,15 +44,14 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 	focus_view(view);
 
 	wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
-	FlutterEngineRegisterExternalTexture(view->server->output->engine, (int64_t) texture);
+	FlutterEngineRegisterExternalTexture(view->server->output->engine, (int64_t) view->id);
 
 	using namespace flutter;
 
 	switch (view->xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
 			auto value = EncodableValue(EncodableMap{
-				  {EncodableValue("texture_id"),  EncodableValue((int64_t) texture)},
-				  {EncodableValue("view_ptr"),    EncodableValue((int64_t) view)},
+				  {EncodableValue("view_id"),     EncodableValue((int64_t) view->id)},
 				  {EncodableValue("surface_ptr"), EncodableValue((int64_t) view->xdg_surface->surface)},
 				  {EncodableValue("width"),       EncodableValue(texture->width)},
 				  {EncodableValue("height"),      EncodableValue(texture->height)},
@@ -62,8 +64,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
 			wlr_xdg_popup* popup = view->xdg_surface->popup;
 			auto value = EncodableValue(EncodableMap{
-				  {EncodableValue("texture_id"),         EncodableValue((int64_t) texture)},
-				  {EncodableValue("view_ptr"),           EncodableValue((int64_t) view)},
+				  {EncodableValue("view_id"),            EncodableValue((int64_t) view->id)},
 				  {EncodableValue("surface_ptr"),        EncodableValue((int64_t) view->xdg_surface->surface)},
 				  {EncodableValue("parent_surface_ptr"), EncodableValue((int64_t) popup->parent)},
 				  {EncodableValue("x"),                  EncodableValue(popup->geometry.x)},
@@ -85,14 +86,12 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
 
-	wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
-
 	using namespace flutter;
 
 	switch (view->xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
 			auto value = EncodableValue(EncodableMap{
-				  {EncodableValue("texture_id"), EncodableValue((int64_t) texture)},
+				  {EncodableValue("view_id"), EncodableValue((int64_t) view->id)},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
@@ -103,7 +102,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 			wlr_xdg_popup* popup = view->xdg_surface->popup;
 
 			auto value = EncodableValue(EncodableMap{
-				  {EncodableValue("view_ptr"),           EncodableValue((int64_t) view)},
+				  {EncodableValue("view_id"),            EncodableValue((int64_t) view->id)},
 				  {EncodableValue("parent_surface_ptr"), EncodableValue((int64_t) popup->parent)},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
@@ -118,19 +117,8 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 
 void xdg_surface_destroy(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, destroy);
-	wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 
-//	view->server->output->surface_framebuffers_mutex.lock();
-//
-//	view->server->output->surface_framebuffers.erase(texture);
-//
-//	view->server->output->surface_framebuffers_mutex.unlock();
-
-//	FlutterEngineUnregisterExternalTexture(view->server->output->engine, (int64_t) texture);
-
-	view->server->views.erase(view);
-
-	std::cout << "DESTROY " << texture << std::endl;
+	view->server->views.erase(view->id);
 
 	free(view);
 }

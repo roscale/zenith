@@ -4,11 +4,10 @@ import 'package:zenith/popup.dart';
 import 'package:flutter/material.dart';
 
 class WindowState with ChangeNotifier {
-  WindowState(this._title, this._rect, this._textureId);
+  WindowState(this._title, this._rect);
 
   String _title;
   Rect _rect;
-  int _textureId;
 
   bool isClosing = false;
   double scale = 0.9;
@@ -29,13 +28,6 @@ class WindowState with ChangeNotifier {
 
   set rect(Rect value) {
     _rect = value;
-    notifyListeners();
-  }
-
-  int get textureId => _textureId;
-
-  set textureId(int value) {
-    _textureId = value;
     notifyListeners();
   }
 

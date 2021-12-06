@@ -16,8 +16,7 @@ class DesktopState with ChangeNotifier {
 
   DesktopState() {
     windowMappedEvent.receiveBroadcastStream().listen((event) {
-      int textureId = event["texture_id"];
-      int viewPtr = event["view_ptr"];
+      int viewId = event["view_id"];
       int surfacePtr = event["surface_ptr"];
       int width = event["width"];
       int height = event["height"];
@@ -28,8 +27,7 @@ class DesktopState with ChangeNotifier {
 
       windows.add(
         Window(
-          textureId: textureId,
-          viewPtr: viewPtr,
+          viewId: viewId,
           surfacePtr: surfacePtr,
           initialWidth: width,
           initialHeight: height,
@@ -46,14 +44,14 @@ class DesktopState with ChangeNotifier {
     // });
 
     windowUnmappedEvent.receiveBroadcastStream().listen((event) async {
-      int textureId = event["texture_id"];
-      print("before $textureId");
+      int viewId = event["view_id"];
+      print("before $viewId");
       // try {
       //   windows.removeLast();
       // } on Exception catch(e) {
       //   print("WRONG");
       // }
-      var window = windows.singleWhere((element) => element.textureId == textureId);
+      var window = windows.singleWhere((element) => element.viewId == viewId);
       await window.getWindowState().animateClosing();
       windows.remove(window);
       notifyListeners();
@@ -61,8 +59,7 @@ class DesktopState with ChangeNotifier {
     });
 
     popupMappedEvent.receiveBroadcastStream().listen((event) {
-      int textureId = event["texture_id"];
-      int viewPtr = event["view_ptr"];
+      int viewId = event["view_id"];
       int surfacePtr = event["surface_ptr"];
       int parentSurfacePtr = event["parent_surface_ptr"];
       int x = event["x"];
@@ -87,8 +84,7 @@ class DesktopState with ChangeNotifier {
         y: y + rect.top.toInt(),
         width: width,
         height: height,
-        textureId: textureId,
-        viewPtr: viewPtr,
+        viewId: viewId,
         parentSurfacePtr: parentSurfacePtr,
         surfacePtr: surfacePtr,
       );
@@ -100,11 +96,11 @@ class DesktopState with ChangeNotifier {
     });
 
     popupUnmappedEvent.receiveBroadcastStream().listen((event) {
-      int viewPtr = event["view_ptr"];
+      int viewId = event["view_id"];
 
-      popups.removeWhere((element) => element.viewPtr == viewPtr);
+      popups.removeWhere((element) => element.viewId == viewId);
       notifyListeners();
-      // parentWindow.getWindowState().popups.removeWhere((popup) => popup.viewPtr == viewPtr);
+      // parentWindow.getWindowState().popups.removeWhere((popup) => popup.viewId == viewId);
       // parentWindow.getWindowState().notifyListeners();
     });
   }
@@ -120,7 +116,7 @@ class DesktopState with ChangeNotifier {
     windows.add(window);
     window.getWindowState().activate();
 
-    platform.invokeMethod('activate_window', window.viewPtr);
+    platform.invokeMethod('activate_window', window.viewId);
     notifyListeners();
   }
 

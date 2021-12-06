@@ -15,7 +15,7 @@ class ActionButtons extends StatelessWidget {
           onPressed: () {
             var window = context.findAncestorWidgetOfExactType<Window>();
             if (window != null) {
-              DesktopState.platform.invokeMethod("close_window", window.viewPtr);
+              DesktopState.platform.invokeMethod("close_window", window.viewId);
             }
           },
           icon: const Icon(Icons.close, color: Colors.white),

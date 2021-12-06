@@ -7,8 +7,7 @@ class Popup extends StatelessWidget {
   final int y;
   final int width;
   final int height;
-  final int textureId;
-  final int viewPtr;
+  final int viewId;
   final int parentSurfacePtr;
   final int surfacePtr;
   final GlobalKey frameGlobalKey = GlobalKey();
@@ -18,8 +17,7 @@ class Popup extends StatelessWidget {
     required this.y,
     required this.width,
     required this.height,
-    required this.textureId,
-    required this.viewPtr,
+    required this.viewId,
     required this.parentSurfacePtr,
     required this.surfacePtr,
   }) : super(key: GlobalKey());
@@ -39,7 +37,7 @@ class Popup extends StatelessWidget {
           onPointerMove: (PointerMoveEvent event) => pointerMoved(event),
           child: Texture(
             key: frameGlobalKey,
-            textureId: textureId,
+            textureId: viewId,
           ),
         ),
       ),
@@ -52,7 +50,7 @@ class Popup extends StatelessWidget {
       {
         "x": event.localPosition.dx,
         "y": event.localPosition.dy,
-        "view_ptr": viewPtr,
+        "view_id": viewId,
       },
     );
   }

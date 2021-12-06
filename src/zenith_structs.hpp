@@ -39,8 +39,9 @@ struct ZenithServer {
 
 	wl_listener new_output;
 	wl_listener new_xdg_surface;
-	std::set<ZenithView*> views;
-	ZenithView* active_view;
+	std::map<size_t, ZenithView*> views;
+	std::mutex surface_framebuffers_mutex;
+	std::map<size_t, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers;
 
 	wlr_cursor* cursor;
 	wlr_xcursor_manager* cursor_mgr;
@@ -83,14 +84,13 @@ struct ZenithOutput {
 	fix_y_flip_state fix_y_flip;
 
 	std::unique_ptr<RenderToTextureShader> render_to_texture_shader;
-	std::mutex surface_framebuffers_mutex;
-	std::map<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers;
 	std::mutex flip_mutex;
 	std::unique_ptr<SurfaceFramebuffer> present_fbo;
 };
 
 struct ZenithView {
 	wl_list link;
+	size_t id;
 	ZenithServer* server;
 	wlr_xdg_surface* xdg_surface;
 	wl_listener map;

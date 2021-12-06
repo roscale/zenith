@@ -8,8 +8,7 @@ import 'package:provider/provider.dart';
 class Window extends StatelessWidget {
   final int initialWidth;
   final int initialHeight;
-  final int textureId;
-  final int viewPtr;
+  final int viewId;
   final int surfacePtr;
   final GlobalKey frameGlobalKey = GlobalKey();
 
@@ -21,12 +20,10 @@ class Window extends StatelessWidget {
       initialWidth.toDouble(),
       initialHeight.toDouble(),
     ),
-    textureId,
   )..activate();
 
   Window({
-    required this.textureId,
-    required this.viewPtr,
+    required this.viewId,
     required this.surfacePtr,
     required this.initialWidth,
     required this.initialHeight,
@@ -51,8 +48,7 @@ class Window extends StatelessWidget {
           child: _WindowAnimations(
             child: WindowFrame(
               frameGlobalKey: frameGlobalKey,
-              viewPtr: viewPtr,
-              textureId: textureId,
+              viewId: viewId,
             ),
           ),
         );
@@ -148,17 +144,15 @@ class _WindowAnimations extends StatelessWidget {
 }
 
 class WindowFrame extends StatelessWidget {
-  final int viewPtr;
-  final int textureId;
+  final int viewId;
   final GlobalKey frameGlobalKey;
 
-  const WindowFrame({Key? key, required this.viewPtr, required this.textureId, required this.frameGlobalKey})
+  const WindowFrame({Key? key, required this.viewId, required this.frameGlobalKey})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     var size = context.select((WindowState state) => state.rect.size);
-    var textureId = context.select((WindowState state) => state.textureId);
 // var windowState = context.watch<WindowState>();
     // var popups = context.select((WindowState state) => state.popups);
 
@@ -187,7 +181,7 @@ class WindowFrame extends StatelessWidget {
                     child: Texture(
                       key: frameGlobalKey,
                       filterQuality: FilterQuality.none,
-                      textureId: textureId,
+                      textureId: viewId,
                     ),
                   ),
                 ),
@@ -205,7 +199,7 @@ class WindowFrame extends StatelessWidget {
       {
         "x": event.localPosition.dx,
         "y": event.localPosition.dy,
-        "view_ptr": viewPtr,
+        "view_id": viewId,
       },
     );
   }
