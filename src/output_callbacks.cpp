@@ -185,6 +185,14 @@ void output_frame(wl_listener* listener, void* data) {
 	output->render_to_texture_shader->render(output->present_fbo->texture, width, height, output_fbo);
 	output->flip_mutex.unlock();
 
+	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
+	 * moved around without re-rendering what's beneath them - which is more
+	 * efficient. However, not all hardware supports hardware cursors. For this
+	 * reason, wlroots provides a software fallback, which we ask it to render
+	 * here. wlr_cursor handles configuring hardware vs software cursors for you,
+	 * and this function is a no-op when hardware cursors are in use. */
+	wlr_output_render_software_cursors(output->wlr_output, nullptr);
+
 	wlr_renderer_end(output->server->renderer);
 	wlr_output_commit(output->wlr_output);
 

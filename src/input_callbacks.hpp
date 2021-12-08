@@ -41,6 +41,11 @@ void server_cursor_axis(wl_listener* listener, void* data);
 void server_cursor_frame(wl_listener* listener, void* data);
 
 /*
+ * This event is raised by the seat when a client provides a cursor image.
+ */
+void server_seat_request_cursor(wl_listener* listener, void* data);
+
+/*
  * This event is raised when a modifier key, such as shift or alt, is
  * pressed. We simply communicate this to the client.
  */

@@ -50,6 +50,7 @@ struct ZenithServer {
 	wl_listener cursor_button;
 	wl_listener cursor_axis;
 	wl_listener cursor_frame;
+	wl_listener request_cursor;
 
 	wlr_seat* seat;
 	wl_listener new_input;

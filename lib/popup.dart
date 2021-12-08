@@ -24,14 +24,12 @@ class Popup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("build");
     return Positioned(
       left: x.toDouble(),
       top: y.toDouble(),
       child: SizedBox(
         width: width.toDouble(),
         height: height.toDouble(),
-        // child: Container(color: Colors.red),
         child: Listener(
           onPointerHover: (PointerHoverEvent event) => pointerMoved(event),
           onPointerMove: (PointerMoveEvent event) => pointerMoved(event),

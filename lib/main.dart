@@ -53,26 +53,23 @@ class _DesktopState extends State<Desktop> {
     var desktopState = context.watch<DesktopState>();
 
     return Container(
-      color: Colors.grey.shade200,
-      // decoration: const BoxDecoration(
-      //   image: DecorationImage(
-      //     image: AssetImage("assets/images/background.png"),
-      //     fit: BoxFit.cover,
-      //   ),
-      // ),
+      // color: Colors.grey,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage("assets/images/background.jpg"),
+          fit: BoxFit.cover,
+        ),
+      ),
       child: Stack(
         children: [
           ...desktopState.windows,
           ...desktopState.popups,
           Positioned(
-            child: IgnorePointer(child: Container(color: Colors.red, width: 10, height: 10)),
-            left: pointerPosition.dx,
-            top: pointerPosition.dy,
-          ),
-          const Positioned(
+            // This is a workaround for a Flutter bug.
+            // This has to be here because otherwise the background image is not being redrawn.
+            child: IgnorePointer(child: Container(color: Colors.white.withAlpha(1), width: 0.1, height: 0.1)),
             left: 0,
             top: 0,
-            child: IgnorePointer(child: CircularProgressIndicator()),
           ),
           Listener(
             behavior: HitTestBehavior.translucent,

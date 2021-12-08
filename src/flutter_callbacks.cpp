@@ -73,15 +73,6 @@ bool flutter_clear_current(void* userdata) {
 
 bool flutter_present(void* userdata) {
 	auto* output = static_cast<ZenithOutput*>(userdata);
-//	wlr_renderer* renderer = output->server->renderer;
-
-//	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
-
-//	static uint8_t buf[4 * 1024 * 768];
-//	glReadPixels(0, 0, 1024, 768, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-
-//	static uint8_t buf;
-//	glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &buf);
 
 	output->flip_mutex.lock();
 	render_to_fbo(&output->fix_y_flip, output->present_fbo->framebuffer);
@@ -89,10 +80,6 @@ bool flutter_present(void* userdata) {
 
 	glFlush();
 
-//	wlr_renderer_end(renderer);
-//	wlr_output_commit(output->wlr_output);
-
-//	sem_post(&output->vsync_semaphore);
 	return true;
 }
 
@@ -116,37 +103,15 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	auto* output = static_cast<ZenithOutput*>(userdata);
 
 	output->server->surface_framebuffers_mutex.lock();
-//
-	auto surface_framebuffer_it = output->server->surface_framebuffers.find(view_id);
-//	if (surface_framebuffer_it == output->surface_framebuffers.end()) {
-//		output->surface_framebuffers_mutex.unlock();
-//		return false;
-//	}
 
-	//	if (surface_framebuffer_it == output->surface_framebuffers.end()) {
-//		auto inserted_pair = output->surface_framebuffers.insert(
-//			  std::pair<wlr_texture*, std::unique_ptr<SurfaceFramebuffer>>(
-//					texture,
-//					std::make_unique<SurfaceFramebuffer>(texture->width, texture->height)
-//			  )
-//		);
-//		surface_framebuffer_it = inserted_pair.first;
-//	}
-//
-
-//	wlr_gles2_texture_attribs attribs{};
-//	wlr_gles2_texture_get_attribs(texture, &attribs);
-//
-//	output->render_to_texture_shader->render(attribs.tex, texture->width, texture->height,
-//	                                         surface_framebuffer_it->second->framebuffer);
+	auto& surface_framebuffer = output->server->surface_framebuffers.find(view_id)->second;
 
 	texture_out->target = GL_TEXTURE_2D;
-	texture_out->name = surface_framebuffer_it->second->texture;
-
-	texture_out->width = surface_framebuffer_it->second->width;
-	texture_out->height = surface_framebuffer_it->second->height;
-
 	texture_out->format = GL_RGBA8;
+	texture_out->name = surface_framebuffer->texture;
+
+	texture_out->width = surface_framebuffer->width;
+	texture_out->height = surface_framebuffer->height;
 
 	output->server->surface_framebuffers_mutex.unlock();
 

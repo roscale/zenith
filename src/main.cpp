@@ -52,6 +52,13 @@ int main() {
 	server.cursor = wlr_cursor_create();
 	wlr_cursor_attach_output_layout(server.cursor, server.output_layout);
 
+	/* Creates an xcursor manager, another wlroots utility which loads up
+     * Xcursor themes to source cursor images from and makes sure that cursor
+     * images are available at all scale factors on the screen (necessary for
+     * HiDPI support). We add a cursor theme at scale factor 1 to begin with. */
+	server.cursor_mgr = wlr_xcursor_manager_create(nullptr, 24);
+	wlr_xcursor_manager_load(server.cursor_mgr, 1);
+
 	/*
 	 * wlr_cursor *only* displays an image on screen. It does not move around
 	 * when the pointer moves. However, we can attach input devices to it, and
@@ -90,6 +97,10 @@ int main() {
 	wl_signal_add(&server.backend->events.new_input, &server.new_input);
 	server.seat = wlr_seat_create(server.display, "seat0");
 
+	server.request_cursor.notify = server_seat_request_cursor;
+	wl_signal_add(&server.seat->events.request_set_cursor,
+	              &server.request_cursor);
+
 	const char* socket = wl_display_add_socket_auto(server.display);
 	if (!socket) {
 		wlr_backend_destroy(server.backend);
@@ -106,7 +117,7 @@ int main() {
 
 	// Set the WAYLAND_DISPLAY environment variable to our socket and start a few clients to test things.
 	setenv("WAYLAND_DISPLAY", socket, true);
-	setenv("KDE_FULL_SESSION", "1", true);
+//	setenv("KDE_FULL_SESSION", "1", true);
 	setenv("XDG_SESSION_TYPE", "wayland", true);
 
 	if (fork() == 0) {

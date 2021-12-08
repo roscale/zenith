@@ -93,14 +93,17 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	 * the cursor around without any input. */
 	wlr_cursor_move(server->cursor, event->device, event->delta_x, event->delta_y);
 
+	// TODO: Prevent pipeline stalling causing frame drops.
+	wlr_xcursor_manager_set_cursor_image(server->cursor_mgr, "left_ptr", server->cursor);
+
 	FlutterPointerEvent e = {
-			.struct_size = sizeof(FlutterPointerEvent),
-			.phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover,
-			.timestamp = FlutterEngineGetCurrentTime(),
-			.x = server->cursor->x,
-			.y = server->cursor->y,
-			.device_kind = kFlutterPointerDeviceKindMouse,
-			.buttons = mouse_button_tracker.get_flutter_mouse_state(),
+		  .struct_size = sizeof(FlutterPointerEvent),
+		  .phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover,
+		  .timestamp = FlutterEngineGetCurrentTime(),
+		  .x = server->cursor->x,
+		  .y = server->cursor->y,
+		  .device_kind = kFlutterPointerDeviceKindMouse,
+		  .buttons = mouse_button_tracker.get_flutter_mouse_state(),
 	};
 	FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 }
@@ -111,14 +114,17 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 
 	wlr_cursor_warp_absolute(server->cursor, event->device, event->x, event->y);
 
+	// TODO: Prevent pipeline stalling causing frame drops.
+	wlr_xcursor_manager_set_cursor_image(server->cursor_mgr, "left_ptr", server->cursor);
+
 	FlutterPointerEvent e = {
-			.struct_size = sizeof(FlutterPointerEvent),
-			.phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover,
-			.timestamp = FlutterEngineGetCurrentTime(),
-			.x = event->x * 1024,
-			.y = event->y * 768,
-			.device_kind = kFlutterPointerDeviceKindMouse,
-			.buttons = mouse_button_tracker.get_flutter_mouse_state(),
+		  .struct_size = sizeof(FlutterPointerEvent),
+		  .phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover,
+		  .timestamp = FlutterEngineGetCurrentTime(),
+		  .x = event->x * 1024,
+		  .y = event->y * 768,
+		  .device_kind = kFlutterPointerDeviceKindMouse,
+		  .buttons = mouse_button_tracker.get_flutter_mouse_state(),
 	};
 	FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 }
@@ -134,13 +140,13 @@ void server_cursor_button(wl_listener* listener, void* data) {
 		mouse_button_tracker.release_button(event->button);
 
 		FlutterPointerEvent e = {
-				.struct_size = sizeof(FlutterPointerEvent),
-				.phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kUp,
-				.timestamp = FlutterEngineGetCurrentTime(),
-				.x = server->cursor->x,
-				.y = server->cursor->y,
-				.device_kind = kFlutterPointerDeviceKindMouse,
-				.buttons = mouse_button_tracker.get_flutter_mouse_state(),
+			  .struct_size = sizeof(FlutterPointerEvent),
+			  .phase = mouse_button_tracker.are_any_buttons_pressed() ? kMove : kUp,
+			  .timestamp = FlutterEngineGetCurrentTime(),
+			  .x = server->cursor->x,
+			  .y = server->cursor->y,
+			  .device_kind = kFlutterPointerDeviceKindMouse,
+			  .buttons = mouse_button_tracker.get_flutter_mouse_state(),
 		};
 		FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 	} else {
@@ -148,13 +154,13 @@ void server_cursor_button(wl_listener* listener, void* data) {
 		mouse_button_tracker.press_button(event->button);
 
 		FlutterPointerEvent e = {
-				.struct_size = sizeof(FlutterPointerEvent),
-				.phase = are_any_buttons_pressed ? kMove : kDown,
-				.timestamp = FlutterEngineGetCurrentTime(),
-				.x = server->cursor->x,
-				.y = server->cursor->y,
-				.device_kind = kFlutterPointerDeviceKindMouse,
-				.buttons = mouse_button_tracker.get_flutter_mouse_state(),
+			  .struct_size = sizeof(FlutterPointerEvent),
+			  .phase = are_any_buttons_pressed ? kMove : kDown,
+			  .timestamp = FlutterEngineGetCurrentTime(),
+			  .x = server->cursor->x,
+			  .y = server->cursor->y,
+			  .device_kind = kFlutterPointerDeviceKindMouse,
+			  .buttons = mouse_button_tracker.get_flutter_mouse_state(),
 		};
 		FlutterEngineSendPointerEvent(server->output->engine, &e, 1);
 	}
@@ -175,6 +181,22 @@ void server_cursor_frame(wl_listener* listener, void* data) {
 
 	/* Notify the client with pointer focus of the frame event. */
 	wlr_seat_pointer_notify_frame(server->seat);
+}
+
+void server_seat_request_cursor(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, cursor_frame);
+
+	auto* event = static_cast<wlr_seat_pointer_request_set_cursor_event*>(data);
+	wlr_seat_client* focused_client = server->seat->pointer_state.focused_client;
+	/* This can be sent by any client, so we check to make sure this one is
+	 * actually has pointer focus first. */
+	if (focused_client == event->seat_client) {
+		/* Once we've vetted the client, we can tell the cursor to use the
+		 * provided surface as the cursor image. It will set the hardware cursor
+		 * on the output that it's currently on and continue to do so as the
+		 * cursor moves between outputs. */
+		wlr_cursor_set_surface(server->cursor, event->surface, event->hotspot_x, event->hotspot_y);
+	}
 }
 
 void keyboard_handle_modifiers(wl_listener* listener, void* data) {

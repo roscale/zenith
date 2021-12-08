@@ -1,6 +1,7 @@
 #include "fix_y_flip.hpp"
 #include <cstdlib>
 #include <iostream>
+#include <GL/gl.h>
 
 static const char* vertexShaderSource = "attribute vec3 position;\n"
                                         "attribute vec2 texcoord;\n"
@@ -20,16 +21,16 @@ static const char* fragmentShaderSource = "precision mediump float;\n"
                                           "}\n\0";
 
 static const float vertices[] = {
-		// pos_x, pos_y, pos_z, tex_x, tex_y
-		// Last column has the y-flip fix.
-		1.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // top right
-		1.0f, -1.0f, 0.0f, 1.0f, 1.0f,   // bottom right
-		-1.0f, -1.0f, 0.0f, 0.0f, 1.0f,   // bottom left
-		-1.0f, 1.0f, 0.0f, 0.0f, 0.0f,    // top left
+	  // pos_x, pos_y, pos_z, tex_x, tex_y
+	  // Last column has the y-flip fix.
+	  1.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // top right
+	  1.0f, -1.0f, 0.0f, 1.0f, 1.0f,   // bottom right
+	  -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,   // bottom left
+	  -1.0f, 1.0f, 0.0f, 0.0f, 0.0f,    // top left
 };
 static const unsigned int indices[] = {
-		0, 1, 3,
-		1, 2, 3,
+	  0, 1, 3,
+	  1, 2, 3,
 };
 
 struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
@@ -109,6 +110,16 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer_texture, 0);
 
+	// Create the depth/stencil renderbuffer and attach it to the framebuffer.
+	GLuint depth_stencil_renderbuffer;
+	glGenRenderbuffers(1, &depth_stencil_renderbuffer);
+
+	glBindRenderbuffer(GL_RENDERBUFFER, depth_stencil_renderbuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_stencil_renderbuffer);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_stencil_renderbuffer);
+
 	// Abort if the framebuffer was not correctly created.
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -117,11 +128,12 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 	}
 
 	fix_y_flip_state state = {
-			.program = shaderProgram,
-			.vbo = vbo,
-			.ebo = ebo,
-			.offscreen_framebuffer = offscreen_framebuffer,
-			.framebuffer_texture = framebuffer_texture,
+		  .program = shaderProgram,
+		  .vbo = vbo,
+		  .ebo = ebo,
+		  .offscreen_framebuffer = offscreen_framebuffer,
+		  .framebuffer_texture = framebuffer_texture,
+		  .depth_stencil_renderbuffer = depth_stencil_renderbuffer,
 	};
 	return state;
 }

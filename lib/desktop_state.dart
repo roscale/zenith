@@ -36,26 +36,14 @@ class DesktopState with ChangeNotifier {
       notifyListeners();
     });
 
-    // Future.delayed(Duration(seconds: 1)).then((value) async {
-    //   while (true) {
-    //     await Future.delayed(Duration(seconds: 1));
-    //     print("sec");
-    //   }
-    // });
-
     windowUnmappedEvent.receiveBroadcastStream().listen((event) async {
       int viewId = event["view_id"];
-      print("before $viewId");
-      // try {
-      //   windows.removeLast();
-      // } on Exception catch(e) {
-      //   print("WRONG");
-      // }
+
       var window = windows.singleWhere((element) => element.viewId == viewId);
       await window.getWindowState().animateClosing();
+
       windows.remove(window);
       notifyListeners();
-      print("after ${windows.length}");
     });
 
     popupMappedEvent.receiveBroadcastStream().listen((event) {
@@ -77,8 +65,6 @@ class DesktopState with ChangeNotifier {
         rect = popups[popupIndex].frameGlobalKey.globalPaintBounds!;
       }
 
-      // var parentWindow = windows.singleWhere((element) => element.surfacePtr == parentSurfacePtr);
-
       var popup = Popup(
         x: x + rect.left.toInt(),
         y: y + rect.top.toInt(),
@@ -88,11 +74,9 @@ class DesktopState with ChangeNotifier {
         parentSurfacePtr: parentSurfacePtr,
         surfacePtr: surfacePtr,
       );
-      // var parentWindow = windows.singleWhere((element) => element.surfacePtr == parentSurfacePtr);
+
       popups.add(popup);
       notifyListeners();
-      // parentWindow.getWindowState().popups.add(popup);
-      // parentWindow.getWindowState().notifyListeners();
     });
 
     popupUnmappedEvent.receiveBroadcastStream().listen((event) {
@@ -100,8 +84,6 @@ class DesktopState with ChangeNotifier {
 
       popups.removeWhere((element) => element.viewId == viewId);
       notifyListeners();
-      // parentWindow.getWindowState().popups.removeWhere((popup) => popup.viewId == viewId);
-      // parentWindow.getWindowState().notifyListeners();
     });
   }
 
