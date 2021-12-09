@@ -147,8 +147,7 @@ class WindowFrame extends StatelessWidget {
   final int viewId;
   final GlobalKey frameGlobalKey;
 
-  const WindowFrame({Key? key, required this.viewId, required this.frameGlobalKey})
-      : super(key: key);
+  const WindowFrame({Key? key, required this.viewId, required this.frameGlobalKey}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -176,8 +175,7 @@ class WindowFrame extends StatelessWidget {
                   onPointerHover: (PointerHoverEvent event) => pointerMoved(event),
                   onPointerMove: (PointerMoveEvent event) => pointerMoved(event),
                   child: MouseRegion(
-                    // onEnter: (PointerEnterEvent event) => print("enter"),
-                    // onExit: (PointerExitEvent event) => print("exit"),
+                    onExit: (PointerExitEvent event) => pointerExit(event),
                     child: Texture(
                       key: frameGlobalKey,
                       filterQuality: FilterQuality.none,
@@ -202,5 +200,9 @@ class WindowFrame extends StatelessWidget {
         "view_id": viewId,
       },
     );
+  }
+
+  void pointerExit(PointerEvent event) {
+    DesktopState.platform.invokeMethod("pointer_exit");
   }
 }

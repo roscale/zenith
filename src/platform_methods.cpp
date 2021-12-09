@@ -10,7 +10,7 @@ extern "C" {
 
 void activate_window(ZenithOutput* output,
                      const flutter::MethodCall<>& call,
-                     std::unique_ptr<flutter::MethodResult<>> result) {
+                     std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
 	ZenithServer* server = output->server;
@@ -30,7 +30,7 @@ void activate_window(ZenithOutput* output,
 
 void pointer_hover(ZenithOutput* output,
                    const flutter::MethodCall<>& call,
-                   std::unique_ptr<flutter::MethodResult<>> result) {
+                   std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 
@@ -50,13 +50,22 @@ void pointer_hover(ZenithOutput* output,
 
 	wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
 	wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
-	// TODO: wlr_seat_pointer_clear_focus(seat); when hovering over another client.
+	result->Success();
+}
+
+void pointer_exit(ZenithOutput* output,
+                  const flutter::MethodCall<>& call,
+                  std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	ZenithServer* server = output->server;
+
+	wlr_seat_pointer_clear_focus(server->seat);
 	result->Success();
 }
 
 void close_window(ZenithOutput* output,
                   const flutter::MethodCall<>& call,
-                  std::unique_ptr<flutter::MethodResult<>> result) {
+                  std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
 	ZenithServer* server = output->server;

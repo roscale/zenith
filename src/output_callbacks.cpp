@@ -8,6 +8,9 @@
 #include "create_shared_egl_context.hpp"
 #include <src/platform_channels/event_stream_handler_functions.h>
 
+void pointer_exit(ZenithOutput* pOutput, const flutter::MethodCall<>& call,
+                  std::unique_ptr<flutter::MethodResult<>>&& uniquePtr);
+
 extern "C" {
 #include <semaphore.h>
 #include <malloc.h>
@@ -100,6 +103,8 @@ void server_new_output(wl_listener* listener, void* data) {
 				  activate_window(output, call, std::move(result));
 			  } else if (call.method_name() == "pointer_hover") {
 				  pointer_hover(output, call, std::move(result));
+			  } else if (call.method_name() == "pointer_exit") {
+				  pointer_exit(output, call, std::move(result));
 			  } else if (call.method_name() == "close_window") {
 				  close_window(output, call, std::move(result));
 			  } else {
