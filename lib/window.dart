@@ -44,7 +44,7 @@ class Window extends StatelessWidget {
     return ChangeNotifierProvider.value(
       value: windowState,
       child: Builder(builder: (_) {
-        return _GestureDetector(
+        return _PointerListener(
           child: _WindowAnimations(
             child: WindowFrame(
               frameGlobalKey: frameGlobalKey,
@@ -73,10 +73,10 @@ class Window extends StatelessWidget {
 //   }
 // }
 
-class _GestureDetector extends StatelessWidget {
+class _PointerListener extends StatelessWidget {
   final Widget child;
 
-  const _GestureDetector({required this.child});
+  const _PointerListener({required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -88,8 +88,8 @@ class _GestureDetector extends StatelessWidget {
       top: rect.top.roundToDouble(),
       child: IgnorePointer(
         ignoring: isClosing,
-        child: GestureDetector(
-          onPanDown: (_) {
+        child: Listener(
+          onPointerDown: (_) {
             var windowWidget = context.findAncestorWidgetOfExactType<Window>()!;
             context.read<DesktopState>().activateWindow(windowWidget);
           },
@@ -152,10 +152,6 @@ class WindowFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var size = context.select((WindowState state) => state.rect.size);
-// var windowState = context.watch<WindowState>();
-    // var popups = context.select((WindowState state) => state.popups);
-
-    // print(windowState.popups);
 
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -172,15 +168,14 @@ class WindowFrame extends StatelessWidget {
                 width: size.width,
                 height: size.height,
                 child: Listener(
-                  onPointerHover: (PointerHoverEvent event) => pointerMoved(event),
-                  onPointerMove: (PointerMoveEvent event) => pointerMoved(event),
-                  child: MouseRegion(
-                    onExit: (PointerExitEvent event) => pointerExit(event),
-                    child: Texture(
-                      key: frameGlobalKey,
-                      filterQuality: FilterQuality.none,
-                      textureId: viewId,
-                    ),
+                  onPointerDown: pointerMoved,
+                  onPointerUp: pointerMoved,
+                  onPointerHover: pointerMoved,
+                  onPointerMove: pointerMoved,
+                  child: Texture(
+                    key: frameGlobalKey,
+                    filterQuality: FilterQuality.none,
+                    textureId: viewId,
                   ),
                 ),
               ),
@@ -200,9 +195,5 @@ class WindowFrame extends StatelessWidget {
         "view_id": viewId,
       },
     );
-  }
-
-  void pointerExit(PointerEvent event) {
-    DesktopState.platform.invokeMethod("pointer_exit");
   }
 }

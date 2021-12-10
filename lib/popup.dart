@@ -31,8 +31,10 @@ class Popup extends StatelessWidget {
         width: width.toDouble(),
         height: height.toDouble(),
         child: Listener(
-          onPointerHover: (PointerHoverEvent event) => pointerMoved(event),
-          onPointerMove: (PointerMoveEvent event) => pointerMoved(event),
+          onPointerDown: pointerMoved,
+          onPointerUp: pointerMoved,
+          onPointerHover: pointerMoved,
+          onPointerMove: pointerMoved,
           child: Texture(
             key: frameGlobalKey,
             textureId: viewId,

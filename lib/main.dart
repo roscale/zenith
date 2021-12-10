@@ -52,32 +52,27 @@ class _DesktopState extends State<Desktop> {
   Widget build(BuildContext context) {
     var desktopState = context.watch<DesktopState>();
 
-    return Container(
-      // color: Colors.grey,
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage("assets/images/background.jpg"),
-          fit: BoxFit.cover,
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Listener(
+          onPointerHover: pointerExit,
+          child: Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
         ),
-      ),
-      child: Stack(
-        children: [
-          ...desktopState.windows,
-          ...desktopState.popups,
-          Positioned(
-            // This is a workaround for a Flutter bug.
-            // This has to be here because otherwise the background image is not being redrawn.
-            child: IgnorePointer(child: Container(color: Colors.white.withAlpha(1), width: 0.1, height: 0.1)),
-            left: 0,
-            top: 0,
-          ),
-          Listener(
-            behavior: HitTestBehavior.translucent,
-            onPointerHover: cursorMoved,
-            onPointerMove: cursorMoved,
-          ),
-        ],
-      ),
+        ...desktopState.windows,
+        ...desktopState.popups,
+        Positioned(
+          // This is a workaround for a Flutter bug.
+          // This has to be here because otherwise the background image is not being redrawn.
+          child: IgnorePointer(child: Container(color: Colors.white.withAlpha(1), width: 0.1, height: 0.1)),
+          left: 0,
+          top: 0,
+        ),
+      ],
     );
   }
+}
+
+void pointerExit(PointerEvent event) {
+  DesktopState.platform.invokeMethod("pointer_exit");
 }
