@@ -12,7 +12,7 @@ extern "C" {
 #undef static
 }
 
-size_t next_view_id = 1;
+static size_t next_view_id = 1;
 
 void server_new_xdg_surface(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface);
@@ -35,7 +35,8 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 	wl_signal_add(&xdg_surface->events.destroy, &view->destroy);
 
 	/* Add it to the list of views. */
-	server->views.insert(std::make_pair(view->id, view));
+	server->views_by_id.insert(std::make_pair(view->id, view));
+	server->views_list.push_front(view);
 }
 
 void xdg_surface_map(wl_listener* listener, void* data) {
@@ -118,7 +119,8 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 void xdg_surface_destroy(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, destroy);
 
-	view->server->views.erase(view->id);
+	view->server->views_by_id.erase(view->id);
+	view->server->views_list.remove(view);
 
 	free(view);
 }

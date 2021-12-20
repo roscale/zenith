@@ -15,8 +15,8 @@ void activate_window(ZenithOutput* output,
 	size_t view_id = std::get<int>(call.arguments()[0]);
 	ZenithServer* server = output->server;
 
-	auto view_it = server->views.find(view_id);
-	bool view_doesnt_exist = view_it == server->views.end();
+	auto view_it = server->views_by_id.find(view_id);
+	bool view_doesnt_exist = view_it == server->views_by_id.end();
 	if (view_doesnt_exist) {
 		result->Success();
 		return;
@@ -40,14 +40,30 @@ void pointer_hover(ZenithOutput* output,
 
 	ZenithServer* server = output->server;
 
-	auto view_it = server->views.find(view_id);
-	bool view_doesnt_exist = view_it == server->views.end();
+	auto view_it = server->views_by_id.find(view_id);
+	bool view_doesnt_exist = view_it == server->views_by_id.end();
 	if (view_doesnt_exist) {
 		result->Success();
 		return;
 	}
 	ZenithView* view = view_it->second;
 
+	double sub_x, sub_y;
+	wlr_surface* leaf_surface = wlr_xdg_surface_surface_at(view->xdg_surface, x, y, &sub_x, &sub_y);
+	if (leaf_surface == nullptr) {
+		result->Success();
+		return;
+	}
+
+	if (!wlr_surface_is_xdg_surface(leaf_surface)) {
+		// Only for subsurfaces.
+		wlr_seat_pointer_notify_enter(server->seat, leaf_surface, sub_x, sub_y);
+		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, sub_x, sub_y);
+		result->Success();
+		return;
+	}
+
+	// This has to stay, otherwise down -> move -> up for selecting a popup entry doesn't work.
 	wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
 	wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
 	result->Success();
@@ -70,8 +86,8 @@ void close_window(ZenithOutput* output,
 	size_t view_id = std::get<int>(call.arguments()[0]);
 	ZenithServer* server = output->server;
 
-	auto view_it = server->views.find(view_id);
-	bool view_doesnt_exist = view_it == server->views.end();
+	auto view_it = server->views_by_id.find(view_id);
+	bool view_doesnt_exist = view_it == server->views_by_id.end();
 	if (view_doesnt_exist) {
 		result->Success();
 		return;

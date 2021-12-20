@@ -101,7 +101,7 @@ RenderToTextureShader::RenderToTextureShader() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_binding);
 }
 
-void RenderToTextureShader::render(GLuint texture, size_t width, size_t height, GLuint framebuffer) {
+void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, size_t height, GLuint framebuffer) {
 	// Backup context state.
 	GLint viewport[4];
 	glGetIntegerv(GL_VIEWPORT, viewport);
@@ -144,11 +144,11 @@ void RenderToTextureShader::render(GLuint texture, size_t width, size_t height, 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	glViewport(0, 0, width, height);
+	glViewport(x, y, width, height);
 
 	// Clear with transparency.
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
+//	glClearColor(0, 0, 0, 0);
+//	glClear(GL_COLOR_BUFFER_BIT);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 

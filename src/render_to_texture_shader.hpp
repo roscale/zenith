@@ -9,5 +9,5 @@ struct RenderToTextureShader {
 
 	RenderToTextureShader();
 
-	void render(GLuint texture, size_t width, size_t height, GLuint framebuffer);
+	void render(GLuint texture, int x, int y, size_t width, size_t height, GLuint framebuffer);
 };

@@ -7,9 +7,7 @@
 #include "platform_methods.hpp"
 #include "create_shared_egl_context.hpp"
 #include <src/platform_channels/event_stream_handler_functions.h>
-
-void pointer_exit(ZenithOutput* pOutput, const flutter::MethodCall<>& call,
-                  std::unique_ptr<flutter::MethodResult<>>&& uniquePtr);
+#include <cstring>
 
 extern "C" {
 #include <semaphore.h>
@@ -23,6 +21,7 @@ extern "C" {
 #include <wlr/render/gles2.h>
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/types/wlr_matrix.h>
 #undef static
 }
 
@@ -121,13 +120,20 @@ void server_new_output(wl_listener* listener, void* data) {
 	FlutterEngineSendWindowMetricsEvent(engine, &window_metrics);
 }
 
+struct render_data {
+	ZenithOutput* output;
+	ZenithView* view;
+	GLuint view_framebuffer;
+	bool skip_surface;
+};
+
 void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(output->server->renderer);
 	wlr_egl_make_current(egl);
 
-	for (auto pair: output->server->views) {
+	for (auto pair: output->server->views_by_id) {
 		size_t view_id = pair.first;
 		ZenithView* view = pair.second;
 
@@ -135,33 +141,92 @@ void output_frame(wl_listener* listener, void* data) {
 			/* An unmapped view should not be rendered. */
 			continue;
 		}
-		wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
 
 		output->server->surface_framebuffers_mutex.lock();
 
-		auto surface_framebuffer_it = output->server->surface_framebuffers.find(view_id);
+		GLuint view_framebuffer;
+		auto surface_framebuffer_it = output->server->surface_framebuffers.find(view->id);
 		if (surface_framebuffer_it == output->server->surface_framebuffers.end()) {
+			wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+
 			auto inserted_pair = output->server->surface_framebuffers.insert(
 				  std::pair<size_t, std::unique_ptr<SurfaceFramebuffer>>(
-						view_id,
+						view->id,
 						std::make_unique<SurfaceFramebuffer>(texture->width, texture->height)
 				  )
 			);
 			surface_framebuffer_it = inserted_pair.first;
 		}
+		view_framebuffer = surface_framebuffer_it->second->framebuffer;
 
-		wlr_gles2_texture_attribs attribs{};
-		wlr_gles2_texture_get_attribs(texture, &attribs);
-
-		output->render_to_texture_shader->render(attribs.tex, texture->width, texture->height,
-		                                         surface_framebuffer_it->second->framebuffer);
 		output->server->surface_framebuffers_mutex.unlock();
 
-		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) view_id);
+		glClearColor(0, 0, 0, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, view_framebuffer);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-		timespec now;
-		clock_gettime(CLOCK_MONOTONIC, &now);
-		wlr_surface_send_frame_done(view->xdg_surface->surface, &now);
+		render_data rdata = {
+			  .output = output,
+			  .view = view,
+			  .view_framebuffer = view_framebuffer,
+			  .skip_surface = false,
+		};
+
+		// Render the subtree of subsurfaces starting from a toplevel or popup.
+		wlr_xdg_surface_for_each_surface(
+			  view->xdg_surface,
+			  [](struct wlr_surface* surface, int sx, int sy, void* data) {
+				  auto* rdata = static_cast<render_data*>(data);
+				  auto* output = rdata->output;
+				  auto* view = rdata->view;
+
+				  if (rdata->skip_surface) {
+					  return;
+				  }
+
+				  if (surface != view->xdg_surface->surface && wlr_surface_is_xdg_surface(surface)) {
+					  // The tree of surfaces might also contain other xdg_surfaces, most notably popups.
+					  // Once such surface is encountered, skip it and its surfaces because we are going to draw them
+					  // in a separate pass on their own framebuffer. There's no easy way to just break out of this recursive iterator, so we'll
+					  // do it using this boolean.
+					  rdata->skip_surface = true;
+					  return;
+				  }
+
+				  wlr_texture* texture = wlr_surface_get_texture(surface);
+				  if (texture == nullptr) {
+					  return;
+				  }
+
+				  wlr_gles2_texture_attribs attribs{};
+				  wlr_gles2_texture_get_attribs(texture, &attribs);
+
+				  if (wlr_surface_is_xdg_surface(surface)) {
+					  // xdg_surfaces each have their own framebuffer, so they are always drawn at (0, 0) in this framebuffer.
+					  output->render_to_texture_shader->render(attribs.tex, 0, 0, surface->current.width,
+					                                           surface->current.height,
+					                                           rdata->view_framebuffer);
+				  } else {
+					  // This is true when the surface is a wayland subsurface and not an xdg_surface.
+					  // I decided to render subsurfaces on the framebuffer of the nearest xdg_surface parent.
+					  // One downside to this approach is that popups created using a subsurface instead of an xdg_popup
+					  // are clipped to the window and cannot be rendered outside the window bounds.
+					  // I don't really care because Gnome Shell takes the same approach on Ubuntu, and it simplifies things a lot.
+					  // Interesting discussion: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/issues/24
+					  output->render_to_texture_shader->render(attribs.tex, sx, sy,
+					                                           surface->current.width, surface->current.height,
+					                                           rdata->view_framebuffer);
+				  }
+
+				  // Tell the client we are done rendering this surface.
+				  timespec now;
+				  clock_gettime(CLOCK_MONOTONIC, &now);
+				  wlr_surface_send_frame_done(surface, &now);
+			  },
+			  &rdata
+		);
+
+		FlutterEngineMarkExternalTextureFrameAvailable(output->engine, (int64_t) view_id);
 	}
 
 	intptr_t baton;
@@ -187,7 +252,9 @@ void output_frame(wl_listener* listener, void* data) {
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(output->server->renderer);
 
 	output->flip_mutex.lock();
-	output->render_to_texture_shader->render(output->present_fbo->texture, width, height, output_fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+	glClear(GL_COLOR_BUFFER_BIT);
+	output->render_to_texture_shader->render(output->present_fbo->texture, 0, 0, width, height, output_fbo);
 	output->flip_mutex.unlock();
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be

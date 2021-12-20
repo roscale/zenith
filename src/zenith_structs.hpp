@@ -10,6 +10,7 @@
 #include "surface_framebuffer.hpp"
 #include "render_to_texture_shader.hpp"
 #include <mutex>
+#include <list>
 
 extern "C" {
 #include <semaphore.h>
@@ -39,9 +40,12 @@ struct ZenithServer {
 
 	wl_listener new_output;
 	wl_listener new_xdg_surface;
-	std::map<size_t, ZenithView*> views;
+
+	std::unordered_map<size_t, ZenithView*> views_by_id;
+	std::list<ZenithView*> views_list;
+
 	std::mutex surface_framebuffers_mutex;
-	std::map<size_t, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers;
+	std::unordered_map<size_t, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers;
 
 	wlr_cursor* cursor;
 	wlr_xcursor_manager* cursor_mgr;

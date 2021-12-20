@@ -1,13 +1,21 @@
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:zenith/desktop_state.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
-
 import 'window_stack.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding.instance!.addPersistentFrameCallback((timeStamp) {
+    // FIXME: FlutterEngineMarkExternalTextureFrameAvailable does not trigger a VSync fast enough,
+    // so Flutter will only VSync every second frame. Marking the texture after FlutterEngineOnVsync
+    // only fixes the problem partially because Flutter will still skip frames every once in a while.
+    // This forces Flutter to always schedule a new frame.
+    WidgetsBinding.instance!.scheduleFrame();
+  });
   runApp(const MyApp());
 }
 
