@@ -1,6 +1,6 @@
 #pragma once
 
-#include <src/embedder.h>
+#include "third_party/embedder.h"
 #include <string>
 #include <functional>
 #include <map>
@@ -15,8 +15,6 @@ using BinaryMessageHandler = std::function<void(const uint8_t* message, size_t m
 
 class BinaryMessenger {
 public:
-	explicit BinaryMessenger(FlutterEngine engine);
-
 	void Send(const std::string& channel,
 	          const uint8_t* message,
 	          size_t message_size,
@@ -30,6 +28,8 @@ public:
 	void SetMessageDispatcher(IncomingMessageDispatcher* message_dispatcher);
 
 	FlutterEngine GetEngine();
+
+	void SetEngine(FlutterEngine engine);
 
 private:
 	// Handle for interacting with the C API.

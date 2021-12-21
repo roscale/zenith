@@ -1,6 +1,5 @@
 #include "surface_framebuffer.hpp"
 #include <cassert>
-#include <iostream>
 
 SurfaceFramebuffer::SurfaceFramebuffer(size_t width, size_t height)
 	  : width(width), height(height) {

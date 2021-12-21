@@ -1,0 +1,70 @@
+#pragma once
+
+#include <wayland-server.h>
+#include <list>
+#include <mutex>
+#include <unordered_map>
+#include <memory>
+#include "output.hpp"
+#include "keyboard.hpp"
+#include "pointer.hpp"
+#include "view.hpp"
+
+extern "C" {
+#define static
+#include <wlr/backend.h>
+#include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_xcursor_manager.h>
+#undef static
+}
+
+struct ZenithServer {
+	ZenithServer();
+
+	void run();
+
+	wl_display* display;
+	wlr_backend* backend;
+	wlr_renderer* renderer;
+	wlr_xdg_shell* xdg_shell;
+
+	wlr_output_layout* output_layout;
+	std::unique_ptr<ZenithOutput> output;
+
+	wl_listener new_output{};
+	wl_listener new_xdg_surface{};
+
+	std::unordered_map<size_t, std::unique_ptr<ZenithView>> views_by_id{};
+	std::unordered_map<size_t, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers{};
+	std::mutex surface_framebuffers_mutex{};
+
+	wlr_seat* seat;
+	std::unique_ptr<ZenithPointer> pointer;
+	std::list<std::unique_ptr<ZenithKeyboard>> keyboards{};
+
+	wl_listener new_input{};
+	wl_listener request_cursor{};
+};
+
+/*
+ * This event is raised when a new output is detected, like a monitor or a projector.
+ */
+void server_new_output(wl_listener* listener, void* data);
+
+/*
+ * This event is raised when wlr_xdg_shell receives a new xdg surface from a
+ * client, either a toplevel (application window) or popup.
+ */
+void server_new_xdg_surface(wl_listener* listener, void* data);
+
+/*
+ * This event is raised by the backend when a new input device becomes available.
+ */
+void server_new_input(wl_listener* listener, void* data);
+
+/*
+ * This event is raised by the seat when a client provides a cursor image.
+ */
+void server_seat_request_cursor(wl_listener* listener, void* data);

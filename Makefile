@@ -19,16 +19,19 @@ DBG_DEPS := $(DBG_OBJS:.o=.d)
 REL_DEPS := $(REL_OBJS:.o=.d)
 
 # Every folder in ./src will need to be passed to GCC so that it can find header files
-INC_DIRS := $(shell find $(SRC_DIRS) -type d) ./ /usr/include/pixman-1
+INC_DIRS := $(shell find $(SRC_DIRS) -type d) ./ third_party /usr/include/pixman-1
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 # The -MMD and -MP flags together generate Makefiles for us!
 # These files will have .d instead of .o as the output.
-DBG_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -g -DDEBUG
-REL_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -O2
+ASAN := -g -fsanitize=address -fno-omit-frame-pointer -lasan -lrt
+WARNINGS := -Wall -Wextra -Wno-unused-parameter -Werror
 
-DBG_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_debug
+DBG_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -DDEBUG $(WARNINGS) $(ASAN)
+REL_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -O2 $(WARNINGS)
+
+DBG_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_debug $(ASAN)
 REL_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_release
 
 all: debug_bundle release_bundle

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <src/embedder.h>
+#include "third_party/embedder.h"
 #include "binary_messenger.hpp"
 #include <functional>
 #include <string>

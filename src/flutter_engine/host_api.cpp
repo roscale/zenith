@@ -1,5 +1,6 @@
-#include "platform_methods.hpp"
-#include "input_callbacks.hpp"
+#include "host_api.hpp"
+#include "server.hpp"
+#include "encodable_value.h"
 
 extern "C" {
 #define static
@@ -21,9 +22,9 @@ void activate_window(ZenithOutput* output,
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second;
+	ZenithView* view = view_it->second.get();
 
-	focus_view(view);
+	view->focus();
 
 	result->Success();
 }
@@ -46,7 +47,7 @@ void pointer_hover(ZenithOutput* output,
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second;
+	ZenithView* view = view_it->second.get();
 
 	double sub_x, sub_y;
 	wlr_surface* leaf_surface = wlr_xdg_surface_surface_at(view->xdg_surface, x, y, &sub_x, &sub_y);
@@ -92,7 +93,7 @@ void close_window(ZenithOutput* output,
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second;
+	ZenithView* view = view_it->second.get();
 
 	wlr_xdg_toplevel_send_close(view->xdg_surface);
 

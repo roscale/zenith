@@ -161,3 +161,12 @@ void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, s
 	glActiveTexture(active_texture);
 	glBindTexture(GL_TEXTURE_2D, texture_binding);
 }
+
+RenderToTextureShader* RenderToTextureShader::_instance = nullptr;
+
+RenderToTextureShader* RenderToTextureShader::instance() {
+	if (_instance == nullptr) {
+		_instance = new RenderToTextureShader();
+	}
+	return _instance;
+}

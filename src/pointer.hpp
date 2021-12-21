@@ -1,11 +1,30 @@
 #pragma once
 
-#include "zenith_structs.hpp"
+#include "mouse_button_tracker.hpp"
 
-/*
- * This event is raised by the backend when a new input device becomes available.
- */
-void server_new_input(wl_listener* listener, void* data);
+extern "C" {
+#include <wlr/types/wlr_cursor.h>
+#define static
+#include <wlr/types/wlr_xcursor_manager.h>
+#undef static
+}
+
+struct ZenithServer;
+
+struct ZenithPointer {
+	explicit ZenithPointer(ZenithServer* server);
+
+	ZenithServer* server;
+	wlr_cursor* cursor;
+	wlr_xcursor_manager* cursor_mgr;
+	MouseButtonTracker mouse_button_tracker{};
+	/* callbacks */
+	wl_listener cursor_motion{};
+	wl_listener cursor_motion_absolute{};
+	wl_listener cursor_button{};
+	wl_listener cursor_axis{};
+	wl_listener cursor_frame{};
+};
 
 /*
  * This event is forwarded by the cursor when a pointer emits a _relative_ pointer motion event (i.e. a delta).
@@ -39,24 +58,3 @@ void server_cursor_axis(wl_listener* listener, void* data);
  * same time, in which case a frame event won't be sent in between.
  */
 void server_cursor_frame(wl_listener* listener, void* data);
-
-/*
- * This event is raised by the seat when a client provides a cursor image.
- */
-void server_seat_request_cursor(wl_listener* listener, void* data);
-
-/*
- * This event is raised when a modifier key, such as shift or alt, is
- * pressed. We simply communicate this to the client.
- */
-void keyboard_handle_modifiers(wl_listener* listener, void* data);
-
-/*
- * This event is raised when a key is pressed or released.
- */
-void keyboard_handle_key(wl_listener* listener, void* data);
-
-/*
- * Activates a view and make the keyboard enter the surface of the view.
- */
-void focus_view(ZenithView* view);

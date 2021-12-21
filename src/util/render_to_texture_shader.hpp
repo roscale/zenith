@@ -7,7 +7,12 @@ struct RenderToTextureShader {
 	GLuint vbo = 0;
 	GLuint ebo = 0;
 
-	RenderToTextureShader();
+	static RenderToTextureShader* instance();
 
 	void render(GLuint texture, int x, int y, size_t width, size_t height, GLuint framebuffer);
+
+private:
+	static RenderToTextureShader* _instance;
+
+	RenderToTextureShader();
 };

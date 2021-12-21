@@ -4,8 +4,6 @@
 
 using FlutterDesktopMessengerRef = BinaryMessenger*;
 
-BinaryMessenger::BinaryMessenger(FlutterEngine engine) : engine_(engine) {}
-
 bool
 send_message_with_reply(FlutterEngine engine, const char* channel, const uint8_t* message, const size_t message_size,
                         const FlutterDataCallback reply, void* user_data) {
@@ -108,4 +106,8 @@ void BinaryMessenger::SetMessageDispatcher(IncomingMessageDispatcher* message_di
 
 FlutterEngine BinaryMessenger::GetEngine() {
 	return engine_;
+}
+
+void BinaryMessenger::SetEngine(FlutterEngine engine) {
+	engine_ = engine;
 }

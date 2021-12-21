@@ -1,6 +1,6 @@
 #pragma once
 
-#include "zenith_structs.hpp"
+#include "output.hpp"
 
 void activate_window(ZenithOutput* output,
                      const flutter::MethodCall<>& call,
