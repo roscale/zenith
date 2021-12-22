@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:zenith/desktop_state.dart';
-import 'package:zenith/title_bar.dart';
 import 'package:zenith/window_state.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -73,6 +73,8 @@ class Window extends StatelessWidget {
 //   }
 // }
 
+Offset delta = Offset.zero;
+
 class _PointerListener extends StatelessWidget {
   final Widget child;
 
@@ -82,6 +84,7 @@ class _PointerListener extends StatelessWidget {
   Widget build(BuildContext context) {
     var rect = context.select((WindowState state) => state.rect);
     var isClosing = context.select((WindowState state) => state.isClosing);
+    var isMoving = context.select((WindowState state) => state.isMoving);
 
     return Positioned(
       left: rect.left.roundToDouble(),
@@ -92,6 +95,15 @@ class _PointerListener extends StatelessWidget {
           onPointerDown: (_) {
             var windowWidget = context.findAncestorWidgetOfExactType<Window>()!;
             context.read<DesktopState>().activateWindow(windowWidget);
+          },
+          onPointerMove: (PointerMoveEvent event) {
+            if (isMoving) {
+              var windowState = context.read<WindowState>();
+              windowState.rect = windowState.rect.shift(event.delta);
+            }
+          },
+          onPointerUp: (_) {
+            context.read<WindowState>().stopMove();
           },
           child: child,
         ),
@@ -163,15 +175,15 @@ class WindowFrame extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const TitleBar(),
+              // const TitleBar(),
               SizedBox(
                 width: size.width,
                 height: size.height,
                 child: Listener(
-                  onPointerDown: pointerMoved,
-                  onPointerUp: pointerMoved,
-                  onPointerHover: pointerMoved,
-                  onPointerMove: pointerMoved,
+                  onPointerDown: (event) => pointerMoved(context, event),
+                  onPointerUp: (event) => pointerMoved(context, event),
+                  onPointerHover: (event) => pointerMoved(context, event),
+                  onPointerMove: (event) => pointerMoved(context, event),
                   child: Texture(
                     key: frameGlobalKey,
                     filterQuality: FilterQuality.none,
@@ -186,12 +198,22 @@ class WindowFrame extends StatelessWidget {
     );
   }
 
-  void pointerMoved(PointerEvent event) {
+  void pointerMoved(BuildContext context, PointerEvent event) {
+    var windowState = context.read<WindowState>();
+
+    if (windowState.isMoving) {
+      // FIXME: Work around a Flutter bug where the Listener widget wouldn't move with the window and would
+      // give coordinates relative to the window position before moving it.
+      // Make sure to include the window movement.
+      windowState.movingDelta += event.delta;
+    }
+    var pos = event.localPosition - windowState.movingDelta;
+
     DesktopState.platform.invokeMethod(
       "pointer_hover",
       {
-        "x": event.localPosition.dx,
-        "y": event.localPosition.dy,
+        "x": pos.dx,
+        "y": pos.dy,
         "view_id": viewId,
       },
     );

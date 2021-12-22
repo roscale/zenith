@@ -23,7 +23,7 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - run: pacman --noconfirm -Syu nodejs zip unzip git cmake ninja clang gtk3 wlroots
+      - run: pacman --noconfirm -Syu nodejs zip unzip git git-lfs cmake ninja clang gtk3 wlroots
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2

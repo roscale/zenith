@@ -81,7 +81,6 @@ void server_new_output(wl_listener* listener, void* data) {
 		return;
 	}
 
-
 	if (!wl_list_empty(&wlr_output->modes)) {
 		// Set the preferred resolution and refresh rate of the monitor which will probably be the highest one.
 		wlr_output_enable(wlr_output, true);

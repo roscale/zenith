@@ -12,6 +12,7 @@ class DesktopState with ChangeNotifier {
   static const EventChannel windowUnmappedEvent = EventChannel('window_unmapped');
   static const EventChannel popupMappedEvent = EventChannel('popup_mapped');
   static const EventChannel popupUnmappedEvent = EventChannel('popup_unmapped');
+  static const EventChannel requestMoveEvent = EventChannel('request_move');
   static const MethodChannel platform = MethodChannel('platform');
 
   DesktopState() {
@@ -84,6 +85,13 @@ class DesktopState with ChangeNotifier {
 
       popups.removeWhere((element) => element.viewId == viewId);
       notifyListeners();
+    });
+
+    requestMoveEvent.receiveBroadcastStream().listen((event) {
+      int viewId = event["view_id"];
+
+      var window = windows.singleWhere((element) => element.viewId == viewId);
+      window.getWindowState().startMove();
     });
   }
 

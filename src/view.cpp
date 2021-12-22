@@ -8,8 +8,8 @@ extern "C" {
 #include <wlr/render/wlr_texture.h>
 #undef static
 }
-//#include "platform_channels/encodable_value.h"
-//#include "standard_method_codec.h"
+
+using namespace flutter;
 
 static size_t next_view_id = 1;
 
@@ -25,6 +25,11 @@ ZenithView::ZenithView(ZenithServer* server, wlr_xdg_surface* xdg_surface)
 
 	destroy.notify = xdg_surface_destroy;
 	wl_signal_add(&xdg_surface->events.destroy, &destroy);
+
+	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+		request_move.notify = xdg_toplevel_request_move;
+		wl_signal_add(&xdg_surface->toplevel->events.request_move, &request_move);
+	}
 }
 
 void ZenithView::focus() {
@@ -84,8 +89,6 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 
 	FlutterEngineRegisterExternalTexture(view->server->output->flutter_engine_state->engine, (int64_t) view->id);
 
-	using namespace flutter;
-
 	switch (view->xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
 			auto value = EncodableValue(EncodableMap{
@@ -126,8 +129,6 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
 
-	using namespace flutter;
-
 	switch (view->xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
 			auto value = EncodableValue(EncodableMap{
@@ -161,4 +162,16 @@ void xdg_surface_destroy(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, destroy);
 
 	view->server->views_by_id.erase(view->id);
+}
+
+void xdg_toplevel_request_move(struct wl_listener* listener, void* data) {
+	ZenithView* view = wl_container_of(listener, view, request_move);
+
+	auto value = EncodableValue(EncodableMap{
+		  {EncodableValue("view_id"), EncodableValue((int64_t) view->id)},
+	});
+	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+
+	view->server->output->flutter_engine_state->messenger.Send("request_move", result->data(),
+	                                                           result->size());
 }

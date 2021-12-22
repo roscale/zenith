@@ -10,6 +10,9 @@ class WindowState with ChangeNotifier {
   Rect _rect;
 
   bool isClosing = false;
+  bool isMoving = false;
+  Offset movingDelta = Offset.zero;
+
   double scale = 0.9;
   double opacity = 0.5;
   double shadowBlurRadius = 10;
@@ -44,14 +47,28 @@ class WindowState with ChangeNotifier {
     notifyListeners();
     return windowClosed.future;
   }
-  
+
   void activate() {
     shadowBlurRadius = 30;
     notifyListeners();
   }
-  
+
   void deactivate() {
     shadowBlurRadius = 10;
     notifyListeners();
+  }
+
+  void startMove() {
+    isMoving = true;
+    movingDelta = Offset.zero;
+    notifyListeners();
+  }
+
+  void stopMove() {
+    if (isMoving) {
+      isMoving = false;
+      movingDelta = Offset.zero;
+      notifyListeners();
+    }
   }
 }

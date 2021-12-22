@@ -25,6 +25,7 @@ struct ZenithView {
 	wl_listener map{};
 	wl_listener unmap{};
 	wl_listener destroy{};
+	wl_listener request_move{};
 };
 
 /*
@@ -41,3 +42,12 @@ void xdg_surface_unmap(wl_listener* listener, void* data);
  * Called when the surface is destroyed and should never be shown again.
  */
 void xdg_surface_destroy(wl_listener* listener, void* data);
+
+/*
+ * This event is raised when a client would like to begin an interactive
+ * move, typically because the user clicked on their client-side
+ * decorations. Note that a more sophisticated compositor should check the
+ * provided serial against a list of button press serials sent to this
+ * client, to prevent the client from requesting this whenever they want.
+ */
+void xdg_toplevel_request_move(struct wl_listener* listener, void* data);

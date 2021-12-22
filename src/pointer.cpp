@@ -20,7 +20,7 @@ ZenithPointer::ZenithPointer(ZenithServer* server)
      * Xcursor themes to source cursor images from and makes sure that cursor
      * images are available at all scale factors on the screen (necessary for
      * HiDPI support). We add a cursor theme at scale factor 1 to begin with. */
-	cursor_mgr = wlr_xcursor_manager_create(nullptr, 24);
+	cursor_mgr = wlr_xcursor_manager_create(nullptr, 20);
 	wlr_xcursor_manager_load(cursor_mgr, 1);
 
 	/*
