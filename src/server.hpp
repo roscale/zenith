@@ -36,6 +36,7 @@ struct ZenithServer {
 	wl_listener new_output{};
 	wl_listener new_xdg_surface{};
 
+	std::unordered_map<wlr_xdg_surface*, size_t> view_id_by_xdg_surface{};
 	std::unordered_map<size_t, std::unique_ptr<ZenithView>> views_by_id{};
 	std::unordered_map<size_t, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers{};
 	std::mutex surface_framebuffers_mutex{};

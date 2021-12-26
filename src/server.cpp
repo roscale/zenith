@@ -117,6 +117,7 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 	auto view = std::make_unique<ZenithView>(server, xdg_surface);
 
 	/* Add it to the list of views. */
+	server->view_id_by_xdg_surface.insert_or_assign(view->xdg_surface, view->id);
 	server->views_by_id.insert(std::make_pair(view->id, std::move(view)));
 }
 

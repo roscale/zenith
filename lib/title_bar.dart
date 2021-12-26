@@ -12,7 +12,7 @@ class TitleBar extends StatelessWidget {
 
     return GestureDetector(
       onPanUpdate: (DragUpdateDetails details) {
-        windowState.rect = windowState.rect.shift(details.delta);
+        windowState.position += details.delta;
       },
       child: SizedBox(
         height: 40,

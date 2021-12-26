@@ -1,8 +1,11 @@
+import 'package:provider/provider.dart';
 import 'package:zenith/popup.dart';
+import 'package:zenith/popup_state.dart';
 import 'package:zenith/util.dart';
 import 'package:zenith/window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:zenith/window_state.dart';
 
 class DesktopState with ChangeNotifier {
   List<Window> windows = [];
@@ -18,21 +21,25 @@ class DesktopState with ChangeNotifier {
   DesktopState() {
     windowMappedEvent.receiveBroadcastStream().listen((event) {
       int viewId = event["view_id"];
-      int surfacePtr = event["surface_ptr"];
-      int width = event["width"];
-      int height = event["height"];
+      int surfaceWidth = event["surface_width"];
+      int surfaceHeight = event["surface_height"];
 
-      if (windows.isNotEmpty) {
-        windows.last.getWindowState().deactivate();
-      }
+      var visibleBoundsMap = Map<String, int>.from(event["visible_bounds"]);
+      var visibleBounds = Rect.fromLTWH(
+        visibleBoundsMap["x"]!.toDouble(),
+        visibleBoundsMap["y"]!.toDouble(),
+        visibleBoundsMap["width"]!.toDouble(),
+        visibleBoundsMap["height"]!.toDouble(),
+      );
 
       windows.add(
-        Window(
+        Window(WindowState(
           viewId: viewId,
-          surfacePtr: surfacePtr,
-          initialWidth: width,
-          initialHeight: height,
-        ),
+          title: "Window",
+          position: const Offset(100, 100),
+          surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
+          visibleBounds: visibleBounds,
+        )),
       );
       notifyListeners();
     });
@@ -40,8 +47,8 @@ class DesktopState with ChangeNotifier {
     windowUnmappedEvent.receiveBroadcastStream().listen((event) async {
       int viewId = event["view_id"];
 
-      var window = windows.singleWhere((element) => element.viewId == viewId);
-      await window.getWindowState().animateClosing();
+      var window = windows.singleWhere((element) => element.state.viewId == viewId);
+      await window.state.animateClosing();
 
       windows.remove(window);
       notifyListeners();
@@ -49,32 +56,36 @@ class DesktopState with ChangeNotifier {
 
     popupMappedEvent.receiveBroadcastStream().listen((event) {
       int viewId = event["view_id"];
-      int surfacePtr = event["surface_ptr"];
-      int parentSurfacePtr = event["parent_surface_ptr"];
+      int parentViewId = event["parent_view_id"];
       int x = event["x"];
       int y = event["y"];
-      int width = event["width"];
-      int height = event["height"];
+      int width = event["surface_width"];
+      int height = event["surface_height"];
+      var visibleBoundsMap = event["visible_bounds"];
+      var visibleBounds = Rect.fromLTWH(
+        visibleBoundsMap["x"]!.toDouble(),
+        visibleBoundsMap["y"]!.toDouble(),
+        visibleBoundsMap["width"]!.toDouble(),
+        visibleBoundsMap["height"]!.toDouble(),
+      );
 
       // Parent can be either a window or another popup.
       Rect rect;
-      var windowIndex = windows.indexWhere((element) => element.surfacePtr == parentSurfacePtr);
+      var windowIndex = windows.indexWhere((element) => element.state.viewId == parentViewId);
       if (windowIndex != -1) {
-        rect = windows[windowIndex].frameGlobalKey.globalPaintBounds!;
+        rect = windows[windowIndex].state.textureKey.globalPaintBounds!;
       } else {
-        var popupIndex = popups.indexWhere((element) => element.surfacePtr == parentSurfacePtr);
-        rect = popups[popupIndex].frameGlobalKey.globalPaintBounds!;
+        var popupIndex = popups.indexWhere((element) => element.state.viewId == parentViewId);
+        rect = popups[popupIndex].state.textureKey.globalPaintBounds!;
       }
 
-      var popup = Popup(
-        x: x + rect.left.toInt(),
-        y: y + rect.top.toInt(),
-        width: width,
-        height: height,
+      var popup = Popup(PopupState(
         viewId: viewId,
-        parentSurfacePtr: parentSurfacePtr,
-        surfacePtr: surfacePtr,
-      );
+        parentViewId: parentViewId,
+        position: Offset(x + rect.left, y + rect.top),
+        surfaceSize: Size(width.toDouble(), height.toDouble()),
+        visibleBounds: visibleBounds,
+      ));
 
       popups.add(popup);
       notifyListeners();
@@ -83,30 +94,25 @@ class DesktopState with ChangeNotifier {
     popupUnmappedEvent.receiveBroadcastStream().listen((event) {
       int viewId = event["view_id"];
 
-      popups.removeWhere((element) => element.viewId == viewId);
+      popups.removeWhere((element) => element.state.viewId == viewId);
       notifyListeners();
     });
 
     requestMoveEvent.receiveBroadcastStream().listen((event) {
       int viewId = event["view_id"];
 
-      var window = windows.singleWhere((element) => element.viewId == viewId);
-      window.getWindowState().startMove();
+      var window = windows.singleWhere((element) => element.state.viewId == viewId);
+      window.state.startMove();
     });
   }
 
-  void activateWindow(Window window) {
-    // Deactivate current active window.
-    if (windows.isNotEmpty) {
-      windows.last.getWindowState().deactivate();
-    }
-
-    var index = windows.indexOf(window);
-    windows.removeAt(index);
+  void activateWindow(int viewId) {
+    var window = windows.singleWhere((window) => window.state.viewId == viewId);
+    // Put it in the front.
+    windows.remove(window);
     windows.add(window);
-    window.getWindowState().activate();
 
-    platform.invokeMethod('activate_window', window.viewId);
+    platform.invokeMethod('activate_window', window.state.viewId);
     notifyListeners();
   }
 

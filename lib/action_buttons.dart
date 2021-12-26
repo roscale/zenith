@@ -13,24 +13,12 @@ class ActionButtons extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () {
-            var window = context.findAncestorWidgetOfExactType<Window>();
-            if (window != null) {
-              DesktopState.platform.invokeMethod("close_window", window.viewId);
-            }
+            var windowState = context.read<WindowState>();
+            DesktopState.platform.invokeMethod("close_window", windowState.viewId);
           },
           icon: const Icon(Icons.close, color: Colors.white),
           splashRadius: 25,
         ),
-        // IconButton(
-        //   onPressed: () {},
-        //   icon: const Icon(Icons.crop_square, color: Colors.white),
-        //   splashRadius: 25,
-        // ),
-        // IconButton(
-        //   onPressed: () {},
-        //   icon: const Icon(Icons.minimize, color: Colors.white),
-        //   splashRadius: 25,
-        // ),
       ],
     );
   }

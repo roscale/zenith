@@ -6,6 +6,7 @@
 extern "C" {
 #define static
 #include <wlr/render/wlr_texture.h>
+#include <wlr/types/wlr_xdg_shell.h>
 #undef static
 }
 
@@ -29,6 +30,9 @@ ZenithView::ZenithView(ZenithServer* server, wlr_xdg_surface* xdg_surface)
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
 		request_move.notify = xdg_toplevel_request_move;
 		wl_signal_add(&xdg_surface->toplevel->events.request_move, &request_move);
+
+		request_resize.notify = xdg_toplevel_request_resize;
+		wl_signal_add(&xdg_surface->toplevel->events.request_resize, &request_resize);
 	}
 }
 
@@ -73,29 +77,25 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 	view->mapped = true;
 	view->focus();
 
-	std::cout << "ptr" << std::endl;
-	std::cout << view->server->output->flutter_engine_state->engine << std::endl;
-
-	wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
+	wlr_xdg_surface* xdg_surface = view->xdg_surface;
+	wlr_surface* surface = xdg_surface->surface;
+	wlr_texture* texture = wlr_surface_get_texture(surface);
 	assert(texture != nullptr);
-
-
-//	auto inserted_pair = server->surface_framebuffers.insert(
-//		  std::pair<size_t, std::unique_ptr<SurfaceFramebuffer>>(
-//				view->id,
-//				std::make_unique<SurfaceFramebuffer>(texture->width, texture->height)
-//		  )
-//	);
 
 	FlutterEngineRegisterExternalTexture(view->server->output->flutter_engine_state->engine, (int64_t) view->id);
 
 	switch (view->xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
 			auto value = EncodableValue(EncodableMap{
-				  {EncodableValue("view_id"),     EncodableValue((int64_t) view->id)},
-				  {EncodableValue("surface_ptr"), EncodableValue((int64_t) view->xdg_surface->surface)},
-				  {EncodableValue("width"),       EncodableValue(texture->width)},
-				  {EncodableValue("height"),      EncodableValue(texture->height)},
+				  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
+				  {EncodableValue("surface_width"),  EncodableValue(surface->current.width)},
+				  {EncodableValue("surface_height"), EncodableValue(surface->current.height)},
+				  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
+						{EncodableValue("x"),      EncodableValue(xdg_surface->geometry.x)},
+						{EncodableValue("y"),      EncodableValue(xdg_surface->geometry.y)},
+						{EncodableValue("width"),  EncodableValue(xdg_surface->geometry.width)},
+						{EncodableValue("height"), EncodableValue(xdg_surface->geometry.height)},
+				  })},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
@@ -104,14 +104,23 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		}
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
 			wlr_xdg_popup* popup = view->xdg_surface->popup;
+			wlr_xdg_surface* parent_xdg_surface = wlr_xdg_surface_from_wlr_surface(popup->parent);
+			wlr_box parent_geometry = parent_xdg_surface->geometry;
+			size_t parent_view_id = view->server->view_id_by_xdg_surface[parent_xdg_surface];
+
 			auto value = EncodableValue(EncodableMap{
-				  {EncodableValue("view_id"),            EncodableValue((int64_t) view->id)},
-				  {EncodableValue("surface_ptr"),        EncodableValue((int64_t) view->xdg_surface->surface)},
-				  {EncodableValue("parent_surface_ptr"), EncodableValue((int64_t) popup->parent)},
-				  {EncodableValue("x"),                  EncodableValue(popup->geometry.x)},
-				  {EncodableValue("y"),                  EncodableValue(popup->geometry.y)},
-				  {EncodableValue("width"),              EncodableValue(popup->geometry.width)},
-				  {EncodableValue("height"),             EncodableValue(popup->geometry.height)},
+				  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
+				  {EncodableValue("parent_view_id"), EncodableValue((int64_t) parent_view_id)},
+				  {EncodableValue("x"),              EncodableValue(parent_geometry.x + popup->geometry.x)},
+				  {EncodableValue("y"),              EncodableValue(parent_geometry.y + popup->geometry.y)},
+				  {EncodableValue("surface_width"),  EncodableValue(view->xdg_surface->surface->current.width)},
+				  {EncodableValue("surface_height"), EncodableValue(view->xdg_surface->surface->current.height)},
+				  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
+						{EncodableValue("x"),      EncodableValue(popup->base->geometry.x)},
+						{EncodableValue("y"),      EncodableValue(popup->base->geometry.y)},
+						{EncodableValue("width"),  EncodableValue(popup->base->geometry.width)},
+						{EncodableValue("height"), EncodableValue(popup->base->geometry.height)},
+				  })},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
@@ -121,8 +130,6 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		case WLR_XDG_SURFACE_ROLE_NONE:
 			break;
 	}
-	std::cout << "ptr" << std::endl;
-	std::cout << view->server->output->flutter_engine_state->engine << std::endl;
 }
 
 void xdg_surface_unmap(wl_listener* listener, void* data) {
@@ -160,18 +167,28 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 
 void xdg_surface_destroy(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, destroy);
+	ZenithServer* server = view->server;
 
-	view->server->views_by_id.erase(view->id);
+	server->view_id_by_xdg_surface.erase(view->xdg_surface);
+	server->views_by_id.erase(view->id);
 }
 
-void xdg_toplevel_request_move(struct wl_listener* listener, void* data) {
+void xdg_toplevel_request_move(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, request_move);
 
 	auto value = EncodableValue(EncodableMap{
 		  {EncodableValue("view_id"), EncodableValue((int64_t) view->id)},
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-
 	view->server->output->flutter_engine_state->messenger.Send("request_move", result->data(),
 	                                                           result->size());
+}
+
+void xdg_toplevel_request_resize(wl_listener* listener, void* data) {
+//	ZenithView* view = wl_container_of(listener, view, request_resize);
+//	auto* event = static_cast<wlr_xdg_toplevel_resize_event*>(data);
+
+//	wlr_surface_for_each_surface()
+
+//	begin_interactive(view, TINYWL_CURSOR_RESIZE, event->edges);
 }

@@ -6,72 +6,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class Window extends StatelessWidget {
-  final int initialWidth;
-  final int initialHeight;
-  final int viewId;
-  final int surfacePtr;
-  final GlobalKey frameGlobalKey = GlobalKey();
+  final WindowState state;
 
-  late final WindowState windowState = WindowState(
-    "Window",
-    Rect.fromLTWH(
-      100,
-      100,
-      initialWidth.toDouble(),
-      initialHeight.toDouble(),
-    ),
-  )..activate();
-
-  Window({
-    required this.viewId,
-    required this.surfacePtr,
-    required this.initialWidth,
-    required this.initialHeight,
-  }) : super(key: GlobalKey()) {
-    print("instantiate window");
-
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
-      windowState.animateOpening();
-    });
-  }
-
-  WindowState getWindowState() {
-    return windowState;
-  }
+  Window(this.state) : super(key: GlobalKey());
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
-      value: windowState,
-      child: Builder(builder: (_) {
-        return _PointerListener(
-          child: _WindowAnimations(
-            child: WindowFrame(
-              frameGlobalKey: frameGlobalKey,
-              viewId: viewId,
-            ),
-          ),
-        );
-      }),
+      value: state,
+      child: const _PointerListener(
+        child: _Animations(
+          child: _Surface(),
+        ),
+      ),
     );
   }
 }
-
-// class LocalWindowState extends State<Window> {
-//   @override
-//   void initState() {
-//     super.initState();
-//     // Start window animations when this widget is created.
-//     WidgetsBinding.instance!.addPostFrameCallback((_) {
-//       windowState.animateOpening();
-//     });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return
-//   }
-// }
 
 Offset delta = Offset.zero;
 
@@ -82,24 +32,24 @@ class _PointerListener extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var rect = context.select((WindowState state) => state.rect);
+    var position = context.select((WindowState state) => state.position);
     var isClosing = context.select((WindowState state) => state.isClosing);
     var isMoving = context.select((WindowState state) => state.isMoving);
 
     return Positioned(
-      left: rect.left.roundToDouble(),
-      top: rect.top.roundToDouble(),
+      left: position.dx.roundToDouble(),
+      top: position.dy.roundToDouble(),
       child: IgnorePointer(
         ignoring: isClosing,
         child: Listener(
           onPointerDown: (_) {
-            var windowWidget = context.findAncestorWidgetOfExactType<Window>()!;
-            context.read<DesktopState>().activateWindow(windowWidget);
+            var windowState = context.read<WindowState>();
+            context.read<DesktopState>().activateWindow(windowState.viewId);
           },
           onPointerMove: (PointerMoveEvent event) {
             if (isMoving) {
               var windowState = context.read<WindowState>();
-              windowState.rect = windowState.rect.shift(event.delta);
+              windowState.position += event.delta;
             }
           },
           onPointerUp: (_) {
@@ -112,16 +62,15 @@ class _PointerListener extends StatelessWidget {
   }
 }
 
-class _WindowAnimations extends StatelessWidget {
+class _Animations extends StatelessWidget {
   final Widget child;
 
-  const _WindowAnimations({required this.child});
+  const _Animations({required this.child});
 
   @override
   Widget build(BuildContext context) {
     var opacity = context.select((WindowState state) => state.opacity);
     var scale = context.select((WindowState state) => state.scale);
-    var shadowBlurRadius = context.select((WindowState state) => state.shadowBlurRadius);
 
     return AnimatedOpacity(
       curve: Curves.linearToEaseOut,
@@ -137,33 +86,19 @@ class _WindowAnimations extends StatelessWidget {
             windowState.windowClosed.complete();
           }
         },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
-          // decoration: CustomBoxDecoration(
-          //   borderRadius: const BorderRadius.all(Radius.circular(10)),
-          //   boxShadow: [
-          //     BoxShadow(
-          //       // spreadRadius: -10,
-          //       blurRadius: shadowBlurRadius,
-          //     )
-          //   ],
-          // ),
-          child: child,
-        ),
+        child: child,
       ),
     );
   }
 }
 
-class WindowFrame extends StatelessWidget {
-  final int viewId;
-  final GlobalKey frameGlobalKey;
-
-  const WindowFrame({Key? key, required this.viewId, required this.frameGlobalKey}) : super(key: key);
+class _Surface extends StatelessWidget {
+  const _Surface({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    var size = context.select((WindowState state) => state.rect.size);
+    var windowState = context.read<WindowState>();
+    var size = context.select((WindowState state) => state.surfaceSize);
 
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -185,9 +120,9 @@ class WindowFrame extends StatelessWidget {
                   onPointerHover: (event) => pointerMoved(context, event),
                   onPointerMove: (event) => pointerMoved(context, event),
                   child: Texture(
-                    key: frameGlobalKey,
+                    key: windowState.textureKey,
                     filterQuality: FilterQuality.none,
-                    textureId: viewId,
+                    textureId: windowState.viewId,
                   ),
                 ),
               ),
@@ -214,7 +149,7 @@ class WindowFrame extends StatelessWidget {
       {
         "x": pos.dx,
         "y": pos.dy,
-        "view_id": viewId,
+        "view_id": windowState.viewId,
       },
     );
   }

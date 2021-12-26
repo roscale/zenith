@@ -12,3 +12,15 @@ extension GlobalKeyExtension on GlobalKey {
     }
   }
 }
+
+class IdentityClip extends CustomClipper<Rect> {
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTWH(0, 0, size.width, size.height);
+  }
+
+  @override
+  bool shouldReclip(oldClipper) {
+    return false;
+  }
+}
