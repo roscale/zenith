@@ -5,22 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:zenith/popup_state.dart';
 import 'package:zenith/util.dart';
 
-class Popup extends StatefulWidget {
+class Popup extends StatelessWidget {
   final PopupState state;
 
   Popup(this.state) : super(key: GlobalKey());
 
   @override
-  State<Popup> createState() => _PopupState();
-}
-
-class _PopupState extends State<Popup> with SingleTickerProviderStateMixin {
-  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: widget.state,
+    return ChangeNotifierProvider(
+      create: (_) => state,
       child: _Positioner(
         child: _Animations(
+          key: state.animationsKey,
           child: _Surface(),
         ),
       ),
@@ -40,7 +36,10 @@ class _Positioner extends StatelessWidget {
     return Positioned(
       left: (state.position.dx - state.visibleBounds.left).toDouble(),
       top: (state.position.dy - state.visibleBounds.top).toDouble(),
-      child: child,
+      child: IgnorePointer(
+        child: child,
+        ignoring: state.isClosing,
+      ),
     );
   }
 }
@@ -49,33 +48,12 @@ class _Animations extends StatefulWidget {
   final Widget child;
 
   @override
-  State<_Animations> createState() => _AnimationsState();
+  State<_Animations> createState() => AnimationsState();
 
   const _Animations({Key? key, required this.child}) : super(key: key);
 }
 
-class _AnimationsState extends State<_Animations> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    duration: const Duration(milliseconds: 200),
-    vsync: this,
-  )..forward();
-
-  late final Animation<Offset> _offsetAnimation = Tween<Offset>(
-    begin: Offset(0.0, -10 / context.read<PopupState>().surfaceSize.height),
-    end: Offset.zero,
-  ).animate(CurvedAnimation(
-    parent: _controller,
-    curve: Curves.easeOutCubic,
-  ));
-
-  late final Animation<double> _fadeAnimation = Tween<double>(
-    begin: 0.0,
-    end: 1.0,
-  ).animate(CurvedAnimation(
-    parent: _controller,
-    curve: Curves.easeOutCubic,
-  ));
-
+class AnimationsState extends State<_Animations> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return ClipRect(
@@ -89,6 +67,34 @@ class _AnimationsState extends State<_Animations> with SingleTickerProviderState
         ),
       ),
     );
+  }
+
+  late final AnimationController controller = AnimationController(
+    duration: const Duration(milliseconds: 200),
+    reverseDuration: const Duration(milliseconds: 100),
+    vsync: this,
+  )..forward();
+
+  late final Animation<Offset> _offsetAnimation = Tween<Offset>(
+    begin: Offset(0.0, -10 / context.read<PopupState>().surfaceSize.height),
+    end: Offset.zero,
+  ).animate(CurvedAnimation(
+    parent: controller,
+    curve: Curves.easeOutCubic,
+  ));
+
+  late final Animation<double> _fadeAnimation = Tween<double>(
+    begin: 0.0,
+    end: 1.0,
+  ).animate(CurvedAnimation(
+    parent: controller,
+    curve: Curves.easeOutCubic,
+  ));
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 }
 

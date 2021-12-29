@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:zenith/popup.dart';
 
 class PopupState with ChangeNotifier {
   PopupState({
@@ -9,24 +10,18 @@ class PopupState with ChangeNotifier {
     required Offset position,
     required this.surfaceSize,
     required this.visibleBounds,
-  }) : _position = position {
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-      // We cannot call this function directly because the window will not animate otherwise.
-      animateOpening();
-    });
-  }
+  }) : _position = position;
 
   final int viewId;
   final int parentViewId;
   final GlobalKey textureKey = GlobalKey();
+  final GlobalKey<AnimationsState> animationsKey = GlobalKey();
 
   Offset _position;
   Size surfaceSize;
   Rect visibleBounds;
 
-  double scale = 0.9;
-  double opacity = 0.5;
-  var closed = Completer<void>();
+  bool isClosing = false;
 
   Offset get position => _position;
 
@@ -35,16 +30,9 @@ class PopupState with ChangeNotifier {
     notifyListeners();
   }
 
-  void animateOpening() {
-    scale = 1.0;
-    opacity = 1.0;
+  FutureOr animateClosing() {
+    isClosing = true;
     notifyListeners();
-  }
-
-  Future animateClosing() {
-    scale = 0.9;
-    opacity = 0.0;
-    notifyListeners();
-    return closed.future;
+    return animationsKey.currentState?.controller.reverse();
   }
 }

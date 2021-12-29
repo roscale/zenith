@@ -69,9 +69,6 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	texture_out->format = GL_RGBA8;
 	texture_out->name = surface_framebuffer->texture;
 
-	texture_out->width = surface_framebuffer->width;
-	texture_out->height = surface_framebuffer->height;
-
 	server->surface_framebuffers_mutex.unlock();
 
 	return true;

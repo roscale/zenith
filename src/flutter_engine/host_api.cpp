@@ -99,3 +99,27 @@ void close_window(ZenithOutput* output,
 
 	result->Success();
 }
+
+void resize_window(ZenithOutput* output,
+                   const flutter::MethodCall<>& call,
+                   std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	double width = std::get<double>(args[flutter::EncodableValue("width")]);
+	double height = std::get<double>(args[flutter::EncodableValue("height")]);
+
+	ZenithServer* server = output->server;
+
+	auto view_it = server->views_by_id.find(view_id);
+	bool view_doesnt_exist = view_it == server->views_by_id.end();
+	if (view_doesnt_exist) {
+		result->Success();
+		return;
+	}
+	ZenithView* view = view_it->second.get();
+
+	wlr_xdg_toplevel_set_size(view->xdg_surface, (size_t) width, (size_t) height);
+
+	result->Success();
+}

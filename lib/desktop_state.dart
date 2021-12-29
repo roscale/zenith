@@ -16,6 +16,8 @@ class DesktopState with ChangeNotifier {
   static const EventChannel popupMappedEvent = EventChannel('popup_mapped');
   static const EventChannel popupUnmappedEvent = EventChannel('popup_unmapped');
   static const EventChannel requestMoveEvent = EventChannel('request_move');
+  static const EventChannel requestResizeEvent = EventChannel('request_resize');
+  static const EventChannel resizeWindowEvent = EventChannel('resize_window');
   static const MethodChannel platform = MethodChannel('platform');
 
   DesktopState() {
@@ -74,6 +76,7 @@ class DesktopState with ChangeNotifier {
       var windowIndex = windows.indexWhere((element) => element.state.viewId == parentViewId);
       if (windowIndex != -1) {
         rect = windows[windowIndex].state.textureKey.globalPaintBounds!;
+        print(rect);
       } else {
         var popupIndex = popups.indexWhere((element) => element.state.viewId == parentViewId);
         rect = popups[popupIndex].state.textureKey.globalPaintBounds!;
@@ -91,10 +94,14 @@ class DesktopState with ChangeNotifier {
       notifyListeners();
     });
 
-    popupUnmappedEvent.receiveBroadcastStream().listen((event) {
+    popupUnmappedEvent.receiveBroadcastStream().listen((event) async {
       int viewId = event["view_id"];
 
-      popups.removeWhere((element) => element.state.viewId == viewId);
+      var popup = popups.singleWhere((element) => element.state.viewId == viewId);
+      await popup.state.animateClosing();
+      print("delete");
+
+      popups.remove(popup);
       notifyListeners();
     });
 
@@ -103,6 +110,31 @@ class DesktopState with ChangeNotifier {
 
       var window = windows.singleWhere((element) => element.state.viewId == viewId);
       window.state.startMove();
+    });
+
+    requestResizeEvent.receiveBroadcastStream().listen((event) {
+      int viewId = event["view_id"];
+
+      var window = windows.singleWhere((element) => element.state.viewId == viewId);
+      window.state.startResize();
+    });
+
+    resizeWindowEvent.receiveBroadcastStream().listen((event) {
+      int viewId = event["view_id"];
+      int surfaceWidth = event["surface_width"];
+      int surfaceHeight = event["surface_height"];
+
+      var window = windows.singleWhere((element) => element.state.viewId == viewId);
+      window.state.surfaceSize = Size(surfaceWidth.toDouble(), surfaceHeight.toDouble());
+
+      var visibleBoundsMap = event["visible_bounds"];
+      var visibleBounds = Rect.fromLTWH(
+        visibleBoundsMap["x"]!.toDouble(),
+        visibleBoundsMap["y"]!.toDouble(),
+        visibleBoundsMap["width"]!.toDouble(),
+        visibleBoundsMap["height"]!.toDouble(),
+      );
+      window.state.visibleBounds = visibleBounds;
     });
   }
 

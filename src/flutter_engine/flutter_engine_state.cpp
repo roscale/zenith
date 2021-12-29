@@ -105,6 +105,8 @@ void FlutterEngineState::run_engine() {
 				  pointer_exit(output, call, std::move(result));
 			  } else if (call.method_name() == "close_window") {
 				  close_window(output, call, std::move(result));
+			  } else if (call.method_name() == "resize_window") {
+				  resize_window(output, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }

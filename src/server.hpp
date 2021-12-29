@@ -21,7 +21,13 @@ extern "C" {
 }
 
 struct ZenithServer {
+private:
 	ZenithServer();
+
+	static ZenithServer* _instance;
+
+public:
+	static ZenithServer* instance();
 
 	void run();
 
@@ -36,7 +42,7 @@ struct ZenithServer {
 	wl_listener new_output{};
 	wl_listener new_xdg_surface{};
 
-	std::unordered_map<wlr_xdg_surface*, size_t> view_id_by_xdg_surface{};
+	std::unordered_map<wlr_surface*, size_t> view_id_by_wlr_surface{};
 	std::unordered_map<size_t, std::unique_ptr<ZenithView>> views_by_id{};
 	std::unordered_map<size_t, std::unique_ptr<SurfaceFramebuffer>> surface_framebuffers{};
 	std::mutex surface_framebuffers_mutex{};
@@ -59,6 +65,8 @@ void server_new_output(wl_listener* listener, void* data);
  * client, either a toplevel (application window) or popup.
  */
 void server_new_xdg_surface(wl_listener* listener, void* data);
+
+void surface_commit(wl_listener* listener, void* data);
 
 /*
  * This event is raised by the backend when a new input device becomes available.

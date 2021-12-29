@@ -102,8 +102,8 @@ void output_frame(wl_listener* listener, void* data) {
 				  if (wlr_surface_is_xdg_surface(surface)) {
 					  // xdg_surfaces each have their own framebuffer, so they are always drawn at (0, 0) in this framebuffer.
 					  RenderToTextureShader::instance()->render(attribs.tex, 0, 0,
-					                                            surface->current.width,
-					                                            surface->current.height,
+					                                            surface->current.buffer_width,
+					                                            surface->current.buffer_height,
 					                                            rdata->view_framebuffer);
 				  } else {
 					  // This is true when the surface is a wayland subsurface and not an xdg_surface.
@@ -113,8 +113,8 @@ void output_frame(wl_listener* listener, void* data) {
 					  // I don't really care because Gnome Shell takes the same approach on Ubuntu, and it simplifies things a lot.
 					  // Interesting discussion: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/issues/24
 					  RenderToTextureShader::instance()->render(attribs.tex, sx, sy,
-					                                            surface->current.width,
-					                                            surface->current.height,
+					                                            surface->current.buffer_width,
+					                                            surface->current.buffer_height,
 					                                            rdata->view_framebuffer);
 				  }
 

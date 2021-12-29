@@ -21,10 +21,12 @@ struct ZenithView {
 	size_t id;
 	bool mapped;
 	int x, y;
+	wlr_box geometry{};
 	/* callbacks */
 	wl_listener map{};
 	wl_listener unmap{};
 	wl_listener destroy{};
+	wl_listener commit{};
 	wl_listener request_move{};
 	wl_listener request_resize{};
 };

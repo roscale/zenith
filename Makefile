@@ -29,10 +29,10 @@ ASAN := -g -fsanitize=address -fno-omit-frame-pointer -lasan -lrt
 WARNINGS := -Wall -Wextra -Wno-unused-parameter -Werror
 
 DBG_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -DDEBUG $(WARNINGS) $(ASAN)
-REL_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -O2 $(WARNINGS)
+REL_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -O2 $(WARNINGS) $(ASAN)
 
 DBG_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_debug $(ASAN)
-REL_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_release
+REL_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_release $(ASAN)
 
 all: debug_bundle release_bundle
 

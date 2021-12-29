@@ -9,6 +9,5 @@ extern "C" {
 int main() {
 	wlr_log_init(WLR_DEBUG, nullptr);
 
-	ZenithServer server{};
-	server.run();
+	ZenithServer::instance()->run();
 }

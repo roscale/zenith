@@ -12,8 +12,8 @@ class Window extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: state,
+    return ChangeNotifierProvider(
+      create: (_) => state,
       child: const _PointerListener(
         child: _Animations(
           child: _Surface(),
@@ -35,6 +35,7 @@ class _PointerListener extends StatelessWidget {
     var position = context.select((WindowState state) => state.position);
     var isClosing = context.select((WindowState state) => state.isClosing);
     var isMoving = context.select((WindowState state) => state.isMoving);
+    var isResizing = context.select((WindowState state) => state.isResizing);
 
     return Positioned(
       left: position.dx.roundToDouble(),
@@ -47,13 +48,31 @@ class _PointerListener extends StatelessWidget {
             context.read<DesktopState>().activateWindow(windowState.viewId);
           },
           onPointerMove: (PointerMoveEvent event) {
+            var windowState = context.read<WindowState>();
             if (isMoving) {
-              var windowState = context.read<WindowState>();
               windowState.position += event.delta;
+            }
+            if (isResizing) {
+              var bounds = windowState.visibleBoundsResize;
+              windowState.visibleBoundsResize = Rect.fromLTWH(
+                bounds.left,
+                bounds.top,
+                bounds.width + event.delta.dx,
+                bounds.height + event.delta.dy,
+              );
+              DesktopState.platform.invokeMethod(
+                "resize_window",
+                {
+                  "view_id": windowState.viewId,
+                  "width": windowState.visibleBoundsResize.width,
+                  "height": windowState.visibleBoundsResize.height,
+                },
+              );
             }
           },
           onPointerUp: (_) {
             context.read<WindowState>().stopMove();
+            context.read<WindowState>().stopResize();
           },
           child: child,
         ),
@@ -73,11 +92,11 @@ class _Animations extends StatelessWidget {
     var scale = context.select((WindowState state) => state.scale);
 
     return AnimatedOpacity(
-      curve: Curves.linearToEaseOut,
+      curve: Curves.easeOutCubic,
       opacity: opacity,
       duration: const Duration(milliseconds: 200),
       child: AnimatedScale(
-        curve: Curves.linearToEaseOut,
+        curve: Curves.easeOutCubic,
         scale: scale,
         duration: const Duration(milliseconds: 200),
         onEnd: () {

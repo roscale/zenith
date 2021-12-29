@@ -17,3 +17,7 @@ void pointer_exit(ZenithOutput* output,
 void close_window(ZenithOutput* output,
                   const flutter::MethodCall<>& call,
                   std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void resize_window(ZenithOutput* output,
+                  const flutter::MethodCall<>& call,
+                  std::unique_ptr<flutter::MethodResult<>>&& result);
