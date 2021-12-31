@@ -20,6 +20,7 @@ ZenithServer* ZenithServer::instance() {
 }
 
 ZenithServer::ZenithServer() {
+	main_thread_id = std::this_thread::get_id();
 	display = wl_display_create();
 	backend = wlr_backend_autocreate(display);
 	renderer = wlr_backend_get_renderer(backend);
@@ -81,11 +82,14 @@ void ZenithServer::run() {
 	wl_display_destroy(display);
 }
 
+size_t i = 1;
+
 void server_new_output(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_output);
 	auto* wlr_output = static_cast<struct wlr_output*>(data);
 
-	if (server->output != nullptr) {
+	if (server->output != nullptr || i <= 0) {
+		i += 1;
 		// Allow only one output for the time being.
 		return;
 	}
@@ -109,7 +113,7 @@ void server_new_output(wl_listener* listener, void* data) {
 	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(server->renderer);
 	auto flutter_engine_state = std::make_unique<FlutterEngineState>(output.get(), main_egl);
 
-	// Link them together
+	// Link them together.
 	output->flutter_engine_state = std::move(flutter_engine_state);
 
 	// Run the engine.

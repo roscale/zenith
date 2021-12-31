@@ -4,12 +4,16 @@
 #include "host_api.hpp"
 #include "standard_method_codec.h"
 #include <filesystem>
+#include <thread>
+#include "server.hpp"
 
 extern "C" {
 #define static
 #include <wlr/types/wlr_output.h>
 #undef static
 }
+
+struct ZenithServer;
 
 FlutterEngineState::FlutterEngineState(ZenithOutput* output, wlr_egl* main_egl)
 	  : output(output), message_dispatcher(&messenger) {
@@ -54,6 +58,30 @@ void FlutterEngineState::run_engine() {
 	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
 	config.open_gl.make_resource_current = flutter_make_resource_current;
 
+	FlutterTaskRunnerDescription platform_task_runner_description{};
+	platform_task_runner_description.struct_size = sizeof(FlutterTaskRunnerDescription);
+	platform_task_runner_description.user_data = this;
+	platform_task_runner_description.identifier = 1;
+	platform_task_runner_description.runs_task_on_current_thread_callback = [](void* userdata) {
+		auto* flutter_engine_state = static_cast<FlutterEngineState*>(userdata);
+		return std::this_thread::get_id() == flutter_engine_state->output->server->main_thread_id;
+	};
+	platform_task_runner_description.post_task_callback = [](FlutterTask task, uint64_t target_time, void* userdata) {
+		auto* flutter_engine_state = static_cast<FlutterEngineState*>(userdata);
+		flutter_engine_state->platform_task_runner.add_task(target_time, task);
+	};
+
+	FlutterCustomTaskRunners task_runners{};
+	task_runners.struct_size = sizeof(FlutterCustomTaskRunners);
+	task_runners.platform_task_runner = &platform_task_runner_description;
+
+	auto executable_path = std::filesystem::canonical("/proc/self/exe");
+	std::array command_line_argv = {
+		  executable_path.c_str(),
+		  "--observatory-port=12345",
+		  "--disable-service-auth-codes",
+	};
+
 #ifdef DEBUG
 	FlutterProjectArgs args = {};
 	args.struct_size = sizeof(FlutterProjectArgs);
@@ -61,30 +89,62 @@ void FlutterEngineState::run_engine() {
 	args.icu_data_path = "data/icudtl.dat";
 	args.platform_message_callback = flutter_platform_message_callback;
 	args.vsync_callback = flutter_vsync_callback;
+	args.custom_task_runners = &task_runners;
+	args.command_line_argc = command_line_argv.size();
+	args.command_line_argv = command_line_argv.data();
+
+#elif defined(PROFILE)
+	auto absolute_path = std::filesystem::canonical("lib/libapp.so");
+
+	FlutterEngineAOTDataSource data_source = {};
+	data_source.type = kFlutterEngineAOTDataSourceTypeElfPath;
+	data_source.elf_path = absolute_path.c_str();
+
+	FlutterEngineAOTData aot_data;
+	FlutterEngineCreateAOTData(&data_source, &aot_data);
+
+	FlutterProjectArgs args = {};
+	args.struct_size = sizeof(FlutterProjectArgs);
+	std::cout << executable_path << std::endl;
+	args.assets_path = "data/flutter_assets";
+	args.icu_data_path = "data/icudtl.dat";
+	args.platform_message_callback = flutter_platform_message_callback;
+	args.vsync_callback = flutter_vsync_callback;
+	args.aot_data = aot_data;
+	args.custom_task_runners = &task_runners;
+	args.command_line_argc = command_line_argv.size();
+	args.command_line_argv = command_line_argv.data();
+
 #else
 	/*
 	 * Release mode has to run in AOT mode and the setup is a bit different.
 	 */
 	auto absolute_path = std::filesystem::canonical("lib/libapp.so");
 
-		FlutterEngineAOTDataSource data_source = {};
-		data_source.type = kFlutterEngineAOTDataSourceTypeElfPath;
-		data_source.elf_path = absolute_path.c_str();
+	FlutterEngineAOTDataSource data_source = {};
+	data_source.type = kFlutterEngineAOTDataSourceTypeElfPath;
+	data_source.elf_path = absolute_path.c_str();
 
-		FlutterEngineAOTData aot_data;
-		FlutterEngineCreateAOTData(&data_source, &aot_data);
+	FlutterEngineAOTData aot_data;
+	FlutterEngineCreateAOTData(&data_source, &aot_data);
 
-		FlutterProjectArgs args = {};
-		args.struct_size = sizeof(FlutterProjectArgs);
-		args.assets_path = "data/flutter_assets";
-		args.icu_data_path = "data/icudtl.dat";
-		args.platform_message_callback = flutter_platform_message_callback;
-		args.vsync_callback = flutter_vsync_callback;
-		args.aot_data = aot_data;
+	FlutterProjectArgs args = {};
+	args.struct_size = sizeof(FlutterProjectArgs);
+	args.assets_path = "data/flutter_assets";
+	args.icu_data_path = "data/icudtl.dat";
+	args.platform_message_callback = flutter_platform_message_callback;
+	args.vsync_callback = flutter_vsync_callback;
+	args.aot_data = aot_data;
+	args.custom_task_runners = &task_runners;
+	args.command_line_argc = command_line_argv.size();
+	args.command_line_argv = command_line_argv.data();
+
 #endif
 
 	int result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config, &args, this, &engine);
 	assert(result == kSuccess && engine != nullptr);
+
+	platform_task_runner.set_engine(engine);
 
 	/*
 	 * Set up a communication channel between the Flutter app and the host.

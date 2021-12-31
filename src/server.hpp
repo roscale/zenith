@@ -5,6 +5,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <memory>
+#include <thread>
 #include "output.hpp"
 #include "keyboard.hpp"
 #include "pointer.hpp"
@@ -31,6 +32,7 @@ public:
 
 	void run();
 
+	std::thread::id main_thread_id;
 	wl_display* display;
 	wlr_backend* backend;
 	wlr_renderer* renderer;

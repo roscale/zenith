@@ -31,7 +31,7 @@ bool flutter_present(void* userdata) {
 	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
 	state->flip_mutex.unlock();
 
-	glFlush();
+	glFlush(); // Don't remove this line!
 
 	return true;
 }
@@ -59,11 +59,9 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	server->surface_framebuffers_mutex.lock();
 
 	auto it = server->surface_framebuffers.find(view_id);
-	if (it == nullptr) {
-		return false; // FIXME
-	}
-	//	assert(it != nullptr);
 	auto& surface_framebuffer = it->second;
+
+	surface_framebuffer->apply_pending_resize();
 
 	texture_out->target = GL_TEXTURE_2D;
 	texture_out->format = GL_RGBA8;

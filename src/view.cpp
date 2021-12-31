@@ -62,7 +62,7 @@ void ZenithView::focus() {
 		 * it no longer has focus and the client will repaint accordingly, e.g.
 		 * stop displaying a caret.
 		 */
-		// TODO segfault, see logs-segfault.txt
+		// TODO segfault, see segfault1.txt
 		wlr_xdg_surface* previous = wlr_xdg_surface_from_wlr_surface(seat->keyboard_state.focused_surface);
 		wlr_xdg_toplevel_set_activated(previous, false);
 	}
@@ -174,6 +174,8 @@ void xdg_surface_destroy(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, destroy);
 	ZenithServer* server = view->server;
 
+	std::cout << "erase surface " << view->xdg_surface->surface << std::endl;
+	std::cout << "erase id " << view->id << std::endl;
 	size_t erased = server->view_id_by_wlr_surface.erase(view->xdg_surface->surface);
 	assert(erased == 1);
 	erased = server->views_by_id.erase(view->id);
@@ -183,13 +185,15 @@ void xdg_surface_destroy(wl_listener* listener, void* data) {
 void surface_commit(wl_listener* listener, void* data) {
 	auto* surface = static_cast<wlr_surface*>(data);
 	auto* server = ZenithServer::instance();
-	bool view_doesnt_exist = server->view_id_by_wlr_surface.find(surface) == server->view_id_by_wlr_surface.end();
+
+	auto it_id = server->view_id_by_wlr_surface.find(surface);
+	bool view_doesnt_exist = it_id == server->view_id_by_wlr_surface.end();
 	if (view_doesnt_exist) {
 		// Not an xdg_surface, nothing to handle.
 		return;
 	}
 
-	ZenithView* view = wl_container_of(listener, view, commit);
+	auto view = server->views_by_id.find(it_id->second)->second.get();
 	wlr_xdg_surface* xdg_surface = view->xdg_surface;
 
 	wlr_box new_geometry = xdg_surface->geometry;
@@ -212,20 +216,23 @@ void surface_commit(wl_listener* listener, void* data) {
 	}
 	auto& surface_framebuffer = it->second;
 
-	if ((size_t) surface->current.buffer_width != surface_framebuffer->width
-	    || (size_t) surface->current.buffer_height != surface_framebuffer->height) {
+	if (not((size_t) surface->current.buffer_width == surface_framebuffer->pending_width and
+	        (size_t) surface->current.buffer_height == surface_framebuffer->pending_height)) {
 
 		wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 		wlr_egl_make_current(egl);
 
-		// TODO too slow, causes libinput warnings; maybe move this into the flutter thread
-		surface_framebuffer->resize(surface->current.buffer_width, surface->current.buffer_height);
-		std::cout << "width: " << surface_framebuffer->width << " height: " << surface_framebuffer->height << std::endl;
+		// The actual resizing is happening on a Flutter thread because resizing a texture is very slow, and I don't want
+		// to block the main thread causing input delay and other stuff.
+		surface_framebuffer->schedule_resize(surface->current.buffer_width, surface->current.buffer_height);
+		std::cout << "width: " << surface->current.buffer_width << " height: " << surface->current.buffer_height
+		          << std::endl;
 
 		auto value = EncodableValue(EncodableMap{
 			  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
-			  {EncodableValue("surface_width"),  EncodableValue((int64_t) surface_framebuffer->width)},
-			  {EncodableValue("surface_height"), EncodableValue((int64_t) surface_framebuffer->height)},
+			  {EncodableValue("surface_role"),   EncodableValue(xdg_surface->role)},
+			  {EncodableValue("surface_width"),  EncodableValue((int64_t) surface->current.buffer_width)},
+			  {EncodableValue("surface_height"), EncodableValue((int64_t) surface->current.buffer_height)},
 			  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
 					{EncodableValue("x"),      EncodableValue(xdg_surface->geometry.x)},
 					{EncodableValue("y"),      EncodableValue(xdg_surface->geometry.y)},
@@ -234,7 +241,7 @@ void surface_commit(wl_listener* listener, void* data) {
 			  })}
 		});
 		auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-		view->server->output->flutter_engine_state->messenger.Send("resize_window", result->data(),
+		view->server->output->flutter_engine_state->messenger.Send("resize_surface", result->data(),
 		                                                           result->size());
 	}
 

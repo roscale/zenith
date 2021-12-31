@@ -1,4 +1,5 @@
 import 'package:provider/provider.dart';
+import 'package:zenith/enums.dart';
 import 'package:zenith/popup.dart';
 import 'package:zenith/popup_state.dart';
 import 'package:zenith/util.dart';
@@ -17,7 +18,7 @@ class DesktopState with ChangeNotifier {
   static const EventChannel popupUnmappedEvent = EventChannel('popup_unmapped');
   static const EventChannel requestMoveEvent = EventChannel('request_move');
   static const EventChannel requestResizeEvent = EventChannel('request_resize');
-  static const EventChannel resizeWindowEvent = EventChannel('resize_window');
+  static const EventChannel resizeSurfaceEvent = EventChannel('resize_surface');
   static const MethodChannel platform = MethodChannel('platform');
 
   DesktopState() {
@@ -119,13 +120,14 @@ class DesktopState with ChangeNotifier {
       window.state.startResize();
     });
 
-    resizeWindowEvent.receiveBroadcastStream().listen((event) {
+    resizeSurfaceEvent.receiveBroadcastStream().listen((event) {
       int viewId = event["view_id"];
+      var role = XdgSurfaceRole.values[event["surface_role"]];
       int surfaceWidth = event["surface_width"];
       int surfaceHeight = event["surface_height"];
 
-      var window = windows.singleWhere((element) => element.state.viewId == viewId);
-      window.state.surfaceSize = Size(surfaceWidth.toDouble(), surfaceHeight.toDouble());
+      Size surfaceSize = Size(surfaceWidth.toDouble(), surfaceHeight.toDouble());
+      print("Received $surfaceSize");
 
       var visibleBoundsMap = event["visible_bounds"];
       var visibleBounds = Rect.fromLTWH(
@@ -134,7 +136,22 @@ class DesktopState with ChangeNotifier {
         visibleBoundsMap["width"]!.toDouble(),
         visibleBoundsMap["height"]!.toDouble(),
       );
-      window.state.visibleBounds = visibleBounds;
+
+      switch (role) {
+        case XdgSurfaceRole.toplevel:
+          var window = windows.singleWhere((element) => element.state.viewId == viewId);
+          window.state.surfaceSize = surfaceSize;
+          window.state.visibleBounds = visibleBounds;
+          break;
+        case XdgSurfaceRole.popup:
+          var popup = popups.singleWhere((element) => element.state.viewId == viewId);
+          popup.state.surfaceSize = surfaceSize;
+          popup.state.visibleBounds = visibleBounds;
+          break;
+        case XdgSurfaceRole.none:
+          assert(false, "xdg_surface has no role, this should never happen.");
+          break;
+      }
     });
   }
 

@@ -102,10 +102,11 @@ class _Surface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var state = context.read<PopupState>();
+    var surfaceSize = context.select((PopupState state) => state.surfaceSize);
 
     return SizedBox(
-      width: state.surfaceSize.width,
-      height: state.surfaceSize.height,
+      width: surfaceSize.width,
+      height: surfaceSize.height,
       child: Listener(
         onPointerDown: (event) => pointerMoved(event, state.viewId),
         onPointerUp: (event) => pointerMoved(event, state.viewId),

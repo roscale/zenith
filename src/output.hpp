@@ -18,7 +18,7 @@ struct ZenithOutput {
 	wl_listener frame_listener{};
 
 	// Set later.
-	std::unique_ptr<FlutterEngineState> flutter_engine_state = nullptr;
+	std::unique_ptr<FlutterEngineState> flutter_engine_state{};
 };
 
 /*

@@ -8,9 +8,10 @@ class PopupState with ChangeNotifier {
     required this.viewId,
     required this.parentViewId,
     required Offset position,
-    required this.surfaceSize,
+    required Size surfaceSize,
     required this.visibleBounds,
-  }) : _position = position;
+  })  : _position = position,
+        _surfaceSize = surfaceSize;
 
   final int viewId;
   final int parentViewId;
@@ -18,7 +19,15 @@ class PopupState with ChangeNotifier {
   final GlobalKey<AnimationsState> animationsKey = GlobalKey();
 
   Offset _position;
-  Size surfaceSize;
+  Size _surfaceSize;
+
+  Size get surfaceSize => _surfaceSize;
+
+  set surfaceSize(Size surfaceSize) {
+    _surfaceSize = surfaceSize;
+    notifyListeners();
+  }
+
   Rect visibleBounds;
 
   bool isClosing = false;

@@ -9,9 +9,14 @@ struct SurfaceFramebuffer {
 	size_t width = 0;
 	size_t height = 0;
 
+	size_t pending_width = 0;
+	size_t pending_height = 0;
+
 	SurfaceFramebuffer(size_t width, size_t height);
 
-	void resize(size_t width, size_t height);
+	void schedule_resize(size_t new_width, size_t new_height);
+
+	bool apply_pending_resize();
 
 	~SurfaceFramebuffer();
 };

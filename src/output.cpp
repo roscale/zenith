@@ -136,7 +136,7 @@ void output_frame(wl_listener* listener, void* data) {
 		flutter_engine_state->new_baton = false;
 
 		uint64_t start = FlutterEngineGetCurrentTime();
-		FlutterEngineOnVsync(flutter_engine_state->engine, baton, start, start + 1'000'000'000ull / 60);
+		FlutterEngineOnVsync(flutter_engine_state->engine, baton, start, start + 1'000'000'000ull / 144);
 	}
 	pthread_mutex_unlock(&flutter_engine_state->baton_mutex);
 
@@ -170,6 +170,5 @@ void output_frame(wl_listener* listener, void* data) {
 	wlr_output_commit(output->wlr_output);
 
 	// Execute all platform tasks while waiting for the next frame event.
-	wl_event_loop_add_idle(wl_display_get_event_loop(server->display), flutter_execute_platform_tasks,
-	                       nullptr);
+	flutter_engine_state->platform_task_runner.execute_expired_tasks();
 }

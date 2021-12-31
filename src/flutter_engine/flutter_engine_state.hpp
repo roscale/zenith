@@ -9,6 +9,7 @@
 #include "util/fix_y_flip.hpp"
 #include "util/render_to_texture_shader.hpp"
 #include "util/surface_framebuffer.hpp"
+#include "task_runner.hpp"
 
 extern "C" {
 #include <wlr/render/egl.h>
@@ -23,6 +24,9 @@ struct FlutterEngineState {
 
 	ZenithOutput* output = nullptr;
 	FlutterEngine engine = nullptr;
+
+	TaskRunner platform_task_runner{};
+
 	/// Send messages to Dart code.
 	BinaryMessenger messenger{};
 	IncomingMessageDispatcher message_dispatcher;
