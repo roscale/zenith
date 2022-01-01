@@ -57,18 +57,18 @@ void pointer_hover(ZenithOutput* output,
 	}
 
 	if (!wlr_surface_is_xdg_surface(leaf_surface)) {
-		// Only for subsurfaces.
+		// Give pointer focus to an inner subsurface, if one exists.
+		// This fixes GTK popovers.
 		wlr_seat_pointer_notify_enter(server->seat, leaf_surface, sub_x, sub_y);
 		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, sub_x, sub_y);
-		result->Success();
-		return;
+	} else {
+		// This has to stay, otherwise down -> move -> up for selecting a popup entry doesn't work.
+		wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
+		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
 	}
-
-	// This has to stay, otherwise down -> move -> up for selecting a popup entry doesn't work.
-	wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
-	wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
 	result->Success();
 }
+
 
 void pointer_exit(ZenithOutput* output,
                   const flutter::MethodCall<>& call,

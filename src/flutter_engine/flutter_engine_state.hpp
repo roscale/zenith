@@ -22,10 +22,15 @@ struct FlutterEngineState {
 
 	void run_engine();
 
+	void start_engine();
+
+	void register_host_api();
+
 	ZenithOutput* output = nullptr;
 	FlutterEngine engine = nullptr;
 
 	TaskRunner platform_task_runner{};
+	wl_event_source* platform_task_runner_timer{};
 
 	/// Send messages to Dart code.
 	BinaryMessenger messenger{};

@@ -21,5 +21,5 @@ public:
 
 	void add_task(uint64_t target_time, FlutterTask task);
 
-	uint64_t execute_expired_tasks();
+	void execute_expired_tasks();
 };

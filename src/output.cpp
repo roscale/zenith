@@ -168,7 +168,4 @@ void output_frame(wl_listener* listener, void* data) {
 
 	wlr_renderer_end(server->renderer);
 	wlr_output_commit(output->wlr_output);
-
-	// Execute all platform tasks while waiting for the next frame event.
-	flutter_engine_state->platform_task_runner.execute_expired_tasks();
 }

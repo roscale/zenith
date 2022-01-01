@@ -14,9 +14,11 @@ void TaskRunner::add_task(uint64_t target_time, FlutterTask task) {
 	mutex.unlock();
 }
 
-uint64_t TaskRunner::execute_expired_tasks() {
+void TaskRunner::execute_expired_tasks() {
 	std::list<Task> expired_tasks{};
 
+	// We don't want to hold onto the mutex while executing tasks, slowing down other threads.
+	// Collect all expired tasks before executing them.
 	mutex.lock();
 	while (not tasks.empty() and FlutterEngineGetCurrentTime() >= tasks.top().first) {
 		Task top_task = tasks.top();
@@ -30,15 +32,5 @@ uint64_t TaskRunner::execute_expired_tasks() {
 		FlutterEngineRunTask(engine, &flutter_task);
 	}
 
-	mutex.lock();
-	if (tasks.empty()) {
-		mutex.unlock();
-		// Reschedule in 1ms.
-		return FlutterEngineGetCurrentTime() + 1'000'000;
-	}
-
-	Task top_task = tasks.top();
-	mutex.unlock();
-	// Reschedule to the time of the earliest task.
-	return top_task.first;
+	// This task runner will be rescheduled every 1ms.
 }

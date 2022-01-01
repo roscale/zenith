@@ -18,6 +18,9 @@ struct ZenithServer;
 FlutterEngineState::FlutterEngineState(ZenithOutput* output, wlr_egl* main_egl)
 	  : output(output), message_dispatcher(&messenger) {
 
+	pthread_mutex_init(&baton_mutex, nullptr);
+	messenger.SetMessageDispatcher(&message_dispatcher);
+
 	wlr_egl_context saved_egl_context{};
 	wlr_egl_save_context(&saved_egl_context);
 
@@ -38,15 +41,35 @@ FlutterEngineState::FlutterEngineState(ZenithOutput* output, wlr_egl* main_egl)
 	wlr_egl_unset_current(flutter_gl_context);
 
 	wlr_egl_restore_context(&saved_egl_context);
-
-	pthread_mutex_init(&baton_mutex, nullptr);
-
-	messenger.SetMessageDispatcher(&message_dispatcher);
 }
 
 void FlutterEngineState::run_engine() {
+	start_engine();
+
+	platform_task_runner.set_engine(engine);
+	platform_task_runner_timer = wl_event_loop_add_timer(wl_display_get_event_loop(output->server->display),
+	                                                     flutter_execute_expired_tasks_timer, this);
+	// Arm the timer.
+	wl_event_source_timer_update(platform_task_runner_timer, 1);
+
+	register_host_api();
+
+	// Tell Flutter how big the screen is, so it can start rendering.
+	int width, height;
+	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+
+	FlutterWindowMetricsEvent window_metrics = {};
+	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
+	window_metrics.width = width;
+	window_metrics.height = height;
+	window_metrics.pixel_ratio = 1.0;
+
+	FlutterEngineSendWindowMetricsEvent(engine, &window_metrics);
+}
+
+void FlutterEngineState::start_engine() {
 	/*
-	 * Configure callbacks, app & assets path, run the engine.
+	 * Configure renderer, task runners, and project args.
 	 */
 	FlutterRendererConfig config = {};
 	config.type = kOpenGL;
@@ -76,13 +99,14 @@ void FlutterEngineState::run_engine() {
 	task_runners.platform_task_runner = &platform_task_runner_description;
 
 	auto executable_path = std::filesystem::canonical("/proc/self/exe");
+	// Normally, the observatory is started on a random port with some random auth code, but we will
+	// set up a fixed URL in order to automate attaching a debugger which requires observatory's URL.
 	std::array command_line_argv = {
 		  executable_path.c_str(),
 		  "--observatory-port=12345",
 		  "--disable-service-auth-codes",
 	};
 
-#ifdef DEBUG
 	FlutterProjectArgs args = {};
 	args.struct_size = sizeof(FlutterProjectArgs);
 	args.assets_path = "data/flutter_assets";
@@ -93,31 +117,9 @@ void FlutterEngineState::run_engine() {
 	args.command_line_argc = command_line_argv.size();
 	args.command_line_argv = command_line_argv.data();
 
-#elif defined(PROFILE)
-	auto absolute_path = std::filesystem::canonical("lib/libapp.so");
-
-	FlutterEngineAOTDataSource data_source = {};
-	data_source.type = kFlutterEngineAOTDataSourceTypeElfPath;
-	data_source.elf_path = absolute_path.c_str();
-
-	FlutterEngineAOTData aot_data;
-	FlutterEngineCreateAOTData(&data_source, &aot_data);
-
-	FlutterProjectArgs args = {};
-	args.struct_size = sizeof(FlutterProjectArgs);
-	std::cout << executable_path << std::endl;
-	args.assets_path = "data/flutter_assets";
-	args.icu_data_path = "data/icudtl.dat";
-	args.platform_message_callback = flutter_platform_message_callback;
-	args.vsync_callback = flutter_vsync_callback;
-	args.aot_data = aot_data;
-	args.custom_task_runners = &task_runners;
-	args.command_line_argc = command_line_argv.size();
-	args.command_line_argv = command_line_argv.data();
-
-#else
+#ifndef DEBUG
 	/*
-	 * Release mode has to run in AOT mode and the setup is a bit different.
+	 * Profile and release modes have to run in AOT mode.
 	 */
 	auto absolute_path = std::filesystem::canonical("lib/libapp.so");
 
@@ -128,27 +130,14 @@ void FlutterEngineState::run_engine() {
 	FlutterEngineAOTData aot_data;
 	FlutterEngineCreateAOTData(&data_source, &aot_data);
 
-	FlutterProjectArgs args = {};
-	args.struct_size = sizeof(FlutterProjectArgs);
-	args.assets_path = "data/flutter_assets";
-	args.icu_data_path = "data/icudtl.dat";
-	args.platform_message_callback = flutter_platform_message_callback;
-	args.vsync_callback = flutter_vsync_callback;
 	args.aot_data = aot_data;
-	args.custom_task_runners = &task_runners;
-	args.command_line_argc = command_line_argv.size();
-	args.command_line_argv = command_line_argv.data();
-
 #endif
 
 	int result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config, &args, this, &engine);
 	assert(result == kSuccess && engine != nullptr);
+}
 
-	platform_task_runner.set_engine(engine);
-
-	/*
-	 * Set up a communication channel between the Flutter app and the host.
-	 */
+void FlutterEngineState::register_host_api() {
 	auto& codec = flutter::StandardMethodCodec::GetInstance();
 
 	messenger.SetEngine(engine);
@@ -172,18 +161,4 @@ void FlutterEngineState::run_engine() {
 			  }
 		  }
 	);
-
-	/*
-	 * Tell Flutter how big the screen is, so it can start rendering.
-	 */
-	int width, height;
-	wlr_output_effective_resolution(output->wlr_output, &width, &height);
-
-	FlutterWindowMetricsEvent window_metrics = {};
-	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
-	window_metrics.width = width;
-	window_metrics.height = height;
-	window_metrics.pixel_ratio = 1.0;
-
-	FlutterEngineSendWindowMetricsEvent(engine, &window_metrics);
 }

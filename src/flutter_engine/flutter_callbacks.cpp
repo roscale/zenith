@@ -72,10 +72,6 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	return true;
 }
 
-void flutter_execute_platform_tasks(void* data) {
-	__FlutterEngineFlushPendingTasksNow();
-}
-
 void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
 
@@ -93,4 +89,15 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 bool flutter_make_resource_current(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
 	return wlr_egl_make_current(state->flutter_resource_gl_context);
+}
+
+int flutter_execute_expired_tasks_timer(void* data) {
+	auto* state = static_cast<FlutterEngineState*>(data);
+
+	state->platform_task_runner.execute_expired_tasks();
+	// I would have preferred to have the delay represented in nanoseconds because I could reschedule
+	// an update at exactly the right time for the earliest task to be executed, but we'll just reschedule
+	// as fast as possible, every millisecond. This shouldn't be heavy for a CPU anyway.
+	wl_event_source_timer_update(state->platform_task_runner_timer, 1);
+	return 0;
 }
