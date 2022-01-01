@@ -110,14 +110,14 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
 			wlr_xdg_popup* popup = view->xdg_surface->popup;
 			wlr_xdg_surface* parent_xdg_surface = wlr_xdg_surface_from_wlr_surface(popup->parent);
-			wlr_box parent_geometry = parent_xdg_surface->geometry;
+//			wlr_box parent_geometry = parent_xdg_surface->geometry;
 			size_t parent_view_id = view->server->view_id_by_wlr_surface[parent_xdg_surface->surface];
 
 			auto value = EncodableValue(EncodableMap{
 				  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
 				  {EncodableValue("parent_view_id"), EncodableValue((int64_t) parent_view_id)},
-				  {EncodableValue("x"),              EncodableValue(parent_geometry.x + popup->geometry.x)},
-				  {EncodableValue("y"),              EncodableValue(parent_geometry.y + popup->geometry.y)},
+				  {EncodableValue("x"),              EncodableValue(popup->geometry.x)},
+				  {EncodableValue("y"),              EncodableValue(popup->geometry.y)},
 				  {EncodableValue("surface_width"),  EncodableValue(view->xdg_surface->surface->current.width)},
 				  {EncodableValue("surface_height"), EncodableValue(view->xdg_surface->surface->current.height)},
 				  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
@@ -174,6 +174,8 @@ void xdg_surface_destroy(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, destroy);
 	ZenithServer* server = view->server;
 
+	wl_list_remove(&view->commit.link);
+
 	std::cout << "erase surface " << view->xdg_surface->surface << std::endl;
 	std::cout << "erase id " << view->id << std::endl;
 	size_t erased = server->view_id_by_wlr_surface.erase(view->xdg_surface->surface);
@@ -189,22 +191,13 @@ void surface_commit(wl_listener* listener, void* data) {
 	auto it_id = server->view_id_by_wlr_surface.find(surface);
 	bool view_doesnt_exist = it_id == server->view_id_by_wlr_surface.end();
 	if (view_doesnt_exist) {
+		assert(false);
 		// Not an xdg_surface, nothing to handle.
 		return;
 	}
 
-	auto view = server->views_by_id.find(it_id->second)->second.get();
+	auto* view = server->views_by_id.find(it_id->second)->second.get();
 	wlr_xdg_surface* xdg_surface = view->xdg_surface;
-
-	wlr_box new_geometry = xdg_surface->geometry;
-
-	if (view->geometry.x != new_geometry.x
-	    || view->geometry.y != new_geometry.y
-	    || view->geometry.width != new_geometry.width
-	    || view->geometry.height != new_geometry.height) {
-		view->geometry = new_geometry;
-		// TODO
-	}
 
 	server->surface_framebuffers_mutex.lock();
 
@@ -214,20 +207,29 @@ void surface_commit(wl_listener* listener, void* data) {
 		server->surface_framebuffers_mutex.unlock();
 		return;
 	}
-	auto& surface_framebuffer = it->second;
+	auto* surface_framebuffer = it->second.get();
 
-	if (not((size_t) surface->current.buffer_width == surface_framebuffer->pending_width and
-	        (size_t) surface->current.buffer_height == surface_framebuffer->pending_height)) {
+	wlr_box new_geometry = xdg_surface->geometry;
+	bool geometry_changed = false;
+	if (view->geometry.x != new_geometry.x
+	    or view->geometry.y != new_geometry.y
+	    or view->geometry.width != new_geometry.width
+	    or view->geometry.height != new_geometry.height) {
+		view->geometry = new_geometry;
+		geometry_changed = true;
+	}
 
-		wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
-		wlr_egl_make_current(egl);
+	bool surface_size_changed = false;
+	if ((size_t) surface->current.buffer_width != surface_framebuffer->pending_width
+	    or (size_t) surface->current.buffer_height != surface_framebuffer->pending_height) {
 
+		surface_size_changed = true;
 		// The actual resizing is happening on a Flutter thread because resizing a texture is very slow, and I don't want
 		// to block the main thread causing input delay and other stuff.
 		surface_framebuffer->schedule_resize(surface->current.buffer_width, surface->current.buffer_height);
-		std::cout << "width: " << surface->current.buffer_width << " height: " << surface->current.buffer_height
-		          << std::endl;
+	}
 
+	if (geometry_changed or surface_size_changed) {
 		auto value = EncodableValue(EncodableMap{
 			  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
 			  {EncodableValue("surface_role"),   EncodableValue(xdg_surface->role)},
@@ -241,7 +243,7 @@ void surface_commit(wl_listener* listener, void* data) {
 			  })}
 		});
 		auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-		view->server->output->flutter_engine_state->messenger.Send("resize_surface", result->data(),
+		view->server->output->flutter_engine_state->messenger.Send("configure_surface", result->data(),
 		                                                           result->size());
 	}
 

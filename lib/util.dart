@@ -24,3 +24,19 @@ class IdentityClip extends CustomClipper<Rect> {
     return false;
   }
 }
+
+class RectClip extends CustomClipper<Rect> {
+  Rect rect;
+
+  RectClip(this.rect);
+
+  @override
+  Rect getClip(Size size) {
+    return rect;
+  }
+
+  @override
+  bool shouldReclip(oldClipper) {
+    return rect != (oldClipper as RectClip).rect;
+  }
+}

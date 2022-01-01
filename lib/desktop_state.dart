@@ -18,7 +18,7 @@ class DesktopState with ChangeNotifier {
   static const EventChannel popupUnmappedEvent = EventChannel('popup_unmapped');
   static const EventChannel requestMoveEvent = EventChannel('request_move');
   static const EventChannel requestResizeEvent = EventChannel('request_resize');
-  static const EventChannel resizeSurfaceEvent = EventChannel('resize_surface');
+  static const EventChannel configureSurfaceEvent = EventChannel('configure_surface');
   static const MethodChannel platform = MethodChannel('platform');
 
   DesktopState() {
@@ -73,20 +73,21 @@ class DesktopState with ChangeNotifier {
       );
 
       // Parent can be either a window or another popup.
-      Rect rect;
+      Offset parentPosition;
       var windowIndex = windows.indexWhere((element) => element.state.viewId == parentViewId);
       if (windowIndex != -1) {
-        rect = windows[windowIndex].state.textureKey.globalPaintBounds!;
-        print(rect);
+        var window = windows[windowIndex];
+        parentPosition = window.state.position + window.state.visibleBounds.topLeft;
       } else {
         var popupIndex = popups.indexWhere((element) => element.state.viewId == parentViewId);
-        rect = popups[popupIndex].state.textureKey.globalPaintBounds!;
+        var popup = popups[popupIndex];
+        parentPosition = popup.state.position;
       }
 
       var popup = Popup(PopupState(
         viewId: viewId,
         parentViewId: parentViewId,
-        position: Offset(x + rect.left, y + rect.top),
+        position: Offset(x + parentPosition.dx, y + parentPosition.dy),
         surfaceSize: Size(width.toDouble(), height.toDouble()),
         visibleBounds: visibleBounds,
       ));
@@ -120,15 +121,13 @@ class DesktopState with ChangeNotifier {
       window.state.startResize();
     });
 
-    resizeSurfaceEvent.receiveBroadcastStream().listen((event) {
+    configureSurfaceEvent.receiveBroadcastStream().listen((event) {
       int viewId = event["view_id"];
       var role = XdgSurfaceRole.values[event["surface_role"]];
       int surfaceWidth = event["surface_width"];
       int surfaceHeight = event["surface_height"];
 
       Size surfaceSize = Size(surfaceWidth.toDouble(), surfaceHeight.toDouble());
-      print("Received $surfaceSize");
-
       var visibleBoundsMap = event["visible_bounds"];
       var visibleBounds = Rect.fromLTWH(
         visibleBoundsMap["x"]!.toDouble(),

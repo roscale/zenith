@@ -8,10 +8,11 @@ class WindowState with ChangeNotifier {
     required String title,
     required Offset position,
     required Size surfaceSize,
-    required this.visibleBounds,
+    required Rect visibleBounds,
   })  : _position = position,
         _title = title,
-        _surfaceSize = surfaceSize {
+        _surfaceSize = surfaceSize,
+        _visibleBounds = visibleBounds {
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
       // We cannot call this function directly because the window will not animate otherwise.
       animateOpening();
@@ -25,7 +26,7 @@ class WindowState with ChangeNotifier {
   Offset _position;
   Size _surfaceSize;
 
-  Rect visibleBounds;
+  Rect _visibleBounds;
   Rect visibleBoundsResize = Rect.zero;
 
   bool isClosing = false;
@@ -57,6 +58,13 @@ class WindowState with ChangeNotifier {
 
   set surfaceSize(Size surfaceSize) {
     _surfaceSize = surfaceSize;
+    notifyListeners();
+  }
+
+  Rect get visibleBounds => _visibleBounds;
+
+  set visibleBounds(Rect visibleBounds) {
+    _visibleBounds = visibleBounds;
     notifyListeners();
   }
 

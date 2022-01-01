@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:zenith/clip_hitbox.dart';
 import 'package:zenith/desktop_state.dart';
+import 'package:zenith/util.dart';
 import 'package:zenith/window_state.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -118,34 +120,26 @@ class _Surface extends StatelessWidget {
   Widget build(BuildContext context) {
     var windowState = context.read<WindowState>();
     var size = context.select((WindowState state) => state.surfaceSize);
+    var bounds = context.select((WindowState state) => state.visibleBounds);
+    const invisibleResizeBorder = 10.0;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.all(Radius.circular(10)),
-      // clipBehavior: Clip.antiAliasWithSaveLayer,
-      child: Material(
-        type: MaterialType.transparency,
+    return ClipHitbox(
+      clipper: RectClip(bounds.inflate(invisibleResizeBorder)),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
         child: SizedBox(
           width: size.width,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // const TitleBar(),
-              SizedBox(
-                width: size.width,
-                height: size.height,
-                child: Listener(
-                  onPointerDown: (event) => pointerMoved(context, event),
-                  onPointerUp: (event) => pointerMoved(context, event),
-                  onPointerHover: (event) => pointerMoved(context, event),
-                  onPointerMove: (event) => pointerMoved(context, event),
-                  child: Texture(
-                    key: windowState.textureKey,
-                    filterQuality: FilterQuality.none,
-                    textureId: windowState.viewId,
-                  ),
-                ),
-              ),
-            ],
+          height: size.height,
+          child: Listener(
+            onPointerDown: (event) => pointerMoved(context, event),
+            onPointerUp: (event) => pointerMoved(context, event),
+            onPointerHover: (event) => pointerMoved(context, event),
+            onPointerMove: (event) => pointerMoved(context, event),
+            child: Texture(
+              key: windowState.textureKey,
+              filterQuality: FilterQuality.none,
+              textureId: windowState.viewId,
+            ),
           ),
         ),
       ),

@@ -58,9 +58,6 @@ release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	cp build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
 	cp -r build/linux/x64/release/bundle/data $(dir $<)
 
-attach_debugger:
-	flutter attach --debug-uri=http://127.0.0.1:12345/
-
 $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC): $(DEBUG_OBJS)
 	mkdir -p $(dir $@)
 	$(CXX) $(DEBUG_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(DEBUG_LDFLAGS)
@@ -113,6 +110,9 @@ $(RELEASE_BUILD_DIR)/%.cc.o: %.cc Makefile
 	$(CXX) $(RELEASE_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean all debug_bundle profile_bundle release_bundle attach_debugger
+
+attach_debugger:
+	flutter attach --debug-uri=http://127.0.0.1:12345/
 
 clean:
 	-rm -r $(DEBUG_BUILD_DIR)

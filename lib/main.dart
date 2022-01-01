@@ -63,6 +63,7 @@ class _DesktopState extends State<Desktop> {
     return Stack(
       fit: StackFit.expand,
       children: [
+        Container(color: Colors.grey),
         Listener(
           onPointerHover: pointerExit,
           child: Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
