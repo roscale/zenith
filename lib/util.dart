@@ -40,3 +40,7 @@ class RectClip extends CustomClipper<Rect> {
     return rect != (oldClipper as RectClip).rect;
   }
 }
+
+extension RoundedExtension on Offset {
+  Offset rounded() => Offset(dx.roundToDouble(), dy.roundToDouble());
+}

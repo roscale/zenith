@@ -124,28 +124,57 @@ class DesktopState with ChangeNotifier {
     configureSurfaceEvent.receiveBroadcastStream().listen((event) {
       int viewId = event["view_id"];
       var role = XdgSurfaceRole.values[event["surface_role"]];
-      int surfaceWidth = event["surface_width"];
-      int surfaceHeight = event["surface_height"];
 
-      Size surfaceSize = Size(surfaceWidth.toDouble(), surfaceHeight.toDouble());
-      var visibleBoundsMap = event["visible_bounds"];
-      var visibleBounds = Rect.fromLTWH(
-        visibleBoundsMap["x"]!.toDouble(),
-        visibleBoundsMap["y"]!.toDouble(),
-        visibleBoundsMap["width"]!.toDouble(),
-        visibleBoundsMap["height"]!.toDouble(),
-      );
+      Size? surfaceSize;
+      if (event["surface_size_changed"]) {
+        int surfaceWidth = event["surface_width"];
+        int surfaceHeight = event["surface_height"];
+        surfaceSize = Size(surfaceWidth.toDouble(), surfaceHeight.toDouble());
+      }
+
+      Rect? visibleBounds;
+      if (event["geometry_changed"]) {
+        var visibleBoundsMap = event["visible_bounds"];
+        visibleBounds = Rect.fromLTWH(
+          visibleBoundsMap["x"]!.toDouble(),
+          visibleBoundsMap["y"]!.toDouble(),
+          visibleBoundsMap["width"]!.toDouble(),
+          visibleBoundsMap["height"]!.toDouble(),
+        );
+      }
+
+      Offset? position;
+      if (role == XdgSurfaceRole.popup && event["popup_position_changed"]) {
+        int x = event["x"];
+        int y = event["y"];
+        position = Offset(x.toDouble(), y.toDouble());
+      }
 
       switch (role) {
         case XdgSurfaceRole.toplevel:
           var window = windows.singleWhere((element) => element.state.viewId == viewId);
-          window.state.surfaceSize = surfaceSize;
-          window.state.visibleBounds = visibleBounds;
+          window.state.surfaceSize = surfaceSize ?? window.state.surfaceSize;
+          window.state.visibleBounds = visibleBounds ?? window.state.visibleBounds;
           break;
         case XdgSurfaceRole.popup:
           var popup = popups.singleWhere((element) => element.state.viewId == viewId);
-          popup.state.surfaceSize = surfaceSize;
-          popup.state.visibleBounds = visibleBounds;
+          popup.state.surfaceSize = surfaceSize ?? popup.state.surfaceSize;
+          popup.state.visibleBounds = visibleBounds ?? popup.state.visibleBounds;
+
+          Offset parentPosition;
+          var windowIndex = windows.indexWhere((element) => element.state.viewId == popup.state.parentViewId);
+          if (windowIndex != -1) {
+            var window = windows[windowIndex];
+            parentPosition = window.state.position + window.state.visibleBounds.topLeft;
+          } else {
+            var popupIndex = popups.indexWhere((element) => element.state.viewId == popup.state.parentViewId);
+            var parentPopup = popups[popupIndex];
+            parentPosition = parentPopup.state.position;
+          }
+
+          if (position != null) {
+            popup.state.position = position + parentPosition;
+          }
           break;
         case XdgSurfaceRole.none:
           assert(false, "xdg_surface has no role, this should never happen.");

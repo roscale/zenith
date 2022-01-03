@@ -42,21 +42,10 @@ void output_frame(wl_listener* listener, void* data) {
 
 		server->surface_framebuffers_mutex.lock();
 
-		GLuint view_framebuffer;
 		auto surface_framebuffer_it = server->surface_framebuffers.find(view->id);
-		if (surface_framebuffer_it == server->surface_framebuffers.end()) {
-			wlr_texture* texture = wlr_surface_get_texture(view->xdg_surface->surface);
-			assert(texture != nullptr);
+		assert(surface_framebuffer_it != server->surface_framebuffers.end());
 
-			auto inserted_pair = server->surface_framebuffers.insert(
-				  std::pair<size_t, std::unique_ptr<SurfaceFramebuffer>>(
-						view->id,
-						std::make_unique<SurfaceFramebuffer>(texture->width, texture->height)
-				  )
-			);
-			surface_framebuffer_it = inserted_pair.first;
-		}
-		view_framebuffer = surface_framebuffer_it->second->framebuffer;
+		GLuint view_framebuffer = surface_framebuffer_it->second->framebuffer;
 
 		server->surface_framebuffers_mutex.unlock();
 

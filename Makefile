@@ -39,25 +39,6 @@ DEBUG_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbc
 PROFILE_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_profile
 RELEASE_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_release
 
-all: debug_bundle profile_bundle release_bundle
-
-debug_bundle: $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC)
-	mkdir -p $(dir $<)/lib/
-	cp libflutter_engine_debug.so $(dir $<)/lib/libflutter_engine.so
-	cp -r build/linux/x64/debug/bundle/data $(dir $<)
-
-profile_bundle: $(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC)
-	mkdir -p $(dir $<)/lib/
-	cp libflutter_engine_profile.so $(dir $<)/lib/libflutter_engine.so
-	cp build/linux/x64/profile/bundle/lib/libapp.so $(dir $<)/lib
-	cp -r build/linux/x64/profile/bundle/data $(dir $<)
-
-release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
-	mkdir -p $(dir $<)/lib/
-	cp libflutter_engine_release.so $(dir $<)/lib/libflutter_engine.so
-	cp build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
-	cp -r build/linux/x64/release/bundle/data $(dir $<)
-
 $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC): $(DEBUG_OBJS)
 	mkdir -p $(dir $@)
 	$(CXX) $(DEBUG_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(DEBUG_LDFLAGS)
@@ -110,6 +91,25 @@ $(RELEASE_BUILD_DIR)/%.cc.o: %.cc Makefile
 	$(CXX) $(RELEASE_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean all debug_bundle profile_bundle release_bundle attach_debugger
+
+all: debug_bundle profile_bundle release_bundle
+
+debug_bundle: $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC)
+	mkdir -p $(dir $<)/lib/
+	cp libflutter_engine_debug.so $(dir $<)/lib/libflutter_engine.so
+	cp -r build/linux/x64/debug/bundle/data $(dir $<)
+
+profile_bundle: $(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC)
+	mkdir -p $(dir $<)/lib/
+	cp libflutter_engine_profile.so $(dir $<)/lib/libflutter_engine.so
+	cp build/linux/x64/profile/bundle/lib/libapp.so $(dir $<)/lib
+	cp -r build/linux/x64/profile/bundle/data $(dir $<)
+
+release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
+	mkdir -p $(dir $<)/lib/
+	cp libflutter_engine_release.so $(dir $<)/lib/libflutter_engine.so
+	cp build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
+	cp -r build/linux/x64/release/bundle/data $(dir $<)
 
 attach_debugger:
 	flutter attach --debug-uri=http://127.0.0.1:12345/

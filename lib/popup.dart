@@ -31,14 +31,16 @@ class _Positioner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var state = context.watch<PopupState>();
+    var position = context.select((PopupState state) => state.position).rounded();
+    var visibleBounds = context.select((PopupState state) => state.visibleBounds);
+    var isClosing = context.select((PopupState state) => state.isClosing);
 
     return Positioned(
-      left: (state.position.dx - state.visibleBounds.left).toDouble(),
-      top: (state.position.dy - state.visibleBounds.top).toDouble(),
+      left: position.dx - visibleBounds.left,
+      top: position.dy - visibleBounds.top,
       child: IgnorePointer(
         child: child,
-        ignoring: state.isClosing,
+        ignoring: isClosing,
       ),
     );
   }

@@ -34,14 +34,14 @@ class _PointerListener extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var position = context.select((WindowState state) => state.position);
+    var position = context.select((WindowState state) => state.position).rounded();
     var isClosing = context.select((WindowState state) => state.isClosing);
     var isMoving = context.select((WindowState state) => state.isMoving);
     var isResizing = context.select((WindowState state) => state.isResizing);
 
     return Positioned(
-      left: position.dx.roundToDouble(),
-      top: position.dy.roundToDouble(),
+      left: position.dx,
+      top: position.dy,
       child: IgnorePointer(
         ignoring: isClosing,
         child: Listener(
