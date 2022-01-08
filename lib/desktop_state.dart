@@ -116,9 +116,10 @@ class DesktopState with ChangeNotifier {
 
     requestResizeEvent.receiveBroadcastStream().listen((event) {
       int viewId = event["view_id"];
+      int edges = event["edges"];
 
       var window = windows.singleWhere((element) => element.state.viewId == viewId);
-      window.state.startResize();
+      window.state.startResize(edges);
     });
 
     configureSurfaceEvent.receiveBroadcastStream().listen((event) {

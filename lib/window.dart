@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:zenith/clip_hitbox.dart';
 import 'package:zenith/desktop_state.dart';
+import 'package:zenith/enums.dart';
 import 'package:zenith/util.dart';
 import 'package:zenith/window_state.dart';
 import 'package:flutter/gestures.dart';
@@ -55,19 +56,40 @@ class _PointerListener extends StatelessWidget {
               windowState.position += event.delta;
             }
             if (isResizing) {
-              var bounds = windowState.visibleBoundsResize;
-              windowState.visibleBoundsResize = Rect.fromLTWH(
+              int edges = windowState.resizingEdges;
+
+              double widthIncrement = 0;
+              if (edges & Edges.right.id != 0) {
+                widthIncrement = event.delta.dx;
+              }
+              if (edges & Edges.left.id != 0) {
+                widthIncrement = -event.delta.dx;
+                windowState.position += Offset(event.delta.dx, 0);
+              }
+
+              double heightIncrement = 0;
+              if (edges & Edges.bottom.id != 0) {
+                heightIncrement = event.delta.dy;
+              }
+              if (edges & Edges.top.id != 0) {
+                heightIncrement = -event.delta.dy;
+                windowState.position += Offset(0, event.delta.dy);
+              }
+
+              var bounds = windowState.wantedVisibleBounds;
+              windowState.wantedVisibleBounds = Rect.fromLTWH(
                 bounds.left,
                 bounds.top,
-                bounds.width + event.delta.dx,
-                bounds.height + event.delta.dy,
+                bounds.width + widthIncrement,
+                bounds.height + heightIncrement,
               );
+
               DesktopState.platform.invokeMethod(
                 "resize_window",
                 {
                   "view_id": windowState.viewId,
-                  "width": windowState.visibleBoundsResize.width,
-                  "height": windowState.visibleBoundsResize.height,
+                  "width": windowState.wantedVisibleBounds.width,
+                  "height": windowState.wantedVisibleBounds.height,
                 },
               );
             }

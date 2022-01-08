@@ -27,11 +27,12 @@ class WindowState with ChangeNotifier {
   Size _surfaceSize;
 
   Rect _visibleBounds;
-  Rect visibleBoundsResize = Rect.zero;
+  Rect wantedVisibleBounds = Rect.zero;
 
   bool isClosing = false;
   bool isMoving = false;
   bool isResizing = false;
+  int resizingEdges = 0;
   Offset movingDelta = Offset.zero;
 
   double scale = 0.9;
@@ -96,9 +97,10 @@ class WindowState with ChangeNotifier {
     }
   }
 
-  void startResize() {
-    visibleBoundsResize = visibleBounds;
+  void startResize(int edges) {
     isResizing = true;
+    wantedVisibleBounds = visibleBounds;
+    resizingEdges = edges;
     notifyListeners();
   }
 

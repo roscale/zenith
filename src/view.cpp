@@ -308,9 +308,11 @@ void xdg_toplevel_request_move(wl_listener* listener, void* data) {
 
 void xdg_toplevel_request_resize(wl_listener* listener, void* data) {
 	ZenithView* view = wl_container_of(listener, view, request_resize);
+	auto* event = static_cast<wlr_xdg_toplevel_resize_event*>(data);
 
 	auto value = EncodableValue(EncodableMap{
 		  {EncodableValue("view_id"), EncodableValue((int64_t) view->id)},
+		  {EncodableValue("edges"),   EncodableValue(event->edges)},
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	view->server->output->flutter_engine_state->messenger.Send("request_resize", result->data(),
