@@ -1,5 +1,5 @@
-import 'package:zenith/action_buttons.dart';
-import 'package:zenith/window_state.dart';
+import 'package:zenith/widgets/server_side_decorations/action_buttons.dart';
+import 'package:zenith/state/window_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

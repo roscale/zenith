@@ -29,9 +29,9 @@ bool flutter_present(void* userdata) {
 
 	state->flip_mutex.lock();
 	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
+	// TODO: maybe it's better to use a fence instead
+	glFinish(); // Don't remove this line!
 	state->flip_mutex.unlock();
-
-	glFlush(); // Don't remove this line!
 
 	return true;
 }

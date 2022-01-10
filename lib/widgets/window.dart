@@ -1,10 +1,9 @@
 import 'package:flutter/cupertino.dart';
-import 'package:zenith/clip_hitbox.dart';
-import 'package:zenith/desktop_state.dart';
+import 'package:zenith/widgets/util/clip_hitbox.dart';
+import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/enums.dart';
 import 'package:zenith/util.dart';
-import 'package:zenith/window_state.dart';
-import 'package:flutter/gestures.dart';
+import 'package:zenith/state/window_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -76,12 +75,11 @@ class _PointerListener extends StatelessWidget {
                 windowState.position += Offset(0, event.delta.dy);
               }
 
-              var bounds = windowState.wantedVisibleBounds;
               windowState.wantedVisibleBounds = Rect.fromLTWH(
-                bounds.left,
-                bounds.top,
-                bounds.width + widthIncrement,
-                bounds.height + heightIncrement,
+                windowState.wantedVisibleBounds.left,
+                windowState.wantedVisibleBounds.top,
+                windowState.wantedVisibleBounds.width + widthIncrement,
+                windowState.wantedVisibleBounds.height + heightIncrement,
               );
 
               DesktopState.platform.invokeMethod(
@@ -97,6 +95,7 @@ class _PointerListener extends StatelessWidget {
           onPointerUp: (_) {
             context.read<WindowState>().stopMove();
             context.read<WindowState>().stopResize();
+            print("hu");
           },
           child: child,
         ),
@@ -126,7 +125,9 @@ class _Animations extends StatelessWidget {
         onEnd: () {
           var windowState = context.read<WindowState>();
           if (windowState.isClosing) {
-            windowState.windowClosed.complete();
+            // This check is necessary because onEnd is also called when the window opening
+            // animation ended.
+            windowState.windowClosedCompleter.complete();
           }
         },
         child: child,
@@ -171,21 +172,17 @@ class _Surface extends StatelessWidget {
   void pointerMoved(BuildContext context, PointerEvent event) {
     var windowState = context.read<WindowState>();
 
-    if (windowState.isMoving) {
-      // FIXME: Work around a Flutter bug where the Listener widget wouldn't move with the window and would
-      // give coordinates relative to the window position before moving it.
-      // Make sure to include the window movement.
-      windowState.movingDelta += event.delta;
-    }
-    var pos = event.localPosition - windowState.movingDelta;
+    // print("f");
 
-    DesktopState.platform.invokeMethod(
-      "pointer_hover",
-      {
-        "x": pos.dx,
-        "y": pos.dy,
-        "view_id": windowState.viewId,
-      },
-    );
+    if (!windowState.isMoving && !windowState.isResizing) {
+      DesktopState.platform.invokeMethod(
+        "pointer_hover",
+        {
+          "x": event.localPosition.dx,
+          "y": event.localPosition.dy,
+          "view_id": windowState.viewId,
+        },
+      );
+    }
   }
 }

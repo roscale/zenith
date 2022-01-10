@@ -77,6 +77,7 @@ void pointer_exit(ZenithOutput* output,
 	ZenithServer* server = output->server;
 
 	wlr_seat_pointer_clear_focus(server->seat);
+	wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
 	result->Success();
 }
 

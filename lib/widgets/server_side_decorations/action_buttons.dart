@@ -1,6 +1,5 @@
-import 'package:zenith/desktop_state.dart';
-import 'package:zenith/window.dart';
-import 'package:zenith/window_state.dart';
+import 'package:zenith/state/desktop_state.dart';
+import 'package:zenith/state/window_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

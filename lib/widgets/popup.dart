@@ -1,8 +1,7 @@
 import 'package:provider/provider.dart';
-import 'package:zenith/desktop_state.dart';
-import 'package:flutter/gestures.dart';
+import 'package:zenith/state/desktop_state.dart';
 import 'package:flutter/material.dart';
-import 'package:zenith/popup_state.dart';
+import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/util.dart';
 
 class Popup extends StatelessWidget {

@@ -26,18 +26,20 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d) ./ third_party /usr/include/pixman
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-# The -MMD and -MP flags together generate Makefiles for us!
-# These files will have .d instead of .o as the output.
 ASAN := -g -fsanitize=address -fno-omit-frame-pointer -lasan -lrt
 WARNINGS := -Wall -Wextra -Wno-unused-parameter -Werror
 
-DEBUG_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -DDEBUG $(WARNINGS) $(ASAN)
-PROFILE_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -DPROFILE $(WARNINGS)
-RELEASE_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE -O2 $(WARNINGS)
+# The -MMD and -MP flags together generate Makefiles for us!
+# These files will have .d instead of .o as the output.
+COMMON_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE $(WARNINGS)
+DEBUG_CPPFLAGS := $(COMMON_CPPFLAGS) -DDEBUG $(ASAN)
+PROFILE_CPPFLAGS := $(COMMON_CPPFLAGS) -DPROFILE
+RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) -O2
 
-DEBUG_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_debug $(ASAN)
-PROFILE_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_profile
-RELEASE_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -L ./ -lflutter_engine_release
+COMMON_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -lpixman-1 -L ./
+DEBUG_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_debug $(ASAN)
+PROFILE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_profile
+RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release
 
 $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC): $(DEBUG_OBJS)
 	mkdir -p $(dir $@)

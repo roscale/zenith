@@ -9,37 +9,38 @@ class WindowState with ChangeNotifier {
     required Offset position,
     required Size surfaceSize,
     required Rect visibleBounds,
-  })  : _position = position,
-        _title = title,
+  })  : _title = title,
+        _position = position,
         _surfaceSize = surfaceSize,
         _visibleBounds = visibleBounds {
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance?.addPostFrameCallback((_timeStamp) {
       // We cannot call this function directly because the window will not animate otherwise.
-      animateOpening();
+      // It must be called after the frame the widget is constructed.
+      _animateOpening();
     });
   }
 
   final int viewId;
   final GlobalKey textureKey = GlobalKey();
-  String _title;
 
-  Offset _position;
-  Size _surfaceSize;
-
-  Rect _visibleBounds;
+  // Completes when the window is no longer visible.
+  final windowClosedCompleter = Completer();
   Rect wantedVisibleBounds = Rect.zero;
 
-  bool isClosing = false;
-  bool isMoving = false;
-  bool isResizing = false;
-  int resizingEdges = 0;
-  Offset movingDelta = Offset.zero;
+  String _title;
+  Offset _position;
+  Size _surfaceSize;
+  Rect _visibleBounds;
 
-  double scale = 0.9;
-  double opacity = 0.5;
-  var windowClosed = Completer<void>();
+  bool _isMoving = false;
+  bool _isResizing = false;
+  bool _isClosing = false;
 
-  // var popups = <Popup>[];
+  int _resizingEdges = 0;
+
+  // Animation values.
+  double _scale = 0.9;
+  double _opacity = 0.5;
 
   String get title => _title;
 
@@ -69,45 +70,54 @@ class WindowState with ChangeNotifier {
     notifyListeners();
   }
 
-  void animateOpening() {
-    scale = 1.0;
-    opacity = 1.0;
-    notifyListeners();
-  }
+  bool get isClosing => _isClosing;
 
-  Future animateClosing() {
-    isClosing = true;
-    scale = 0.9;
-    opacity = 0.0;
+  bool get isMoving => _isMoving;
+
+  bool get isResizing => _isResizing;
+
+  int get resizingEdges => _resizingEdges;
+
+  double get scale => _scale;
+
+  double get opacity => _opacity;
+
+  void _animateOpening() {
+    _scale = 1.0;
+    _opacity = 1.0;
     notifyListeners();
-    return windowClosed.future;
   }
 
   void startMove() {
-    isMoving = true;
-    movingDelta = Offset.zero;
+    assert(!_isMoving);
+    _isMoving = true;
     notifyListeners();
   }
 
   void stopMove() {
-    if (isMoving) {
-      isMoving = false;
-      movingDelta = Offset.zero;
-      notifyListeners();
-    }
+    _isMoving = false;
+    notifyListeners();
   }
 
   void startResize(int edges) {
-    isResizing = true;
+    assert(!_isResizing);
+    _isResizing = true;
     wantedVisibleBounds = visibleBounds;
-    resizingEdges = edges;
+    _resizingEdges = edges;
     notifyListeners();
   }
 
   void stopResize() {
-    if (isResizing) {
-      isResizing = false;
-      notifyListeners();
-    }
+    _isResizing = false;
+    notifyListeners();
+  }
+
+  Future animateClosing() {
+    assert(!_isClosing);
+    _isClosing = true;
+    _scale = 0.9;
+    _opacity = 0.0;
+    notifyListeners();
+    return windowClosedCompleter.future;
   }
 }

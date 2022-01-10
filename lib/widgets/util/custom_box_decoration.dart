@@ -1,9 +1,11 @@
+// This is for drawing shadows around windows and having transparency behind them. Using the Flutter
+// built-in widget, the behind of the window is all solid black instead of showing what's behind.
+
 // Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
