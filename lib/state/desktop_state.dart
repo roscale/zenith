@@ -72,6 +72,13 @@ class DesktopState with ChangeNotifier {
     int viewId = event["view_id"];
 
     var window = windows.singleWhere((element) => element.state.viewId == viewId);
+
+    if (window == windows.last && windows.length >= 2) {
+      // Activate the window behind.
+      var penultimate = windows[windows.length - 2];
+      platform.invokeMethod('activate_window', penultimate.state.viewId);
+    }
+
     await window.state.animateClosing();
 
     windows.remove(window);
