@@ -44,3 +44,11 @@ class RectClip extends CustomClipper<Rect> {
 extension RoundedExtension on Offset {
   Offset rounded() => Offset(dx.roundToDouble(), dy.roundToDouble());
 }
+
+extension RectClamp on Rect {
+  Rect clampTo(Rect bigger) {
+    double left = width > bigger.width ? 0 : this.left.clamp(bigger.left, bigger.right - width);
+    double top = height > bigger.height ? 0 : this.top.clamp(bigger.top, bigger.bottom - height);
+    return Rect.fromLTWH(left, top, width, height);
+  }
+}

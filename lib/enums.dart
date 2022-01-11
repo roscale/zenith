@@ -12,7 +12,7 @@ enum Edges {
   right,
 }
 
-extension EdgesId on Edges {
+extension EdgesExt on Edges {
   int get id {
     switch (this) {
       case Edges.none:
@@ -26,5 +26,9 @@ extension EdgesId on Edges {
       case Edges.right:
         return 1 << 3;
     }
+  }
+
+  bool operator &(int bitmap) {
+    return bitmap & id != 0;
   }
 }

@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:zenith/enums.dart';
+import 'package:zenith/util.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/widgets/window.dart';
@@ -20,6 +23,8 @@ class DesktopState with ChangeNotifier {
 
   static const MethodChannel platform = MethodChannel('platform');
 
+  Offset pointerPosition = window.physicalGeometry.center;
+
   DesktopState() {
     windowMappedEvent.receiveBroadcastStream().listen(windowMapped);
     windowUnmappedEvent.receiveBroadcastStream().listen(windowUnmapped);
@@ -35,6 +40,7 @@ class DesktopState with ChangeNotifier {
     int surfaceWidth = event["surface_width"];
     int surfaceHeight = event["surface_height"];
 
+    // Visible bounds relative to (0, 0) being the top left corner of the surface.
     var visibleBoundsMap = Map<String, int>.from(event["visible_bounds"]);
     var visibleBounds = Rect.fromLTWH(
       visibleBoundsMap["x"]!.toDouble(),
@@ -43,11 +49,18 @@ class DesktopState with ChangeNotifier {
       visibleBoundsMap["height"]!.toDouble(),
     );
 
+    var initialWindowPosition = Rect.fromCenter(
+      center: pointerPosition,
+      width: visibleBounds.width,
+      height: visibleBounds.height,
+    );
+    initialWindowPosition = initialWindowPosition.clampTo(window.physicalGeometry);
+
     windows.add(
       Window(WindowState(
         viewId: viewId,
         title: "Window",
-        position: const Offset(100, 100),
+        position: initialWindowPosition.topLeft,
         surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
         visibleBounds: visibleBounds,
       )),
@@ -85,7 +98,7 @@ class DesktopState with ChangeNotifier {
     var windowIndex = windows.indexWhere((element) => element.state.viewId == parentViewId);
     if (windowIndex != -1) {
       var window = windows[windowIndex];
-      parentPosition = window.state.position + window.state.visibleBounds.topLeft;
+      parentPosition = window.state.position;
     } else {
       var popupIndex = popups.indexWhere((element) => element.state.viewId == parentViewId);
       var popup = popups[popupIndex];
@@ -109,7 +122,6 @@ class DesktopState with ChangeNotifier {
 
     var popup = popups.singleWhere((element) => element.state.viewId == viewId);
     await popup.state.animateClosing();
-    print("delete");
 
     popups.remove(popup);
     notifyListeners();
@@ -162,9 +174,27 @@ class DesktopState with ChangeNotifier {
     switch (role) {
       case XdgSurfaceRole.toplevel:
         var window = windows.singleWhere((element) => element.state.viewId == viewId);
+
+        if (newVisibleBounds != null) {
+          // Window position will change if it's resized from the left or top.
+          var position = window.state.position;
+          var visibleBounds = window.state.visibleBounds;
+
+          double x = Edges.left & window.state.resizingEdges
+              ? position.dx + (visibleBounds.width - newVisibleBounds.width)
+              : position.dx;
+
+          double y = Edges.top & window.state.resizingEdges
+              ? position.dy + (visibleBounds.height - newVisibleBounds.height)
+              : position.dy;
+
+          window.state.position = Offset(x, y);
+        }
+
         window.state.surfaceSize = newSurfaceSize ?? window.state.surfaceSize;
         window.state.visibleBounds = newVisibleBounds ?? window.state.visibleBounds;
         break;
+
       case XdgSurfaceRole.popup:
         var popup = popups.singleWhere((element) => element.state.viewId == viewId);
         popup.state.surfaceSize = newSurfaceSize ?? popup.state.surfaceSize;
@@ -173,18 +203,25 @@ class DesktopState with ChangeNotifier {
         Offset parentPosition;
         var windowIndex = windows.indexWhere((element) => element.state.viewId == popup.state.parentViewId);
         if (windowIndex != -1) {
+          // Parent is a window.
           var window = windows[windowIndex];
-          parentPosition = window.state.position + window.state.visibleBounds.topLeft;
+          parentPosition = window.state.position;
         } else {
+          // Parent is another popup.
           var popupIndex = popups.indexWhere((element) => element.state.viewId == popup.state.parentViewId);
           var parentPopup = popups[popupIndex];
           parentPosition = parentPopup.state.position;
         }
 
-        if (newPosition != null) {
+        if (event["popup_position_changed"]) {
+          // Position relative to the parent.
+          int x = event["x"];
+          int y = event["y"];
+          newPosition = Offset(x.toDouble(), y.toDouble());
           popup.state.position = newPosition + parentPosition;
         }
         break;
+
       case XdgSurfaceRole.none:
         assert(false, "xdg_surface has no role, this should never happen.");
         break;

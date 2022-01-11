@@ -35,71 +35,79 @@ class _PointerListener extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var position = context.select((WindowState state) => state.position).rounded();
+    var visibleBounds = context.select((WindowState state) => state.visibleBounds);
     var isClosing = context.select((WindowState state) => state.isClosing);
     var isMoving = context.select((WindowState state) => state.isMoving);
     var isResizing = context.select((WindowState state) => state.isResizing);
 
     return Positioned(
-      left: position.dx,
-      top: position.dy,
+      left: position.dx - visibleBounds.left,
+      top: position.dy - visibleBounds.top,
       child: IgnorePointer(
-        ignoring: isClosing,
+        ignoring: isClosing || isMoving || isResizing,
         child: Listener(
           onPointerDown: (_) {
             var windowState = context.read<WindowState>();
             context.read<DesktopState>().activateWindow(windowState.viewId);
           },
           onPointerMove: (PointerMoveEvent event) {
-            var windowState = context.read<WindowState>();
             if (isMoving) {
-              windowState.position += event.delta;
+              handleMove(context, event);
             }
             if (isResizing) {
-              int edges = windowState.resizingEdges;
-
-              double widthIncrement = 0;
-              if (edges & Edges.right.id != 0) {
-                widthIncrement = event.delta.dx;
-              }
-              if (edges & Edges.left.id != 0) {
-                widthIncrement = -event.delta.dx;
-                windowState.position += Offset(event.delta.dx, 0);
-              }
-
-              double heightIncrement = 0;
-              if (edges & Edges.bottom.id != 0) {
-                heightIncrement = event.delta.dy;
-              }
-              if (edges & Edges.top.id != 0) {
-                heightIncrement = -event.delta.dy;
-                windowState.position += Offset(0, event.delta.dy);
-              }
-
-              windowState.wantedVisibleBounds = Rect.fromLTWH(
-                windowState.wantedVisibleBounds.left,
-                windowState.wantedVisibleBounds.top,
-                windowState.wantedVisibleBounds.width + widthIncrement,
-                windowState.wantedVisibleBounds.height + heightIncrement,
-              );
-
-              DesktopState.platform.invokeMethod(
-                "resize_window",
-                {
-                  "view_id": windowState.viewId,
-                  "width": windowState.wantedVisibleBounds.width,
-                  "height": windowState.wantedVisibleBounds.height,
-                },
-              );
+              handleResize(context, event);
             }
           },
           onPointerUp: (_) {
-            context.read<WindowState>().stopMove();
-            context.read<WindowState>().stopResize();
-            print("hu");
+            var windowState = context.read<WindowState>();
+            windowState.stopMove();
+            windowState.stopResize();
           },
           child: child,
         ),
       ),
+    );
+  }
+
+  void handleMove(BuildContext context, PointerMoveEvent event) {
+    var windowState = context.read<WindowState>();
+    windowState.position += event.delta;
+  }
+
+  void handleResize(BuildContext context, PointerMoveEvent event) {
+    var windowState = context.read<WindowState>();
+    int edges = windowState.resizingEdges;
+
+    double widthIncrement = 0;
+    if (edges & Edges.right.id != 0) {
+      widthIncrement = event.delta.dx;
+    }
+    if (edges & Edges.left.id != 0) {
+      widthIncrement = -event.delta.dx;
+    }
+
+    double heightIncrement = 0;
+    if (edges & Edges.bottom.id != 0) {
+      heightIncrement = event.delta.dy;
+    }
+    if (edges & Edges.top.id != 0) {
+      heightIncrement = -event.delta.dy;
+    }
+
+    windowState.wantedVisibleBounds = Rect.fromLTWH(
+      windowState.wantedVisibleBounds.left,
+      windowState.wantedVisibleBounds.top,
+      windowState.wantedVisibleBounds.width + widthIncrement,
+      windowState.wantedVisibleBounds.height + heightIncrement,
+    );
+
+    DesktopState.platform.invokeMethod(
+      "resize_window",
+      {
+        "view_id": windowState.viewId,
+        "width": windowState.wantedVisibleBounds.width,
+        "height": windowState.wantedVisibleBounds.height,
+      },
     );
   }
 }
@@ -171,8 +179,6 @@ class _Surface extends StatelessWidget {
 
   void pointerMoved(BuildContext context, PointerEvent event) {
     var windowState = context.read<WindowState>();
-
-    // print("f");
 
     if (!windowState.isMoving && !windowState.isResizing) {
       DesktopState.platform.invokeMethod(
