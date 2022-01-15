@@ -55,6 +55,8 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_motion);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion*>(data);
+	pointer->kinetic_scrolling = false;
+
 	/* The cursor doesn't move unless we tell it to. The cursor automatically
 	 * handles constraining the motion to the output layout, as well as any
 	 * special configuration applied for the specific input device which
@@ -78,6 +80,7 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_motion_absolute);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion_absolute*>(data);
+	pointer->kinetic_scrolling = false;
 
 	wlr_cursor_warp_absolute(pointer->cursor, event->device, event->x, event->y);
 
@@ -137,10 +140,96 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_axis*>(data);
 
+	uint32_t now = FlutterEngineGetCurrentTime() / 1'000'000;
+
+	uint32_t interval = 30;
+
+	std::cout << "event->delta = " << event->delta << std::endl;
+	std::cout << "event->delta_discrete = " << event->delta_discrete << std::endl;
+	std::cout << "event->source = " << event->source << std::endl;
+	std::cout << "event->time_msec = " << event->time_msec << std::endl;
+	std::cout << "event->orientation = " << event->orientation << std::endl;
+	std::cout << "event->device = " << event->device << std::endl;
+	std::cout << std::endl;
+
+	if (event->source == WLR_AXIS_SOURCE_FINGER) {
+		if (abs(event->delta) < 0.1 && abs(pointer->kinetic_event.delta) < 0.1) {
+			std::cout << "huh" << std::endl;
+			return;
+		}
+
+		if (abs(event->delta) >= 0.1) {
+			pointer->kinetic_scrolling = false;
+			pointer->kinetic_events.push_back(*event);
+
+			uint32_t oldest_threshold = now - interval;
+			while (not pointer->kinetic_events.empty()) {
+				auto& front = pointer->kinetic_events.front();
+				if (front.time_msec < oldest_threshold) {
+					pointer->kinetic_events.pop_front();
+				} else {
+					break;
+				}
+			}
+			pointer->kinetic_event = *event;
+
+			std::cout << "ms " << event->time_msec << std::endl;
+
+		} else {
+//			uint32_t oldest_threshold = now - interval;
+//			while (not pointer->kinetic_events.empty()) {
+//				auto& front = pointer->kinetic_events.front();
+//				if (front.time_msec < oldest_threshold) {
+//					pointer->kinetic_events.pop_front();
+//				} else {
+//					break;
+//				}
+//			}
+
+			if (not pointer->kinetic_events.empty()) {
+				double sum = 0;
+				for (auto& kevent: pointer->kinetic_events) {
+					sum += kevent.delta;
+				}
+				pointer->mean_delta = sum / pointer->kinetic_events.size();
+			} else {
+				pointer->mean_delta = 0;
+				std::cout << "mean delta = 0" << std::endl;
+			}
+
+			if (abs(pointer->mean_delta) >= 0.1 && abs(pointer->kinetic_events.back().delta) > 0.5) {
+				pointer->kinetic_scrolling = true;
+				pointer->last_kinetic_event = now;
+				pointer->last_real_event = event->time_msec;
+				std::cout << "Start scroll" << std::endl;
+				wlr_seat_pointer_notify_axis(server->seat,
+				                             now, event->orientation,
+				                             pointer->mean_delta,
+				                             0, event->source);
+				wlr_seat_pointer_notify_frame(server->seat);
+			}
+		}
+	}
+
 	/* Notify the client with pointer focus of the axis event. */
 	wlr_seat_pointer_notify_axis(server->seat,
 	                             event->time_msec, event->orientation, event->delta,
 	                             event->delta_discrete, event->source);
+
+	bool are_any_buttons_pressed = pointer->mouse_button_tracker.are_any_buttons_pressed();
+
+	FlutterPointerEvent e = {};
+	e.struct_size = sizeof(FlutterPointerEvent);
+	e.phase = are_any_buttons_pressed ? kMove : kDown;
+	e.timestamp = FlutterEngineGetCurrentTime();
+	e.x = pointer->cursor->x;
+	e.y = pointer->cursor->y;
+	e.device_kind = kFlutterPointerDeviceKindMouse;
+	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
+	e.signal_kind = kFlutterPointerSignalKindScroll;
+	e.scroll_delta_y = event->delta;
+
+	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
 }
 
 void server_cursor_frame(wl_listener* listener, void* data) {

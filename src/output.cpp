@@ -109,6 +109,79 @@ void output_frame(wl_listener* listener, void* data) {
 
 	wlr_renderer_end(server->renderer);
 	wlr_output_commit(output->wlr_output);
+
+	if (server->pointer->kinetic_scrolling) {
+		uint32_t now = FlutterEngineGetCurrentTime() / 1'000'000;
+		double mean_delta = server->pointer->mean_delta;
+
+		std::cout << "mean " << mean_delta << std::endl;
+
+		uint32_t last_real_event = server->pointer->last_real_event;
+		auto event = &server->pointer->kinetic_event;
+		//		uint32_t last_kinetic_event = server->pointer->last_kinetic_event;
+
+		double sum = 0;
+		for (uint32_t ms = server->pointer->last_kinetic_event; ms <= now; ms += 1) {
+			auto vel = abs(mean_delta) * exp(-(double) (ms - last_real_event) / 150);
+
+			auto value = vel / 10;
+			if (mean_delta < 0) {
+				value *= -1;
+			}
+			sum += value;
+			server->pointer->last_kinetic_event = now;
+
+			if (vel >= 0.1) {
+				std::cout << "value " << value << std::endl;
+//				wlr_seat_pointer_notify_axis(server->seat,
+//				                             now, event->orientation, value,
+//				                             0, event->source);
+//				wlr_seat_pointer_notify_frame(server->seat);
+			} else {
+				std::cout << "scroll end" << std::endl;
+				server->pointer->kinetic_scrolling = false;
+				break;
+			}
+		}
+		wlr_seat_pointer_notify_axis(server->seat,
+		                             now, event->orientation, sum,
+		                             0, event->source);
+		wlr_seat_pointer_notify_frame(server->seat);
+		if (not server->pointer->kinetic_scrolling) {
+			wlr_seat_pointer_notify_axis(server->seat,
+			                             now, event->orientation, 0,
+			                             0, event->source);
+			wlr_seat_pointer_notify_frame(server->seat);
+		}
+
+//		if (vel >= 0.1) {
+//			std::cout << "scroll " << incr << std::endl;
+//			wlr_seat_pointer_notify_axis(server->seat,
+//			                             now, event->orientation, vel,
+//			                             event->delta_discrete, event->source);
+//			wlr_seat_pointer_notify_frame(server->seat);
+//			server->pointer->last_kinetic_event = now;
+//		} else {
+//			std::cout << "scroll end" << std::endl;
+//			server->pointer->kinetic_scrolling = false;
+//		}
+
+//		std::cout << server->pointer->last_kinetic_event << std::endl;
+//		std::cout << now << std::endl;
+//		for (uint32_t t = server->pointer->last_kinetic_event; t <= now; t += 1) {
+//			if (abs(event->delta) >= 0.1) {
+//				event->delta *= 0.995;
+//			} else {
+//				server->pointer->kinetic_scrolling = false;
+//				break;
+//			}
+//		}
+//		wlr_seat_pointer_notify_axis(server->seat,
+//		                             now, event->orientation, event->delta,
+//		                             event->delta_discrete, event->source);
+//		wlr_seat_pointer_notify_frame(server->seat);
+//		server->pointer->last_kinetic_event = now;
+	}
 }
 
 void mode_changed_event(wl_listener* listener, void* data) {

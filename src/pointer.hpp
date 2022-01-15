@@ -1,9 +1,11 @@
 #pragma once
 
+#include <queue>
 #include "mouse_button_tracker.hpp"
 
 extern "C" {
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_pointer.h>
 #define static
 #include <wlr/types/wlr_xcursor_manager.h>
 #undef static
@@ -24,6 +26,13 @@ struct ZenithPointer {
 	wl_listener cursor_button{};
 	wl_listener cursor_axis{};
 	wl_listener cursor_frame{};
+
+	bool kinetic_scrolling = false;
+	std::deque<wlr_event_pointer_axis> kinetic_events{};
+	wlr_event_pointer_axis kinetic_event;
+	uint32_t last_kinetic_event;
+	uint32_t last_real_event;
+	double mean_delta = 0.0;
 };
 
 /*
