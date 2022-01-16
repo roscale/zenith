@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:zenith/enums.dart';
-import 'package:zenith/util.dart';
+import 'package:zenith/util/util.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/widgets/window.dart';

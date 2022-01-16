@@ -2,6 +2,7 @@
 
 #include "keyboard.hpp"
 #include <wayland-util.h>
+#include <xkbcommon/xkbcommon.h>
 
 extern "C" {
 #define static
@@ -31,3 +32,5 @@ void keyboard_handle_modifiers(wl_listener* listener, void* data);
  * This event is raised when a key is pressed or released.
  */
 void keyboard_handle_key(wl_listener* listener, void* data);
+
+bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, const xkb_keysym_t* syms, size_t nsyms);

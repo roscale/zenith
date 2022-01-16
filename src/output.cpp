@@ -99,7 +99,7 @@ void output_frame(wl_listener* listener, void* data) {
 					  // I decided to render subsurfaces on the framebuffer of the nearest xdg_surface parent.
 					  // One downside to this approach is that popups created using a subsurface instead of an xdg_popup
 					  // are clipped to the window and cannot be rendered outside the window bounds.
-					  // I don't really care because Gnome Shell takes the same approach on Ubuntu, and it simplifies things a lot.
+					  // I don't really care because Gnome Shell takes the same approach, and it simplifies things a lot.
 					  // Interesting discussion: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/issues/24
 					  RenderToTextureShader::instance()->render(attribs.tex, sx, sy,
 					                                            surface->current.buffer_width,
@@ -118,6 +118,9 @@ void output_frame(wl_listener* listener, void* data) {
 		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view_id);
 	}
 
+	/*
+	 * Notify the compositor to prepare a new frame for the next time.
+	 */
 	intptr_t baton;
 	pthread_mutex_lock(&flutter_engine_state->baton_mutex);
 	if (flutter_engine_state->new_baton) {
@@ -129,13 +132,15 @@ void output_frame(wl_listener* listener, void* data) {
 	}
 	pthread_mutex_unlock(&flutter_engine_state->baton_mutex);
 
+	/*
+	 * Copy the frame to the screen.
+	 */
 	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
 		return;
 	}
 
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
-
 	wlr_renderer_begin(server->renderer, width, height);
 
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);

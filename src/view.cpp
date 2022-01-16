@@ -62,9 +62,13 @@ void ZenithView::focus() {
 		 * it no longer has focus and the client will repaint accordingly, e.g.
 		 * stop displaying a caret.
 		 */
-		if (wlr_surface_is_xdg_surface(prev_surface)) {
-			// In some weird cases a surface can lose its associated xdg_surface.
-			wlr_xdg_surface* previous = wlr_xdg_surface_from_wlr_surface(prev_surface);
+		wlr_xdg_surface* previous;
+		if (wlr_surface_is_xdg_surface(prev_surface)
+		    && (previous = wlr_xdg_surface_from_wlr_surface(prev_surface)) != nullptr) {
+			// FIXME: There is some weirdness going on which requires this seemingly redundant check.
+			// I think the surface might be already destroyed but in this case keyboard_state.focused_surface
+			// should be automatically set to null according to wlroots source code.
+			// It seems that it doesn't cause any more crashes but I don't think this is the right fix.
 			wlr_xdg_toplevel_set_activated(previous, false);
 		}
 	}

@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:zenith/widgets/util/clip_hitbox.dart';
+import 'package:zenith/util/clip_hitbox.dart';
 import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/enums.dart';
-import 'package:zenith/util.dart';
+import 'package:zenith/util/util.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

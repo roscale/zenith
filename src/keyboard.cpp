@@ -52,7 +52,44 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 	auto* event = static_cast<wlr_event_keyboard_key*>(data);
 	wlr_seat* seat = server->seat;
 
-	// We pass it along to the client.
 	wlr_seat_set_keyboard(seat, keyboard->device);
-	wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
+
+	bool shortcut_handled = false;
+	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+		uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+
+		/* Translate libinput keycode -> xkbcommon */
+		uint32_t keycode = event->keycode + 8;
+		/* Get a list of keysyms based on the keymap for this keyboard */
+		const xkb_keysym_t* syms;
+		int nsyms = xkb_state_key_get_syms(keyboard->device->keyboard->xkb_state, keycode, &syms);
+
+		shortcut_handled = handle_shortcuts(keyboard, modifiers, syms, (size_t) nsyms);
+	}
+
+	if (not shortcut_handled) {
+		// We pass it along to the client.
+		wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
+	}
+}
+
+bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, const xkb_keysym_t* syms, size_t nsyms) {
+	auto is_key_pressed = [syms, nsyms](uint64_t key) {
+		for (size_t i = 0; i < nsyms; i++) {
+			if (syms[i] == key) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	if ((modifiers & WLR_MODIFIER_CTRL) and
+	    (modifiers & WLR_MODIFIER_ALT) and
+	    (is_key_pressed(XKB_KEY_Delete) or
+	     is_key_pressed(XKB_KEY_KP_Delete))) {
+
+		wl_display_terminate(keyboard->server->display);
+		return true;
+	}
+	return false;
 }

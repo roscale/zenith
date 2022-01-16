@@ -7,7 +7,7 @@ RELEASE_BUILD_DIR := ./build/$(TARGET_EXEC)/release
 
 # Find all the C and C++ files we want to compile
 # Note the single quotes around the * expressions. Make will incorrectly expand these otherwise.
-SRCS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.cc' -or -name '*.c' -or -name '*.s')
+SRCS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.cc' -or -name '*.c')
 
 # String substitution for every C/C++ file.
 # As an example, hello.cpp turns into ./build/hello.cpp.o
@@ -22,7 +22,7 @@ PROFILE_DEPS := $(PROFILE_OBJS:.o=.d)
 RELEASE_DEPS := $(RELEASE_OBJS:.o=.d)
 
 # Every folder in ./src will need to be passed to GCC so that it can find header files
-INC_DIRS := $(shell find $(SRC_DIRS) -type d) ./ third_party /usr/include/pixman-1
+INC_DIRS := $(shell find $(SRC_DIRS) -type d) ./ third_party
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
@@ -31,7 +31,7 @@ WARNINGS := -Wall -Wextra -Wno-unused-parameter -Werror
 
 # The -MMD and -MP flags together generate Makefiles for us!
 # These files will have .d instead of .o as the output.
-COMMON_CPPFLAGS := $(INC_FLAGS) -MMD -MP -DWLR_USE_UNSTABLE $(WARNINGS)
+COMMON_CPPFLAGS := $(INC_FLAGS) $(shell pkg-config --cflags pixman-1) -MMD -MP -DWLR_USE_UNSTABLE $(WARNINGS)
 DEBUG_CPPFLAGS := $(COMMON_CPPFLAGS) -DDEBUG $(ASAN)
 PROFILE_CPPFLAGS := $(COMMON_CPPFLAGS) -DPROFILE
 RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) -O2
