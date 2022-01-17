@@ -6,6 +6,7 @@ extern "C" {
 #define static
 #include "wlr/types/wlr_seat.h"
 #include "wlr/types/wlr_xdg_shell.h"
+#include <wlr/render/gles2.h>
 #undef static
 }
 
@@ -121,6 +122,26 @@ void resize_window(ZenithOutput* output,
 	ZenithView* view = view_it->second.get();
 
 	wlr_xdg_toplevel_set_size(view->xdg_surface, (size_t) width, (size_t) height);
+
+	result->Success();
+}
+
+void closing_animation_finished(ZenithOutput* output,
+                                const flutter::MethodCall<>& call,
+                                std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	size_t view_id = std::get<int>(call.arguments()[0]);
+	ZenithServer* server = output->server;
+
+	if (eglGetCurrentContext() == nullptr) {
+		// wlroots is screwing with me and deactivates the gl context for some reason.
+		wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
+		wlr_egl_make_current(egl);
+	}
+
+	server->surface_framebuffers_mutex.lock();
+	server->surface_framebuffers.erase(view_id);
+	server->surface_framebuffers_mutex.unlock();
 
 	result->Success();
 }

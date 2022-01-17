@@ -1,6 +1,6 @@
 # Zenith
 
-A Wayland compositor that uses Flutter for rendering.
+A wlroots-based Wayland compositor that uses Flutter for rendering.
 
 ![Vsync test](screenshots/vsync.png)
 
@@ -84,7 +84,8 @@ cd build/zenith/[debug|release]/bundle/
 ```
 
 For development purposes it is more convenient to start Zenith from an existing X11 or Wayland compositor, and it will
-show up as a window.\
+show up as a window.
+
 **Do not just run `flutter run`. It will not work. It will use the GTK embedder instead of our beautiful C++ code.**
 
 Press `Ctrl`+`Alt`+`Delete` to quit.

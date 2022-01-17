@@ -80,8 +80,8 @@ class DesktopState with ChangeNotifier {
     }
 
     await window.state.animateClosing();
-
     windows.remove(window);
+    platform.invokeMethod('closing_animation_finished', window.state.viewId);
     notifyListeners();
   }
 
@@ -131,6 +131,7 @@ class DesktopState with ChangeNotifier {
     await popup.state.animateClosing();
 
     popups.remove(popup);
+    platform.invokeMethod('closing_animation_finished', popup.state.viewId);
     notifyListeners();
   }
 

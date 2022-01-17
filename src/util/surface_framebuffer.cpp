@@ -3,6 +3,8 @@
 #include <cassert>
 #include <iostream>
 #include <GL/gl.h>
+#include <EGL/egl.h>
+#include <thread>
 
 SurfaceFramebuffer::SurfaceFramebuffer(size_t width, size_t height)
 	  : width(width), height(height), pending_width(width), pending_height(height) {
@@ -87,6 +89,7 @@ bool SurfaceFramebuffer::apply_pending_resize() {
 }
 
 SurfaceFramebuffer::~SurfaceFramebuffer() {
+	assert(eglGetCurrentContext() != EGL_NO_CONTEXT);
 	glDeleteTextures(1, &texture);
 	glDeleteFramebuffers(1, &framebuffer);
 }

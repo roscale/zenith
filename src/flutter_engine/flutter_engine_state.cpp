@@ -156,6 +156,8 @@ void FlutterEngineState::register_host_api() {
 				  close_window(output, call, std::move(result));
 			  } else if (call.method_name() == "resize_window") {
 				  resize_window(output, call, std::move(result));
+			  } else if (call.method_name() == "closing_animation_finished") {
+				  closing_animation_finished(output, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }
