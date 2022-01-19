@@ -96,14 +96,19 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 
 	// Make sure a framebuffer exists for this xdg_surface.
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
-	auto surface_framebuffer_it = server->surface_framebuffers.find(view->id);
-	if (surface_framebuffer_it == server->surface_framebuffers.end()) {
-		server->surface_framebuffers.insert(
-			  std::pair<size_t, std::unique_ptr<SurfaceFramebuffer>>(
-					view->id,
-					std::make_unique<SurfaceFramebuffer>(texture->width, texture->height)
-			  )
-		);
+
+	{
+		std::scoped_lock lock(server->surface_framebuffers_mutex);
+
+		auto surface_framebuffer_it = server->surface_framebuffers.find(view->id);
+		if (surface_framebuffer_it == server->surface_framebuffers.end()) {
+			server->surface_framebuffers.insert(
+				  std::pair(
+						view->id,
+						std::make_shared<SurfaceFramebuffer>(texture->width, texture->height)
+				  )
+			);
+		}
 	}
 
 	FlutterEngineRegisterExternalTexture(view->server->output->flutter_engine_state->engine, (int64_t) view->id);
@@ -214,8 +219,6 @@ void surface_commit(wl_listener* listener, void* data) {
 	auto* view = server->views_by_id.find(it_id->second)->second.get();
 	wlr_xdg_surface* xdg_surface = view->xdg_surface;
 
-	server->surface_framebuffers_mutex.lock();
-
 	auto map = EncodableMap{
 		  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
 		  {EncodableValue("surface_role"),   EncodableValue(xdg_surface->role)},
@@ -247,13 +250,20 @@ void surface_commit(wl_listener* listener, void* data) {
 		map.insert({EncodableValue("geometry_changed"), EncodableValue(false)});
 	}
 
-	auto it = server->surface_framebuffers.find(view->id);
-	bool framebuffer_doesnt_exist = it == server->surface_framebuffers.end();
-	if (framebuffer_doesnt_exist) {
-		server->surface_framebuffers_mutex.unlock();
-		return;
+	std::shared_ptr<SurfaceFramebuffer> surface_framebuffer;
+	{
+		std::scoped_lock lock(server->surface_framebuffers_mutex);
+
+		auto it = server->surface_framebuffers.find(view->id);
+		bool framebuffer_doesnt_exist = it == server->surface_framebuffers.end();
+		if (framebuffer_doesnt_exist) {
+			return;
+		}
+
+		surface_framebuffer = it->second;
 	}
-	auto* surface_framebuffer = it->second.get();
+
+	std::scoped_lock lock(surface_framebuffer->mutex);
 
 	bool surface_size_changed = false;
 	if ((size_t) surface->current.buffer_width != surface_framebuffer->pending_width
@@ -295,8 +305,6 @@ void surface_commit(wl_listener* listener, void* data) {
 		view->server->output->flutter_engine_state->messenger.Send("configure_surface", result->data(),
 		                                                           result->size());
 	}
-
-	server->surface_framebuffers_mutex.unlock();
 }
 
 void xdg_toplevel_request_move(wl_listener* listener, void* data) {

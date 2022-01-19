@@ -139,9 +139,10 @@ void closing_animation_finished(ZenithOutput* output,
 		wlr_egl_make_current(egl);
 	}
 
-	server->surface_framebuffers_mutex.lock();
+	std::scoped_lock lock(server->surface_framebuffers_mutex);
 	server->surface_framebuffers.erase(view_id);
-	server->surface_framebuffers_mutex.unlock();
+
+	FlutterEngineUnregisterExternalTexture(output->flutter_engine_state->engine, view_id);
 
 	result->Success();
 }

@@ -19,7 +19,7 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 struct render_data {
 	ZenithOutput* output;
 	ZenithView* view;
-	GLuint view_framebuffer;
+	GLuint view_fbo;
 	bool skip_surface;
 };
 
@@ -40,23 +40,29 @@ void output_frame(wl_listener* listener, void* data) {
 			continue;
 		}
 
-		server->surface_framebuffers_mutex.lock();
+		std::shared_ptr<SurfaceFramebuffer> view_framebuffer;
 
-		auto surface_framebuffer_it = server->surface_framebuffers.find(view->id);
-		assert(surface_framebuffer_it != server->surface_framebuffers.end());
+		{
+			std::scoped_lock lock(server->surface_framebuffers_mutex);
 
-		GLuint view_framebuffer = surface_framebuffer_it->second->framebuffer;
+			auto surface_framebuffer_it = server->surface_framebuffers.find(view->id);
+			assert(surface_framebuffer_it != server->surface_framebuffers.end());
 
-		server->surface_framebuffers_mutex.unlock();
+			view_framebuffer = surface_framebuffer_it->second;
+		}
+
+		std::scoped_lock lock(view_framebuffer->mutex);
+
+		GLuint view_fbo = view_framebuffer->framebuffer;
 
 		glClearColor(0, 0, 0, 0);
-		glBindFramebuffer(GL_FRAMEBUFFER, view_framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, view_fbo);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		render_data rdata = {
 			  .output = output,
 			  .view = view.get(),
-			  .view_framebuffer = view_framebuffer,
+			  .view_fbo = view_fbo,
 			  .skip_surface = false,
 		};
 
@@ -93,7 +99,7 @@ void output_frame(wl_listener* listener, void* data) {
 					  RenderToTextureShader::instance()->render(attribs.tex, 0, 0,
 					                                            surface->current.buffer_width,
 					                                            surface->current.buffer_height,
-					                                            rdata->view_framebuffer);
+					                                            rdata->view_fbo);
 				  } else {
 					  // This is true when the surface is a wayland subsurface and not an xdg_surface.
 					  // I decided to render subsurfaces on the framebuffer of the nearest xdg_surface parent.
@@ -104,7 +110,7 @@ void output_frame(wl_listener* listener, void* data) {
 					  RenderToTextureShader::instance()->render(attribs.tex, sx, sy,
 					                                            surface->current.buffer_width,
 					                                            surface->current.buffer_height,
-					                                            rdata->view_framebuffer);
+					                                            rdata->view_fbo);
 				  }
 
 				  // Tell the client we are done rendering this surface.
@@ -118,19 +124,21 @@ void output_frame(wl_listener* listener, void* data) {
 		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view_id);
 	}
 
-	/*
-	 * Notify the compositor to prepare a new frame for the next time.
-	 */
-	intptr_t baton;
-	pthread_mutex_lock(&flutter_engine_state->baton_mutex);
-	if (flutter_engine_state->new_baton) {
-		baton = flutter_engine_state->baton;
-		flutter_engine_state->new_baton = false;
 
-		uint64_t start = FlutterEngineGetCurrentTime();
-		FlutterEngineOnVsync(flutter_engine_state->engine, baton, start, start + 1'000'000'000ull / 144);
+	{
+		/*
+		 * Notify the compositor to prepare a new frame for the next time.
+		 */
+		std::scoped_lock lock(flutter_engine_state->baton_mutex);
+
+		if (flutter_engine_state->new_baton) {
+			intptr_t baton = flutter_engine_state->baton;
+			flutter_engine_state->new_baton = false;
+
+			uint64_t start = FlutterEngineGetCurrentTime();
+			FlutterEngineOnVsync(flutter_engine_state->engine, baton, start, start + 1'000'000'000ull / 144);
+		}
 	}
-	pthread_mutex_unlock(&flutter_engine_state->baton_mutex);
 
 	/*
 	 * Copy the frame to the screen.
@@ -145,12 +153,14 @@ void output_frame(wl_listener* listener, void* data) {
 
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
 
-	flutter_engine_state->flip_mutex.lock();
-	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
-	glClear(GL_COLOR_BUFFER_BIT);
-	RenderToTextureShader::instance()->render(flutter_engine_state->present_fbo->texture, 0, 0, width,
-	                                          height, output_fbo);
-	flutter_engine_state->flip_mutex.unlock();
+	{
+		std::scoped_lock lock(flutter_engine_state->present_fbo->mutex);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+		glClear(GL_COLOR_BUFFER_BIT);
+		RenderToTextureShader::instance()->render(flutter_engine_state->present_fbo->texture, 0, 0, width,
+		                                          height, output_fbo);
+	}
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
 	 * moved around without re-rendering what's beneath them - which is more

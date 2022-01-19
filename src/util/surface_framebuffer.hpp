@@ -2,8 +2,11 @@
 
 #include <GLES2/gl2.h>
 #include <cstddef>
+#include <mutex>
 
 struct SurfaceFramebuffer {
+	std::mutex mutex{};
+
 	GLuint framebuffer = 0;
 	GLuint texture = 0;
 	size_t width = 0;

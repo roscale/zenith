@@ -69,6 +69,7 @@ bool SurfaceFramebuffer::apply_pending_resize() {
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, resized_texture, 0);
 
+	// Copy the current texture into the resized texture to avoid flickering.
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	RenderToTextureShader::instance()->render(texture, 0, 0, width, height, framebuffer);
@@ -78,8 +79,6 @@ bool SurfaceFramebuffer::apply_pending_resize() {
 	width = pending_width;
 	height = pending_height;
 	texture = resized_texture;
-//	glBindTexture(GL_TEXTURE_2D, texture);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int) width, (int) height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	// Restore context state.
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);

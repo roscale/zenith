@@ -27,11 +27,13 @@ bool flutter_clear_current(void* userdata) {
 bool flutter_present(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
 
-	state->flip_mutex.lock();
+	state->framebuffers_in_use.clear();
+
+	std::scoped_lock lock(state->present_fbo->mutex);
+
 	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
 	// TODO: maybe it's better to use a fence instead
 	glFinish(); // Don't remove this line!
-	state->flip_mutex.unlock();
 
 	return true;
 }
@@ -44,11 +46,11 @@ uint32_t flutter_fbo_callback(void* userdata) {
 void flutter_vsync_callback(void* userdata, intptr_t baton) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
 
-	pthread_mutex_lock(&state->baton_mutex);
+	std::scoped_lock lock(state->baton_mutex);
+
 	assert(state->new_baton == false);
 	state->new_baton = true;
 	state->baton = baton;
-	pthread_mutex_unlock(&state->baton_mutex);
 }
 
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id, size_t width, size_t height,
@@ -56,10 +58,20 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	auto* state = static_cast<FlutterEngineState*>(userdata);
 	ZenithServer* server = state->output->server;
 
-	server->surface_framebuffers_mutex.lock();
+	std::shared_ptr<SurfaceFramebuffer> surface_framebuffer;
+	{
+		std::scoped_lock lock(server->surface_framebuffers_mutex);
 
-	auto it = server->surface_framebuffers.find(view_id);
-	auto& surface_framebuffer = it->second;
+		auto it = server->surface_framebuffers.find(view_id);
+		if (it == server->surface_framebuffers.end()) {
+			// This function could be called any time so we better check if the framebuffer still exists.
+			// Asynchronicity can be a pain sometimes.
+			return false;
+		}
+		surface_framebuffer = it->second;
+	}
+
+	std::scoped_lock lock(surface_framebuffer->mutex);
 
 	surface_framebuffer->apply_pending_resize();
 
@@ -67,8 +79,11 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	texture_out->format = GL_RGBA8;
 	texture_out->name = surface_framebuffer->texture;
 
-	server->surface_framebuffers_mutex.unlock();
-
+	// Make sure the framebuffer doesn't get destroyed at the end of this function if this
+	// shared_ptr happens to be the only copy left. We don't want the destructor to run and delete
+	// the texture because Flutter is going to render it later. We can safely clear this list
+	// after all the rendering is done.
+	state->framebuffers_in_use.push_back(surface_framebuffer);
 	return true;
 }
 
@@ -82,8 +97,7 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 		return;
 	}
 
-	state->message_dispatcher.HandleMessage(
-		  *message, [] {}, [] {});
+	state->message_dispatcher.HandleMessage(*message, [] {}, [] {});
 }
 
 bool flutter_make_resource_current(void* userdata) {

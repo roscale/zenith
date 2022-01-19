@@ -43,9 +43,9 @@ struct FlutterEngineState {
 
 	intptr_t baton = 0;
 	bool new_baton = false;
-	pthread_mutex_t baton_mutex{};
+	std::mutex baton_mutex{};
 	fix_y_flip_state fix_y_flip{};
 
-	std::mutex flip_mutex{};
 	std::unique_ptr<SurfaceFramebuffer> present_fbo = nullptr;
+	std::list<std::shared_ptr<SurfaceFramebuffer>> framebuffers_in_use{};
 };

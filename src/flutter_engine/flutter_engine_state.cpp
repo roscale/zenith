@@ -18,7 +18,6 @@ struct ZenithServer;
 FlutterEngineState::FlutterEngineState(ZenithOutput* output, wlr_egl* main_egl)
 	  : output(output), message_dispatcher(&messenger) {
 
-	pthread_mutex_init(&baton_mutex, nullptr);
 	messenger.SetMessageDispatcher(&message_dispatcher);
 
 	wlr_egl_context saved_egl_context{};
