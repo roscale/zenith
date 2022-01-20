@@ -273,6 +273,7 @@ void surface_commit(wl_listener* listener, void* data) {
 		// The actual resizing is happening on a Flutter thread because resizing a texture is very slow, and I don't want
 		// to block the main thread causing input delay and other stuff.
 		surface_framebuffer->schedule_resize(surface->current.buffer_width, surface->current.buffer_height);
+
 		map.insert({EncodableValue("surface_size_changed"), EncodableValue(true)});
 		map.insert({EncodableValue("surface_width"), EncodableValue((int64_t) surface->current.buffer_width)});
 		map.insert({EncodableValue("surface_height"), EncodableValue((int64_t) surface->current.buffer_height)});

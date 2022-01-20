@@ -12,6 +12,8 @@ uint32_t flutter_fbo_callback(void* userdata);
 
 void flutter_vsync_callback(void* userdata, intptr_t baton);
 
+// NOTE: in debug mode, this function is sometimes not getting called enough times for every view.
+// This Flutter bug made me waste a lot of time thinking there's some data race in OpenGL.
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out);
 

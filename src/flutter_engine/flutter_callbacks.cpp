@@ -24,16 +24,28 @@ bool flutter_clear_current(void* userdata) {
 	return wlr_egl_unset_current(state->flutter_gl_context);
 }
 
+static size_t i = 0;
+
 bool flutter_present(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
 
+	for (auto& fb: state->framebuffers_in_use) {
+		fb->stop_reading();
+	}
 	state->framebuffers_in_use.clear();
 
 	std::scoped_lock lock(state->present_fbo->mutex);
 
-	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
+	Framebuffer& fb = state->present_fbo->start_writing();
+
+	render_to_fbo(&state->fix_y_flip, fb.framebuffer);
 	// TODO: maybe it's better to use a fence instead
 	glFinish(); // Don't remove this line!
+
+	state->present_fbo->stop_writing();
+
+	std::cout << "i = " << i << std::endl;
+	i = 0;
 
 	return true;
 }
@@ -73,11 +85,12 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 
 	std::scoped_lock lock(surface_framebuffer->mutex);
 
-	surface_framebuffer->apply_pending_resize();
+
+	Framebuffer& fb = surface_framebuffer->start_reading();
 
 	texture_out->target = GL_TEXTURE_2D;
 	texture_out->format = GL_RGBA8;
-	texture_out->name = surface_framebuffer->texture;
+	texture_out->name = fb.texture;
 
 	// Make sure the framebuffer doesn't get destroyed at the end of this function if this
 	// shared_ptr happens to be the only copy left. We don't want the destructor to run and delete

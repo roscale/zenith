@@ -31,6 +31,8 @@ void output_frame(wl_listener* listener, void* data) {
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 	wlr_egl_make_current(egl);
 
+//	size_t i = 0;
+
 	for (auto& pair: server->views_by_id) {
 		size_t view_id = pair.first;
 		std::unique_ptr<ZenithView>& view = pair.second;
@@ -53,7 +55,11 @@ void output_frame(wl_listener* listener, void* data) {
 
 		std::scoped_lock lock(view_framebuffer->mutex);
 
-		GLuint view_fbo = view_framebuffer->framebuffer;
+		Framebuffer& fb = view_framebuffer->start_writing();
+
+		view_framebuffer->apply_pending_resize();
+
+		GLuint view_fbo = fb.framebuffer;
 
 		glClearColor(0, 0, 0, 0);
 		glBindFramebuffer(GL_FRAMEBUFFER, view_fbo);
@@ -65,6 +71,8 @@ void output_frame(wl_listener* listener, void* data) {
 			  .view_fbo = view_fbo,
 			  .skip_surface = false,
 		};
+
+//		static size_t i = 0;
 
 		// Render the subtree of subsurfaces starting from a toplevel or popup.
 		wlr_xdg_surface_for_each_surface(
@@ -121,9 +129,14 @@ void output_frame(wl_listener* listener, void* data) {
 			  &rdata
 		);
 
+		view_framebuffer->stop_writing();
+
 		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view_id);
 	}
 
+//	glFinish();
+//	std::cout << i << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds (100));
 
 	{
 		/*
@@ -156,10 +169,14 @@ void output_frame(wl_listener* listener, void* data) {
 	{
 		std::scoped_lock lock(flutter_engine_state->present_fbo->mutex);
 
+		Framebuffer& fb = flutter_engine_state->present_fbo->start_reading();
+
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 		glClear(GL_COLOR_BUFFER_BIT);
-		RenderToTextureShader::instance()->render(flutter_engine_state->present_fbo->texture, 0, 0, width,
+		RenderToTextureShader::instance()->render(fb.texture, 0, 0, width,
 		                                          height, output_fbo);
+
+		flutter_engine_state->present_fbo->stop_reading();
 	}
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
@@ -169,6 +186,8 @@ void output_frame(wl_listener* listener, void* data) {
 	 * here. wlr_cursor handles configuring hardware vs software cursors for you,
 	 * and this function is a no-op when hardware cursors are in use. */
 	wlr_output_render_software_cursors(output->wlr_output, nullptr);
+
+	glFinish();
 
 	wlr_renderer_end(server->renderer);
 	wlr_output_commit(output->wlr_output);

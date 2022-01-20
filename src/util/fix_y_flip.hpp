@@ -6,7 +6,8 @@
  * framebuffer in the right orientation.
  */
 
-#include <GLES2/gl2.h>
+//#include <GLES2/gl2.h>
+#include <epoxy/gl.h>
 
 struct fix_y_flip_state {
 	GLuint program;
