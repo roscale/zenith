@@ -30,7 +30,7 @@ private:
 public:
 	static ZenithServer* instance();
 
-	void run();
+	void run(char* startup_command);
 
 	std::thread::id main_thread_id;
 	wl_display* display;

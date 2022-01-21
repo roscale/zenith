@@ -59,6 +59,7 @@ class _PointerListener extends StatelessWidget {
             }
           },
           onPointerUp: (_) {
+            // TODO: Listen to a global event instead, because this callback doesn't always get called and makes windows unclickable.
             var windowState = context.read<WindowState>();
             windowState.stopMove();
             windowState.stopResize();

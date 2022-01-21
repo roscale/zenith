@@ -62,9 +62,6 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	 * the cursor around without any input. */
 	wlr_cursor_move(pointer->cursor, event->device, event->delta_x, event->delta_y);
 
-	// TODO: Prevent pipeline stalling causing frame drops.
-//	wlr_xcursor_manager_set_cursor_image(pointer->cursor_mgr, "left_ptr", pointer->cursor);
-
 	FlutterPointerEvent e = {};
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover;
@@ -83,9 +80,6 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	auto* event = static_cast<wlr_event_pointer_motion_absolute*>(data);
 
 	wlr_cursor_warp_absolute(pointer->cursor, event->device, event->x, event->y);
-
-	// TODO: Prevent pipeline stalling causing frame drops.
-//	wlr_xcursor_manager_set_cursor_image(pointer->cursor_mgr, "left_ptr", pointer->cursor);
 
 	FlutterPointerEvent e = {};
 	e.struct_size = sizeof(FlutterPointerEvent);

@@ -53,29 +53,33 @@ ZenithServer::ZenithServer() {
 	              &request_cursor);
 }
 
-void ZenithServer::run() {
+void ZenithServer::run(char* startup_command) {
 	const char* socket = wl_display_add_socket_auto(display);
 	if (!socket) {
 		wlr_backend_destroy(backend);
-		exit(1);
+		exit(2);
 	}
 
 	if (!wlr_backend_start(backend)) {
 		wlr_backend_destroy(backend);
 		wl_display_destroy(display);
-		exit(1);
+		exit(3);
+	}
+
+	// Make sure the X11 session from the host is not visible because some programs prefer talking
+	// to the X server instead of defaulting to Wayland.
+	unsetenv("DISPLAY");
+
+	setenv("WAYLAND_DISPLAY", socket, true);
+	setenv("XDG_SESSION_TYPE", "wayland", true);
+
+
+	if (fork() == 0) {
+		execl("/bin/sh", "/bin/sh", "-c", startup_command, nullptr);
 	}
 
 	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
 
-	// Set the WAYLAND_DISPLAY environment variable to our socket and start a few clients to test things.
-	setenv("WAYLAND_DISPLAY", socket, true);
-	setenv("XDG_SESSION_TYPE", "wayland", true);
-//	setenv("KDE_FULL_SESSION", "1", true);
-
-	if (fork() == 0) {
-		execl("/bin/sh", "/bin/sh", "-c", "konsole", nullptr);
-	}
 	wl_display_run(display);
 
 	wl_display_destroy_clients(display);

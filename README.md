@@ -11,7 +11,7 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 - [x] Move windows
 - [x] Resize windows
 - [x] Milestone 1: Feature parity with tinywl
-- [ ] Global kinetic scrolling using the touchpad
+- [ ] Global kinetic scrolling when using the touchpad
 - [ ] Maximize windows
 - [ ] XWayland
 - [ ] Alt-tab switcher
@@ -92,8 +92,13 @@ Switch to another TTY.
 
 ```
 cd build/zenith/[debug|profile|release]/bundle/
-./zenith
+./zenith COMMAND
 ```
+
+Replace `COMMAND` with your program of choice to be launched with the compositor. The program must have Wayland
+support (at the moment). Any QT or GTK app should work. You can launch a terminal emulator like `konsole`
+or `gnome-terminal`, and use it to start subsequent programs. If you want to launch Chromium, you must
+use `--enable-features=UseOzonePlatform --ozone-platform=wayland`.
 
 For development purposes it is more convenient to start Zenith from an existing X11 or Wayland compositor, and it will
 show up as a window.

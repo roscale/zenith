@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="release_bundle" type="CLionNativeAppRunConfigurationType" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$/build/zenith/release/bundle" PASS_PARENT_ENVS_2="true" PROJECT_NAME="zenith" TARGET_NAME="release_bundle" CONFIG_NAME="release_bundle" version="1" RUN_PATH="zenith">
+  <configuration default="false" name="release_bundle" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="konsole" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$/build/zenith/release/bundle" PASS_PARENT_ENVS_2="true" PROJECT_NAME="zenith" TARGET_NAME="release_bundle" CONFIG_NAME="release_bundle" version="1" RUN_PATH="zenith">
     <method v="2">
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="flutter_build_release" run_configuration_type="ShConfigurationType" />
       <option name="CLION.COMPOUND.BUILD" enabled="true" />
