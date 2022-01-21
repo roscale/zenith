@@ -146,10 +146,6 @@ void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, s
 
 	glViewport(x, y, width, height);
 
-	// Clear with transparency.
-//	glClearColor(0, 0, 0, 0);
-//	glClear(GL_COLOR_BUFFER_BIT);
-
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 	// Restore context state.

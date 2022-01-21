@@ -12,7 +12,7 @@ struct ZenithView {
 	ZenithView(ZenithServer* server, wlr_xdg_surface* xdg_surface);
 
 	/*
-	 * Activates a view and make the keyboard enter the surface of the view.
+	 * Activate the view and make the keyboard enter the surface of this view.
 	 */
 	void focus();
 

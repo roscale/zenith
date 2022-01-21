@@ -33,7 +33,13 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 - `src/util/` Useful classes and functions used in various places
 - `src/third_party/` Imported files and libraries
 
-## Dependencies
+## Run without compilation
+
+- Install `wlroots`
+- Download the latest release
+- Read the [Running](#running) section.
+
+## Compilation dependencies
 
 ### Arch Linux
 
@@ -74,12 +80,18 @@ make release_bundle -j6
 
 The bundle is compiled at `build/zenith/[debug|profile|release]/bundle/`.
 
+If you have problems compiling, have a look at the Github Action workflow and please fix this README by creating a pull
+request.
+
+If you use a Jetbrains IDE you should see multiple configurations for creating and running bundles instead of using the
+command line.
+
 ## Running
 
 Switch to another TTY.
 
 ```
-cd build/zenith/[debug|release]/bundle/
+cd build/zenith/[debug|profile|release]/bundle/
 ./zenith
 ```
 
@@ -90,9 +102,15 @@ show up as a window.
 
 Press `Ctrl`+`Alt`+`Delete` to quit.
 
+It's worth mentioning Flutter for Desktop is still in beta and thus, when running in debug mode you will see visual bugs
+not present in profile or release mode. For some reason, in debug mode the loading of images doesn't seem to work and
+windows will flicker sometimes. Let's hope these bugs will be fixed by the Flutter team. Compile in release mode if you
+want a good experience.
+
 ## Attaching a debugger
 
-For C++, any debugger should work.\
+For C++, any debugger should work.
+
 For Flutter, I suggest using VSCode. Run command "Attach to Flutter Process" and give it `http://127.0.0.1:12345/`. All
 usual Flutter debugging and profiling tools should work just fine. If you want to attach the debugger without VSCode,
 run `make attach_debugger`.
