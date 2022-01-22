@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:zenith/util/clip_hitbox.dart';
 import 'package:zenith/state/desktop_state.dart';
@@ -25,12 +27,33 @@ class Window extends StatelessWidget {
   }
 }
 
-Offset delta = Offset.zero;
-
-class _PointerListener extends StatelessWidget {
+class _PointerListener extends StatefulWidget {
   final Widget child;
 
   const _PointerListener({required this.child});
+
+  @override
+  State<_PointerListener> createState() => _PointerListenerState();
+}
+
+class _PointerListenerState extends State<_PointerListener> {
+  late StreamSubscription pointerUpStreamSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    pointerUpStreamSubscription = context.read<DesktopState>().pointerUpStream.stream.listen((event) {
+      var windowState = context.read<WindowState>();
+      windowState.stopMove();
+      windowState.stopResize();
+    });
+  }
+
+  @override
+  void dispose() {
+    pointerUpStreamSubscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,13 +81,7 @@ class _PointerListener extends StatelessWidget {
               handleResize(context, event);
             }
           },
-          onPointerUp: (_) {
-            // TODO: Listen to a global event instead, because this callback doesn't always get called and makes windows unclickable.
-            var windowState = context.read<WindowState>();
-            windowState.stopMove();
-            windowState.stopResize();
-          },
-          child: child,
+          child: widget.child,
         ),
       ),
     );

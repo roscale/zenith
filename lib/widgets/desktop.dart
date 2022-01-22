@@ -14,14 +14,15 @@ class Desktop extends StatelessWidget {
           var desktopState = context.watch<DesktopState>();
 
           return Listener(
-            onPointerHover: (event) => cursorMoved(context, event),
-            onPointerMove: (event) => cursorMoved(context, event),
+            onPointerHover: (event) => pointerMoved(context, event),
+            onPointerMove: (event) => pointerMoved(context, event),
+            onPointerUp: (event) => pointerUp(context, event),
             child: Stack(
               fit: StackFit.expand,
               children: [
                 Container(color: Colors.grey),
                 Listener(
-                  onPointerHover: pointerExit,
+                  onPointerHover: pointerExitSurfaces,
                   child: Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
                 ),
                 ...desktopState.windows,
@@ -41,15 +42,19 @@ class Desktop extends StatelessWidget {
     );
   }
 
-  void cursorMoved(BuildContext context, PointerEvent event) {
+  void pointerMoved(BuildContext context, PointerEvent event) {
     context.read<DesktopState>().pointerPosition = Offset(
       event.position.dx.floorToDouble(),
       event.position.dy.floorToDouble(),
     );
   }
 
-  void pointerExit(PointerEvent event) {
+  void pointerExitSurfaces(PointerEvent event) {
     // When the pointer is hovering the background, it exited all surfaces.
     DesktopState.platform.invokeMethod("pointer_exit");
+  }
+
+  void pointerUp(BuildContext context, PointerUpEvent event) {
+    context.read<DesktopState>().pointerUpStream.sink.add(null);
   }
 }

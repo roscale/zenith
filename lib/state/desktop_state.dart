@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:zenith/enums.dart';
@@ -12,6 +13,11 @@ import 'package:zenith/state/window_state.dart';
 class DesktopState with ChangeNotifier {
   List<Window> windows = [];
   List<Popup> popups = [];
+
+  // Sends global pointer up events to windows. Listening for this event at the window level is not
+  // reliable because sometimes it is not getting emitted when the pointer quickly leaves the window
+  // which causes the window to be impossible to interact with.
+  var pointerUpStream = StreamController.broadcast();
 
   static const EventChannel windowMappedEvent = EventChannel('window_mapped');
   static const EventChannel windowUnmappedEvent = EventChannel('window_unmapped');
