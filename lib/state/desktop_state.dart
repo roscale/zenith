@@ -17,7 +17,7 @@ class DesktopState with ChangeNotifier {
   // Sends global pointer up events to windows. Listening for this event at the window level is not
   // reliable because sometimes it is not getting emitted when the pointer quickly leaves the window
   // which causes the window to be impossible to interact with.
-  var pointerUpStream = StreamController.broadcast();
+  var pointerUpStream = StreamController<PointerUpEvent>.broadcast();
 
   static const EventChannel windowMappedEvent = EventChannel('window_mapped');
   static const EventChannel windowUnmappedEvent = EventChannel('window_unmapped');

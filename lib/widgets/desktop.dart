@@ -55,6 +55,6 @@ class Desktop extends StatelessWidget {
   }
 
   void pointerUp(BuildContext context, PointerUpEvent event) {
-    context.read<DesktopState>().pointerUpStream.sink.add(null);
+    context.read<DesktopState>().pointerUpStream.sink.add(event);
   }
 }

@@ -85,10 +85,9 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover;
 	e.timestamp = FlutterEngineGetCurrentTime();
-	// TODO: This function only gets called when Zenith is running in window mode, but instead of
-	// hardcoding the dimensions of the window we should query the real dimensions, as they could change.
-	e.x = event->x * 1024;
-	e.y = event->y * 768;
+	// Map from [0, 1] to [screen_width, screen_height].
+	e.x = event->x * server->output->wlr_output->width;
+	e.y = event->y * server->output->wlr_output->height;
 	e.device_kind = kFlutterPointerDeviceKindMouse;
 	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 

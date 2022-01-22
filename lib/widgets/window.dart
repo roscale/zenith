@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:zenith/util/clip_hitbox.dart';
 import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/enums.dart';
@@ -42,7 +43,7 @@ class _PointerListenerState extends State<_PointerListener> {
   @override
   void initState() {
     super.initState();
-    pointerUpStreamSubscription = context.read<DesktopState>().pointerUpStream.stream.listen((event) {
+    pointerUpStreamSubscription = context.read<DesktopState>().pointerUpStream.stream.listen((_event) {
       var windowState = context.read<WindowState>();
       windowState.stopMove();
       windowState.stopResize();
@@ -71,9 +72,14 @@ class _PointerListenerState extends State<_PointerListener> {
         child: Listener(
           onPointerDown: (_) {
             var windowState = context.read<WindowState>();
+            windowState.accumulatedPointerDrag = Offset.zero;
             context.read<DesktopState>().activateWindow(windowState.viewId);
           },
           onPointerMove: (PointerMoveEvent event) {
+            if (event.buttons & kPrimaryButton != 0) {
+              // A move may be triggered late so keep track how much the user dragged the pointer.
+              context.read<WindowState>().accumulatedPointerDrag += event.delta;
+            }
             if (isMoving) {
               handleMove(context, event);
             }
