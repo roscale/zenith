@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "debug.hpp"
 #include <unistd.h>
 
 extern "C" {
@@ -22,32 +23,69 @@ ZenithServer* ZenithServer::instance() {
 ZenithServer::ZenithServer() {
 	main_thread_id = std::this_thread::get_id();
 	display = wl_display_create();
-	backend = wlr_backend_autocreate(display);
-	renderer = wlr_backend_get_renderer(backend);
-	wlr_renderer_init_wl_display(renderer, display);
+	if (display == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create Wayland display");
+		exit(1);
+	}
 
-	wlr_compositor_create(display, renderer);
-	wlr_data_device_manager_create(display);
+	backend = wlr_backend_autocreate(display);
+	if (backend == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create wlroots backend");
+		exit(2);
+	}
+
+	renderer = wlr_backend_get_renderer(backend);
+	if (!wlr_renderer_init_wl_display(renderer, display)) {
+		wlr_log(WLR_ERROR, "Could not initialize wlroots renderer");
+		exit(3);
+	}
+
+	if (wlr_compositor_create(display, renderer) == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create wlroots compositor");
+		exit(4);
+	}
+
+	if (wlr_data_device_manager_create(display) == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create wlroots data device manager");
+		exit(5);
+	}
 
 	output_layout = wlr_output_layout_create();
-
-	new_output.notify = server_new_output;
-	wl_signal_add(&backend->events.new_output, &new_output);
+	if (output_layout == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create wlroots output layout");
+		exit(6);
+	}
 
 	xdg_shell = wlr_xdg_shell_create(display);
-	new_xdg_surface.notify = server_new_xdg_surface;
-	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
+	if (xdg_shell == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create wlroots XDG shell");
+		exit(7);
+	}
 
 	/*
 	 * Configures a seat, which is a single "seat" at which a user sits and
 	 * operates the computer. This conceptually includes up to one keyboard,
-	 * pointer, touch, and drawing tablet device. We also rig up a listener to
-	 * let us know when new input devices are available on the backend.
+	 * pointer, touch, and drawing tablet device.
 	 */
+	seat = wlr_seat_create(display, "seat0");
+	if (seat == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create wlroots seat");
+		exit(8);
+	}
+
+	// Called at the start for each available output, but also when the user plugs in a monitor.
+	new_output.notify = server_new_output;
+	wl_signal_add(&backend->events.new_output, &new_output);
+
+	new_xdg_surface.notify = server_new_xdg_surface;
+	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
+
+	// Called at the start for each available input device, but also when the user plugs in a new input
+	// device, like a mouse, keyboard, drawing tablet, etc.
 	new_input.notify = server_new_input;
 	wl_signal_add(&backend->events.new_input, &new_input);
-	seat = wlr_seat_create(display, "seat0");
 
+	// Programs can request to change the cursor image.
 	request_cursor.notify = server_seat_request_cursor;
 	wl_signal_add(&seat->events.request_set_cursor,
 	              &request_cursor);
@@ -56,14 +94,16 @@ ZenithServer::ZenithServer() {
 void ZenithServer::run(char* startup_command) {
 	const char* socket = wl_display_add_socket_auto(display);
 	if (!socket) {
+		wlr_log(WLR_ERROR, "Could not create a Wayland socket");
 		wlr_backend_destroy(backend);
-		exit(2);
+		exit(9);
 	}
 
 	if (!wlr_backend_start(backend)) {
+		wlr_log(WLR_ERROR, "Could not start backend");
 		wlr_backend_destroy(backend);
 		wl_display_destroy(display);
-		exit(3);
+		exit(10);
 	}
 
 	// Make sure the X11 session from the host is not visible because some programs prefer talking
