@@ -14,7 +14,6 @@ struct fix_y_flip_state {
 	GLuint ebo;
 	GLuint offscreen_framebuffer;
 	GLuint framebuffer_texture;
-	GLuint depth_stencil_renderbuffer;
 };
 
 fix_y_flip_state fix_y_flip_init_state(int width, int height);
@@ -22,3 +21,5 @@ fix_y_flip_state fix_y_flip_init_state(int width, int height);
 void bind_offscreen_framebuffer(fix_y_flip_state* state);
 
 void render_to_fbo(fix_y_flip_state* state, unsigned int fbo);
+
+void fix_y_flip_resize(fix_y_flip_state* state, int width, int height);

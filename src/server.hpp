@@ -55,6 +55,8 @@ public:
 
 	wl_listener new_input{};
 	wl_listener request_cursor{};
+
+	std::unique_ptr<FlutterEngineState> flutter_engine_state{};
 };
 
 /*

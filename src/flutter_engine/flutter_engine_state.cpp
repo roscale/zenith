@@ -15,8 +15,8 @@ extern "C" {
 
 struct ZenithServer;
 
-FlutterEngineState::FlutterEngineState(ZenithOutput* output, wlr_egl* main_egl)
-	  : output(output), message_dispatcher(&messenger) {
+FlutterEngineState::FlutterEngineState(ZenithServer* server, wlr_egl* main_egl)
+	  : server(server), message_dispatcher(&messenger) {
 
 	messenger.SetMessageDispatcher(&message_dispatcher);
 
@@ -29,14 +29,17 @@ FlutterEngineState::FlutterEngineState(ZenithOutput* output, wlr_egl* main_egl)
 	flutter_resource_gl_context = create_shared_egl_context(main_egl);
 	wlr_egl_unset_current(main_egl);
 
-	int width, height;
-	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+	// Flutter doesn't know the output dimensions, so initialize all required textures with the smallest
+	// size possible. When an output (screen) becomes available, the Flutter engine will be notified and
+	// all textures will be resized.
+	size_t dummy_width = 1;
+	size_t dummy_height = 1;
 
 	// FBOs cannot be shared between GL contexts. Since these FBOs will be used by a Flutter thread, create these
 	// resources using Flutter's context.
 	wlr_egl_make_current(flutter_gl_context);
-	fix_y_flip = fix_y_flip_init_state(width, height);
-	present_fbo = std::make_unique<SurfaceFramebuffer>(width, height);
+	fix_y_flip = fix_y_flip_init_state((int) dummy_width, (int) dummy_height);
+	present_fbo = std::make_unique<SurfaceFramebuffer>(dummy_width, dummy_height);
 	wlr_egl_unset_current(flutter_gl_context);
 
 	wlr_egl_restore_context(&saved_egl_context);
@@ -46,24 +49,12 @@ void FlutterEngineState::run_engine() {
 	start_engine();
 
 	platform_task_runner.set_engine(engine);
-	platform_task_runner_timer = wl_event_loop_add_timer(wl_display_get_event_loop(output->server->display),
+	platform_task_runner_timer = wl_event_loop_add_timer(wl_display_get_event_loop(server->display),
 	                                                     flutter_execute_expired_tasks_timer, this);
 	// Arm the timer.
 	wl_event_source_timer_update(platform_task_runner_timer, 1);
 
 	register_host_api();
-
-	// Tell Flutter how big the screen is, so it can start rendering.
-	int width, height;
-	wlr_output_effective_resolution(output->wlr_output, &width, &height);
-
-	FlutterWindowMetricsEvent window_metrics = {};
-	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
-	window_metrics.width = width;
-	window_metrics.height = height;
-	window_metrics.pixel_ratio = 1.0;
-
-	FlutterEngineSendWindowMetricsEvent(engine, &window_metrics);
 }
 
 void FlutterEngineState::start_engine() {
@@ -86,7 +77,7 @@ void FlutterEngineState::start_engine() {
 	platform_task_runner_description.identifier = 1;
 	platform_task_runner_description.runs_task_on_current_thread_callback = [](void* userdata) {
 		auto* flutter_engine_state = static_cast<FlutterEngineState*>(userdata);
-		return std::this_thread::get_id() == flutter_engine_state->output->server->main_thread_id;
+		return std::this_thread::get_id() == flutter_engine_state->server->main_thread_id;
 	};
 	platform_task_runner_description.post_task_callback = [](FlutterTask task, uint64_t target_time, void* userdata) {
 		auto* flutter_engine_state = static_cast<FlutterEngineState*>(userdata);
@@ -142,24 +133,35 @@ void FlutterEngineState::register_host_api() {
 	messenger.SetEngine(engine);
 	platform_method_channel = std::make_unique<flutter::MethodChannel<>>(&messenger, "platform", &codec);
 
-	ZenithOutput* output = this->output;
+	ZenithServer* server = this->server;
 	platform_method_channel->SetMethodCallHandler(
-		  [output](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
+		  [server](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
 			  if (call.method_name() == "activate_window") {
-				  activate_window(output, call, std::move(result));
+				  activate_window(server, call, std::move(result));
 			  } else if (call.method_name() == "pointer_hover") {
-				  pointer_hover(output, call, std::move(result));
+				  pointer_hover(server, call, std::move(result));
 			  } else if (call.method_name() == "pointer_exit") {
-				  pointer_exit(output, call, std::move(result));
+				  pointer_exit(server, call, std::move(result));
 			  } else if (call.method_name() == "close_window") {
-				  close_window(output, call, std::move(result));
+				  close_window(server, call, std::move(result));
 			  } else if (call.method_name() == "resize_window") {
-				  resize_window(output, call, std::move(result));
+				  resize_window(server, call, std::move(result));
 			  } else if (call.method_name() == "closing_animation_finished") {
-				  closing_animation_finished(output, call, std::move(result));
+				  closing_animation_finished(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }
 		  }
 	);
+}
+
+void FlutterEngineState::send_window_metrics(FlutterWindowMetricsEvent& metrics) {
+	std::scoped_lock lock(server->flutter_engine_state->present_fbo->mutex);
+
+	FlutterEngineSendWindowMetricsEvent(server->flutter_engine_state->engine, &metrics);
+
+	present_fbo->schedule_resize(metrics.width, metrics.height);
+	present_fbo->apply_pending_resize();
+
+	fix_y_flip_resize(&fix_y_flip, (int) metrics.width, (int) metrics.height);
 }

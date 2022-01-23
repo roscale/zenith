@@ -110,16 +110,6 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer_texture, 0);
 
-	// Create the depth/stencil renderbuffer and attach it to the framebuffer.
-	GLuint depth_stencil_renderbuffer;
-	glGenRenderbuffers(1, &depth_stencil_renderbuffer);
-
-	glBindRenderbuffer(GL_RENDERBUFFER, depth_stencil_renderbuffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_stencil_renderbuffer);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_stencil_renderbuffer);
-
 	// Abort if the framebuffer was not correctly created.
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -133,7 +123,6 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 		  .ebo = ebo,
 		  .offscreen_framebuffer = offscreen_framebuffer,
 		  .framebuffer_texture = framebuffer_texture,
-		  .depth_stencil_renderbuffer = depth_stencil_renderbuffer,
 	};
 	return state;
 }
@@ -185,5 +174,15 @@ void render_to_fbo(fix_y_flip_state* state, unsigned int fbo) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_binding);
 	glUseProgram(current_program);
 	glActiveTexture(active_texture);
+	glBindTexture(GL_TEXTURE_2D, texture_binding);
+}
+
+void fix_y_flip_resize(fix_y_flip_state* state, int width, int height) {
+	GLint texture_binding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture_binding);
+
+	glBindTexture(GL_TEXTURE_2D, state->framebuffer_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
 	glBindTexture(GL_TEXTURE_2D, texture_binding);
 }

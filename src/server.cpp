@@ -92,6 +92,12 @@ ZenithServer::ZenithServer() {
 }
 
 void ZenithServer::run(char* startup_command) {
+	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
+	flutter_engine_state = std::make_unique<FlutterEngineState>(this, main_egl);
+
+	// Run the engine.
+	flutter_engine_state->run_engine();
+
 	const char* socket = wl_display_add_socket_auto(display);
 	if (!socket) {
 		wlr_log(WLR_ERROR, "Could not create a Wayland socket");
@@ -106,6 +112,8 @@ void ZenithServer::run(char* startup_command) {
 		exit(10);
 	}
 
+	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
+
 	// Make sure the X11 session from the host is not visible because some programs prefer talking
 	// to the X server instead of defaulting to Wayland.
 	unsetenv("DISPLAY");
@@ -113,12 +121,9 @@ void ZenithServer::run(char* startup_command) {
 	setenv("WAYLAND_DISPLAY", socket, true);
 	setenv("XDG_SESSION_TYPE", "wayland", true);
 
-
 	if (fork() == 0) {
 		execl("/bin/sh", "/bin/sh", "-c", startup_command, nullptr);
 	}
-
-	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
 
 	wl_display_run(display);
 
@@ -153,15 +158,18 @@ void server_new_output(wl_listener* listener, void* data) {
 	auto output = std::make_unique<ZenithOutput>(server, wlr_output);
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
-	// Create the flutter engine associated with this output.
-	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(server->renderer);
-	auto flutter_engine_state = std::make_unique<FlutterEngineState>(output.get(), main_egl);
+	// Tell Flutter how big the screen is, so it can start rendering.
+	int width, height;
+	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
-	// Link them together.
-	output->flutter_engine_state = std::move(flutter_engine_state);
+	FlutterWindowMetricsEvent window_metrics = {};
+	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
+	window_metrics.width = width;
+	window_metrics.height = height;
+	window_metrics.pixel_ratio = 1.0;
 
-	// Run the engine.
-	output->flutter_engine_state->run_engine();
+	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
+	server->flutter_engine_state->send_window_metrics(window_metrics);
 
 	server->output = std::move(output);
 }

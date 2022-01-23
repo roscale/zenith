@@ -10,13 +10,11 @@ extern "C" {
 #undef static
 }
 
-void activate_window(ZenithOutput* output,
+void activate_window(ZenithServer* server,
                      const flutter::MethodCall<>& call,
                      std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
-	ZenithServer* server = output->server;
-
 	auto view_it = server->views_by_id.find(view_id);
 	bool view_doesnt_exist = view_it == server->views_by_id.end();
 	if (view_doesnt_exist) {
@@ -30,7 +28,7 @@ void activate_window(ZenithOutput* output,
 	result->Success();
 }
 
-void pointer_hover(ZenithOutput* output,
+void pointer_hover(ZenithServer* server,
                    const flutter::MethodCall<>& call,
                    std::unique_ptr<flutter::MethodResult<>>&& result) {
 
@@ -39,8 +37,6 @@ void pointer_hover(ZenithOutput* output,
 	double x = std::get<double>(args[flutter::EncodableValue("x")]);
 	double y = std::get<double>(args[flutter::EncodableValue("y")]);
 	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
-
-	ZenithServer* server = output->server;
 
 	auto view_it = server->views_by_id.find(view_id);
 	bool view_doesnt_exist = view_it == server->views_by_id.end();
@@ -71,23 +67,20 @@ void pointer_hover(ZenithOutput* output,
 }
 
 
-void pointer_exit(ZenithOutput* output,
+void pointer_exit(ZenithServer* server,
                   const flutter::MethodCall<>& call,
                   std::unique_ptr<flutter::MethodResult<>>&& result) {
-
-	ZenithServer* server = output->server;
 
 	wlr_seat_pointer_clear_focus(server->seat);
 	wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
 	result->Success();
 }
 
-void close_window(ZenithOutput* output,
+void close_window(ZenithServer* server,
                   const flutter::MethodCall<>& call,
                   std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
-	ZenithServer* server = output->server;
 
 	auto view_it = server->views_by_id.find(view_id);
 	bool view_doesnt_exist = view_it == server->views_by_id.end();
@@ -102,7 +95,7 @@ void close_window(ZenithOutput* output,
 	result->Success();
 }
 
-void resize_window(ZenithOutput* output,
+void resize_window(ZenithServer* server,
                    const flutter::MethodCall<>& call,
                    std::unique_ptr<flutter::MethodResult<>>&& result) {
 
@@ -110,8 +103,6 @@ void resize_window(ZenithOutput* output,
 	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 	double width = std::get<double>(args[flutter::EncodableValue("width")]);
 	double height = std::get<double>(args[flutter::EncodableValue("height")]);
-
-	ZenithServer* server = output->server;
 
 	auto view_it = server->views_by_id.find(view_id);
 	bool view_doesnt_exist = view_it == server->views_by_id.end();
@@ -126,12 +117,11 @@ void resize_window(ZenithOutput* output,
 	result->Success();
 }
 
-void closing_animation_finished(ZenithOutput* output,
+void closing_animation_finished(ZenithServer* server,
                                 const flutter::MethodCall<>& call,
                                 std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
-	ZenithServer* server = output->server;
 
 	if (eglGetCurrentContext() == nullptr) {
 		// wlroots is screwing with me and deactivates the gl context for some reason.
@@ -142,7 +132,7 @@ void closing_animation_finished(ZenithOutput* output,
 	std::scoped_lock lock(server->surface_framebuffers_mutex);
 	server->surface_framebuffers.erase(view_id);
 
-	FlutterEngineUnregisterExternalTexture(output->flutter_engine_state->engine, view_id);
+	FlutterEngineUnregisterExternalTexture(server->flutter_engine_state->engine, view_id);
 
 	result->Success();
 }

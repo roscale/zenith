@@ -21,12 +21,14 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 
 	frame_listener.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &frame_listener);
+	mode_changed.notify = mode_changed_event;
+	wl_signal_add(&wlr_output->events.mode, &mode_changed);
 }
 
 void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 	ZenithServer* server = output->server;
-	auto& flutter_engine_state = output->flutter_engine_state;
+	auto& flutter_engine_state = server->flutter_engine_state;
 
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 	wlr_egl_make_current(egl);
@@ -106,6 +108,22 @@ void output_frame(wl_listener* listener, void* data) {
 
 	wlr_renderer_end(server->renderer);
 	wlr_output_commit(output->wlr_output);
+}
+
+void mode_changed_event(wl_listener* listener, void* data) {
+	ZenithOutput* output = wl_container_of(listener, output, mode_changed);
+
+	int width, height;
+	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+
+	FlutterWindowMetricsEvent window_metrics = {};
+	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
+	window_metrics.width = width;
+	window_metrics.height = height;
+	window_metrics.pixel_ratio = 1.0;
+
+	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+	output->server->flutter_engine_state->send_window_metrics(window_metrics);
 }
 
 static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo) {

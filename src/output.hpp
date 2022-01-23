@@ -16,12 +16,12 @@ struct ZenithOutput {
 
 	struct wlr_output* wlr_output = nullptr;
 	wl_listener frame_listener{};
-
-	// Set later.
-	std::unique_ptr<FlutterEngineState> flutter_engine_state{};
+	wl_listener mode_changed{};
 };
 
 /*
  * This function is called every time an output is ready to display a frame, generally at the output's refresh rate.
  */
 void output_frame(wl_listener* listener, void* data);
+
+void mode_changed_event(wl_listener* listener, void* data);

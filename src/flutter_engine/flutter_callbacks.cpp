@@ -56,7 +56,7 @@ void flutter_vsync_callback(void* userdata, intptr_t baton) {
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
-	ZenithServer* server = state->output->server;
+	ZenithServer* server = state->server;
 
 	std::shared_ptr<SurfaceFramebuffer> surface_framebuffer;
 	{

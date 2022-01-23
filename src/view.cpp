@@ -111,7 +111,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		}
 	}
 
-	FlutterEngineRegisterExternalTexture(view->server->output->flutter_engine_state->engine, (int64_t) view->id);
+	FlutterEngineRegisterExternalTexture(view->server->flutter_engine_state->engine, (int64_t) view->id);
 
 	switch (view->xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
@@ -128,7 +128,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
-			view->server->output->flutter_engine_state->messenger.Send("window_mapped", result->data(), result->size());
+			view->server->flutter_engine_state->messenger.Send("window_mapped", result->data(), result->size());
 			break;
 		}
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
@@ -156,7 +156,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
-			view->server->output->flutter_engine_state->messenger.Send("popup_mapped", result->data(), result->size());
+			view->server->flutter_engine_state->messenger.Send("popup_mapped", result->data(), result->size());
 			break;
 		}
 		case WLR_XDG_SURFACE_ROLE_NONE:
@@ -175,7 +175,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
-			view->server->output->flutter_engine_state->messenger.Send("window_unmapped", result->data(),
+			view->server->flutter_engine_state->messenger.Send("window_unmapped", result->data(),
 			                                                           result->size());
 			break;
 		}
@@ -188,7 +188,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
-			view->server->output->flutter_engine_state->messenger.Send("popup_unmapped", result->data(),
+			view->server->flutter_engine_state->messenger.Send("popup_unmapped", result->data(),
 			                                                           result->size());
 			break;
 		}
@@ -302,7 +302,7 @@ void surface_commit(wl_listener* listener, void* data) {
 		auto value = EncodableValue(map);
 
 		auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-		view->server->output->flutter_engine_state->messenger.Send("configure_surface", result->data(),
+		view->server->flutter_engine_state->messenger.Send("configure_surface", result->data(),
 		                                                           result->size());
 	}
 }
@@ -314,7 +314,7 @@ void xdg_toplevel_request_move(wl_listener* listener, void* data) {
 		  {EncodableValue("view_id"), EncodableValue((int64_t) view->id)},
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-	view->server->output->flutter_engine_state->messenger.Send("request_move", result->data(),
+	view->server->flutter_engine_state->messenger.Send("request_move", result->data(),
 	                                                           result->size());
 }
 
@@ -327,6 +327,6 @@ void xdg_toplevel_request_resize(wl_listener* listener, void* data) {
 		  {EncodableValue("edges"),   EncodableValue(event->edges)},
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-	view->server->output->flutter_engine_state->messenger.Send("request_resize", result->data(),
+	view->server->flutter_engine_state->messenger.Send("request_resize", result->data(),
 	                                                           result->size());
 }

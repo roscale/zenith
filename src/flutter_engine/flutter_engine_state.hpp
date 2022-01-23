@@ -15,10 +15,10 @@ extern "C" {
 #include <wlr/render/egl.h>
 }
 
-struct ZenithOutput;
+struct ZenithServer;
 
 struct FlutterEngineState {
-	FlutterEngineState(ZenithOutput* output, wlr_egl* main_egl);
+	FlutterEngineState(ZenithServer* server, wlr_egl* main_egl);
 
 	void run_engine();
 
@@ -26,7 +26,9 @@ struct FlutterEngineState {
 
 	void register_host_api();
 
-	ZenithOutput* output = nullptr;
+	void send_window_metrics(FlutterWindowMetricsEvent& metrics);
+
+	ZenithServer* server = nullptr;
 	FlutterEngine engine = nullptr;
 
 	TaskRunner platform_task_runner{};
