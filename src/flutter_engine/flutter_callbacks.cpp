@@ -10,18 +10,19 @@ extern "C" {
 #undef static
 }
 
-#include <GL/gl.h>
 #include <cassert>
 #include <iostream>
 
 bool flutter_make_current(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
-	return wlr_egl_make_current(state->flutter_gl_context);
+	return wlr_egl_make_current(wlr_gles2_renderer_get_egl(state->server->renderer));
+//	return wlr_egl_make_current(state->flutter_gl_context);
 }
 
 bool flutter_clear_current(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
-	return wlr_egl_unset_current(state->flutter_gl_context);
+	return wlr_egl_unset_current(wlr_gles2_renderer_get_egl(state->server->renderer));
+//	return wlr_egl_unset_current(state->flutter_gl_context);
 }
 
 bool flutter_present(void* userdata) {
@@ -30,6 +31,7 @@ bool flutter_present(void* userdata) {
 	state->framebuffers_in_use.clear();
 
 	std::scoped_lock lock(state->present_fbo->mutex);
+//	GLScopedLock gl_lock(state->gl_mutex);
 
 	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
 	// TODO: maybe it's better to use a fence instead
@@ -108,7 +110,7 @@ bool flutter_make_resource_current(void* userdata) {
 int flutter_execute_expired_tasks_timer(void* data) {
 	auto* state = static_cast<FlutterEngineState*>(data);
 
-	state->platform_task_runner.execute_expired_tasks();
+//	state->platform_task_runner.execute_expired_tasks();
 	// I would have preferred to have the delay represented in nanoseconds because I could reschedule
 	// an update at exactly the right time for the earliest task to be executed, but we'll just reschedule
 	// as fast as possible, every millisecond. This shouldn't be heavy for a CPU anyway.

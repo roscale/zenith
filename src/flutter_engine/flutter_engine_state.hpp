@@ -10,6 +10,7 @@
 #include "util/render_to_texture_shader.hpp"
 #include "util/surface_framebuffer.hpp"
 #include "task_runner.hpp"
+#include "gl_mutex.hpp"
 
 extern "C" {
 #include <wlr/render/egl.h>
@@ -37,7 +38,7 @@ struct FlutterEngineState {
 	/// Send messages to Dart code.
 	BinaryMessenger messenger{};
 	IncomingMessageDispatcher message_dispatcher;
-	wlr_egl* flutter_gl_context = nullptr;
+//	wlr_egl* flutter_gl_context = nullptr;
 	wlr_egl* flutter_resource_gl_context = nullptr;
 
 	/// Allow Dart code to call C++ methods though this channel.
@@ -49,5 +50,6 @@ struct FlutterEngineState {
 	fix_y_flip_state fix_y_flip{};
 
 	std::unique_ptr<SurfaceFramebuffer> present_fbo = nullptr;
+	GLMutex gl_mutex{};
 	std::list<std::shared_ptr<SurfaceFramebuffer>> framebuffers_in_use{};
 };

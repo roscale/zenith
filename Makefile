@@ -27,7 +27,7 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d) ./ third_party
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 ASAN := -g -fsanitize=address -fno-omit-frame-pointer -lasan -lrt
-WARNINGS := -Wall -Wextra -Wno-unused-parameter -Werror
+WARNINGS := -Wall -Wextra
 
 # The -MMD and -MP flags together generate Makefiles for us!
 # These files will have .d instead of .o as the output.
@@ -36,7 +36,7 @@ DEBUG_CPPFLAGS := $(COMMON_CPPFLAGS) -DDEBUG $(ASAN)
 PROFILE_CPPFLAGS := $(COMMON_CPPFLAGS) -DPROFILE
 RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) -O2
 
-COMMON_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -lpixman-1 -L ./
+COMMON_LDFLAGS := -lGL -lEGL -lGLESv2 -lepoxy -lpthread -lwlroots -lwayland-server -lxkbcommon -lpixman-1 -L ./
 DEBUG_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_debug $(ASAN)
 PROFILE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_profile
 RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release

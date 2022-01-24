@@ -1,6 +1,13 @@
 #include "mouse_button_tracker.hpp"
-#include <linux/input-event-codes.h>
 #include "embedder.h"
+#include <linux/input-event-codes.h>
+#include <cinttypes>
+
+extern "C" {
+#define static
+#include <wlr/util/log.h>
+#undef static
+}
 
 void MouseButtonTracker::press_button(uint32_t button) {
 	pressed_buttons.insert(button);
@@ -36,6 +43,10 @@ int64_t MouseButtonTracker::get_flutter_mouse_state() {
 				break;
 			case BTN_FORWARD:
 				bitmap |= kFlutterPointerButtonMouseForward;
+				break;
+			default:
+				wlr_log(WLR_DEBUG, "Unknown mouse button 0x%" PRIx32, button);
+				// TODO: I should also consider other mouse buttons according to embedder.h.
 				break;
 		}
 	}

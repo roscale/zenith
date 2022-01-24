@@ -25,9 +25,9 @@ FlutterEngineState::FlutterEngineState(ZenithServer* server, wlr_egl* main_egl)
 
 	// Create 2 OpenGL shared contexts for rendering operations.
 	wlr_egl_make_current(main_egl);
-	flutter_gl_context = create_shared_egl_context(main_egl);
+//	flutter_gl_context = create_shared_egl_context(main_egl);
 	flutter_resource_gl_context = create_shared_egl_context(main_egl);
-	wlr_egl_unset_current(main_egl);
+//	wlr_egl_unset_current(main_egl);
 
 	// Flutter doesn't know the output dimensions, so initialize all required textures with the smallest
 	// size possible. When an output (screen) becomes available, the Flutter engine will be notified and
@@ -37,10 +37,10 @@ FlutterEngineState::FlutterEngineState(ZenithServer* server, wlr_egl* main_egl)
 
 	// FBOs cannot be shared between GL contexts. Since these FBOs will be used by a Flutter thread, create these
 	// resources using Flutter's context.
-	wlr_egl_make_current(flutter_gl_context);
+//	wlr_egl_make_current(flutter_gl_context);
 	fix_y_flip = fix_y_flip_init_state((int) dummy_width, (int) dummy_height);
 	present_fbo = std::make_unique<SurfaceFramebuffer>(dummy_width, dummy_height);
-	wlr_egl_unset_current(flutter_gl_context);
+//	wlr_egl_unset_current(flutter_gl_context);
 
 	wlr_egl_restore_context(&saved_egl_context);
 }
@@ -87,6 +87,7 @@ void FlutterEngineState::start_engine() {
 	FlutterCustomTaskRunners task_runners{};
 	task_runners.struct_size = sizeof(FlutterCustomTaskRunners);
 	task_runners.platform_task_runner = &platform_task_runner_description;
+	task_runners.render_task_runner = &platform_task_runner_description;
 
 	auto executable_path = std::filesystem::canonical("/proc/self/exe");
 	// Normally, the observatory is started on a random port with some random auth code, but we will
@@ -157,6 +158,7 @@ void FlutterEngineState::register_host_api() {
 
 void FlutterEngineState::send_window_metrics(FlutterWindowMetricsEvent& metrics) {
 	std::scoped_lock lock(server->flutter_engine_state->present_fbo->mutex);
+//	GLScopedLock gl_lock(server->flutter_engine_state->gl_mutex);
 
 	FlutterEngineSendWindowMetricsEvent(server->flutter_engine_state->engine, &metrics);
 

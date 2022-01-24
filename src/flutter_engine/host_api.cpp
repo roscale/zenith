@@ -72,7 +72,8 @@ void pointer_exit(ZenithServer* server,
                   std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	wlr_seat_pointer_clear_focus(server->seat);
-	wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
+//	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
+//	wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
 	result->Success();
 }
 

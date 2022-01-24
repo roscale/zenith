@@ -34,6 +34,16 @@ static const unsigned int indices[] = {
 };
 
 struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
+	// Backup context state.
+	GLint framebuffer_binding;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
+	GLint texture_binding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture_binding);
+	GLint vbo_binding;
+	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vbo_binding);
+	GLint ebo_binding;
+	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &ebo_binding);
+
 	int success;
 	char infoLog[512];
 
@@ -116,6 +126,12 @@ struct fix_y_flip_state fix_y_flip_init_state(int width, int height) {
 		std::cerr << "Incomplete framebuffer: " << status << std::endl;
 		exit(1);
 	}
+
+	// Restore context state.
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);
+	glBindTexture(GL_TEXTURE_2D, texture_binding);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_binding);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_binding);
 
 	fix_y_flip_state state = {
 		  .program = shaderProgram,

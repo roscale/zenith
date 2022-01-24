@@ -1,3 +1,5 @@
+#include <EGL/egl.h>
+#include <cassert>
 #include "task_runner.hpp"
 
 bool compare::operator()(const Task& t1, const Task& t2) {
@@ -27,8 +29,10 @@ void TaskRunner::execute_expired_tasks() {
 	}
 	mutex.unlock();
 
+
 	for (Task& task: expired_tasks) {
 		FlutterTask& flutter_task = task.second;
+//		assert(eglGetCurrentContext() != EGL_NO_CONTEXT);
 		FlutterEngineRunTask(engine, &flutter_task);
 	}
 

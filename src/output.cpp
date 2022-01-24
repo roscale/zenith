@@ -30,6 +30,10 @@ void output_frame(wl_listener* listener, void* data) {
 	ZenithServer* server = output->server;
 	auto& flutter_engine_state = server->flutter_engine_state;
 
+	// Backup context state.
+	GLint framebuffer_binding;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
+
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 	wlr_egl_make_current(egl);
 
@@ -76,27 +80,38 @@ void output_frame(wl_listener* listener, void* data) {
 		}
 	}
 
-	/*
-	 * Copy the frame to the screen.
-	 */
+//	/*
+//	 * Copy the frame to the screen.
+//	 */
 	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
 		return;
 	}
+	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
 
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
-	wlr_renderer_begin(server->renderer, width, height);
+//	wlr_renderer_begin(server->renderer, width, height);
 
-	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
+//	flutter_engine_state->platform_task_runner.execute_expired_tasks();
+
+	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
 
 	{
 		std::scoped_lock lock(flutter_engine_state->present_fbo->mutex);
+//		GLScopedLock gl_lock(flutter_engine_state->gl_mutex);
+
+		flutter_engine_state->platform_task_runner.execute_expired_tasks();
+
+		glFinish();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+		glClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT);
 		RenderToTextureShader::instance()->render(flutter_engine_state->present_fbo->texture, 0, 0, width,
 		                                          height, output_fbo);
 	}
+
+	std::cout << FlutterEngineGetCurrentTime() << std::endl;
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
 	 * moved around without re-rendering what's beneath them - which is more
@@ -106,8 +121,11 @@ void output_frame(wl_listener* listener, void* data) {
 	 * and this function is a no-op when hardware cursors are in use. */
 	wlr_output_render_software_cursors(output->wlr_output, nullptr);
 
-	wlr_renderer_end(server->renderer);
+//	wlr_renderer_end(server->renderer);
 	wlr_output_commit(output->wlr_output);
+
+	// Restore context state.
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);
 }
 
 void mode_changed_event(wl_listener* listener, void* data) {
