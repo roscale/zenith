@@ -1,6 +1,7 @@
 #include "flutter_callbacks.hpp"
 #include "flutter_engine_state.hpp"
 #include "server.hpp"
+#include "gl_mutex.hpp"
 
 extern "C" {
 #define static
@@ -10,7 +11,7 @@ extern "C" {
 #undef static
 }
 
-#include <GL/gl.h>
+#include <epoxy/gl.h>
 #include <cassert>
 #include <iostream>
 
@@ -30,10 +31,9 @@ bool flutter_present(void* userdata) {
 	state->framebuffers_in_use.clear();
 
 	std::scoped_lock lock(state->present_fbo->mutex);
+	GLScopedLock gl_lock(state->gl_mutex);
 
 	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
-	// TODO: maybe it's better to use a fence instead
-	glFinish(); // Don't remove this line!
 
 	return true;
 }

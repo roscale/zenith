@@ -10,6 +10,7 @@
 #include "util/render_to_texture_shader.hpp"
 #include "util/surface_framebuffer.hpp"
 #include "task_runner.hpp"
+#include "gl_mutex.hpp"
 
 extern "C" {
 #include <wlr/render/egl.h>
@@ -47,6 +48,7 @@ struct FlutterEngineState {
 	bool new_baton = false;
 	std::mutex baton_mutex{};
 	fix_y_flip_state fix_y_flip{};
+	GLMutex gl_mutex{};
 
 	std::unique_ptr<SurfaceFramebuffer> present_fbo = nullptr;
 	std::list<std::shared_ptr<SurfaceFramebuffer>> framebuffers_in_use{};

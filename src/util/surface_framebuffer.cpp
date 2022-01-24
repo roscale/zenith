@@ -1,10 +1,8 @@
 #include "surface_framebuffer.hpp"
 #include "render_to_texture_shader.hpp"
 #include <cassert>
-#include <iostream>
-#include <GL/gl.h>
-#include <EGL/egl.h>
-#include <thread>
+#include <epoxy/gl.h>
+#include <epoxy/egl.h>
 
 SurfaceFramebuffer::SurfaceFramebuffer(size_t width, size_t height)
 	  : width(width), height(height), pending_width(width), pending_height(height) {

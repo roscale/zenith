@@ -1,7 +1,7 @@
 #include "fix_y_flip.hpp"
 #include <cstdlib>
 #include <iostream>
-#include <GL/gl.h>
+#include <epoxy/gl.h>
 
 static const char* vertexShaderSource = "attribute vec3 position;\n"
                                         "attribute vec2 texcoord;\n"

@@ -157,6 +157,7 @@ void FlutterEngineState::register_host_api() {
 
 void FlutterEngineState::send_window_metrics(FlutterWindowMetricsEvent& metrics) {
 	std::scoped_lock lock(server->flutter_engine_state->present_fbo->mutex);
+	GLScopedLock gl_lock(server->flutter_engine_state->gl_mutex);
 
 	FlutterEngineSendWindowMetricsEvent(server->flutter_engine_state->engine, &metrics);
 

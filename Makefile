@@ -36,7 +36,7 @@ DEBUG_CPPFLAGS := $(COMMON_CPPFLAGS) -DDEBUG $(ASAN)
 PROFILE_CPPFLAGS := $(COMMON_CPPFLAGS) -DPROFILE
 RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) -O2
 
-COMMON_LDFLAGS := -lGL -lEGL -lGLESv2 -lpthread -lwlroots -lwayland-server -lxkbcommon -lpixman-1 -L ./
+COMMON_LDFLAGS := -lGL -lEGL -lGLESv2 -lepoxy -lwlroots -lwayland-server -lxkbcommon -lpixman-1 -L ./
 DEBUG_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_debug $(ASAN)
 PROFILE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_profile
 RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release

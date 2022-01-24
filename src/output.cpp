@@ -91,6 +91,7 @@ void output_frame(wl_listener* listener, void* data) {
 
 	{
 		std::scoped_lock lock(flutter_engine_state->present_fbo->mutex);
+		GLScopedLock gl_lock(flutter_engine_state->gl_mutex);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 		glClear(GL_COLOR_BUFFER_BIT);
