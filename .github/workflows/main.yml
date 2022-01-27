@@ -23,7 +23,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - run: pacman --noconfirm -Syu nodejs zip unzip git git-lfs cmake ninja clang gtk3 wlroots
+      # I'm installing wlroots just to get all required dependencies, even though I don't use the system library.
+      # TODO: Install dependencies of wlroots and not wlroots itself.
+      - run: pacman --noconfirm -Syu nodejs zip unzip git git-lfs cmake ninja meson clang gtk3 wlroots
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
@@ -33,8 +35,8 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Download platform-agnostic Flutter engine
-        run: ./download_flutter_engine.sh
+      - name: Download required dependencies
+        run: ./download_dependencies.sh
 
       - name: Compile the code and make bundles
         run: |
