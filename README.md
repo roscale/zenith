@@ -100,6 +100,10 @@ support (at the moment). Any QT or GTK app should work. You can launch a termina
 or `gnome-terminal`, and use it to start subsequent programs. If you want to launch Chromium, you must
 use `--enable-features=UseOzonePlatform --ozone-platform=wayland`.
 
+If you want to start Zenith on your secondary screen, set the environment variable `ZENITH_OUTPUT=1`, `1` being the
+index of the output. The default choice is `0`, the primary screen. This setting is temporary until multi-monitor
+support is implemented.
+
 For development purposes it is more convenient to start Zenith from an existing X11 or Wayland compositor, and it will
 show up as a window.
 
@@ -109,8 +113,8 @@ Press `Ctrl`+`Alt`+`Delete` to quit.
 
 It's worth mentioning Flutter for Desktop is still in beta and thus, when running in debug mode you will see visual bugs
 not present in profile or release mode. For some reason, in debug mode the loading of images doesn't seem to work and
-windows will flicker sometimes. Let's hope these bugs will be fixed by the Flutter team. Compile in release mode if you
-want a good experience.
+windows will flicker sometimes. I'm almost certain these bugs come from the Flutter engine so let's hope they will be
+fixed soon. Compile in release mode if you want a good experience.
 
 ## Attaching a debugger
 

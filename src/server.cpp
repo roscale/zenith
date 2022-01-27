@@ -137,7 +137,12 @@ void server_new_output(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_output);
 	auto* wlr_output = static_cast<struct wlr_output*>(data);
 
-	if (server->output != nullptr || i <= 0) {
+	static const char* selected_output_str = getenv("ZENITH_OUTPUT");
+	static size_t selected_output = selected_output_str != nullptr
+	                                ? selected_output_str[0] - '0'
+	                                : 0;
+
+	if (server->output != nullptr || i <= selected_output) {
 		i += 1;
 		// Allow only one output for the time being.
 		return;
