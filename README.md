@@ -43,7 +43,7 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 
 ### Arch Linux
 
-- `pacman -S base-devel git-lfs unzip cmake ninja meson clang gtk3 wlroots`
+- `pacman -S base-devel git-lfs unzip cmake ninja meson clang gtk3 wlroots wayland-protocols xorg-xwayland`
 - Download Flutter: https://docs.flutter.dev/get-started/install/linux#install-flutter-manually
 
 Make sure `flutter` is in PATH.

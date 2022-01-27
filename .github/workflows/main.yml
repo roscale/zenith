@@ -25,7 +25,7 @@ jobs:
     steps:
       # I'm installing wlroots just to get all required dependencies, even though I don't use the system library.
       # TODO: Install dependencies of wlroots and not wlroots itself.
-      - run: pacman --noconfirm -Syu nodejs zip unzip git git-lfs cmake ninja meson clang gtk3 wlroots
+      - run: pacman --noconfirm -Syu nodejs zip unzip git git-lfs cmake ninja meson clang gtk3 wlroots wayland-protocols xorg-xwayland
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
