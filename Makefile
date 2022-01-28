@@ -1,7 +1,7 @@
 TARGET_EXEC := zenith
 SRC_DIRS := src
 DEPS_DIR := deps
-WLROOTS_INCLUDE_DIR := $(DEPS_DIR)/wlroots/include
+WLROOTS_INCLUDE_DIR := $(DEPS_DIR)/wlroots/include $(DEPS_DIR)/wlroots/build/include
 WLROOTS_SO := $(DEPS_DIR)/wlroots/build/libwlroots.so.9
 
 DEBUG_BUILD_DIR := build/$(TARGET_EXEC)/debug

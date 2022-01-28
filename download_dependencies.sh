@@ -27,7 +27,7 @@ mv /tmp/libflutter_engine.so deps/libflutter_engine_release.so
 printf "\n* Compiling wlroots *\n\n"
 
 cd deps/wlroots || exit
-meson build/
+meson -Dxcb-errors=disabled build/
 ninja -C build/
 
 printf "\n* Done *\n\n"

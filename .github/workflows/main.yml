@@ -23,9 +23,32 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # I'm installing wlroots just to get all required dependencies, even though I don't use the system library.
-      # TODO: Install dependencies of wlroots and not wlroots itself.
-      - run: pacman --noconfirm -Syu nodejs zip unzip git git-lfs cmake ninja meson clang gtk3 wlroots wayland-protocols xorg-xwayland
+      - name: Install dependencies
+        run: |
+          pacman --noconfirm -Syu \
+          nodejs \
+          zip \
+          unzip \
+          git \
+          git-lfs \
+          clang \
+          gtk3 \
+          meson \
+          wayland \
+          wayland-protocols \
+          cmake \
+          libdrm \
+          opengl-driver \
+          libinput \
+          libxkbcommon \
+          udev \
+          pixman \
+          seatd \
+          libxcb \
+          xcb-util-renderutil \
+          xorg-xwayland \
+          xcb-util-wm
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
