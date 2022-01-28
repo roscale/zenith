@@ -45,8 +45,8 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 
 ### Arch Linux
 
-- `./install_compilation_dependencies.sh`
 - Download Flutter: https://docs.flutter.dev/get-started/install/linux#install-flutter-manually
+- `./install_compilation_dependencies.sh`
 
 Make sure `flutter` is in PATH.
 

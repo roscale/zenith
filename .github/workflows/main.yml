@@ -24,7 +24,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # We technically don't need sudo because we are root, but the scripts will break if sudo is not available.
-      - run: pacman --noconfirm -Syu sudo
+      - run: pacman --noconfirm -Syu git git-lfs nodejs sudo
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2

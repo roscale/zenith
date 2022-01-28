@@ -14,7 +14,6 @@ sudo pacman -S --needed "$@" \
   libxcb \
   libxkbcommon \
   meson \
-  nodejs \
   opengl-driver \
   pixman \
   seatd \
