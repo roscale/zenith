@@ -35,7 +35,9 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 
 ## Run without compilation
 
-- Install `wlroots`
+### Arch Linux
+
+- `./install_runtime_dependencies.sh`
 - Download the [latest](https://github.com/roscale/zenith/releases/latest) release
 - Read the [Running](#running) section.
 
@@ -43,17 +45,13 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 
 ### Arch Linux
 
-- `pacman -S base-devel git-lfs unzip cmake ninja meson clang gtk3 wlroots wayland-protocols xorg-xwayland`
+- `./install_compilation_dependencies.sh`
 - Download Flutter: https://docs.flutter.dev/get-started/install/linux#install-flutter-manually
 
 Make sure `flutter` is in PATH.
 
 ## Compiling
 
-### Arch Linux
-
-- cd into the project directory
-- `./download_dependencies.sh` to download and compile the required libraries
 - `flutter config --enable-linux-desktop` to enable the Linux desktop platform
 - `flutter pub get` to download Flutter project dependencies
 

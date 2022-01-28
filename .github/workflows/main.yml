@@ -23,31 +23,8 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Install dependencies
-        run: |
-          pacman --noconfirm -Syu \
-          nodejs \
-          zip \
-          unzip \
-          git \
-          git-lfs \
-          clang \
-          gtk3 \
-          meson \
-          wayland \
-          wayland-protocols \
-          cmake \
-          libdrm \
-          opengl-driver \
-          libinput \
-          libxkbcommon \
-          udev \
-          pixman \
-          seatd \
-          libxcb \
-          xcb-util-renderutil \
-          xorg-xwayland \
-          xcb-util-wm
+      # We technically don't need sudo because we are root, but the scripts will break if sudo is not available.
+      - run: pacman --noconfirm -Syu sudo
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
@@ -58,8 +35,8 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Download required dependencies
-        run: ./download_dependencies.sh
+      - name: Download and install required dependencies
+        run: ./install_compilation_dependencies.sh --noconfirm
 
       - name: Compile the code and make bundles
         run: |
