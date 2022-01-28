@@ -55,7 +55,7 @@ printf "\n* Compiling wlroots *\n\n"
 cd deps/wlroots || exit
 # Build without xcb-errors because this library is not widely available on other distros like Ubuntu.
 # TODO: Compile it manually.
-meson -Dxcb-errors=disabled build/ --reconfigure
+meson -Dxcb-errors=disabled build/
 ninja -C build/
 
 printf "\n* Done *\n\n"
