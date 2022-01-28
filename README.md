@@ -36,7 +36,7 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 ## Run without compilation
 
 - Install `wlroots`
-- Download the latest release
+- Download the [latest](https://github.com/roscale/zenith/releases/latest) release
 - Read the [Running](#running) section.
 
 ## Compilation dependencies
