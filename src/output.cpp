@@ -29,6 +29,7 @@ void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 	ZenithServer* server = output->server;
 	auto& flutter_engine_state = server->flutter_engine_state;
+	uint64_t now = FlutterEngineGetCurrentTime();
 
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 	wlr_egl_make_current(egl);
@@ -71,8 +72,10 @@ void output_frame(wl_listener* listener, void* data) {
 			intptr_t baton = flutter_engine_state->baton;
 			flutter_engine_state->new_baton = false;
 
-			uint64_t start = FlutterEngineGetCurrentTime();
-			FlutterEngineOnVsync(flutter_engine_state->engine, baton, start, start + 1'000'000'000ull / 144);
+			double refresh_rate = output->wlr_output->refresh != 0
+			                      ? (double) output->wlr_output->refresh / 1000
+			                      : 60; // Suppose it's 60Hz if the refresh rate is not available.
+			FlutterEngineOnVsync(flutter_engine_state->engine, baton, now, now + 1'000'000'000ull / refresh_rate);
 		}
 	}
 
@@ -110,95 +113,9 @@ void output_frame(wl_listener* listener, void* data) {
 	wlr_renderer_end(server->renderer);
 	wlr_output_commit(output->wlr_output);
 
-	if (server->pointer->kinetic_scrolling) {
-		uint32_t now = FlutterEngineGetCurrentTime() / 1'000'000;
-		double average_delta_x = server->pointer->average_delta_x;
-		double average_delta_y = server->pointer->average_delta_y;
-
-		uint32_t last_real_event = server->pointer->last_real_event;
-
-		double sum_x = 0;
-		double sum_y = 0;
-		const double length = 150;
-
-		for (uint32_t ms = server->pointer->last_kinetic_event_time; ms <= now; ms += 1) {
-			const double amplitude_x = 1.4 * abs(average_delta_x);
-			const double amplitude_y = 1.4 * abs(average_delta_y);
-
-			auto vel_x = amplitude_x * exp(-(double) (ms - last_real_event) / length);
-			auto vel_y = amplitude_y * exp(-(double) (ms - last_real_event) / length);
-
-			auto value_x = vel_x / 10;
-			auto value_y = vel_y / 10;
-
-			if (average_delta_x < 0) {
-				value_x *= -1;
-			}
-			sum_x += value_x;
-
-			if (average_delta_y < 0) {
-				value_y *= -1;
-			}
-			sum_y += value_y;
-
-			if (vel_x * vel_x + vel_y * vel_y < 0.1 * 0.1) {
-				server->pointer->kinetic_scrolling = false;
-				break;
-			}
-		}
-
-		auto event = &server->pointer->last_real_scroll_event;
-
-		wlr_seat_pointer_notify_axis(server->seat,
-		                             now, WLR_AXIS_ORIENTATION_HORIZONTAL, sum_x,
-		                             0, event->source);
-		wlr_seat_pointer_notify_frame(server->seat);
-		wlr_seat_pointer_notify_axis(server->seat,
-		                             now, WLR_AXIS_ORIENTATION_VERTICAL, sum_y,
-		                             0, event->source);
-		wlr_seat_pointer_notify_frame(server->seat);
-		if (not server->pointer->kinetic_scrolling) {
-			wlr_seat_pointer_notify_axis(server->seat,
-			                             now, WLR_AXIS_ORIENTATION_HORIZONTAL, 0,
-			                             0, event->source);
-			wlr_seat_pointer_notify_frame(server->seat);
-			wlr_seat_pointer_notify_axis(server->seat,
-			                             now, WLR_AXIS_ORIENTATION_VERTICAL, 0,
-			                             0, event->source);
-			wlr_seat_pointer_notify_frame(server->seat);
-		}
-
-		server->pointer->last_kinetic_event_time = now;
-
-//		if (vel >= 0.1) {
-//			std::cout << "scroll " << incr << std::endl;
-//			wlr_seat_server->pointer_notify_axis(server->seat,
-//			                             now, event->orientation, vel,
-//			                             event->delta_discrete, event->source);
-//			wlr_seat_server->pointer_notify_frame(server->seat);
-//			server->pointer->last_kinetic_event = now;
-//		} else {
-//			std::cout << "scroll end" << std::endl;
-//			server->pointer->kinetic_scrolling = false;
-//		}
-
-//		std::cout << server->pointer->last_kinetic_event << std::endl;
-//		std::cout << now << std::endl;
-//		for (uint32_t t = server->pointer->last_kinetic_event; t <= now; t += 1) {
-//			if (abs(event->delta) >= 0.1) {
-//				event->delta *= 0.995;
-//			} else {
-//				server->pointer->kinetic_scrolling = false;
-//				break;
-//			}
-//		}
-//		wlr_seat_server->pointer_notify_axis(server->seat,
-//		                             now, event->orientation, event->delta,
-//		                             event->delta_discrete, event->source);
-//		wlr_seat_server->pointer_notify_frame(server->seat);
-//		server->pointer->last_kinetic_event = now;
-	}
-
+	// I tried using a timer to apply the scrolling but on high CPU load the timer is not triggered
+	// often enough. This is a good place because it forces the scroll to update on every frame.
+	server->pointer->kinetic_scrolling.apply_kinetic_scrolling(server->seat);
 }
 
 void mode_changed_event(wl_listener* listener, void* data) {

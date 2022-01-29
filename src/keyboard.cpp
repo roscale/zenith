@@ -34,23 +34,27 @@ ZenithKeyboard::ZenithKeyboard(ZenithServer* server, wlr_input_device* device)
 
 void keyboard_handle_modifiers(wl_listener* listener, void* data) {
 	ZenithKeyboard* keyboard = wl_container_of(listener, keyboard, modifiers);
+	wlr_seat* seat = keyboard->server->seat;
+
+	keyboard->server->pointer->kinetic_scrolling.stop();
+
 	/*
 	 * A seat can only have one keyboard, but this is a limitation of the
 	 * Wayland protocol - not wlroots. We assign all connected keyboards to the
 	 * same seat. You can swap out the underlying wlr_keyboard like this and
 	 * wlr_seat handles this transparently.
 	 */
-	wlr_seat_set_keyboard(keyboard->server->seat, keyboard->device);
+	wlr_seat_set_keyboard(seat, keyboard->device);
 	/* Send modifiers to the client. */
-	wlr_seat_keyboard_notify_modifiers(keyboard->server->seat, &keyboard->device->keyboard->modifiers);
+	wlr_seat_keyboard_notify_modifiers(seat, &keyboard->device->keyboard->modifiers);
 }
 
 void keyboard_handle_key(wl_listener* listener, void* data) {
 	ZenithKeyboard* keyboard = wl_container_of(listener, keyboard, key);
-	ZenithServer* server = keyboard->server;
-
+	wlr_seat* seat = keyboard->server->seat;
 	auto* event = static_cast<wlr_event_keyboard_key*>(data);
-	wlr_seat* seat = server->seat;
+
+	keyboard->server->pointer->kinetic_scrolling.stop();
 
 	wlr_seat_set_keyboard(seat, keyboard->device);
 
@@ -89,22 +93,6 @@ bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, const
 	     is_key_pressed(XKB_KEY_KP_Delete))) {
 
 		wl_display_terminate(keyboard->server->display);
-		return true;
-	}
-
-	if ((modifiers & WLR_MODIFIER_CTRL) and
-	    (modifiers & WLR_MODIFIER_ALT) and
-	    (is_key_pressed(XKB_KEY_Insert) or
-	     is_key_pressed(XKB_KEY_KP_Insert))) {
-
-		auto& pointer = keyboard->server->pointer;
-
-		pointer->kinetic_scrolling = true;
-		pointer->average_delta_x = 0;
-		pointer->average_delta_y = 10;
-		pointer->last_kinetic_event_time = FlutterEngineGetCurrentTime() / 1'000'000;
-		pointer->last_real_event = FlutterEngineGetCurrentTime() / 1'000'000;
-
 		return true;
 	}
 

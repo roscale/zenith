@@ -1,6 +1,5 @@
 #include "pointer.hpp"
 #include "server.hpp"
-#include "defer.hpp"
 #include <cmath>
 
 extern "C" {
@@ -51,19 +50,14 @@ ZenithPointer::ZenithPointer(ZenithServer* server)
 
 	cursor_frame.notify = server_cursor_frame;
 	wl_signal_add(&cursor->events.frame, &cursor_frame);
-
-	kinetic_scrolling_timer = wl_event_loop_add_timer(wl_display_get_event_loop(server->display),
-	                                                  kinetic_scrolling_timer_callback, this);
-	// Arm the timer.
-	wl_event_source_timer_update(kinetic_scrolling_timer, 1);
 }
 
 void server_cursor_motion(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_motion);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion*>(data);
-	pointer->kinetic_scrolling = false;
 
+	pointer->kinetic_scrolling.stop();
 	/* The cursor doesn't move unless we tell it to. The cursor automatically
 	 * handles constraining the motion to the output layout, as well as any
 	 * special configuration applied for the specific input device which
@@ -87,7 +81,8 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_motion_absolute);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion_absolute*>(data);
-	pointer->kinetic_scrolling = false;
+
+	pointer->kinetic_scrolling.stop();
 
 	wlr_cursor_warp_absolute(pointer->cursor, event->device, event->x, event->y);
 
@@ -147,143 +142,7 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_axis*>(data);
 
-	auto f = [&event, &pointer]() {
-		const double epsilon = 0.0001;
-		uint32_t now = FlutterEngineGetCurrentTime() / 1'000'000;
-
-		if (event->source != WLR_AXIS_SOURCE_FINGER) {
-			return;
-		}
-
-		if (abs(event->delta) >= epsilon) {
-			// Real movement, not a stop event.
-			pointer->kinetic_scrolling = false;
-			pointer->recent_scroll_events.push_back(*event);
-			// Keep scroll events only from the last 30 ms.
-			const uint32_t interval = 30;
-			uint32_t oldest_threshold = now - interval;
-			while (not pointer->recent_scroll_events.empty()) {
-				auto& front = pointer->recent_scroll_events.front();
-				if (front.time_msec < oldest_threshold) {
-					pointer->recent_scroll_events.pop_front();
-				} else {
-					break;
-				}
-			}
-			// Save the latest one.
-			pointer->last_real_scroll_event = *event;
-			return;
-		}
-
-		// Stop event.
-
-		defer _([&]() {
-			// Clear the scroll events on return.
-			pointer->recent_scroll_events.clear();
-		});
-
-		if (pointer->recent_scroll_events.empty()) {
-			// No scroll events, nothing to do.
-			return;
-		}
-
-		double sum_delta_x = 0.0;
-		double sum_delta_y = 0.0;
-		size_t num_delta_x = 0;
-		size_t num_delta_y = 0;
-
-		wlr_event_pointer_axis* last_horizontal_event = nullptr;
-		wlr_event_pointer_axis* last_vertical_event = nullptr;
-
-		for (auto& e: pointer->recent_scroll_events) {
-			if (e.orientation == WLR_AXIS_ORIENTATION_HORIZONTAL) {
-				last_horizontal_event = &e;
-				sum_delta_x += e.delta;
-				num_delta_x += 1;
-			} else if (e.orientation == WLR_AXIS_ORIENTATION_VERTICAL) {
-				last_vertical_event = &e;
-				sum_delta_y += e.delta;
-				num_delta_y += 1;
-			}
-		}
-
-		double average_delta_x = num_delta_x != 0 ? sum_delta_x / (double) num_delta_x : 0.0;
-		double average_delta_y = num_delta_y != 0 ? sum_delta_y / (double) num_delta_y : 0.0;
-		// Pythagorean theorem.
-		double average_delta = average_delta_x * average_delta_x + average_delta_y * average_delta_y;
-
-		if (average_delta < 1.0 * 1.0) { // TODO: something other than epsilon
-			// Insignificant scroll events.
-			return;
-		}
-
-		if ((last_horizontal_event == nullptr || abs(last_horizontal_event->delta) < 1.0) &&
-		    (last_vertical_event == nullptr || abs(last_vertical_event->delta) < 1.0)) {
-			// The user most likely stopped scrolling to rest his fingers on the touchpad.
-			return;
-		}
-
-		pointer->kinetic_scrolling = true;
-		pointer->average_delta_x = average_delta_x;
-		pointer->average_delta_y = average_delta_y;
-		pointer->last_kinetic_event_time = now;
-		pointer->last_real_event = event->time_msec;
-	};
-	f();
-
-
-//	if (event->source == WLR_AXIS_SOURCE_FINGER) {
-////		if (abs(event->delta) <= epsilon && abs(pointer->kinetic_event.delta) <= epsilon) {
-////			std::cout << "huh" << std::endl;
-////			return;
-////		}
-//
-//		if (abs(event->delta) > epsilon) {
-//			// Real movement, not a stop event.
-//			pointer->kinetic_scrolling = false;
-//			pointer->recent_scroll_events.push_back(*event);
-//
-//			// Keep scroll events only from the last 30 ms.
-//			const uint32_t interval = 30;
-//			uint32_t oldest_threshold = now - interval;
-//			while (not pointer->recent_scroll_events.empty()) {
-//				auto& front = pointer->recent_scroll_events.front();
-//				if (front.time_msec < oldest_threshold) {
-//					pointer->recent_scroll_events.pop_front();
-//				} else {
-//					break;
-//				}
-//			}
-//
-//			// Save the latest one.
-//			pointer->last_real_scroll_event = *event;
-//			// return;
-//		} else {
-//			// Stop event.
-//			if (not pointer->recent_scroll_events.empty()) {
-//				double sum = 0;
-//				for (auto& kevent: pointer->recent_scroll_events) {
-//					sum += kevent.delta;
-//				}
-//				pointer->average_delta = sum / pointer->recent_scroll_events.size();
-//			} else {
-//				pointer->average_delta = 0.0;
-//				std::cout << "mean delta = 0" << std::endl;
-//			}
-//
-//			if (abs(pointer->average_delta) >= epsilon && abs(pointer->recent_scroll_events.back().delta) > 0.5) {
-//				pointer->kinetic_scrolling = true;
-//				pointer->last_kinetic_event = now;
-//				pointer->last_real_event = event->time_msec;
-//				std::cout << "Start scroll" << std::endl;
-//				wlr_seat_pointer_notify_axis(server->seat,
-//				                             now, event->orientation,
-//				                             pointer->average_delta,
-//				                             0, event->source);
-//				wlr_seat_pointer_notify_frame(server->seat);
-//			}
-//		}
-//	}
+	pointer->kinetic_scrolling.record_scroll_event(event);
 
 	/* Notify the client with pointer focus of the axis event. */
 	wlr_seat_pointer_notify_axis(server->seat,
@@ -312,14 +171,4 @@ void server_cursor_frame(wl_listener* listener, void* data) {
 
 	/* Notify the client with pointer focus of the frame event. */
 	wlr_seat_pointer_notify_frame(server->seat);
-}
-
-int kinetic_scrolling_timer_callback(void* data) {
-	auto* pointer = static_cast<ZenithPointer*>(data);
-//	ZenithServer* server = pointer->server;
-
-
-
-	wl_event_source_timer_update(pointer->kinetic_scrolling_timer, 1);
-	return 0;
 }
