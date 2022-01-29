@@ -112,54 +112,70 @@ void output_frame(wl_listener* listener, void* data) {
 
 	if (server->pointer->kinetic_scrolling) {
 		uint32_t now = FlutterEngineGetCurrentTime() / 1'000'000;
-		double mean_delta = server->pointer->mean_delta;
-
-		std::cout << "mean " << mean_delta << std::endl;
+		double average_delta_x = server->pointer->average_delta_x;
+		double average_delta_y = server->pointer->average_delta_y;
 
 		uint32_t last_real_event = server->pointer->last_real_event;
-		auto event = &server->pointer->kinetic_event;
-		//		uint32_t last_kinetic_event = server->pointer->last_kinetic_event;
 
-		double sum = 0;
-		for (uint32_t ms = server->pointer->last_kinetic_event; ms <= now; ms += 1) {
-			auto vel = abs(mean_delta) * exp(-(double) (ms - last_real_event) / 150);
+		double sum_x = 0;
+		double sum_y = 0;
+		const double length = 150;
 
-			auto value = vel / 10;
-			if (mean_delta < 0) {
-				value *= -1;
+		for (uint32_t ms = server->pointer->last_kinetic_event_time; ms <= now; ms += 1) {
+			const double amplitude_x = 1.4 * abs(average_delta_x);
+			const double amplitude_y = 1.4 * abs(average_delta_y);
+
+			auto vel_x = amplitude_x * exp(-(double) (ms - last_real_event) / length);
+			auto vel_y = amplitude_y * exp(-(double) (ms - last_real_event) / length);
+
+			auto value_x = vel_x / 10;
+			auto value_y = vel_y / 10;
+
+			if (average_delta_x < 0) {
+				value_x *= -1;
 			}
-			sum += value;
-			server->pointer->last_kinetic_event = now;
+			sum_x += value_x;
 
-			if (vel >= 0.1) {
-				std::cout << "value " << value << std::endl;
-//				wlr_seat_pointer_notify_axis(server->seat,
-//				                             now, event->orientation, value,
-//				                             0, event->source);
-//				wlr_seat_pointer_notify_frame(server->seat);
-			} else {
-				std::cout << "scroll end" << std::endl;
+			if (average_delta_y < 0) {
+				value_y *= -1;
+			}
+			sum_y += value_y;
+
+			if (vel_x * vel_x + vel_y * vel_y < 0.1 * 0.1) {
 				server->pointer->kinetic_scrolling = false;
 				break;
 			}
 		}
+
+		auto event = &server->pointer->last_real_scroll_event;
+
 		wlr_seat_pointer_notify_axis(server->seat,
-		                             now, event->orientation, sum,
+		                             now, WLR_AXIS_ORIENTATION_HORIZONTAL, sum_x,
+		                             0, event->source);
+		wlr_seat_pointer_notify_frame(server->seat);
+		wlr_seat_pointer_notify_axis(server->seat,
+		                             now, WLR_AXIS_ORIENTATION_VERTICAL, sum_y,
 		                             0, event->source);
 		wlr_seat_pointer_notify_frame(server->seat);
 		if (not server->pointer->kinetic_scrolling) {
 			wlr_seat_pointer_notify_axis(server->seat,
-			                             now, event->orientation, 0,
+			                             now, WLR_AXIS_ORIENTATION_HORIZONTAL, 0,
+			                             0, event->source);
+			wlr_seat_pointer_notify_frame(server->seat);
+			wlr_seat_pointer_notify_axis(server->seat,
+			                             now, WLR_AXIS_ORIENTATION_VERTICAL, 0,
 			                             0, event->source);
 			wlr_seat_pointer_notify_frame(server->seat);
 		}
 
+		server->pointer->last_kinetic_event_time = now;
+
 //		if (vel >= 0.1) {
 //			std::cout << "scroll " << incr << std::endl;
-//			wlr_seat_pointer_notify_axis(server->seat,
+//			wlr_seat_server->pointer_notify_axis(server->seat,
 //			                             now, event->orientation, vel,
 //			                             event->delta_discrete, event->source);
-//			wlr_seat_pointer_notify_frame(server->seat);
+//			wlr_seat_server->pointer_notify_frame(server->seat);
 //			server->pointer->last_kinetic_event = now;
 //		} else {
 //			std::cout << "scroll end" << std::endl;
@@ -176,12 +192,13 @@ void output_frame(wl_listener* listener, void* data) {
 //				break;
 //			}
 //		}
-//		wlr_seat_pointer_notify_axis(server->seat,
+//		wlr_seat_server->pointer_notify_axis(server->seat,
 //		                             now, event->orientation, event->delta,
 //		                             event->delta_discrete, event->source);
-//		wlr_seat_pointer_notify_frame(server->seat);
+//		wlr_seat_server->pointer_notify_frame(server->seat);
 //		server->pointer->last_kinetic_event = now;
 	}
+
 }
 
 void mode_changed_event(wl_listener* listener, void* data) {

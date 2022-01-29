@@ -8,7 +8,7 @@
 #include <thread>
 #include "output.hpp"
 #include "keyboard.hpp"
-#include "pointer.hpp"
+#include "pointer/pointer.hpp"
 #include "view.hpp"
 
 extern "C" {

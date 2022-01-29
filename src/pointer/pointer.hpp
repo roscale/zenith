@@ -4,10 +4,10 @@
 #include "mouse_button_tracker.hpp"
 
 extern "C" {
-#include <wlr/types/wlr_cursor.h>
-#include <wlr/types/wlr_pointer.h>
+#include "wlr/types/wlr_cursor.h"
+#include "wlr/types/wlr_pointer.h"
 #define static
-#include <wlr/types/wlr_xcursor_manager.h>
+#include "wlr/types/wlr_xcursor_manager.h"
 #undef static
 }
 
@@ -27,12 +27,14 @@ struct ZenithPointer {
 	wl_listener cursor_axis{};
 	wl_listener cursor_frame{};
 
+	wl_event_source* kinetic_scrolling_timer{};
 	bool kinetic_scrolling = false;
-	std::deque<wlr_event_pointer_axis> kinetic_events{};
-	wlr_event_pointer_axis kinetic_event;
-	uint32_t last_kinetic_event;
+	std::deque<wlr_event_pointer_axis> recent_scroll_events{};
+	wlr_event_pointer_axis last_real_scroll_event;
+	uint32_t last_kinetic_event_time;
 	uint32_t last_real_event;
-	double mean_delta = 0.0;
+	double average_delta_x = 0.0;
+	double average_delta_y = 0.0;
 };
 
 /*
@@ -67,3 +69,5 @@ void server_cursor_axis(wl_listener* listener, void* data);
  * same time, in which case a frame event won't be sent in between.
  */
 void server_cursor_frame(wl_listener* listener, void* data);
+
+int kinetic_scrolling_timer_callback(void* data);

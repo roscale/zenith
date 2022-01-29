@@ -6,6 +6,7 @@ extern "C" {
 #define static
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/backend/libinput.h>
 #include <wlr/util/log.h>
 #include <wlr/render/gles2.h>
 #undef static
@@ -194,25 +195,32 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 
 void server_new_input(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_input);
-	auto* device = static_cast<wlr_input_device*>(data);
+	auto* wlr_device = static_cast<wlr_input_device*>(data);
 
-	switch (device->type) {
+	switch (wlr_device->type) {
 		case WLR_INPUT_DEVICE_KEYBOARD: {
-			auto keyboard = std::make_unique<ZenithKeyboard>(server, device);
+			auto keyboard = std::make_unique<ZenithKeyboard>(server, wlr_device);
 			server->keyboards.push_back(std::move(keyboard));
 			break;
 		}
 		case WLR_INPUT_DEVICE_POINTER: {
 			if (server->pointer == nullptr) {
+				// Regardless of the number of input devices, there will be only one pointer on the
+				// screen if at least one input device exists.
 				server->pointer = std::make_unique<ZenithPointer>(server);
 			}
-			/*
-			 * We don't do anything special with pointers. All of our pointer handling
-			 * is proxied through wlr_cursor. On another compositor, you might take this
-			 * opportunity to do libinput configuration on the device to set
-			 * acceleration, etc.
-			 */
-			wlr_cursor_attach_input_device(server->pointer->cursor, device);
+
+			bool is_touchpad = wlr_device->type == WLR_INPUT_DEVICE_POINTER && wlr_input_device_is_libinput(wlr_device);
+			if (is_touchpad) {
+				// Enable tapping by default on all touchpads.
+				libinput_device* device = wlr_libinput_get_device_handle(wlr_device);
+				libinput_device_config_tap_set_enabled(device, LIBINPUT_CONFIG_TAP_ENABLED);
+				libinput_device_config_tap_set_drag_enabled(device, LIBINPUT_CONFIG_DRAG_ENABLED);
+				libinput_device_config_scroll_set_natural_scroll_enabled(device, true);
+				libinput_device_config_dwt_set_enabled(device, LIBINPUT_CONFIG_DWT_ENABLED);
+			}
+
+			wlr_cursor_attach_input_device(server->pointer->cursor, wlr_device);
 			break;
 		}
 		default:
