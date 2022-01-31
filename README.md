@@ -11,7 +11,7 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 - [x] Move windows
 - [x] Resize windows
 - [x] Milestone 1: Feature parity with tinywl
-- [ ] Global kinetic scrolling when using the touchpad
+- [x] Global kinetic scrolling when using the touchpad
 - [ ] Maximize windows
 - [ ] XWayland
 - [ ] Alt-tab switcher

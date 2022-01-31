@@ -1,5 +1,6 @@
 #include "server.hpp"
 #include "debug.hpp"
+#include "wayland_view.hpp"
 #include <unistd.h>
 
 extern "C" {
@@ -23,6 +24,7 @@ ZenithServer* ZenithServer::instance() {
 
 ZenithServer::ZenithServer() {
 	main_thread_id = std::this_thread::get_id();
+
 	display = wl_display_create();
 	if (display == nullptr) {
 		wlr_log(WLR_ERROR, "Could not create Wayland display");
@@ -41,8 +43,15 @@ ZenithServer::ZenithServer() {
 		exit(3);
 	}
 
-	if (wlr_compositor_create(display, renderer) == nullptr) {
+	compositor = wlr_compositor_create(display, renderer);
+	if (compositor == nullptr) {
 		wlr_log(WLR_ERROR, "Could not create wlroots compositor");
+		exit(4);
+	}
+
+	xwayland = wlr_xwayland_create(display, compositor, false);
+	if (xwayland == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create XWayland server");
 		exit(4);
 	}
 
@@ -90,6 +99,11 @@ ZenithServer::ZenithServer() {
 	request_cursor.notify = server_seat_request_cursor;
 	wl_signal_add(&seat->events.request_set_cursor,
 	              &request_cursor);
+
+	setenv("DISPLAY", xwayland->display_name, true);
+
+	new_xwayland_surface.notify = server_new_xwayland_surface;
+	wl_signal_add(&xwayland->events.new_surface, &new_xwayland_surface);
 }
 
 void ZenithServer::run(char* startup_command) {
@@ -114,10 +128,6 @@ void ZenithServer::run(char* startup_command) {
 	}
 
 	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
-
-	// Make sure the X11 session from the host is not visible because some programs prefer talking
-	// to the X server instead of defaulting to Wayland.
-	unsetenv("DISPLAY");
 
 	setenv("WAYLAND_DISPLAY", socket, true);
 	setenv("XDG_SESSION_TYPE", "wayland", true);
@@ -186,11 +196,20 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
 
 	/* Allocate a ZenithView for this surface */
-	auto view = std::make_unique<ZenithView>(server, xdg_surface);
+	auto view = std::make_unique<ZenithWaylandView>(server, xdg_surface);
 
 	/* Add it to the list of views. */
 	server->view_id_by_wlr_surface.insert(std::make_pair(view->xdg_surface->surface, view->id));
 	server->views_by_id.insert(std::make_pair(view->id, std::move(view)));
+}
+
+void server_new_xwayland_surface(wl_listener* listener, void* data) {
+	auto* x_surface = static_cast<wlr_xwayland_surface*>(data);
+
+	//	wlr_xwayland_surface_from_wlr_surface()
+	if (x_surface->override_redirect) {
+		return;
+	}
 }
 
 void server_new_input(wl_listener* listener, void* data) {

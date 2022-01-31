@@ -1,24 +1,21 @@
-#include "view.hpp"
+#include "wayland_view.hpp"
 #include "server.hpp"
+#include <cassert>
+
 #include "platform_channels/encodable_value.h"
 #include "standard_method_codec.h"
+#include "util.hpp"
 
 extern "C" {
-#define static
-#include <wlr/render/wlr_texture.h>
-#include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/render/gles2.h>
-#undef static
 }
 
 using namespace flutter;
 
-static size_t next_view_id = 1;
+ZenithWaylandView::ZenithWaylandView(ZenithServer* server, wlr_xdg_surface* xdg_surface)
+	  : ZenithView(server, xdg_surface->surface),
+	    xdg_surface(xdg_surface) {
 
-ZenithView::ZenithView(ZenithServer* server, wlr_xdg_surface* xdg_surface)
-	  : server(server), xdg_surface(xdg_surface), id(next_view_id++) {
-
-	/* Listen to the various events it can emit */
 	map.notify = xdg_surface_map;
 	wl_signal_add(&xdg_surface->events.map, &map);
 
@@ -40,51 +37,8 @@ ZenithView::ZenithView(ZenithServer* server, wlr_xdg_surface* xdg_surface)
 	}
 }
 
-void ZenithView::focus() {
-	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		// Popups cannot get focus.
-		return;
-	}
-
-	wlr_seat* seat = server->seat;
-	wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
-
-	wlr_surface* prev_surface = seat->keyboard_state.focused_surface;
-
-	bool is_surface_already_focused = prev_surface == xdg_surface->surface;
-	if (is_surface_already_focused) {
-		return;
-	}
-
-	if (prev_surface != nullptr) {
-		/*
-		 * Deactivate the previously focused surface. This lets the client know
-		 * it no longer has focus and the client will repaint accordingly, e.g.
-		 * stop displaying a caret.
-		 */
-		wlr_xdg_surface* previous;
-		if (wlr_surface_is_xdg_surface(prev_surface)
-		    && (previous = wlr_xdg_surface_from_wlr_surface(prev_surface)) != nullptr) {
-			// FIXME: There is some weirdness going on which requires this seemingly redundant check.
-			// I think the surface might be already destroyed but in this case keyboard_state.focused_surface
-			// should be automatically set to null according to wlroots source code.
-			// It seems that it doesn't cause any more crashes but I don't think this is the right fix.
-			wlr_xdg_toplevel_set_activated(previous, false);
-		}
-	}
-	// Activate the new surface.
-	wlr_xdg_toplevel_set_activated(xdg_surface, true);
-	/*
-	 * Tell the seat to have the keyboard enter this surface. wlroots will keep
-	 * track of this and automatically send key events to the appropriate
-	 * clients without additional work on your part.
-	 */
-	wlr_seat_keyboard_notify_enter(seat, xdg_surface->surface,
-	                               keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
-}
-
 void xdg_surface_map(wl_listener* listener, void* data) {
-	ZenithView* view = wl_container_of(listener, view, map);
+	ZenithWaylandView* view = wl_container_of(listener, view, map);
 	ZenithServer* server = view->server;
 	view->mapped = true;
 	view->focus();
@@ -133,8 +87,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		}
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
 			wlr_xdg_popup* popup = view->xdg_surface->popup;
-			view->x = popup->geometry.x;
-			view->y = popup->geometry.y;
+			view->popup_geometry = popup->geometry;
 
 			wlr_xdg_surface* parent_xdg_surface = wlr_xdg_surface_from_wlr_surface(popup->parent);
 //			wlr_box parent_geometry = parent_xdg_surface->geometry;
@@ -165,7 +118,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 }
 
 void xdg_surface_unmap(wl_listener* listener, void* data) {
-	ZenithView* view = wl_container_of(listener, view, unmap);
+	ZenithWaylandView* view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
 
 	switch (view->xdg_surface->role) {
@@ -176,7 +129,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
 			view->server->flutter_engine_state->messenger.Send("window_unmapped", result->data(),
-			                                                           result->size());
+			                                                   result->size());
 			break;
 		}
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
@@ -189,7 +142,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
 			view->server->flutter_engine_state->messenger.Send("popup_unmapped", result->data(),
-			                                                           result->size());
+			                                                   result->size());
 			break;
 		}
 		case WLR_XDG_SURFACE_ROLE_NONE:
@@ -198,7 +151,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 }
 
 void xdg_surface_destroy(wl_listener* listener, void* data) {
-	ZenithView* view = wl_container_of(listener, view, destroy);
+	ZenithWaylandView* view = wl_container_of(listener, view, destroy);
 	ZenithServer* server = view->server;
 
 	wl_list_remove(&view->commit.link);
@@ -217,10 +170,12 @@ void surface_commit(wl_listener* listener, void* data) {
 	assert(it_id != server->view_id_by_wlr_surface.end());
 
 	auto* view = server->views_by_id.find(it_id->second)->second.get();
-	wlr_xdg_surface* xdg_surface = view->xdg_surface;
+	auto* wayland_view = dynamic_cast<ZenithWaylandView*>(view);
+
+	wlr_xdg_surface* xdg_surface = wayland_view->xdg_surface;
 
 	auto map = EncodableMap{
-		  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
+		  {EncodableValue("view_id"),        EncodableValue((int64_t) wayland_view->id)},
 		  {EncodableValue("surface_role"),   EncodableValue(xdg_surface->role)},
 		  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
 				{EncodableValue("x"),      EncodableValue(xdg_surface->geometry.x)},
@@ -230,24 +185,20 @@ void surface_commit(wl_listener* listener, void* data) {
 		  })}
 	};
 
-	wlr_box new_geometry = xdg_surface->geometry;
-	bool geometry_changed = false;
-	if (view->geometry.x != new_geometry.x
-	    or view->geometry.y != new_geometry.y
-	    or view->geometry.width != new_geometry.width
-	    or view->geometry.height != new_geometry.height) {
+	bool geometry_changed = not wlr_box_equal(xdg_surface->geometry, wayland_view->geometry);
 
-		geometry_changed = true;
-		view->geometry = new_geometry;
-		map.insert({EncodableValue("geometry_changed"), EncodableValue(true)});
+	map.insert({EncodableValue("geometry_changed"), EncodableValue(geometry_changed)});
+
+	if (geometry_changed) {
+		wlr_box& new_geometry = xdg_surface->geometry;
+		wayland_view->geometry = new_geometry;
+
 		map.insert({EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
-			  {EncodableValue("x"),      EncodableValue(xdg_surface->geometry.x)},
-			  {EncodableValue("y"),      EncodableValue(xdg_surface->geometry.y)},
-			  {EncodableValue("width"),  EncodableValue(xdg_surface->geometry.width)},
-			  {EncodableValue("height"), EncodableValue(xdg_surface->geometry.height)},
+			  {EncodableValue("x"),      EncodableValue(new_geometry.x)},
+			  {EncodableValue("y"),      EncodableValue(new_geometry.y)},
+			  {EncodableValue("width"),  EncodableValue(new_geometry.width)},
+			  {EncodableValue("height"), EncodableValue(new_geometry.height)},
 		})});
-	} else {
-		map.insert({EncodableValue("geometry_changed"), EncodableValue(false)});
 	}
 
 	std::shared_ptr<SurfaceFramebuffer> surface_framebuffer;
@@ -263,38 +214,41 @@ void surface_commit(wl_listener* listener, void* data) {
 		surface_framebuffer = it->second;
 	}
 
-	std::scoped_lock lock(surface_framebuffer->mutex);
+	bool surface_size_changed;
+	{
+		std::scoped_lock lock(surface_framebuffer->mutex);
 
-	bool surface_size_changed = false;
-	if ((size_t) surface->current.buffer_width != surface_framebuffer->pending_width
-	    or (size_t) surface->current.buffer_height != surface_framebuffer->pending_height) {
+		surface_size_changed =
+			  (size_t) surface->current.buffer_width != surface_framebuffer->pending_width or
+			  (size_t) surface->current.buffer_height != surface_framebuffer->pending_height;
 
-		surface_size_changed = true;
-		// The actual resizing is happening on a Flutter thread because resizing a texture is very slow, and I don't want
-		// to block the main thread causing input delay and other stuff.
-		surface_framebuffer->schedule_resize(surface->current.buffer_width, surface->current.buffer_height);
-		map.insert({EncodableValue("surface_size_changed"), EncodableValue(true)});
-		map.insert({EncodableValue("surface_width"), EncodableValue((int64_t) surface->current.buffer_width)});
-		map.insert({EncodableValue("surface_height"), EncodableValue((int64_t) surface->current.buffer_height)});
-	} else {
-		map.insert({EncodableValue("surface_size_changed"), EncodableValue(false)});
+		map.insert({EncodableValue("surface_size_changed"), EncodableValue(surface_size_changed)});
+
+		if (surface_size_changed) {
+			int& new_surface_width = surface->current.buffer_width;
+			int& new_surface_height = surface->current.buffer_height;
+			// The actual resizing is happening on a Flutter thread because resizing a texture is very slow, and I don't want
+			// to block the main thread causing input delay and other stuff.
+			surface_framebuffer->schedule_resize(new_surface_width, new_surface_height);
+
+			map.insert({EncodableValue("surface_width"), EncodableValue((int64_t) new_surface_width)});
+			map.insert({EncodableValue("surface_height"), EncodableValue((int64_t) new_surface_height)});
+		}
 	}
 
-	bool popup_position_changed = false;
-	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
-		if (xdg_surface->popup->geometry.x != view->x
-		    or xdg_surface->popup->geometry.y != view->y) {
-			view->x = xdg_surface->popup->geometry.x;
-			view->y = xdg_surface->popup->geometry.y;
+	bool is_popup = xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP;
+	bool popup_position_changed =
+		  is_popup and
+		  wlr_box_equal(xdg_surface->popup->geometry, wayland_view->popup_geometry);
 
-			std::cout << "position changed" << std::endl;
+	if (is_popup) {
+		map.insert({EncodableValue("popup_position_changed"), EncodableValue(popup_position_changed)});
 
-			popup_position_changed = true;
-			map.insert({EncodableValue("popup_position_changed"), EncodableValue(true)});
+		if (popup_position_changed) {
+			wayland_view->popup_geometry = xdg_surface->popup->geometry;
+
 			map.insert({EncodableValue("x"), EncodableValue(xdg_surface->popup->geometry.x)});
 			map.insert({EncodableValue("y"), EncodableValue(xdg_surface->popup->geometry.y)});
-		} else {
-			map.insert({EncodableValue("popup_position_changed"), EncodableValue(false)});
 		}
 	}
 
@@ -303,23 +257,23 @@ void surface_commit(wl_listener* listener, void* data) {
 
 		auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 		view->server->flutter_engine_state->messenger.Send("configure_surface", result->data(),
-		                                                           result->size());
+		                                                   result->size());
 	}
 }
 
 void xdg_toplevel_request_move(wl_listener* listener, void* data) {
-	ZenithView* view = wl_container_of(listener, view, request_move);
+	ZenithWaylandView* view = wl_container_of(listener, view, request_move);
 
 	auto value = EncodableValue(EncodableMap{
 		  {EncodableValue("view_id"), EncodableValue((int64_t) view->id)},
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	view->server->flutter_engine_state->messenger.Send("request_move", result->data(),
-	                                                           result->size());
+	                                                   result->size());
 }
 
 void xdg_toplevel_request_resize(wl_listener* listener, void* data) {
-	ZenithView* view = wl_container_of(listener, view, request_resize);
+	ZenithWaylandView* view = wl_container_of(listener, view, request_resize);
 	auto* event = static_cast<wlr_xdg_toplevel_resize_event*>(data);
 
 	auto value = EncodableValue(EncodableMap{
@@ -328,5 +282,75 @@ void xdg_toplevel_request_resize(wl_listener* listener, void* data) {
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	view->server->flutter_engine_state->messenger.Send("request_resize", result->data(),
-	                                                           result->size());
+	                                                   result->size());
+}
+
+void ZenithWaylandView::focus() {
+	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+		// Popups cannot get focus.
+		return;
+	}
+
+	wlr_seat* seat = server->seat;
+	wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
+
+	wlr_surface* prev_surface = seat->keyboard_state.focused_surface;
+
+	bool is_surface_already_focused = prev_surface == xdg_surface->surface;
+	if (is_surface_already_focused) {
+		return;
+	}
+
+	if (prev_surface != nullptr) {
+		/*
+		 * Deactivate the previously focused surface. This lets the client know
+		 * it no longer has focus and the client will repaint accordingly, e.g.
+		 * stop displaying a caret.
+		 */
+		wlr_xdg_surface* previous;
+		if (wlr_surface_is_xdg_surface(prev_surface)
+		    && (previous = wlr_xdg_surface_from_wlr_surface(prev_surface)) != nullptr) {
+			// FIXME: There is some weirdness going on which requires this seemingly redundant check.
+			// I think the surface might be already destroyed but in this case keyboard_state.focused_surface
+			// should be automatically set to null according to wlroots source code.
+			// It seems that it doesn't cause any more crashes but I don't think this is the right fix.
+			wlr_xdg_toplevel_set_activated(previous, false);
+		}
+	}
+	// Activate the new surface.
+	wlr_xdg_toplevel_set_activated(xdg_surface, true);
+	/*
+	 * Tell the seat to have the keyboard enter this surface. wlroots will keep
+	 * track of this and automatically send key events to the appropriate
+	 * clients without additional work on your part.
+	 */
+	wlr_seat_keyboard_notify_enter(seat, xdg_surface->surface,
+	                               keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+}
+
+void ZenithWaylandView::close() {
+	wlr_xdg_toplevel_send_close(xdg_surface);
+}
+
+void ZenithWaylandView::pointer_hover(double x, double y) {
+	double sub_x, sub_y;
+	wlr_surface* leaf_surface = wlr_xdg_surface_surface_at(xdg_surface, x, y, &sub_x, &sub_y);
+	if (leaf_surface == nullptr) {
+		return;
+	}
+
+	if (!wlr_surface_is_xdg_surface(leaf_surface)) {
+		// Give pointer focus to an inner subsurface, if one exists.
+		// This fixes GTK popovers.
+		wlr_seat_pointer_notify_enter(server->seat, leaf_surface, sub_x, sub_y);
+		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, sub_x, sub_y);
+	} else {
+		// This has to stay, otherwise down -> move -> up for selecting a popup entry doesn't work.
+		wlr_seat_pointer_notify_enter(server->seat, xdg_surface->surface, x, y);
+		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
+	}
+}
+
+void ZenithWaylandView::resize(uint32_t width, uint32_t height) {
+	wlr_xdg_toplevel_set_size(xdg_surface, (size_t) width, (size_t) height);
 }

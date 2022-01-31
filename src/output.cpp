@@ -2,6 +2,7 @@
 #include "output.hpp"
 #include "server.hpp"
 #include "flutter_callbacks.hpp"
+#include "wayland_view.hpp"
 
 extern "C" {
 #define static
@@ -9,10 +10,11 @@ extern "C" {
 #undef static
 }
 
-static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo);
+// TODO: Handle XWayland.
+static void render_view_to_framebuffer(ZenithWaylandView* view, GLuint view_fbo);
 
 struct render_data {
-	ZenithView* view;
+	ZenithWaylandView* view;
 	GLuint view_fbo;
 };
 
@@ -36,7 +38,9 @@ void output_frame(wl_listener* listener, void* data) {
 
 	for (auto& pair: server->views_by_id) {
 		size_t view_id = pair.first;
-		std::unique_ptr<ZenithView>& view = pair.second;
+		std::unique_ptr<ZenithView>& view_ = pair.second;
+		auto* view = dynamic_cast<ZenithWaylandView*>(view_.get());
+
 
 		if (!view->mapped || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
 			// An unmapped view should not be rendered.
@@ -57,7 +61,7 @@ void output_frame(wl_listener* listener, void* data) {
 		std::scoped_lock lock(view_framebuffer->mutex);
 
 		GLuint view_fbo = view_framebuffer->framebuffer;
-		render_view_to_framebuffer(view.get(), view_fbo);
+		render_view_to_framebuffer(view, view_fbo);
 
 		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view_id);
 	}
@@ -134,7 +138,7 @@ void mode_changed_event(wl_listener* listener, void* data) {
 	output->server->flutter_engine_state->send_window_metrics(window_metrics);
 }
 
-static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo) {
+static void render_view_to_framebuffer(ZenithWaylandView* view, GLuint view_fbo) {
 	glBindFramebuffer(GL_FRAMEBUFFER, view_fbo);
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);

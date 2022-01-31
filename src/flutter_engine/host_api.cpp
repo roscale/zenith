@@ -46,23 +46,8 @@ void pointer_hover(ZenithServer* server,
 	}
 	ZenithView* view = view_it->second.get();
 
-	double sub_x, sub_y;
-	wlr_surface* leaf_surface = wlr_xdg_surface_surface_at(view->xdg_surface, x, y, &sub_x, &sub_y);
-	if (leaf_surface == nullptr) {
-		result->Success();
-		return;
-	}
+	view->pointer_hover(x, y);
 
-	if (!wlr_surface_is_xdg_surface(leaf_surface)) {
-		// Give pointer focus to an inner subsurface, if one exists.
-		// This fixes GTK popovers.
-		wlr_seat_pointer_notify_enter(server->seat, leaf_surface, sub_x, sub_y);
-		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, sub_x, sub_y);
-	} else {
-		// This has to stay, otherwise down -> move -> up for selecting a popup entry doesn't work.
-		wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
-		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
-	}
 	result->Success();
 }
 
@@ -90,7 +75,7 @@ void close_window(ZenithServer* server,
 	}
 	ZenithView* view = view_it->second.get();
 
-	wlr_xdg_toplevel_send_close(view->xdg_surface);
+	view->close();
 
 	result->Success();
 }
@@ -112,7 +97,7 @@ void resize_window(ZenithServer* server,
 	}
 	ZenithView* view = view_it->second.get();
 
-	wlr_xdg_toplevel_set_size(view->xdg_surface, (size_t) width, (size_t) height);
+	view->resize((uint32_t) width, (uint32_t) height);
 
 	result->Success();
 }

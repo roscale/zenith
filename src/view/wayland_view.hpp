@@ -1,27 +1,23 @@
 #pragma once
 
-#include <cstddef>
+#include "view.hpp"
 
-extern "C" {
-#include <wlr/types/wlr_xdg_shell.h>
-}
+struct ZenithWaylandView : public ZenithView {
+	ZenithWaylandView(ZenithServer* server, wlr_xdg_surface* xdg_surface);
 
-struct ZenithServer;
+	void focus() override;
 
-struct ZenithView {
-	ZenithView(ZenithServer* server, wlr_xdg_surface* xdg_surface);
+	void close() override;
 
-	/*
-	 * Activate the view and make the keyboard enter the surface of this view.
-	 */
-	void focus();
+	void pointer_hover(double x, double y) override;
 
-	ZenithServer* server;
+	void resize(uint32_t width, uint32_t height) override;
+
 	wlr_xdg_surface* xdg_surface;
-	size_t id;
-	bool mapped;
-	int x, y;
+
 	wlr_box geometry{};
+	wlr_box popup_geometry{};
+
 	/* callbacks */
 	wl_listener map{};
 	wl_listener unmap{};

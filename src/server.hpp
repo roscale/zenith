@@ -9,11 +9,14 @@
 #include "output.hpp"
 #include "keyboard.hpp"
 #include "pointer/pointer.hpp"
-#include "view.hpp"
+#include "view/view.hpp"
 
 extern "C" {
 #define static
 #include <wlr/backend.h>
+#define class class_variable
+#include <wlr/xwayland.h>
+#undef class
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_cursor.h>
@@ -36,13 +39,16 @@ public:
 	wl_display* display;
 	wlr_backend* backend;
 	wlr_renderer* renderer;
+	wlr_compositor* compositor;
 	wlr_xdg_shell* xdg_shell;
+	wlr_xwayland* xwayland;
 
 	wlr_output_layout* output_layout;
 	std::unique_ptr<ZenithOutput> output;
 
 	wl_listener new_output{};
 	wl_listener new_xdg_surface{};
+	wl_listener new_xwayland_surface{};
 
 	std::unordered_map<wlr_surface*, size_t> view_id_by_wlr_surface{};
 	std::unordered_map<size_t, std::unique_ptr<ZenithView>> views_by_id{};
@@ -69,6 +75,8 @@ void server_new_output(wl_listener* listener, void* data);
  * client, either a toplevel (application window) or popup.
  */
 void server_new_xdg_surface(wl_listener* listener, void* data);
+
+void server_new_xwayland_surface(wl_listener* listener, void* data);
 
 void surface_commit(wl_listener* listener, void* data);
 
