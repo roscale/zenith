@@ -5,14 +5,6 @@
 struct ZenithWaylandView : public ZenithView {
 	ZenithWaylandView(ZenithServer* server, wlr_xdg_surface* xdg_surface);
 
-	void focus() override;
-
-	void close() override;
-
-	void pointer_hover(double x, double y) override;
-
-	void resize(uint32_t width, uint32_t height) override;
-
 	wlr_xdg_surface* xdg_surface;
 
 	wlr_box geometry{};
@@ -25,6 +17,16 @@ struct ZenithWaylandView : public ZenithView {
 	wl_listener commit{};
 	wl_listener request_move{};
 	wl_listener request_resize{};
+
+	void focus() override;
+
+	void close() override;
+
+	void pointer_hover(double x, double y) override;
+
+	void resize(uint32_t width, uint32_t height) override;
+
+	void render_to_fbo(GLuint fbo) override;
 };
 
 /*

@@ -14,13 +14,11 @@
 extern "C" {
 #define static
 #include <wlr/backend.h>
-#define class class_variable
-#include <wlr/xwayland.h>
-#undef class
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include "my_xwayland.h"
 #undef static
 }
 

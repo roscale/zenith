@@ -1,6 +1,7 @@
 #include "server.hpp"
 #include "debug.hpp"
 #include "wayland_view.hpp"
+#include "x11_view.hpp"
 #include <unistd.h>
 
 extern "C" {
@@ -83,6 +84,8 @@ ZenithServer::ZenithServer() {
 		exit(8);
 	}
 
+	wlr_xwayland_set_seat(xwayland, seat);
+
 	// Called at the start for each available output, but also when the user plugs in a monitor.
 	new_output.notify = server_new_output;
 	wl_signal_add(&backend->events.new_output, &new_output);
@@ -140,7 +143,10 @@ void ZenithServer::run(char* startup_command) {
 	wl_display_run(display);
 
 	wl_display_destroy_clients(display);
+	wlr_xwayland_destroy(xwayland);
 	wl_display_destroy(display);
+
+	wlr_output_layout_destroy(output_layout);
 }
 
 size_t i = 1;
@@ -204,12 +210,14 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 }
 
 void server_new_xwayland_surface(wl_listener* listener, void* data) {
-	auto* x_surface = static_cast<wlr_xwayland_surface*>(data);
+	ZenithServer* server = wl_container_of(listener, server, new_xwayland_surface);
+	auto* x11_surface = static_cast<wlr_xwayland_surface*>(data);
 
-	//	wlr_xwayland_surface_from_wlr_surface()
-	if (x_surface->override_redirect) {
-		return;
-	}
+	auto view = std::make_unique<ZenithX11View>(server, x11_surface);
+
+	/* Add it to the list of views. */
+	server->view_id_by_wlr_surface.insert(std::make_pair(view->x11_surface->surface, view->id));
+	server->views_by_id.insert(std::make_pair(view->id, std::move(view)));
 }
 
 void server_new_input(wl_listener* listener, void* data) {

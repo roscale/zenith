@@ -16,7 +16,6 @@ using namespace flutter;
 
 static size_t next_view_id = 1;
 
-ZenithView::ZenithView(ZenithServer* server, wlr_surface* surface)
-	  : server(server), surface(surface), id(next_view_id++) {
+ZenithView::ZenithView(ZenithServer* server)
+	  : server(server), id(next_view_id++) {
 }
-

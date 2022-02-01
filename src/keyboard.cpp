@@ -96,5 +96,10 @@ bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, const
 		return true;
 	}
 
+	if ((modifiers & WLR_MODIFIER_ALT) and is_key_pressed(XKB_KEY_Escape)) {
+		wl_display_terminate(keyboard->server->display);
+		return true;
+	}
+
 	return false;
 }

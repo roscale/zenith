@@ -13,7 +13,7 @@ extern "C" {
 using namespace flutter;
 
 ZenithWaylandView::ZenithWaylandView(ZenithServer* server, wlr_xdg_surface* xdg_surface)
-	  : ZenithView(server, xdg_surface->surface),
+	  : ZenithView(server),
 	    xdg_surface(xdg_surface) {
 
 	map.notify = xdg_surface_map;
@@ -177,12 +177,6 @@ void surface_commit(wl_listener* listener, void* data) {
 	auto map = EncodableMap{
 		  {EncodableValue("view_id"),        EncodableValue((int64_t) wayland_view->id)},
 		  {EncodableValue("surface_role"),   EncodableValue(xdg_surface->role)},
-		  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
-				{EncodableValue("x"),      EncodableValue(xdg_surface->geometry.x)},
-				{EncodableValue("y"),      EncodableValue(xdg_surface->geometry.y)},
-				{EncodableValue("width"),  EncodableValue(xdg_surface->geometry.width)},
-				{EncodableValue("height"), EncodableValue(xdg_surface->geometry.height)},
-		  })}
 	};
 
 	bool geometry_changed = not wlr_box_equal(xdg_surface->geometry, wayland_view->geometry);
@@ -353,4 +347,70 @@ void ZenithWaylandView::pointer_hover(double x, double y) {
 
 void ZenithWaylandView::resize(uint32_t width, uint32_t height) {
 	wlr_xdg_toplevel_set_size(xdg_surface, (size_t) width, (size_t) height);
+}
+
+void ZenithWaylandView::render_to_fbo(GLuint fbo) {
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	render_data<ZenithWaylandView> rdata = {
+		  .view = this,
+		  .view_fbo = fbo,
+	};
+
+	try {
+		// Render the subtree of subsurfaces starting from a toplevel or popup.
+		wlr_xdg_surface_for_each_surface(
+			  xdg_surface,
+			  [](struct wlr_surface* surface, int sx, int sy, void* data) {
+				  auto* rdata = static_cast<render_data<ZenithWaylandView>*>(data);
+				  auto* view = rdata->view;
+
+				  if (surface != view->xdg_surface->surface && wlr_surface_is_xdg_surface(surface)) {
+					  // Don't render child popups. They will be rendered separately on their own framebuffer,
+					  // so skip this subtree of surfaces.
+					  // There's no easy way to exit this recursive iterator, but we can still do this by throwing a
+					  // dummy exception.
+					  throw std::exception();
+				  }
+
+				  wlr_texture* texture = wlr_surface_get_texture(surface);
+				  if (texture == nullptr) {
+					  // I don't remember if it's possible to have a mapped surface without texture, but better to be
+					  // safe than sorry. Just skip it.
+					  return;
+				  }
+
+				  wlr_gles2_texture_attribs attribs{};
+				  wlr_gles2_texture_get_attribs(texture, &attribs);
+
+				  if (wlr_surface_is_xdg_surface(surface)) {
+					  // xdg_surfaces each have their own framebuffer, so they are always drawn at (0, 0).
+					  RenderToTextureShader::instance()->render(attribs.tex, 0, 0,
+					                                            surface->current.buffer_width,
+					                                            surface->current.buffer_height,
+					                                            rdata->view_fbo);
+				  } else {
+					  // This is true when the surface is a wayland subsurface and not an xdg_surface.
+					  // I decided to render subsurfaces on the framebuffer of the nearest xdg_surface parent.
+					  // One downside to this approach is that popups created using a subsurface instead of an xdg_popup
+					  // are clipped to the window and cannot be rendered outside the window bounds.
+					  // I don't really care because Gnome Shell takes the same approach, and it simplifies things a lot.
+					  // Interesting discussion: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/issues/24
+					  RenderToTextureShader::instance()->render(attribs.tex, sx, sy,
+					                                            surface->current.buffer_width,
+					                                            surface->current.buffer_height,
+					                                            rdata->view_fbo);
+				  }
+
+				  // Tell the client we are done rendering this surface.
+				  timespec now{};
+				  clock_gettime(CLOCK_MONOTONIC, &now);
+				  wlr_surface_send_frame_done(surface, &now);
+			  },
+			  &rdata
+		);
+	} catch (std::exception& unused) {
+	}
 }
