@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:zenith/state/desktop_state.dart';
+import 'package:zenith/system_ui/top.dart';
 import 'package:zenith/widgets/desktop.dart';
 
 void main() {
@@ -23,7 +25,9 @@ class Zenith extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const Desktop(),
+      home: const Scaffold(
+        body: Desktop(),
+      ),
     );
   }
 }

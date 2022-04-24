@@ -33,14 +33,16 @@ bool flutter_present(void* userdata) {
 	std::scoped_lock lock(state->present_fbo->mutex);
 	GLScopedLock gl_lock(state->gl_mutex);
 
-	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
+//	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
 
 	return true;
 }
 
 uint32_t flutter_fbo_callback(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
-	return state->fix_y_flip.offscreen_framebuffer;
+	std::cout << "fbo" << std::endl;
+	return state->present_fbo->framebuffer;
+//	return state->fix_y_flip.offscreen_framebuffer;
 }
 
 void flutter_vsync_callback(void* userdata, intptr_t baton) {

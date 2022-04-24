@@ -55,6 +55,9 @@ public:
 
 	wl_listener new_input{};
 	wl_listener request_cursor{};
+	wl_listener touch_down{};
+	wl_listener touch_motion{};
+	wl_listener touch_up{};
 
 	std::unique_ptr<FlutterEngineState> flutter_engine_state{};
 };
@@ -81,3 +84,7 @@ void server_new_input(wl_listener* listener, void* data);
  * This event is raised by the seat when a client provides a cursor image.
  */
 void server_seat_request_cursor(wl_listener* listener, void* data);
+
+void touch_down_handle(wl_listener* listener, void* data);
+void touch_motion_handle(wl_listener* listener, void* data);
+void touch_up_handle(wl_listener* listener, void* data);

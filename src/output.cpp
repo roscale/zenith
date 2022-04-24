@@ -99,7 +99,7 @@ void output_frame(wl_listener* listener, void* data) {
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 		glClear(GL_COLOR_BUFFER_BIT);
 		RenderToTextureShader::instance()->render(flutter_engine_state->present_fbo->texture, 0, 0, width,
-		                                          height, output_fbo);
+		                                          height, output_fbo, true);
 	}
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be

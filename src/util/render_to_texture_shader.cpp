@@ -20,12 +20,21 @@ static const char* fragmentShaderSource = "precision mediump float;\n"
 
 static const float vertices[] = {
 	  // pos_x, pos_y, pos_z, tex_x, tex_y
-	  // Last column has the y-flip fix.
 	  1.0f, 1.0f, 0.0f, 1.0f, 1.0f,   // top right
 	  1.0f, -1.0f, 0.0f, 1.0f, 0.0f,   // bottom right
 	  -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,   // bottom left
 	  -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,    // top left
 };
+
+static const float y_flipped_vertices[] = {
+	  // pos_x, pos_y, pos_z, tex_x, tex_y
+	  // Last column has the y-flip fix.
+	  1.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // top right
+	  1.0f, -1.0f, 0.0f, 1.0f, 1.0f,   // bottom right
+	  -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,   // bottom left
+	  -1.0f, 1.0f, 0.0f, 0.0f, 0.0f,    // top left
+};
+
 static const unsigned int indices[] = {
 	  0, 1, 3,
 	  1, 2, 3,
@@ -88,10 +97,14 @@ RenderToTextureShader::RenderToTextureShader() {
 
 	// Upload the quad on the GPU.
 	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &y_flipped_vbo);
 	glGenBuffers(1, &ebo);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, y_flipped_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(y_flipped_vertices), y_flipped_vertices, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -101,7 +114,8 @@ RenderToTextureShader::RenderToTextureShader() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_binding);
 }
 
-void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, size_t height, GLuint framebuffer) {
+void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, size_t height, GLuint framebuffer,
+                                   bool flip_y_axis) {
 	// Backup context state.
 	GLint viewport[4];
 	glGetIntegerv(GL_VIEWPORT, viewport);
@@ -120,7 +134,7 @@ void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, s
 
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, flip_y_axis ? y_flipped_vbo : vbo);
 
 	// position
 	glEnableVertexAttribArray(0);

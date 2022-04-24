@@ -9,6 +9,7 @@ extern "C" {
 #include <wlr/backend/libinput.h>
 #include <wlr/util/log.h>
 #include <wlr/render/gles2.h>
+#include <wlr/interfaces/wlr_touch.h>
 #undef static
 }
 
@@ -90,6 +91,10 @@ ZenithServer::ZenithServer() {
 	request_cursor.notify = server_seat_request_cursor;
 	wl_signal_add(&seat->events.request_set_cursor,
 	              &request_cursor);
+
+	touch_down.notify = touch_down_handle;
+	touch_motion.notify = touch_motion_handle;
+	touch_up.notify = touch_up_handle;
 }
 
 void ZenithServer::run(char* startup_command) {
@@ -223,6 +228,12 @@ void server_new_input(wl_listener* listener, void* data) {
 			wlr_cursor_attach_input_device(server->pointer->cursor, wlr_device);
 			break;
 		}
+		case WLR_INPUT_DEVICE_TOUCH: {
+			wl_signal_add(&wlr_device->touch->events.down, &server->touch_down);
+			wl_signal_add(&wlr_device->touch->events.motion, &server->touch_motion);
+			wl_signal_add(&wlr_device->touch->events.up, &server->touch_up);
+			break;
+		}
 		default:
 			break;
 	}
@@ -250,4 +261,94 @@ void server_seat_request_cursor(wl_listener* listener, void* data) {
 		 * cursor moves between outputs. */
 		wlr_cursor_set_surface(server->pointer->cursor, event->surface, event->hotspot_x, event->hotspot_y);
 	}
+}
+
+double x;
+double y;
+bool added = false;
+
+void touch_down_handle(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, touch_down);
+	auto* event = static_cast<wlr_event_touch_down*>(data);
+
+	{
+		if (!added) {
+			std::cout << "ADDED" << std::endl;
+			added = true;
+			FlutterPointerEvent e = {};
+			e.struct_size = sizeof(FlutterPointerEvent);
+			e.phase = kAdd;
+			e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
+			std::cout << server->output->wlr_output << std::endl;
+			// Map from [0, 1] to [screen_width, screen_height].
+			e.x = event->x * server->output->wlr_output->width;
+			e.y = event->y * server->output->wlr_output->height;
+			x = event->x;
+			y = event->y;
+			e.device_kind = kFlutterPointerDeviceKindTouch;
+			e.signal_kind = kFlutterPointerSignalKindNone;
+			e.device = event->device->product;
+
+			std::cout << server->flutter_engine_state->engine << std::endl;
+
+			FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
+		}
+	}
+
+
+	FlutterPointerEvent e = {};
+	e.struct_size = sizeof(FlutterPointerEvent);
+	e.phase = kDown;
+	e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
+	std::cout << server->output->wlr_output << std::endl;
+	// Map from [0, 1] to [screen_width, screen_height].
+	e.x = event->x * server->output->wlr_output->width;
+	e.y = event->y * server->output->wlr_output->height;
+	x = event->x;
+	y = event->y;
+	e.device_kind = kFlutterPointerDeviceKindTouch;
+	e.signal_kind = kFlutterPointerSignalKindNone;
+	e.device = event->device->product;
+
+	std::cout << server->flutter_engine_state->engine << std::endl;
+
+	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
+}
+
+void touch_motion_handle(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, touch_motion);
+	auto* event = static_cast<wlr_event_touch_motion*>(data);
+
+	FlutterPointerEvent e = {};
+	e.struct_size = sizeof(FlutterPointerEvent);
+	e.phase = kMove;
+	e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
+	// Map from [0, 1] to [screen_width, screen_height].
+	e.x = event->x * server->output->wlr_output->width;
+	e.y = event->y * server->output->wlr_output->height;
+	x = event->x;
+	y = event->y;
+	e.device_kind = kFlutterPointerDeviceKindTouch;
+	e.signal_kind = kFlutterPointerSignalKindNone;
+	e.device = event->device->product;
+
+	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
+}
+
+void touch_up_handle(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, touch_up);
+	auto* event = static_cast<wlr_event_touch_up*>(data);
+
+	FlutterPointerEvent e = {};
+	e.struct_size = sizeof(FlutterPointerEvent);
+	e.phase = kUp;
+	e.x = x * server->output->wlr_output->width;
+	e.y = y * server->output->wlr_output->height;
+	e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
+	// Map from [0, 1] to [screen_width, screen_height].
+	e.device_kind = kFlutterPointerDeviceKindTouch;
+	e.signal_kind = kFlutterPointerSignalKindNone;
+	e.device = event->device->product;
+
+	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
 }

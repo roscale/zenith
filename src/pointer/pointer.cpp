@@ -68,7 +68,7 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	FlutterPointerEvent e = {};
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover;
-	e.timestamp = FlutterEngineGetCurrentTime();
+	e.timestamp = FlutterEngineGetCurrentTime() / 1000;
 	e.x = pointer->cursor->x;
 	e.y = pointer->cursor->y;
 	e.device_kind = kFlutterPointerDeviceKindMouse;
@@ -89,7 +89,7 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	FlutterPointerEvent e = {};
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover;
-	e.timestamp = FlutterEngineGetCurrentTime();
+	e.timestamp = FlutterEngineGetCurrentTime() / 1000;
 	// Map from [0, 1] to [screen_width, screen_height].
 	e.x = event->x * server->output->wlr_output->width;
 	e.y = event->y * server->output->wlr_output->height;
@@ -113,7 +113,7 @@ void server_cursor_button(wl_listener* listener, void* data) {
 		FlutterPointerEvent e = {};
 		e.struct_size = sizeof(FlutterPointerEvent);
 		e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kUp;
-		e.timestamp = FlutterEngineGetCurrentTime();
+		e.timestamp = FlutterEngineGetCurrentTime() / 1000;
 		e.x = pointer->cursor->x;
 		e.y = pointer->cursor->y;
 		e.device_kind = kFlutterPointerDeviceKindMouse;
@@ -127,7 +127,7 @@ void server_cursor_button(wl_listener* listener, void* data) {
 		FlutterPointerEvent e = {};
 		e.struct_size = sizeof(FlutterPointerEvent);
 		e.phase = are_any_buttons_pressed ? kMove : kDown;
-		e.timestamp = FlutterEngineGetCurrentTime();
+		e.timestamp = FlutterEngineGetCurrentTime() / 1000;
 		e.x = pointer->cursor->x;
 		e.y = pointer->cursor->y;
 		e.device_kind = kFlutterPointerDeviceKindMouse;
@@ -154,7 +154,7 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 	FlutterPointerEvent e = {};
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = are_any_buttons_pressed ? kMove : kDown;
-	e.timestamp = FlutterEngineGetCurrentTime();
+	e.timestamp = FlutterEngineGetCurrentTime() / 1000;
 	e.x = pointer->cursor->x;
 	e.y = pointer->cursor->y;
 	e.device_kind = kFlutterPointerDeviceKindMouse;

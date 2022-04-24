@@ -81,10 +81,10 @@ class _PointerListenerState extends State<_PointerListener> {
               context.read<WindowState>().accumulatedPointerDrag += event.delta;
             }
             if (isMoving) {
-              handleMove(context, event);
+              handleMove(context, event.delta);
             }
             if (isResizing) {
-              handleResize(context, event);
+              handleResize(context, event.delta);
             }
           },
           child: widget.child,
@@ -93,29 +93,29 @@ class _PointerListenerState extends State<_PointerListener> {
     );
   }
 
-  void handleMove(BuildContext context, PointerMoveEvent event) {
+  void handleMove(BuildContext context, Offset delta) {
     var windowState = context.read<WindowState>();
-    windowState.position += event.delta;
+    windowState.position += delta;
   }
 
-  void handleResize(BuildContext context, PointerMoveEvent event) {
+  void handleResize(BuildContext context, Offset delta) {
     var windowState = context.read<WindowState>();
     int edges = windowState.resizingEdges;
 
     double widthIncrement = 0;
     if (edges & Edges.right.id != 0) {
-      widthIncrement = event.delta.dx;
+      widthIncrement = delta.dx;
     }
     if (edges & Edges.left.id != 0) {
-      widthIncrement = -event.delta.dx;
+      widthIncrement = -delta.dx;
     }
 
     double heightIncrement = 0;
     if (edges & Edges.bottom.id != 0) {
-      heightIncrement = event.delta.dy;
+      heightIncrement = delta.dy;
     }
     if (edges & Edges.top.id != 0) {
-      heightIncrement = -event.delta.dy;
+      heightIncrement = -delta.dy;
     }
 
     windowState.wantedVisibleBounds = Rect.fromLTWH(
