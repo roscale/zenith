@@ -40,7 +40,7 @@ bool flutter_present(void* userdata) {
 
 uint32_t flutter_fbo_callback(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
-	std::cout << "fbo" << std::endl;
+//	std::cout << "fbo" << std::endl;
 	return state->present_fbo->framebuffer;
 //	return state->fix_y_flip.offscreen_framebuffer;
 }

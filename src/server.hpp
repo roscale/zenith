@@ -58,6 +58,7 @@ public:
 	wl_listener touch_down{};
 	wl_listener touch_motion{};
 	wl_listener touch_up{};
+	wl_listener touch_cancel{};
 
 	std::unique_ptr<FlutterEngineState> flutter_engine_state{};
 };
@@ -88,3 +89,4 @@ void server_seat_request_cursor(wl_listener* listener, void* data);
 void touch_down_handle(wl_listener* listener, void* data);
 void touch_motion_handle(wl_listener* listener, void* data);
 void touch_up_handle(wl_listener* listener, void* data);
+void touch_cancel_handle(wl_listener* listener, void* data);
