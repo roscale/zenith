@@ -196,6 +196,11 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 	/* Add it to the list of views. */
 	server->view_id_by_wlr_surface.insert(std::make_pair(view->xdg_surface->surface, view->id));
 	server->views_by_id.insert(std::make_pair(view->id, std::move(view)));
+
+	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+		wlr_xdg_toplevel_set_maximized(xdg_surface, true);
+		wlr_xdg_toplevel_set_size(xdg_surface, server->output->wlr_output->width, server->output->wlr_output->height);
+	}
 }
 
 void server_new_input(wl_listener* listener, void* data) {

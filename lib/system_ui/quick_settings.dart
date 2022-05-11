@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -10,7 +11,11 @@ class QuickSettings extends StatefulWidget {
 }
 
 class _QuickSettingsState extends State<QuickSettings> {
-  var brightness = 0.4;
+  final maxBrightnessFile = File("/sys/class/backlight/intel_backlight/max_brightness");
+  final brightnessFile = File("/sys/class/backlight/intel_backlight/brightness");
+
+  late int maxBrightness = int.parse(maxBrightnessFile.readAsStringSync());
+  late double brightnessFraction = double.parse(brightnessFile.readAsStringSync()) / maxBrightness;
 
   @override
   Widget build(BuildContext context) {
@@ -34,51 +39,52 @@ class _QuickSettingsState extends State<QuickSettings> {
                     children: [
                       IconButton(
                         onPressed: () {},
-                        icon: Icon(Icons.wifi, size: 30),
+                        icon: const Icon(Icons.wifi, size: 30),
                         padding: EdgeInsets.zero,
                       ),
                       IconButton(
                         onPressed: () {},
-                        icon: Icon(Icons.import_export, size: 30),
+                        icon: const Icon(Icons.import_export, size: 30),
                         padding: EdgeInsets.zero,
                       ),
                       IconButton(
                         onPressed: () {},
-                        icon: Icon(Icons.bluetooth, size: 30),
+                        icon: const Icon(Icons.bluetooth, size: 30),
                         padding: EdgeInsets.zero,
                       ),
                       IconButton(
                         onPressed: () {},
-                        icon: Icon(Icons.screen_lock_rotation, size: 30),
+                        icon: const Icon(Icons.screen_lock_rotation, size: 30),
                         padding: EdgeInsets.zero,
                       ),
                       IconButton(
                         onPressed: () {},
-                        icon: Icon(Icons.battery_full, size: 30),
+                        icon: const Icon(Icons.battery_full, size: 30),
                         padding: EdgeInsets.zero,
                       ),
                       IconButton(
                         onPressed: () {},
-                        icon: Icon(Icons.airplanemode_active, size: 30),
+                        icon: const Icon(Icons.airplanemode_active, size: 30),
                         padding: EdgeInsets.zero,
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
-                      Icon(Icons.brightness_6),
+                      const Icon(Icons.brightness_6),
                       Expanded(
                         child: Slider(
-                          value: brightness,
+                          value: brightnessFraction,
                           onChanged: (value) {
                             setState(() {
-                              brightness = value;
+                              brightnessFraction = value;
+                              brightnessFile.writeAsString("${(brightnessFraction * maxBrightness).floor()}");
                             });
                           },
                         ),
                       ),
-                      Icon(Icons.brightness_7),
+                      const Icon(Icons.brightness_7),
                     ],
                   ),
                 ],

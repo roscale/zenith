@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:zenith/enums.dart';
-import 'package:zenith/util/util.dart';
-import 'package:zenith/widgets/popup.dart';
-import 'package:zenith/state/popup_state.dart';
-import 'package:zenith/widgets/window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:zenith/enums.dart';
+import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/state/window_state.dart';
+import 'package:zenith/util/util.dart';
+import 'package:zenith/widgets/popup.dart';
+import 'package:zenith/widgets/window.dart';
 
 class DesktopState with ChangeNotifier {
   List<Window> windows = [];
@@ -60,7 +60,14 @@ class DesktopState with ChangeNotifier {
       width: visibleBounds.width,
       height: visibleBounds.height,
     );
-    initialWindowPosition = initialWindowPosition.clampTo(window.physicalGeometry);
+    initialWindowPosition = initialWindowPosition.clampTo(
+      Rect.fromLTRB(
+        window.physicalGeometry.left,
+        window.physicalGeometry.top + 40,
+        window.physicalGeometry.right,
+        window.physicalGeometry.bottom,
+      ),
+    );
 
     windows.add(
       Window(WindowState(
