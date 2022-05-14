@@ -13,7 +13,7 @@ class WindowState with ChangeNotifier {
         _position = position,
         _surfaceSize = surfaceSize,
         _visibleBounds = visibleBounds {
-    WidgetsBinding.instance?.addPostFrameCallback((_timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((_timeStamp) {
       // We cannot call this function directly because the window will not animate otherwise.
       // It must be called after the frame the widget is constructed.
       _animateOpening();

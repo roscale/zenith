@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zenith/state/desktop_state.dart';
-import 'package:zenith/system_ui/bottom.dart';
+import 'package:zenith/system_ui/task_switcher.dart';
 import 'package:zenith/system_ui/top.dart';
+
+final taskSwitcherKey = GlobalKey<TaskSwitcherState>();
 
 class Desktop extends StatelessWidget {
   const Desktop({Key? key}) : super(key: key);
@@ -24,12 +26,19 @@ class Desktop extends StatelessWidget {
               children: [
                 Listener(
                   onPointerHover: pointerExitSurfaces,
-                  child: Image.asset("assets/images/background.jpg", fit: BoxFit.cover, key: key),
+                  child: Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
                 ),
-                ...desktopState.windows,
+                Padding(
+                  padding: const EdgeInsets.only(top: 40.0),
+                  child: TaskSwitcher(
+                    key: taskSwitcherKey,
+                    spacing: 20,
+                  ),
+                ),
+                // ...desktopState.windows,
                 ...desktopState.popups,
                 const Top(),
-                const Bottom(),
+                // const Bottom(),
               ],
             ),
           );

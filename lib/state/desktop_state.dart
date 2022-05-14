@@ -7,6 +7,7 @@ import 'package:zenith/enums.dart';
 import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:zenith/util/util.dart';
+import 'package:zenith/widgets/desktop.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/window.dart';
 
@@ -69,15 +70,15 @@ class DesktopState with ChangeNotifier {
       ),
     );
 
-    windows.add(
-      Window(WindowState(
-        viewId: viewId,
-        title: "Window",
-        position: initialWindowPosition.topLeft,
-        surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
-        visibleBounds: visibleBounds,
-      )),
-    );
+    var clientWindow = Window(WindowState(
+      viewId: viewId,
+      title: "Window",
+      position: initialWindowPosition.topLeft,
+      surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
+      visibleBounds: visibleBounds,
+    ));
+    windows.add(clientWindow);
+    taskSwitcherKey.currentState!.spawnTask(clientWindow);
     notifyListeners();
   }
 
@@ -92,8 +93,9 @@ class DesktopState with ChangeNotifier {
       platform.invokeMethod('activate_window', penultimate.state.viewId);
     }
 
-    await window.state.animateClosing();
+    // await window.state.animateClosing();
     windows.remove(window);
+    await taskSwitcherKey.currentState!.stopTask(window);
     platform.invokeMethod('closing_animation_finished', window.state.viewId);
     notifyListeners();
   }

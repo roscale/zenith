@@ -200,7 +200,7 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
 		wlr_xdg_toplevel_set_maximized(xdg_surface, true);
-		wlr_xdg_toplevel_set_size(xdg_surface, server->output->wlr_output->width, server->output->wlr_output->height);
+		wlr_xdg_toplevel_set_size(xdg_surface, server->output->wlr_output->width, server->output->wlr_output->height - 40);
 	}
 }
 
