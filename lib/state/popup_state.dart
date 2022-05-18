@@ -6,7 +6,6 @@ import 'package:zenith/widgets/popup.dart';
 class PopupState with ChangeNotifier {
   PopupState({
     required this.viewId,
-    required this.parentViewId,
     required Offset position,
     required Size surfaceSize,
     required Rect visibleBounds,
@@ -15,9 +14,10 @@ class PopupState with ChangeNotifier {
         _surfaceSize = surfaceSize;
 
   final int viewId;
-  final int parentViewId;
+  late int parentViewId;
   final GlobalKey textureKey = GlobalKey();
   final GlobalKey<AnimationsState> animationsKey = GlobalKey();
+  final List<Popup> _popups = [];
 
   Offset _position;
   Size _surfaceSize;
@@ -52,5 +52,18 @@ class PopupState with ChangeNotifier {
     _isClosing = true;
     notifyListeners();
     return animationsKey.currentState?.controller.reverse();
+  }
+
+  List<Popup> get popups => List.unmodifiable(_popups);
+
+  void addPopup(Popup popup) {
+    _popups.add(popup);
+    popup.state.parentViewId = viewId;
+    notifyListeners();
+  }
+
+  void removePopup(Popup popup) {
+    _popups.remove(popup);
+    notifyListeners();
   }
 }

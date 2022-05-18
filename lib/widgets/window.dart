@@ -78,20 +78,27 @@ class _Surface extends StatelessWidget {
     var windowState = context.read<WindowState>();
     var size = context.select((WindowState state) => state.surfaceSize);
     var bounds = context.select((WindowState state) => state.visibleBounds);
+    var popups = context.select((WindowState state) => state.popups);
 
     return SizedBox(
       width: size.width,
       height: size.height,
-      child: Listener(
-        onPointerDown: (event) => pointerMoved(context, event),
-        onPointerUp: (event) => pointerMoved(context, event),
-        onPointerHover: (event) => pointerMoved(context, event),
-        onPointerMove: (event) => pointerMoved(context, event),
-        child: Texture(
-          key: windowState.textureKey,
-          filterQuality: FilterQuality.high,
-          textureId: windowState.viewId,
-        ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Listener(
+            onPointerDown: (event) => pointerMoved(context, event),
+            onPointerUp: (event) => pointerMoved(context, event),
+            onPointerHover: (event) => pointerMoved(context, event),
+            onPointerMove: (event) => pointerMoved(context, event),
+            child: Texture(
+              key: windowState.textureKey,
+              filterQuality: FilterQuality.medium,
+              textureId: windowState.viewId,
+            ),
+          ),
+          ...popups,
+        ],
       ),
     );
   }

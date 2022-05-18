@@ -35,8 +35,6 @@ class Desktop extends StatelessWidget {
                     spacing: 20,
                   ),
                 ),
-                // ...desktopState.windows,
-                ...desktopState.popups,
                 const Top(),
                 // const Bottom(),
               ],

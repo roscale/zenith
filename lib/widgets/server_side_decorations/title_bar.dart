@@ -24,8 +24,8 @@ class TitleBar extends StatelessWidget {
               const ActionButtons(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(windowState.title, style: const TextStyle(color: Colors.white)),
+                children: const [
+                  Text("Window", style: TextStyle(color: Colors.white)),
                 ],
               ),
             ],

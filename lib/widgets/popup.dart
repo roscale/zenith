@@ -1,6 +1,7 @@
+import 'package:defer_pointer/defer_pointer.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zenith/state/desktop_state.dart';
-import 'package:flutter/material.dart';
 import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/util/util.dart';
 
@@ -57,15 +58,12 @@ class _Animations extends StatefulWidget {
 class AnimationsState extends State<_Animations> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    return ClipRect(
-      clipper: IdentityClip(),
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          transformHitTests: false,
-          position: _offsetAnimation,
-          child: widget.child,
-        ),
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        transformHitTests: false,
+        position: _offsetAnimation,
+        child: widget.child,
       ),
     );
   }
@@ -104,18 +102,30 @@ class _Surface extends StatelessWidget {
   Widget build(BuildContext context) {
     var state = context.read<PopupState>();
     var surfaceSize = context.select((PopupState state) => state.surfaceSize);
+    var popups = context.select((PopupState state) => state.popups);
 
     return SizedBox(
       width: surfaceSize.width,
       height: surfaceSize.height,
-      child: Listener(
-        onPointerDown: (event) => pointerMoved(event, state.viewId),
-        onPointerUp: (event) => pointerMoved(event, state.viewId),
-        onPointerHover: (event) => pointerMoved(event, state.viewId),
-        onPointerMove: (event) => pointerMoved(event, state.viewId),
-        child: Texture(
-          key: state.textureKey,
-          textureId: state.viewId,
+      child: DeferPointer(
+        child: DeferredPointerHandler(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Listener(
+                onPointerDown: (event) => pointerMoved(event, state.viewId),
+                onPointerUp: (event) => pointerMoved(event, state.viewId),
+                onPointerHover: (event) => pointerMoved(event, state.viewId),
+                onPointerMove: (event) => pointerMoved(event, state.viewId),
+                child: Texture(
+                  key: state.textureKey,
+                  filterQuality: FilterQuality.medium,
+                  textureId: state.viewId,
+                ),
+              ),
+              ...popups,
+            ],
+          ),
         ),
       ),
     );

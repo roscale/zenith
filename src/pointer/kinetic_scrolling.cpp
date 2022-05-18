@@ -1,10 +1,10 @@
 #include "kinetic_scrolling.hpp"
 #include "embedder.h"
 #include "defer.hpp"
+#include "time.hpp"
 
 void KineticScrolling::record_scroll_event(wlr_event_pointer_axis* event) {
 	const double epsilon = 0.0001;
-	uint32_t now = FlutterEngineGetCurrentTime() / 1'000'000;
 
 	if (event->source != WLR_AXIS_SOURCE_FINGER) {
 		return;
@@ -16,7 +16,7 @@ void KineticScrolling::record_scroll_event(wlr_event_pointer_axis* event) {
 		recent_scroll_events.push_back(*event);
 		// Keep scroll events only from the last 30 ms.
 		const uint32_t interval = 30;
-		uint32_t oldest_threshold = now - interval;
+		uint32_t oldest_threshold = current_time_milliseconds() - interval;
 		while (not recent_scroll_events.empty()) {
 			auto& front = recent_scroll_events.front();
 			if (front.time_msec < oldest_threshold) {
@@ -87,7 +87,7 @@ void KineticScrolling::apply_kinetic_scrolling(wlr_seat* seat) {
 		return;
 	}
 
-	uint32_t now = (double) FlutterEngineGetCurrentTime() / 1'000'000;
+	uint32_t now = current_time_milliseconds();
 
 	// The bigger this value is, the lower the friction will be, so the kinetic scrolling will last longer.
 	const double looseness = 200;

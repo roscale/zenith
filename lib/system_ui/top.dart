@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:zenith/system_ui/quick_settings.dart';
 import 'package:zenith/system_ui/status_bar.dart';
@@ -36,7 +38,7 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    const width = 600.0;
+    final width = min(MediaQuery.of(context).size.width, 600.0);
     const height = 300.0;
 
     return Stack(
@@ -66,8 +68,7 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
           },
         ),
         Positioned(
-          left: (startDragHorizontalPosition - width / 2)
-              .clamp(0, MediaQuery.of(context).size.width - width),
+          left: (startDragHorizontalPosition - width / 2).clamp(0, MediaQuery.of(context).size.width - width),
           child: SlideTransition(
             position: quickSettingsAnimation,
             child: SizedBox(

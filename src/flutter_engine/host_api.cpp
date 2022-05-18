@@ -1,6 +1,7 @@
 #include "host_api.hpp"
 #include "server.hpp"
 #include "encodable_value.h"
+#include "time.hpp"
 
 extern "C" {
 #define static
@@ -57,11 +58,11 @@ void pointer_hover(ZenithServer* server,
 		// Give pointer focus to an inner subsurface, if one exists.
 		// This fixes GTK popovers.
 		wlr_seat_pointer_notify_enter(server->seat, leaf_surface, sub_x, sub_y);
-		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, sub_x, sub_y);
+		wlr_seat_pointer_notify_motion(server->seat, current_time_milliseconds(), sub_x, sub_y);
 	} else {
 		// This has to stay, otherwise down -> move -> up for selecting a popup entry doesn't work.
 		wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
-		wlr_seat_pointer_notify_motion(server->seat, FlutterEngineGetCurrentTime() / 1000000, x, y);
+		wlr_seat_pointer_notify_motion(server->seat, current_time_milliseconds(), x, y);
 	}
 	result->Success();
 }

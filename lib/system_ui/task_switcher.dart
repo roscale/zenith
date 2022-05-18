@@ -4,8 +4,11 @@ import 'dart:math';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:provider/provider.dart';
 import 'package:vector_math/vector_math_64.dart' as math;
+import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/widgets/custom_stack.dart';
+import 'package:zenith/widgets/window.dart';
 
 class TaskSwitcher extends StatefulWidget {
   final double spacing;
@@ -22,7 +25,7 @@ class TaskSwitcher extends StatefulWidget {
 var rand = Random();
 
 class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixin {
-  var tasks = <Widget>[];
+  var tasks = <Window>[];
   bool overview = false;
 
   AnimationController? controller;
@@ -153,7 +156,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
   Iterable<Widget> _buildTaskWidgets(BoxConstraints constraints) sync* {
     double position = 0;
 
-    for (Widget task in tasks) {
+    for (Window task in tasks) {
       Widget container = ConstrainedBox(
         constraints: constraints,
         child: Center(
@@ -180,7 +183,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     }
   }
 
-  void spawnTask(Widget widget) {
+  void spawnTask(Window task) {
     overview = false;
 
     if (tasks.isNotEmpty) {
@@ -190,7 +193,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
       translation = _offset(tasks.length - 1);
     }
 
-    tasks.add(widget);
+    tasks.add(task);
     translationAnimation?.removeListener(_updateTranslationFromAnimation);
     var t = _offset(tasks.length - 1);
 
@@ -220,41 +223,41 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     controller!.forward();
   }
 
-  Future<void> stopTask(Widget task) async {
+  Future<void> stopTask(Window task) async {
     var index = tasks.indexOf(task);
-    if (_taskIndex(translation) != index) {
+    var currentTaskIndex = _taskIndex(translation);
+    if (currentTaskIndex != index) {
       // Not visible, no need for animation.
-      tasks.remove(task);
+      _removeTask(task);
       return;
     }
 
     overview = false;
 
-    var completer = Completer<void>();
-
     _stopAnimations();
     controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          completer.complete();
-        }
-      });
+    );
 
-    double end;
+    int targetIndex;
     if (tasks.length == 1) {
-      end = _offset(-1);
+      targetIndex = -1;
     } else if (index == 0) {
-      end = _offset(1);
+      targetIndex = 1;
     } else {
-      end = _offset(_taskIndex(translation) - 1);
+      targetIndex = _taskIndex(translation) - 1;
+    }
+    double targetTranslation = _offset(targetIndex);
+
+    if (targetIndex != -1) {
+      context.read<DesktopState>().activateWindow(tasks[targetIndex].state.viewId);
     }
 
     translationAnimation = controller!.drive(CurveTween(curve: Curves.easeOutCubic)).drive(
           Tween(
             begin: translation,
-            end: end,
+            end: targetTranslation,
           ),
         )..addListener(_updateTranslationFromAnimation);
 
@@ -278,8 +281,22 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
 
     controller!.forward();
 
-    await completer.future;
+    // FIXME: Cannot just modify the translation when animations are going on. It will cause visual
+    // glitches.
+    await Future.delayed(const Duration(milliseconds: 400));
+    _removeTask(task);
+  }
+
+  void _removeTask(Window task) {
+    var currentTaskIndex = _taskIndex(translation);
+    var index = tasks.indexOf(task);
     tasks.remove(task);
+    // If the task to remove is before the current one in the list, it will shift all next ones
+    // to the left. Update the translation.
+    if (index < currentTaskIndex) {
+      translation = _offset(currentTaskIndex - 1);
+    }
+    setState(() {});
   }
 
   void _stopAnimations() {
@@ -324,6 +341,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
   }
 
   void _switchToTaskByIndex(int index) {
+    context.read<DesktopState>().activateWindow(tasks[index].state.viewId);
     setState(() => overview = false);
 
     _stopAnimations();
@@ -349,7 +367,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     controller!.forward();
   }
 
-  void _switchToTask(Widget task) => _switchToTaskByIndex(tasks.indexOf(task));
+  void _switchToTask(Window task) => _switchToTaskByIndex(tasks.indexOf(task));
 
   void _showOverview() {
     overview = true;

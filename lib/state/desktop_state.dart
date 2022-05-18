@@ -12,8 +12,8 @@ import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/window.dart';
 
 class DesktopState with ChangeNotifier {
-  List<Window> windows = [];
-  List<Popup> popups = [];
+  // Keeps track of all windows and popups alive. The widget is of type Window or Popup.
+  Map<int, Widget> views = {};
 
   // Sends global pointer up events to windows. Listening for this event at the window level is not
   // reliable because sometimes it is not getting emitted when the pointer quickly leaves the window
@@ -37,8 +37,6 @@ class DesktopState with ChangeNotifier {
     windowUnmappedEvent.receiveBroadcastStream().listen(windowUnmapped);
     popupMappedEvent.receiveBroadcastStream().listen(popupMapped);
     popupUnmappedEvent.receiveBroadcastStream().listen(popupUnmapped);
-    requestMoveEvent.receiveBroadcastStream().listen(requestMove);
-    requestResizeEvent.receiveBroadcastStream().listen(requestResize);
     configureSurfaceEvent.receiveBroadcastStream().listen(configureSurface);
   }
 
@@ -72,30 +70,21 @@ class DesktopState with ChangeNotifier {
 
     var clientWindow = Window(WindowState(
       viewId: viewId,
-      title: "Window",
-      position: initialWindowPosition.topLeft,
       surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
       visibleBounds: visibleBounds,
     ));
-    windows.add(clientWindow);
+    views[viewId] = clientWindow;
     taskSwitcherKey.currentState!.spawnTask(clientWindow);
     notifyListeners();
   }
 
   void windowUnmapped(dynamic event) async {
     int viewId = event["view_id"];
+    var window = views[viewId] as Window;
 
-    var window = windows.singleWhere((element) => element.state.viewId == viewId);
-
-    if (window == windows.last && windows.length >= 2) {
-      // Activate the window behind.
-      var penultimate = windows[windows.length - 2];
-      platform.invokeMethod('activate_window', penultimate.state.viewId);
-    }
-
-    // await window.state.animateClosing();
-    windows.remove(window);
     await taskSwitcherKey.currentState!.stopTask(window);
+    views.remove(viewId);
+
     platform.invokeMethod('closing_animation_finished', window.state.viewId);
     notifyListeners();
   }
@@ -115,59 +104,46 @@ class DesktopState with ChangeNotifier {
       visibleBoundsMap["height"]!.toDouble(),
     );
 
-    // Parent can be either a window or another popup.
-    Offset parentPosition;
-    var windowIndex = windows.indexWhere((element) => element.state.viewId == parentViewId);
-    if (windowIndex != -1) {
-      var window = windows[windowIndex];
-      parentPosition = window.state.position;
-    } else {
-      var popupIndex = popups.indexWhere((element) => element.state.viewId == parentViewId);
-      var popup = popups[popupIndex];
-      parentPosition = popup.state.position;
-    }
-
     var popup = Popup(PopupState(
       viewId: viewId,
-      parentViewId: parentViewId,
-      position: Offset(x + parentPosition.dx, y + parentPosition.dy),
+      position: Offset(x.toDouble(), y.toDouble()),
       surfaceSize: Size(width.toDouble(), height.toDouble()),
       visibleBounds: visibleBounds,
     ));
 
-    popups.add(popup);
+    Widget parent = views[parentViewId]!;
+    if (parent is Window) {
+      parent.state.addPopup(popup);
+    } else if (parent is Popup) {
+      parent.state.addPopup(popup);
+    }
+
+    views[viewId] = popup;
     notifyListeners();
   }
 
   void popupUnmapped(dynamic event) async {
     int viewId = event["view_id"];
 
-    var popup = popups.singleWhere((element) => element.state.viewId == viewId);
+    var popup = views[viewId] as Popup;
     await popup.state.animateClosing();
 
-    popups.remove(popup);
+    views.remove(viewId);
+
+    Widget parent = views[popup.state.parentViewId]!;
+    if (parent is Window) {
+      parent.state.removePopup(popup);
+    } else if (parent is Popup) {
+      parent.state.removePopup(popup);
+    }
+
     platform.invokeMethod('closing_animation_finished', popup.state.viewId);
     notifyListeners();
   }
 
-  void requestMove(dynamic event) {
-    int viewId = event["view_id"];
-
-    var window = windows.singleWhere((element) => element.state.viewId == viewId);
-    window.state.startMove();
-  }
-
-  void requestResize(dynamic event) {
-    int viewId = event["view_id"];
-    int edges = event["edges"];
-
-    var window = windows.singleWhere((element) => element.state.viewId == viewId);
-    window.state.startResize(edges);
-  }
-
   void configureSurface(dynamic event) {
     int viewId = event["view_id"];
-    var role = XdgSurfaceRole.values[event["surface_role"]];
+    XdgSurfaceRole role = XdgSurfaceRole.values[event["surface_role"]];
 
     Size? newSurfaceSize;
     if (event["surface_size_changed"]) {
@@ -187,61 +163,22 @@ class DesktopState with ChangeNotifier {
       );
     }
 
-    Offset? newPosition;
-    if (role == XdgSurfaceRole.popup && event["popup_position_changed"]) {
-      int x = event["x"];
-      int y = event["y"];
-      newPosition = Offset(x.toDouble(), y.toDouble());
-    }
-
     switch (role) {
       case XdgSurfaceRole.toplevel:
-        var window = windows.singleWhere((element) => element.state.viewId == viewId);
-
-        if (newVisibleBounds != null) {
-          // Window position will change if it's resized from the left or top.
-          var position = window.state.position;
-          var visibleBounds = window.state.visibleBounds;
-
-          double x = Edges.left & window.state.resizingEdges
-              ? position.dx + (visibleBounds.width - newVisibleBounds.width)
-              : position.dx;
-
-          double y = Edges.top & window.state.resizingEdges
-              ? position.dy + (visibleBounds.height - newVisibleBounds.height)
-              : position.dy;
-
-          window.state.position = Offset(x, y);
-        }
-
+        var window = views[viewId] as Window;
         window.state.surfaceSize = newSurfaceSize ?? window.state.surfaceSize;
         window.state.visibleBounds = newVisibleBounds ?? window.state.visibleBounds;
         break;
 
       case XdgSurfaceRole.popup:
-        var popup = popups.singleWhere((element) => element.state.viewId == viewId);
+        var popup = views[viewId] as Popup;
         popup.state.surfaceSize = newSurfaceSize ?? popup.state.surfaceSize;
         popup.state.visibleBounds = newVisibleBounds ?? popup.state.visibleBounds;
-
-        Offset parentPosition;
-        var windowIndex = windows.indexWhere((element) => element.state.viewId == popup.state.parentViewId);
-        if (windowIndex != -1) {
-          // Parent is a window.
-          var window = windows[windowIndex];
-          parentPosition = window.state.position;
-        } else {
-          // Parent is another popup.
-          var popupIndex = popups.indexWhere((element) => element.state.viewId == popup.state.parentViewId);
-          var parentPopup = popups[popupIndex];
-          parentPosition = parentPopup.state.position;
-        }
-
         if (event["popup_position_changed"]) {
           // Position relative to the parent.
           int x = event["x"];
           int y = event["y"];
-          newPosition = Offset(x.toDouble(), y.toDouble());
-          popup.state.position = newPosition + parentPosition;
+          popup.state.position = Offset(x.toDouble(), y.toDouble());
         }
         break;
 
@@ -252,17 +189,8 @@ class DesktopState with ChangeNotifier {
   }
 
   void activateWindow(int viewId) {
-    var window = windows.singleWhere((window) => window.state.viewId == viewId);
-    // Put it in the front.
-    windows.remove(window);
-    windows.add(window);
-
+    var window = views[viewId] as Window;
     platform.invokeMethod('activate_window', window.state.viewId);
-    notifyListeners();
-  }
-
-  void destroyWindow(Window window) {
-    windows.remove(window);
     notifyListeners();
   }
 }

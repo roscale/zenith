@@ -9,11 +9,15 @@
 #include "output.hpp"
 #include "keyboard.hpp"
 #include "pointer/pointer.hpp"
+#include "touch.hpp"
 #include "view.hpp"
 
 extern "C" {
 #define static
 #include <wlr/backend.h>
+#define class class_variable
+#include <wlr/xwayland.h>
+#undef class
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_cursor.h>
@@ -36,6 +40,7 @@ public:
 	wl_display* display;
 	wlr_backend* backend;
 	wlr_renderer* renderer;
+	wlr_compositor* compositor;
 	wlr_xdg_shell* xdg_shell;
 
 	wlr_output_layout* output_layout;
@@ -52,13 +57,10 @@ public:
 	wlr_seat* seat;
 	std::unique_ptr<ZenithPointer> pointer;
 	std::list<std::unique_ptr<ZenithKeyboard>> keyboards{};
+	std::list<std::unique_ptr<ZenithTouchDevice>> touch_devices{};
 
 	wl_listener new_input{};
 	wl_listener request_cursor{};
-	wl_listener touch_down{};
-	wl_listener touch_motion{};
-	wl_listener touch_up{};
-	wl_listener touch_cancel{};
 
 	std::unique_ptr<FlutterEngineState> flutter_engine_state{};
 };
@@ -85,8 +87,3 @@ void server_new_input(wl_listener* listener, void* data);
  * This event is raised by the seat when a client provides a cursor image.
  */
 void server_seat_request_cursor(wl_listener* listener, void* data);
-
-void touch_down_handle(wl_listener* listener, void* data);
-void touch_motion_handle(wl_listener* listener, void* data);
-void touch_up_handle(wl_listener* listener, void* data);
-void touch_cancel_handle(wl_listener* listener, void* data);

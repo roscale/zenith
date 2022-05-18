@@ -2,6 +2,7 @@
 #include "output.hpp"
 #include "server.hpp"
 #include "flutter_callbacks.hpp"
+#include "time.hpp"
 
 extern "C" {
 #define static
@@ -29,7 +30,8 @@ void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 	ZenithServer* server = output->server;
 	auto& flutter_engine_state = server->flutter_engine_state;
-	uint64_t now = FlutterEngineGetCurrentTime();
+
+	uint64_t now = current_time_nanoseconds();
 
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 	wlr_egl_make_current(egl);
@@ -75,7 +77,9 @@ void output_frame(wl_listener* listener, void* data) {
 			double refresh_rate = output->wlr_output->refresh != 0
 			                      ? (double) output->wlr_output->refresh / 1000
 			                      : 60; // Suppose it's 60Hz if the refresh rate is not available.
-			FlutterEngineOnVsync(flutter_engine_state->engine, baton, now, now + 1'000'000'000ull / refresh_rate);
+
+			uint64_t next_frame = now + (uint64_t) (1'000'000'000ull / refresh_rate);
+			FlutterEngineOnVsync(flutter_engine_state->engine, baton, now, next_frame);
 		}
 	}
 

@@ -24,6 +24,7 @@ ZenithServer* ZenithServer::instance() {
 
 ZenithServer::ZenithServer() {
 	main_thread_id = std::this_thread::get_id();
+
 	display = wl_display_create();
 	if (display == nullptr) {
 		wlr_log(WLR_ERROR, "Could not create Wayland display");
@@ -42,7 +43,8 @@ ZenithServer::ZenithServer() {
 		exit(3);
 	}
 
-	if (wlr_compositor_create(display, renderer) == nullptr) {
+	compositor = wlr_compositor_create(display, renderer);
+	if (compositor == nullptr) {
 		wlr_log(WLR_ERROR, "Could not create wlroots compositor");
 		exit(4);
 	}
@@ -91,11 +93,6 @@ ZenithServer::ZenithServer() {
 	request_cursor.notify = server_seat_request_cursor;
 	wl_signal_add(&seat->events.request_set_cursor,
 	              &request_cursor);
-
-	touch_down.notify = touch_down_handle;
-	touch_motion.notify = touch_motion_handle;
-	touch_up.notify = touch_up_handle;
-	touch_cancel.notify = touch_cancel_handle;
 }
 
 void ZenithServer::run(char* startup_command) {
@@ -197,11 +194,6 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 	/* Add it to the list of views. */
 	server->view_id_by_wlr_surface.insert(std::make_pair(view->xdg_surface->surface, view->id));
 	server->views_by_id.insert(std::make_pair(view->id, std::move(view)));
-
-	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		wlr_xdg_toplevel_set_maximized(xdg_surface, true);
-		wlr_xdg_toplevel_set_size(xdg_surface, server->output->wlr_output->width, server->output->wlr_output->height - 40);
-	}
 }
 
 void server_new_input(wl_listener* listener, void* data) {
@@ -235,10 +227,10 @@ void server_new_input(wl_listener* listener, void* data) {
 			break;
 		}
 		case WLR_INPUT_DEVICE_TOUCH: {
-			wl_signal_add(&wlr_device->touch->events.down, &server->touch_down);
-			wl_signal_add(&wlr_device->touch->events.motion, &server->touch_motion);
-			wl_signal_add(&wlr_device->touch->events.up, &server->touch_up);
+			auto touch_device = std::make_unique<ZenithTouchDevice>(server, wlr_device);
+			server->touch_devices.push_back(std::move(touch_device));
 			break;
+			// TODO: handle destruct callback
 		}
 		default:
 			break;
@@ -267,105 +259,4 @@ void server_seat_request_cursor(wl_listener* listener, void* data) {
 		 * cursor moves between outputs. */
 		wlr_cursor_set_surface(server->pointer->cursor, event->surface, event->hotspot_x, event->hotspot_y);
 	}
-}
-
-double x;
-double y;
-bool added = false;
-
-void touch_down_handle(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, touch_down);
-	auto* event = static_cast<wlr_event_touch_down*>(data);
-
-	{
-		if (added) {
-			added = true;
-			FlutterPointerEvent e = {};
-			e.struct_size = sizeof(FlutterPointerEvent);
-			e.phase = kAdd;
-			e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
-			// Map from [0, 1] to [screen_width, screen_height].
-			e.x = event->x * server->output->wlr_output->width;
-			e.y = event->y * server->output->wlr_output->height;
-			x = event->x;
-			y = event->y;
-			e.device_kind = kFlutterPointerDeviceKindTouch;
-			e.signal_kind = kFlutterPointerSignalKindNone;
-			e.device = event->touch_id;
-			FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
-		}
-	}
-
-
-	FlutterPointerEvent e = {};
-	e.struct_size = sizeof(FlutterPointerEvent);
-	e.phase = kDown;
-	e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
-	// Map from [0, 1] to [screen_width, screen_height].
-	e.x = event->x * server->output->wlr_output->width;
-	e.y = event->y * server->output->wlr_output->height;
-	x = event->x;
-	y = event->y;
-	e.device_kind = kFlutterPointerDeviceKindTouch;
-	e.signal_kind = kFlutterPointerSignalKindNone;
-	e.device = event->touch_id;
-
-	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
-}
-
-void touch_motion_handle(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, touch_motion);
-	auto* event = static_cast<wlr_event_touch_motion*>(data);
-
-	FlutterPointerEvent e = {};
-	e.struct_size = sizeof(FlutterPointerEvent);
-	e.phase = kMove;
-	e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
-	// Map from [0, 1] to [screen_width, screen_height].
-	e.x = event->x * server->output->wlr_output->width;
-	e.y = event->y * server->output->wlr_output->height;
-	x = event->x;
-	y = event->y;
-	e.device_kind = kFlutterPointerDeviceKindTouch;
-	e.signal_kind = kFlutterPointerSignalKindNone;
-	e.device = event->touch_id;
-
-	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
-}
-
-void touch_up_handle(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, touch_up);
-	auto* event = static_cast<wlr_event_touch_up*>(data);
-
-	FlutterPointerEvent e = {};
-	e.struct_size = sizeof(FlutterPointerEvent);
-	e.phase = kUp;
-	std::cout << "up" << std::endl;
-	e.x = x * server->output->wlr_output->width;
-	e.y = y * server->output->wlr_output->height;
-	e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
-	// Map from [0, 1] to [screen_width, screen_height].
-	e.device_kind = kFlutterPointerDeviceKindTouch;
-	e.signal_kind = kFlutterPointerSignalKindNone;
-	e.device = event->touch_id;
-
-	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
-}
-
-void touch_cancel_handle(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, touch_cancel);
-	auto* event = static_cast<wlr_event_touch_cancel*>(data);
-
-	FlutterPointerEvent e = {};
-	e.struct_size = sizeof(FlutterPointerEvent);
-	e.phase = kCancel;
-	e.x = x * server->output->wlr_output->width;
-	e.y = y * server->output->wlr_output->height;
-	e.timestamp = FlutterEngineGetCurrentTime() / 1000.0;
-	// Map from [0, 1] to [screen_width, screen_height].
-	e.device_kind = kFlutterPointerDeviceKindTouch;
-	e.signal_kind = kFlutterPointerSignalKindNone;
-	e.device = event->touch_id;
-
-	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
 }

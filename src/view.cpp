@@ -94,6 +94,16 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 	wlr_texture* texture = wlr_surface_get_texture(surface);
 	assert(texture != nullptr);
 
+	// FIXME
+	// This causes small flickers because windows change size after they have been displayed.
+	// But Obsidian (Chromium-based) crashes if I put this in the callback where the xdg surface
+	// is created.
+	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+		wlr_xdg_toplevel_set_maximized(xdg_surface, true);
+		wlr_xdg_toplevel_set_size(xdg_surface, server->output->wlr_output->width,
+		                          server->output->wlr_output->height - 40);
+	}
+
 	// Make sure a framebuffer exists for this xdg_surface.
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
 
@@ -137,7 +147,6 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 			view->y = popup->geometry.y;
 
 			wlr_xdg_surface* parent_xdg_surface = wlr_xdg_surface_from_wlr_surface(popup->parent);
-//			wlr_box parent_geometry = parent_xdg_surface->geometry;
 			size_t parent_view_id = view->server->view_id_by_wlr_surface[parent_xdg_surface->surface];
 
 			auto value = EncodableValue(EncodableMap{
@@ -176,7 +185,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
 			view->server->flutter_engine_state->messenger.Send("window_unmapped", result->data(),
-			                                                           result->size());
+			                                                   result->size());
 			break;
 		}
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
@@ -189,7 +198,7 @@ void xdg_surface_unmap(wl_listener* listener, void* data) {
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 
 			view->server->flutter_engine_state->messenger.Send("popup_unmapped", result->data(),
-			                                                           result->size());
+			                                                   result->size());
 			break;
 		}
 		case WLR_XDG_SURFACE_ROLE_NONE:
@@ -303,7 +312,7 @@ void surface_commit(wl_listener* listener, void* data) {
 
 		auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 		view->server->flutter_engine_state->messenger.Send("configure_surface", result->data(),
-		                                                           result->size());
+		                                                   result->size());
 	}
 }
 
@@ -315,7 +324,7 @@ void xdg_toplevel_request_move(wl_listener* listener, void* data) {
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	view->server->flutter_engine_state->messenger.Send("request_move", result->data(),
-	                                                           result->size());
+	                                                   result->size());
 }
 
 void xdg_toplevel_request_resize(wl_listener* listener, void* data) {
@@ -328,5 +337,5 @@ void xdg_toplevel_request_resize(wl_listener* listener, void* data) {
 	});
 	auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	view->server->flutter_engine_state->messenger.Send("request_resize", result->data(),
-	                                                           result->size());
+	                                                   result->size());
 }
