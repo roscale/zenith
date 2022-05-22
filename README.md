@@ -2,6 +2,8 @@
 
 A wlroots-based Wayland compositor that uses Flutter for rendering.
 
+Video demonstration: https://youtu.be/3Zh7Tk4oWo0
+
 <p float="middle">
   <img src="screenshots/firefox.png" width="45%" />
   <img src="screenshots/task_switcher.png" width="45%" />
