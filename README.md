@@ -2,8 +2,10 @@
 
 A wlroots-based Wayland compositor that uses Flutter for rendering.
 
-![Firefox](screenshots/firefox.png)
-![Task switcher](screenshots/task_switcher.png)
+<p float="middle">
+  <img src="screenshots/firefox.png" width="45%" />
+  <img src="screenshots/task_switcher.png" width="45%" />
+</p>
 
 ## Code navigation
 
