@@ -208,8 +208,8 @@ able to see nearby Wi-Fi networks and connect to them if they are password-less 
 able to adjust the master volume.
 
 The Settings app will be written in Flutter and will use D-Bus to communicate to various system services.
-There's already a D-Bus library for Dart written by Canonical. Fun fact, the installer for Ubuntu 22.04 is a Flutter
-app, so I think this is the reason they wrote this library.
+There's already a D-Bus library for Dart written by Canonical. Fun fact, Canonical is working on a new Ubuntu installer,
+and a firmware update tool written in Flutter, so that might be the reason why they created this library.
 https://pub.dev/packages/dbus
 
 I will have to read the D-Bus API documentation of various system services: NetworkManager, ModemManager, PipeWire (or
