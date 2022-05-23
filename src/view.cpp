@@ -130,10 +130,10 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 				  {EncodableValue("surface_width"),  EncodableValue(surface->current.width)},
 				  {EncodableValue("surface_height"), EncodableValue(surface->current.height)},
 				  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
-						{EncodableValue("x"),      EncodableValue(xdg_surface->geometry.x)},
-						{EncodableValue("y"),      EncodableValue(xdg_surface->geometry.y)},
-						{EncodableValue("width"),  EncodableValue(xdg_surface->geometry.width)},
-						{EncodableValue("height"), EncodableValue(xdg_surface->geometry.height)},
+						{EncodableValue("x"),      EncodableValue(xdg_surface->current.geometry.x)},
+						{EncodableValue("y"),      EncodableValue(xdg_surface->current.geometry.y)},
+						{EncodableValue("width"),  EncodableValue(xdg_surface->current.geometry.width)},
+						{EncodableValue("height"), EncodableValue(xdg_surface->current.geometry.height)},
 				  })},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
@@ -157,10 +157,10 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 				  {EncodableValue("surface_width"),  EncodableValue(view->xdg_surface->surface->current.width)},
 				  {EncodableValue("surface_height"), EncodableValue(view->xdg_surface->surface->current.height)},
 				  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
-						{EncodableValue("x"),      EncodableValue(popup->base->geometry.x)},
-						{EncodableValue("y"),      EncodableValue(popup->base->geometry.y)},
-						{EncodableValue("width"),  EncodableValue(popup->base->geometry.width)},
-						{EncodableValue("height"), EncodableValue(popup->base->geometry.height)},
+						{EncodableValue("x"),      EncodableValue(popup->base->current.geometry.x)},
+						{EncodableValue("y"),      EncodableValue(popup->base->current.geometry.y)},
+						{EncodableValue("width"),  EncodableValue(popup->base->current.geometry.width)},
+						{EncodableValue("height"), EncodableValue(popup->base->current.geometry.height)},
 				  })},
 			});
 			auto result = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
@@ -232,14 +232,14 @@ void surface_commit(wl_listener* listener, void* data) {
 		  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
 		  {EncodableValue("surface_role"),   EncodableValue(xdg_surface->role)},
 		  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
-				{EncodableValue("x"),      EncodableValue(xdg_surface->geometry.x)},
-				{EncodableValue("y"),      EncodableValue(xdg_surface->geometry.y)},
-				{EncodableValue("width"),  EncodableValue(xdg_surface->geometry.width)},
-				{EncodableValue("height"), EncodableValue(xdg_surface->geometry.height)},
+				{EncodableValue("x"),      EncodableValue(xdg_surface->current.geometry.x)},
+				{EncodableValue("y"),      EncodableValue(xdg_surface->current.geometry.y)},
+				{EncodableValue("width"),  EncodableValue(xdg_surface->current.geometry.width)},
+				{EncodableValue("height"), EncodableValue(xdg_surface->current.geometry.height)},
 		  })}
 	};
 
-	wlr_box new_geometry = xdg_surface->geometry;
+	wlr_box new_geometry = xdg_surface->current.geometry;
 	bool geometry_changed = false;
 	if (view->geometry.x != new_geometry.x
 	    or view->geometry.y != new_geometry.y
@@ -250,10 +250,10 @@ void surface_commit(wl_listener* listener, void* data) {
 		view->geometry = new_geometry;
 		map.insert({EncodableValue("geometry_changed"), EncodableValue(true)});
 		map.insert({EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
-			  {EncodableValue("x"),      EncodableValue(xdg_surface->geometry.x)},
-			  {EncodableValue("y"),      EncodableValue(xdg_surface->geometry.y)},
-			  {EncodableValue("width"),  EncodableValue(xdg_surface->geometry.width)},
-			  {EncodableValue("height"), EncodableValue(xdg_surface->geometry.height)},
+			  {EncodableValue("x"),      EncodableValue(xdg_surface->current.geometry.x)},
+			  {EncodableValue("y"),      EncodableValue(xdg_surface->current.geometry.y)},
+			  {EncodableValue("width"),  EncodableValue(xdg_surface->current.geometry.width)},
+			  {EncodableValue("height"), EncodableValue(xdg_surface->current.geometry.height)},
 		})});
 	} else {
 		map.insert({EncodableValue("geometry_changed"), EncodableValue(false)});

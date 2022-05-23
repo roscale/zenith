@@ -29,6 +29,7 @@ sudo pacman -S --needed "$@" \
   seatd \
   systemd-libs \
   wayland \
+  wlroots \
   xcb-util-renderutil \
   xcb-util-wm \
   xz \

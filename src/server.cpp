@@ -6,6 +6,7 @@ extern "C" {
 #define static
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/render/allocator.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/util/log.h>
 #include <wlr/render/gles2.h>
@@ -37,10 +38,21 @@ ZenithServer::ZenithServer() {
 		exit(2);
 	}
 
-	renderer = wlr_backend_get_renderer(backend);
+	renderer = wlr_renderer_autocreate(backend);
 	if (!wlr_renderer_init_wl_display(renderer, display)) {
 		wlr_log(WLR_ERROR, "Could not initialize wlroots renderer");
 		exit(3);
+	}
+
+	/*
+	 * Auto-creates an allocator for us.
+	 * The allocator is the bridge between the renderer and the backend. It handles the buffer creation,
+	 * allowing wlroots to render onto the screen.
+	 */
+	allocator = wlr_allocator_autocreate(backend, renderer);
+	if (allocator == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create wlroots allocator");
+		exit(12);
 	}
 
 	compositor = wlr_compositor_create(display, renderer);
@@ -141,6 +153,9 @@ size_t i = 1;
 void server_new_output(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_output);
 	auto* wlr_output = static_cast<struct wlr_output*>(data);
+
+	/* Configures the output created by the backend to use our allocator and our renderer */
+	wlr_output_init_render(wlr_output, server->allocator, server->renderer);
 
 	static const char* selected_output_str = getenv("ZENITH_OUTPUT");
 	static size_t selected_output = selected_output_str != nullptr

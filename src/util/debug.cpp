@@ -42,10 +42,10 @@ void print_surface_tree_debug_info(wlr_surface* surface, int x, int y, int inden
 		indent();
 		wlr_xdg_surface* xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
 		std::cout << "xdg_surface -> "
-		          << "geom_x = " << xdg_surface->geometry.x
-		          << ", geom_y = " << xdg_surface->geometry.y
-		          << ", geom_width = " << xdg_surface->geometry.width
-		          << ", geom_height = " << xdg_surface->geometry.height
+		          << "geom_x = " << xdg_surface->current.geometry.x
+		          << ", geom_y = " << xdg_surface->current.geometry.y
+		          << ", geom_width = " << xdg_surface->current.geometry.width
+		          << ", geom_height = " << xdg_surface->current.geometry.height
 		          << std::endl;
 
 		if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
@@ -81,35 +81,35 @@ void print_surface_tree_debug_info(wlr_surface* surface, int x, int y, int inden
 		}
 	}
 
-	if (!wl_list_empty(&surface->subsurfaces_below)) {
+	if (!wl_list_empty(&surface->current.subsurfaces_below)) {
 		indent();
 		std::cout << "below: " << std::endl;
 	}
 
 	struct wlr_subsurface* sub;
-	wl_list_for_each(sub, &surface->subsurfaces_below, parent_link) {
+	wl_list_for_each(sub, &surface->current.subsurfaces_below, current.link) {
 		if (!sub->mapped) {
 			continue;
 		}
 
-		struct wlr_subsurface_state* state = &sub->current;
+		struct wlr_subsurface_parent_state* state = &sub->current;
 		int sx = state->x;
 		int sy = state->y;
 
 		print_surface_tree_debug_info(sub->surface, x + sx, y + sy, indents + 4, sub);
 	}
 
-	if (!wl_list_empty(&surface->subsurfaces_above)) {
+	if (!wl_list_empty(&surface->current.subsurfaces_above)) {
 		indent();
 		std::cout << "above: " << std::endl;
 	}
 
-	wl_list_for_each(sub, &surface->subsurfaces_above, parent_link) {
+	wl_list_for_each(sub, &surface->current.subsurfaces_above, current.link) {
 		if (!sub->mapped) {
 			continue;
 		}
 
-		struct wlr_subsurface_state* state = &sub->current;
+		struct wlr_subsurface_parent_state* state = &sub->current;
 		int sx = state->x;
 		int sy = state->y;
 

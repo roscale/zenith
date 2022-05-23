@@ -1,8 +1,6 @@
 TARGET_EXEC := zenith
 SRC_DIRS := src
 DEPS_DIR := deps
-WLROOTS_INCLUDE_DIR := $(DEPS_DIR)/wlroots/include $(DEPS_DIR)/wlroots/build/include
-WLROOTS_SO := $(DEPS_DIR)/wlroots/build/libwlroots.so.9
 
 DEBUG_BUILD_DIR := build/$(TARGET_EXEC)/debug
 PROFILE_BUILD_DIR := build/$(TARGET_EXEC)/profile
@@ -25,7 +23,7 @@ PROFILE_DEPS := $(PROFILE_OBJS:.o=.d)
 RELEASE_DEPS := $(RELEASE_OBJS:.o=.d)
 
 # Every folder in ./src will need to be passed to GCC so that it can find header files
-INC_DIRS := $(shell find $(SRC_DIRS) -type d) $(WLROOTS_INCLUDE_DIR)
+INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
@@ -39,7 +37,7 @@ DEBUG_CPPFLAGS := $(COMMON_CPPFLAGS) -DDEBUG $(ASAN)
 PROFILE_CPPFLAGS := $(COMMON_CPPFLAGS) -DPROFILE
 RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) -O2
 
-COMMON_LDFLAGS := -lGL -lEGL -lGLESv2 -lepoxy -lwayland-server -lxkbcommon -lpixman-1 -linput -L. -L$(DEPS_DIR) -l:$(WLROOTS_SO)
+COMMON_LDFLAGS := -lGL -lEGL -lGLESv2 -lepoxy -lwayland-server -lxkbcommon -lpixman-1 -linput -lwlroots -L. -L$(DEPS_DIR)
 DEBUG_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_debug $(ASAN)
 PROFILE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_profile
 RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release
@@ -101,20 +99,17 @@ all: debug_bundle profile_bundle release_bundle
 
 debug_bundle: $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	mkdir -p $(dir $<)/lib/
-	cp $(WLROOTS_SO) $(dir $<)/lib
 	cp $(DEPS_DIR)/libflutter_engine_debug.so $(dir $<)/lib/libflutter_engine.so
 	cp -r build/linux/x64/debug/bundle/data $(dir $<)
 
 profile_bundle: $(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	mkdir -p $(dir $<)/lib/
-	cp $(WLROOTS_SO) $(dir $<)/lib
 	cp $(DEPS_DIR)/libflutter_engine_profile.so $(dir $<)/lib/libflutter_engine.so
 	cp build/linux/x64/profile/bundle/lib/libapp.so $(dir $<)/lib
 	cp -r build/linux/x64/profile/bundle/data $(dir $<)
 
 release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	mkdir -p $(dir $<)/lib/
-	cp $(WLROOTS_SO) $(dir $<)/lib
 	cp $(DEPS_DIR)/libflutter_engine_release.so $(dir $<)/lib/libflutter_engine.so
 	cp build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
 	cp -r build/linux/x64/release/bundle/data $(dir $<)

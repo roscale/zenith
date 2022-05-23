@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <thread>
 #include "server.hpp"
+#include "egl_helpers.hpp"
 
 extern "C" {
 #define static
@@ -20,8 +21,8 @@ FlutterEngineState::FlutterEngineState(ZenithServer* server, wlr_egl* main_egl)
 
 	messenger.SetMessageDispatcher(&message_dispatcher);
 
-	wlr_egl_context saved_egl_context{};
-	wlr_egl_save_context(&saved_egl_context);
+	ZenithEglContext saved_egl_context{};
+	zenith_egl_save_context(&saved_egl_context);
 
 	// Create 2 OpenGL shared contexts for rendering operations.
 	wlr_egl_make_current(main_egl);
@@ -42,7 +43,7 @@ FlutterEngineState::FlutterEngineState(ZenithServer* server, wlr_egl* main_egl)
 	present_fbo = std::make_unique<SurfaceFramebuffer>(dummy_width, dummy_height);
 	wlr_egl_unset_current(flutter_gl_context);
 
-	wlr_egl_restore_context(&saved_egl_context);
+	zenith_egl_restore_context(&saved_egl_context);
 }
 
 void FlutterEngineState::run_engine() {

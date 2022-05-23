@@ -40,6 +40,7 @@ public:
 	wl_display* display;
 	wlr_backend* backend;
 	wlr_renderer* renderer;
+	wlr_allocator* allocator;
 	wlr_compositor* compositor;
 	wlr_xdg_shell* xdg_shell;
 
