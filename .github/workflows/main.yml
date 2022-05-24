@@ -6,9 +6,9 @@ name: Build bundles
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [ master, deb_packages ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, deb_packages ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,14 +18,10 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-    container: archlinux:base-devel
+    runs-on: ubuntu-22.04
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # We technically don't need sudo because we are root, but the scripts will break if sudo is not available.
-      - run: pacman --noconfirm -Syu git git-lfs nodejs sudo
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
@@ -34,9 +30,14 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: 'stable'
+          cache: true
+          cache-key: flutter # optional, change this to force refresh cache
+          cache-path: ${{ runner.tool_cache }}/flutter # optional, change this to specify the cache path
+          architecture: x64 # optional, x64 or arm64
 
-      - name: Download and install required dependencies
-        run: ./install_compilation_dependencies.sh --noconfirm
+      - run: |
+          apt update -y
+          ./install_compilation_dependencies.sh
 
       - name: Compile the code and make bundles
         run: |
