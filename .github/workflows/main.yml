@@ -27,7 +27,7 @@ jobs:
         with:
           lfs: true
 
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
@@ -36,7 +36,6 @@ jobs:
           architecture: x64 # optional, x64 or arm64
 
       - run: |
-          sudo apt update -y
           ./install_compilation_dependencies.sh
 
       - name: Compile the code and make bundles
@@ -51,6 +50,50 @@ jobs:
 
           flutter build linux --release
           make release_bundle -j6
+
+      - name: Prepare deb file hierarchy
+        run: |
+          mkdir -p .debpkg_debug/opt/zenith
+          cp build/zenith/debug/bundle/* .debpkg_debug/opt/zenith
+          chmod +x .debpkg_debug/opt/zenith/zenith
+          
+          mkdir -p .debpkg_profile/opt/zenith
+          cp build/zenith/profile/bundle/* .debpkg_profile/opt/zenith
+          chmod +x .debpkg_profile/opt/zenith/zenith
+          
+          mkdir -p .debpkg_release/opt/zenith
+          cp build/zenith/release/bundle/* .debpkg_release/opt/zenith
+          chmod +x .debpkg_release/opt/zenith/zenith
+
+      - uses: jiro4989/build-deb-action@v2
+        with:
+          package: zenith
+          package_root: .debpkg_debug
+          maintainer: 'Alex Rosca'
+          version: 'debug'
+          arch: 'amd64'
+          depends: 'libwlroots10 (>= 0.15.1), libegl1, libgles2, libepoxy0, libwayland-server0, libxkbcommon0, libpixman-1-0, libinput10'
+          desc: 'Zenith desktop environment'
+
+      - uses: jiro4989/build-deb-action@v2
+        with:
+          package: zenith
+          package_root: .debpkg_profile
+          maintainer: 'Alex Rosca'
+          version: 'profile'
+          arch: 'amd64'
+          depends: 'libwlroots10 (>= 0.15.1), libegl1, libgles2, libepoxy0, libwayland-server0, libxkbcommon0, libpixman-1-0, libinput10'
+          desc: 'Zenith desktop environment'
+
+      - uses: jiro4989/build-deb-action@v2
+        with:
+          package: zenith
+          package_root: .debpkg_release
+          maintainer: 'Alex Rosca'
+          version: 'release'
+          arch: 'amd64'
+          depends: 'libwlroots10 (>= 0.15.1), libegl1, libgles2, libepoxy0, libwayland-server0, libxkbcommon0, libpixman-1-0, libinput10'
+          desc: 'Zenith desktop environment'
 
       - name: Archive debug bundle
         uses: thedoctor0/zip-release@master
@@ -80,6 +123,4 @@ jobs:
           automatic_release_tag: "release-${{ github.run_id }}"
           prerelease: false
           files: |
-            build/zenith/debug/bundle/debug_bundle.zip
-            build/zenith/profile/bundle/profile_bundle.zip
-            build/zenith/release/bundle/release_bundle.zip
+            *.deb
