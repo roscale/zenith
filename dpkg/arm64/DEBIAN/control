@@ -1,0 +1,6 @@
+Package: zenith
+Version: 0.1
+Architecture: arm64
+Maintainer: Alex Rosca <roscaalex19@gmail.com>
+Depends: libwlroots10 (>= 0.15.1), libegl1, libgles2, libepoxy0, libwayland-server0, libxkbcommon0, libpixman-1-0, libinput10
+Description: Zenith desktop environment
