@@ -36,7 +36,7 @@ jobs:
           architecture: x64 # optional, x64 or arm64
 
       - run: |
-          apt update -y
+          sudo apt update -y
           ./install_compilation_dependencies.sh
 
       - name: Compile the code and make bundles
