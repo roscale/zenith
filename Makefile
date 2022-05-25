@@ -42,15 +42,35 @@ DEBUG_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_debug $(ASAN)
 PROFILE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_profile
 RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release
 
-$(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC): $(DEBUG_OBJS)
+ENGINE_REVISION := $(shell flutter --version | grep Engine | awk '{print $$NF}')
+
+$(DEPS_DIR)/libflutter_engine_debug.so:
+	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-x64-debug.zip >/tmp/elinux-x64-debug.zip
+	unzip -o /tmp/elinux-x64-debug.zip -d /tmp || exit
+	mkdir -p deps
+	mv /tmp/libflutter_engine.so deps/libflutter_engine_debug.so
+
+$(DEPS_DIR)/libflutter_engine_profile.so:
+	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-x64-profile.zip >/tmp/elinux-x64-profile.zip
+	unzip -o /tmp/elinux-x64-profile.zip -d /tmp || exit
+	mkdir -p deps
+	mv /tmp/libflutter_engine.so deps/libflutter_engine_profile.so
+
+$(DEPS_DIR)/libflutter_engine_release.so:
+	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-x64-release.zip >/tmp/elinux-x64-release.zip
+	unzip -o /tmp/elinux-x64-release.zip -d /tmp || exit
+	mkdir -p deps
+	mv /tmp/libflutter_engine.so deps/libflutter_engine_release.so
+
+$(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC): $(DEBUG_OBJS) $(DEPS_DIR)/libflutter_engine_debug.so
 	mkdir -p $(dir $@)
 	$(CXX) $(DEBUG_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(DEBUG_LDFLAGS)
 
-$(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC): $(PROFILE_OBJS)
+$(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC): $(PROFILE_OBJS) $(DEPS_DIR)/libflutter_engine_profile.so
 	mkdir -p $(dir $@)
 	$(CXX) $(PROFILE_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(PROFILE_LDFLAGS)
 
-$(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC): $(RELEASE_OBJS)
+$(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC): $(RELEASE_OBJS) $(DEPS_DIR)/libflutter_engine_release.so
 	mkdir -p $(dir $@)
 	$(CXX) $(RELEASE_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(RELEASE_LDFLAGS)
 
@@ -93,26 +113,36 @@ $(RELEASE_BUILD_DIR)/%.cc.o: %.cc Makefile
 	mkdir -p $(dir $@)
 	$(CXX) $(RELEASE_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: clean all debug_bundle profile_bundle release_bundle attach_debugger
-
-all: debug_bundle profile_bundle release_bundle
+.PHONY: clean all debug_bundle profile_bundle release_bundle deb_package attach_debugger
 
 debug_bundle: $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC)
+	flutter build linux --debug
+
 	mkdir -p $(dir $<)/lib/
 	cp $(DEPS_DIR)/libflutter_engine_debug.so $(dir $<)/lib/libflutter_engine.so
 	cp -r build/linux/x64/debug/bundle/data $(dir $<)
 
 profile_bundle: $(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC)
+	flutter build linux --profile
+
 	mkdir -p $(dir $<)/lib/
 	cp $(DEPS_DIR)/libflutter_engine_profile.so $(dir $<)/lib/libflutter_engine.so
 	cp build/linux/x64/profile/bundle/lib/libapp.so $(dir $<)/lib
 	cp -r build/linux/x64/profile/bundle/data $(dir $<)
 
 release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
+	flutter build linux --release
+
 	mkdir -p $(dir $<)/lib/
 	cp $(DEPS_DIR)/libflutter_engine_release.so $(dir $<)/lib/libflutter_engine.so
 	cp build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
 	cp -r build/linux/x64/release/bundle/data $(dir $<)
+
+deb_package: release_bundle
+	mkdir -p build/zenith/release/deb/debpkg
+	cp -r dpkg/x86_64/* build/zenith/release/deb/debpkg
+	cp -r build/zenith/release/bundle/* build/zenith/release/deb/debpkg/opt/zenith
+	dpkg-deb --build build/zenith/release/deb/debpkg build/zenith/release/deb
 
 attach_debugger:
 	flutter attach --debug-uri=http://127.0.0.1:12345/

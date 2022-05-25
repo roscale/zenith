@@ -35,28 +35,17 @@ jobs:
           cache-path: ${{ runner.tool_cache }}/flutter # optional, change this to specify the cache path
           architecture: x64 # optional, x64 or arm64
 
-      - run: |
-          ./install_compilation_dependencies.sh
+      - name: Install dependencies
+        run: |
+          ./install_dependencies_ubuntu.sh
 
-      - name: Compile the code and make bundles
+      - name: Build x86_64 artifacts
         run: |
           flutter config --enable-linux-desktop
-
-          flutter build linux --debug
-          make debug_bundle -j6
-          
-          flutter build linux --profile
-          make profile_bundle -j6
-
-          flutter build linux --release
-          make release_bundle -j6
-
-      - name: Build deb package for x86_64
-        run: |
-          mkdir -p debpkg
-          cp -r dpkg/x86_64/* debpkg
-          cp -r build/zenith/release/bundle/* debpkg/opt/zenith
-          dpkg-deb --build debpkg .
+          make debug_bundle
+          make profile_bundle
+          make release_bundle
+          make deb_package
 
       - name: Archive debug bundle
         uses: thedoctor0/zip-release@master
@@ -86,7 +75,7 @@ jobs:
           automatic_release_tag: "release-${{ github.run_id }}"
           prerelease: false
           files: |
-            *.deb
-            build/zenith/debug/bundle/debug_bundle.zip
-            build/zenith/profile/bundle/profile_bundle.zip
-            build/zenith/release/bundle/release_bundle.zip
+            build/zenith/release/deb/*.deb
+            build/zenith/debug/bundle/*.zip
+            build/zenith/profile/bundle/*.zip
+            build/zenith/release/bundle/*.zip
