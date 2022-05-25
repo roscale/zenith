@@ -5,58 +5,60 @@ A wlroots-based Wayland compositor that uses Flutter for rendering.
 Video demonstration: https://youtu.be/3Zh7Tk4oWo0
 
 <p float="middle">
-  <img src="screenshots/firefox.png" width="45%" />
-  <img src="screenshots/task_switcher.png" width="45%" />
+  <img src="screenshots/firefox.png" width="40%" />
+  <img src="screenshots/task_switcher.png" width="40%" />
 </p>
 
 ## Code navigation
 
 - `lib/` Compositor Flutter code
 - `src/` Display server C++ code
-- `src/flutter_engine/` Flutter engine setup and method channel callbacks.
+- `src/flutter_engine/` Flutter engine setup and method channel callbacks
 - `src/util/` Useful classes and functions used in various places
 - `src/third_party/` Imported files and libraries
 
-## Run without compilation
+## Run without compiling
 
-### Arch Linux
+### Debian 12 Bookworm / Ubuntu 22.04 LTS
 
-- `./install_runtime_dependencies.sh`
-- Download the [latest](https://github.com/roscale/zenith/releases/latest) release
+- Download the deb package from the [latest](https://github.com/roscale/zenith/releases/latest) release
+- Install it with `sudo apt install ./package.deb`
+- Read the [Running](#running) section
+
+### Other distributions
+
+- Download a bundle from the [latest](https://github.com/roscale/zenith/releases/latest) release, preferably the release
+  version
+- Install necessary dependencies by yourself. If you are on Arch Linux, run `install_dependencies_arch_linux.sh`
 - Read the [Running](#running) section.
 
-## Compilation dependencies
-
-### Arch Linux
+## Development dependencies
 
 - Download Flutter: https://docs.flutter.dev/get-started/install/linux#install-flutter-manually
-- `./install_compilation_dependencies.sh`
+- Make sure `flutter` is in PATH
+- On Debian or Ubuntu, run `install_dependencies_debian.sh`
+- On Arch Linux, run `install_dependencies_arch_linux.sh`
 
-Make sure `flutter` is in PATH.
-
-## Compiling
+## Building
 
 - `flutter config --enable-linux-desktop` to enable the Linux desktop platform
-- `flutter pub get` to download Flutter project dependencies
+- `flutter pub get` to download Flutter dependencies from pub.dev
 
 #### Debug
 
 ```
-flutter build linux --debug
 make debug_bundle -j6
 ```
 
 #### Profile
 
 ```
-flutter build linux --profile
 make profile_bundle -j6
 ```
 
 #### Release
 
 ```
-flutter build linux --release
 make release_bundle -j6
 ```
 
@@ -69,24 +71,30 @@ command line.
 
 Switch to another TTY.
 
+Change directory where the `zenith` binary is. If you installed the deb package, it's in `/opt/zenith/`. If you built
+the project using `make`, it's in `build/zenith/[debug|profile|release]/bundle/`.
+
+Start the compositor:
+
 ```
-cd build/zenith/[debug|profile|release]/bundle/
 ./zenith COMMAND
 ```
 
 Replace `COMMAND` with your program of choice to be launched with the compositor. The program must have Wayland
 support (at the moment). Any QT or GTK app should work. You can launch a terminal emulator like `konsole`
-or `gnome-terminal`, and use it to start subsequent programs. If you want to launch Chromium, you must
-use `--enable-features=UseOzonePlatform --ozone-platform=wayland`.
+or `terminator`, and use it to start subsequent programs. `gnome-terminal` is very picky and it seems to always choose
+to connect to the Wayland socket of the host, so it may not work. If you want to launch Chromium or Chromium-based
+apps, you must use `--enable-features=UseOzonePlatform --ozone-platform=wayland`.
 
-If you want to start Zenith on your secondary screen, set the environment variable `ZENITH_OUTPUT=1`, `1` being the
-index of the output. The default choice is `0`, the primary screen. This setting is temporary until multi-monitor
-support is implemented.
+If you want to start the compositor on your secondary screen, set the environment variable `ZENITH_OUTPUT=1`, `1` being
+the
+index of the output. The default choice is `0`, the primary screen.
 
-For development purposes it is more convenient to start Zenith from an existing X11 or Wayland compositor, and it will
+For development purposes it is more convenient to start the compositor from an existing X11 or Wayland compositor, and
+it will
 show up as a window.
 
-**Do not just run `flutter run`. It will not work. It will use the GTK embedder instead of our wlroots embedder.**
+**Do not just run `flutter run`. It will not work. It will use the GTK embedder instead of the wlroots embedder.**
 
 Press `Ctrl`+`Alt`+`Delete` to quit.
 

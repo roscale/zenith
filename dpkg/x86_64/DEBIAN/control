@@ -2,5 +2,5 @@ Package: zenith
 Version: 0.1
 Architecture: amd64
 Maintainer: Alex Rosca <roscaalex19@gmail.com>
-Depends: libwlroots10, libegl1, libgles2, libepoxy0, libwayland-server0, libxkbcommon0, libpixman-1-0, libinput10
+Depends: libwlroots10, libgl1, libegl1, libgles2, libepoxy0, libwayland-server0, libxkbcommon0, libpixman-1-0, libinput10
 Description: Zenith desktop environment

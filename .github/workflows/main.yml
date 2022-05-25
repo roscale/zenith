@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ./install_dependencies_ubuntu.sh
+          ./install_dependencies_debian.sh
 
       - name: Build x86_64 artifacts
         run: |
