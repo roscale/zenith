@@ -39,34 +39,47 @@ jobs:
         run: |
           ./install_dependencies_debian.sh
 
-      - name: Build x86_64 artifacts
+      - name: Build amd64 artifacts
         run: |
           flutter config --enable-linux-desktop
-          make debug_bundle
-          make profile_bundle
-          make release_bundle
-          make deb_package
+          flutter pub get
+          make deb_package -j16
 
-      - name: Archive debug bundle
-        uses: thedoctor0/zip-release@master
-        with:
-          type: 'zip'
-          directory: 'build/zenith/debug/bundle/'
-          filename: 'debug_bundle.zip'
-
-      - name: Archive profile bundle
-        uses: thedoctor0/zip-release@master
-        with:
-          type: 'zip'
-          directory: 'build/zenith/profile/bundle/'
-          filename: 'profile_bundle.zip'
-
-      - name: Archive release bundle
+      - name: Archive amd64 bundle
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
           directory: 'build/zenith/release/bundle/'
-          filename: 'release_bundle.zip'
+          filename: 'bundle_amd64.zip'
+
+      - uses: uraimo/run-on-arch-action@v2
+        name: Build arm64 artifacts
+        id: arm64_artifacts
+        with:
+          arch: aarch64
+          distro: ubuntu22.04
+
+          # Create an arm64_artifacts directory
+          setup: |
+            mkdir -p "${PWD}/arm64_artifacts"
+
+          # Mount the arm64_artifacts directory as /arm64_artifacts in the container
+          dockerRunArgs: |
+            --volume "${PWD}/arm64_artifacts:/arm64_artifacts"
+
+          run: |
+            apt update -y
+            apt install -y sudo curl file git unzip debianutils xz-utils zip pkg-config build-essential
+            ./install_dependencies_debian.sh
+            git clone -b stable https://github.com/flutter/flutter.git
+            export PATH="$PATH:$PWD/flutter/bin"
+            flutter config --enable-linux-desktop
+            flutter doctor
+            
+            flutter pub get
+            make release_bundle -j16
+            make deb_package
+            cp build/zenith/release/deb/*.deb /arm64_artifacts
 
       - name: Create a release
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -75,7 +88,6 @@ jobs:
           automatic_release_tag: "release-${{ github.run_id }}"
           prerelease: false
           files: |
-            build/zenith/release/deb/*.deb
-            build/zenith/debug/bundle/*.zip
-            build/zenith/profile/bundle/*.zip
             build/zenith/release/bundle/*.zip
+            build/zenith/release/deb/*.deb
+            arm64_artifacts/*

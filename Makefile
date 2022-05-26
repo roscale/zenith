@@ -1,3 +1,10 @@
+uname_m = $(shell uname -m)
+ifeq ($(uname_m),x86_64)
+ARCH += x64
+else
+ARCH += arm64
+endif
+
 TARGET_EXEC := zenith
 SRC_DIRS := src
 DEPS_DIR := deps
@@ -45,20 +52,20 @@ RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release
 ENGINE_REVISION := $(shell flutter --version | grep Engine | awk '{print $$NF}')
 
 $(DEPS_DIR)/libflutter_engine_debug.so:
-	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-x64-debug.zip >/tmp/elinux-x64-debug.zip
-	unzip -o /tmp/elinux-x64-debug.zip -d /tmp || exit
+	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-$(ARCH)-debug.zip >/tmp/elinux-$(ARCH)-debug.zip
+	unzip -o /tmp/elinux-$(ARCH)-debug.zip -d /tmp || exit
 	mkdir -p deps
 	mv /tmp/libflutter_engine.so deps/libflutter_engine_debug.so
 
 $(DEPS_DIR)/libflutter_engine_profile.so:
-	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-x64-profile.zip >/tmp/elinux-x64-profile.zip
-	unzip -o /tmp/elinux-x64-profile.zip -d /tmp || exit
+	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-$(ARCH)-profile.zip >/tmp/elinux-$(ARCH)-profile.zip
+	unzip -o /tmp/elinux-$(ARCH)-profile.zip -d /tmp || exit
 	mkdir -p deps
 	mv /tmp/libflutter_engine.so deps/libflutter_engine_profile.so
 
 $(DEPS_DIR)/libflutter_engine_release.so:
-	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-x64-release.zip >/tmp/elinux-x64-release.zip
-	unzip -o /tmp/elinux-x64-release.zip -d /tmp || exit
+	curl -L https://github.com/sony/flutter-embedded-linux/releases/download/$(ENGINE_REVISION)/elinux-$(ARCH)-release.zip >/tmp/elinux-$(ARCH)-release.zip
+	unzip -o /tmp/elinux-$(ARCH)-release.zip -d /tmp || exit
 	mkdir -p deps
 	mv /tmp/libflutter_engine.so deps/libflutter_engine_release.so
 
@@ -120,27 +127,27 @@ debug_bundle: $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC)
 
 	mkdir -p $(dir $<)/lib/
 	cp $(DEPS_DIR)/libflutter_engine_debug.so $(dir $<)/lib/libflutter_engine.so
-	cp -r build/linux/x64/debug/bundle/data $(dir $<)
+	cp -r build/linux/$(ARCH)/debug/bundle/data $(dir $<)
 
 profile_bundle: $(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	flutter build linux --profile
 
 	mkdir -p $(dir $<)/lib/
 	cp $(DEPS_DIR)/libflutter_engine_profile.so $(dir $<)/lib/libflutter_engine.so
-	cp build/linux/x64/profile/bundle/lib/libapp.so $(dir $<)/lib
-	cp -r build/linux/x64/profile/bundle/data $(dir $<)
+	cp build/linux/$(ARCH)/profile/bundle/lib/libapp.so $(dir $<)/lib
+	cp -r build/linux/$(ARCH)/profile/bundle/data $(dir $<)
 
 release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	flutter build linux --release
 
 	mkdir -p $(dir $<)/lib/
 	cp $(DEPS_DIR)/libflutter_engine_release.so $(dir $<)/lib/libflutter_engine.so
-	cp build/linux/x64/release/bundle/lib/libapp.so $(dir $<)/lib
-	cp -r build/linux/x64/release/bundle/data $(dir $<)
+	cp build/linux/$(ARCH)/release/bundle/lib/libapp.so $(dir $<)/lib
+	cp -r build/linux/$(ARCH)/release/bundle/data $(dir $<)
 
 deb_package: release_bundle
 	mkdir -p build/zenith/release/deb/debpkg
-	cp -r dpkg/x86_64/* build/zenith/release/deb/debpkg
+	cp -r dpkg/$(ARCH)/* build/zenith/release/deb/debpkg
 	cp -r build/zenith/release/bundle/* build/zenith/release/deb/debpkg/opt/zenith
 	dpkg-deb --build build/zenith/release/deb/debpkg build/zenith/release/deb
 
