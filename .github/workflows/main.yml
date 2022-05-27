@@ -1,14 +1,12 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Build bundles
+name: Build artifacts for amd64 and arm64
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    tags:
+      - '*'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -59,14 +57,6 @@ jobs:
           arch: aarch64
           distro: ubuntu22.04
 
-          # Create an arm64_artifacts directory
-          setup: |
-            mkdir -p "${PWD}/arm64_artifacts"
-
-          # Mount the arm64_artifacts directory as /arm64_artifacts in the container
-          dockerRunArgs: |
-            --volume "${PWD}/arm64_artifacts:/arm64_artifacts"
-
           run: |
             apt update -y
             apt install -y sudo curl file git unzip debianutils xz-utils zip pkg-config build-essential
@@ -79,15 +69,14 @@ jobs:
             flutter pub get
             make release_bundle -j16
             make deb_package
-            cp build/zenith/release/deb/*.deb /arm64_artifacts
 
       - name: Create a release
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "release-${{ github.run_id }}"
+          automatic_release_tag: "${{ github.ref_name }}"
+          title: "Zenith ${{ github.ref_name }}"
           prerelease: false
           files: |
             build/zenith/release/bundle/*.zip
             build/zenith/release/deb/*.deb
-            arm64_artifacts/*
