@@ -27,7 +27,7 @@ Video demonstration: https://youtu.be/3Zh7Tk4oWo0
 
 ### Other distributions
 
-- Download a bundle from the [latest](https://github.com/roscale/zenith/releases/latest) release, preferably the release
+- Download the bundle from the [latest](https://github.com/roscale/zenith/releases/latest) release
   version
 - Install necessary dependencies by yourself. If you are on Arch Linux, run `install_dependencies_arch_linux.sh`
 - Read the [Running](#running) section.
@@ -369,3 +369,7 @@ Translate the desktop environment in multiple languages, add multiple virtual ke
 
 XWayland integration would allow for running X11 apps. Mobile friendly Wayland apps are few, mobile friendly X11 apps
 are even fewer (or non-existent?). It would be nice to have for compatibility though.
+
+# License
+
+This project is licensed under GPL-2.0-or-later, see the LICENSE file for more information.
