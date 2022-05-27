@@ -1,8 +1,10 @@
 uname_m = $(shell uname -m)
 ifeq ($(uname_m),x86_64)
 ARCH += x64
+ARCH_DEB += amd64
 else
 ARCH += arm64
+ARCH_DEB += arm64
 endif
 
 TARGET_EXEC := zenith
@@ -147,8 +149,12 @@ release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
 
 deb_package: release_bundle
 	mkdir -p build/zenith/release/deb/debpkg
-	cp -r dpkg/$(ARCH)/* build/zenith/release/deb/debpkg
+	cp -r dpkg/* build/zenith/release/deb/debpkg
+
+	sed -i 's/$$VERSION/$(VERSION)/g' build/zenith/release/deb/debpkg/DEBIAN/control
+	sed -i 's/$$ARCH/$(ARCH_DEB)/g' build/zenith/release/deb/debpkg/DEBIAN/control
 	cp -r build/zenith/release/bundle/* build/zenith/release/deb/debpkg/opt/zenith
+
 	dpkg-deb --build build/zenith/release/deb/debpkg build/zenith/release/deb
 
 attach_debugger:

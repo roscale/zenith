@@ -41,7 +41,8 @@ jobs:
         run: |
           flutter config --enable-linux-desktop
           flutter pub get
-          make deb_package -j16
+          make release_bundle -j16
+          make deb_package VERSION=${{ github.ref_name }}
 
       - name: Archive amd64 bundle
         uses: thedoctor0/zip-release@master
@@ -67,8 +68,7 @@ jobs:
             flutter doctor
             
             flutter pub get
-            make release_bundle -j16
-            make deb_package
+            make deb_package -j16 VERSION=${{ github.ref_name }}
 
       - name: Create a release
         uses: "marvinpinto/action-automatic-releases@latest"
