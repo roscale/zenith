@@ -1,8 +1,5 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Build artifacts for amd64 and arm64
 
-# Controls when the workflow will run
 on:
   push:
     tags:
@@ -11,15 +8,17 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-22.04
+  build-for-amd64:
+    runs-on: ubuntu-20.04
+    container: debian:bookworm
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - run: |
+          apt update -y
+          apt install -y sudo git git-lfs nodejs npm zip unzip curl file debianutils xz-utils pkg-config build-essential jq docker.io
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
@@ -51,12 +50,33 @@ jobs:
           directory: 'build/zenith/release/bundle/'
           filename: 'bundle_amd64.zip'
 
-      - uses: uraimo/run-on-arch-action@v2
+      - uses: actions/upload-artifact@v3
+        with:
+          name: 'amd64_bundle'
+          path: 'build/zenith/release/bundle/*.zip'
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: 'amd64_deb'
+          path: 'build/zenith/release/deb/*.deb'
+
+  
+  build-for-arm64:
+    runs-on: ubuntu-22.04
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+
+      - uses: roscale/run-on-arch-action@bookworm-host
         name: Build arm64 artifacts
         id: arm64_artifacts
         with:
           arch: aarch64
-          distro: ubuntu22.04
+          distro: bookworm
 
           run: |
             apt update -y
@@ -70,6 +90,27 @@ jobs:
             flutter pub get
             make deb_package -j16 VERSION=${{ github.ref_name }}
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: 'arm64_deb'
+          path: 'build/zenith/release/deb/*.deb'
+
+  create-release:
+    needs: [ build-for-amd64, build-for-arm64 ]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'amd64_bundle'
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'amd64_deb'
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'arm64_deb'
+
       - name: Create a release
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -78,5 +119,5 @@ jobs:
           title: "Zenith ${{ github.ref_name }}"
           prerelease: false
           files: |
-            build/zenith/release/bundle/*.zip
-            build/zenith/release/deb/*.deb
+            *.zip
+            *.deb
