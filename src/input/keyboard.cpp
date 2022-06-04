@@ -36,8 +36,6 @@ void keyboard_handle_modifiers(wl_listener* listener, void* data) {
 	ZenithKeyboard* keyboard = wl_container_of(listener, keyboard, modifiers);
 	wlr_seat* seat = keyboard->server->seat;
 
-	keyboard->server->pointer->kinetic_scrolling.stop();
-
 	/*
 	 * A seat can only have one keyboard, but this is a limitation of the
 	 * Wayland protocol - not wlroots. We assign all connected keyboards to the
@@ -53,8 +51,6 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 	ZenithKeyboard* keyboard = wl_container_of(listener, keyboard, key);
 	wlr_seat* seat = keyboard->server->seat;
 	auto* event = static_cast<wlr_event_keyboard_key*>(data);
-
-	keyboard->server->pointer->kinetic_scrolling.stop();
 
 	wlr_seat_set_keyboard(seat, keyboard->device);
 

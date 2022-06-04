@@ -1,7 +1,7 @@
 #include "flutter_engine_state.hpp"
 #include "util/create_shared_egl_context.hpp"
 #include "flutter_callbacks.hpp"
-#include "host_api.hpp"
+#include "platform_api.hpp"
 #include "standard_method_codec.h"
 #include <filesystem>
 #include <thread>
@@ -39,8 +39,7 @@ FlutterEngineState::FlutterEngineState(ZenithServer* server, wlr_egl* main_egl)
 	// FBOs cannot be shared between GL contexts. Since these FBOs will be used by a Flutter thread, create these
 	// resources using Flutter's context.
 	wlr_egl_make_current(flutter_gl_context);
-	fix_y_flip = fix_y_flip_init_state((int) dummy_width, (int) dummy_height);
-	present_fbo = std::make_unique<SurfaceFramebuffer>(dummy_width, dummy_height);
+	output_framebuffer = std::make_unique<Framebuffer>(dummy_width, dummy_height);
 	wlr_egl_unset_current(flutter_gl_context);
 
 	zenith_egl_restore_context(&saved_egl_context);
@@ -55,7 +54,7 @@ void FlutterEngineState::run_engine() {
 	// Arm the timer.
 	wl_event_source_timer_update(platform_task_runner_timer, 1);
 
-	register_host_api();
+	register_platform_api();
 }
 
 void FlutterEngineState::start_engine() {
@@ -128,7 +127,7 @@ void FlutterEngineState::start_engine() {
 	assert(result == kSuccess && engine != nullptr);
 }
 
-void FlutterEngineState::register_host_api() {
+void FlutterEngineState::register_platform_api() {
 	auto& codec = flutter::StandardMethodCodec::GetInstance();
 
 	messenger.SetEngine(engine);
@@ -157,13 +156,10 @@ void FlutterEngineState::register_host_api() {
 }
 
 void FlutterEngineState::send_window_metrics(FlutterWindowMetricsEvent& metrics) {
-	std::scoped_lock lock(server->flutter_engine_state->present_fbo->mutex);
-	GLScopedLock gl_lock(server->flutter_engine_state->gl_mutex);
+	std::scoped_lock lock(server->flutter_engine_state->output_framebuffer->mutex);
+	GLScopedLock gl_lock(server->flutter_engine_state->output_gl_mutex);
 
 	FlutterEngineSendWindowMetricsEvent(server->flutter_engine_state->engine, &metrics);
 
-	present_fbo->schedule_resize(metrics.width, metrics.height);
-	present_fbo->apply_pending_resize();
-
-	fix_y_flip_resize(&fix_y_flip, (int) metrics.width, (int) metrics.height);
+	output_framebuffer->resize(metrics.width, metrics.height);
 }

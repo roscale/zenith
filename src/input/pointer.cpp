@@ -58,7 +58,6 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion*>(data);
 
-	pointer->kinetic_scrolling.stop();
 	/* The cursor doesn't move unless we tell it to. The cursor automatically
 	 * handles constraining the motion to the output layout, as well as any
 	 * special configuration applied for the specific input device which
@@ -82,8 +81,6 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_motion_absolute);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion_absolute*>(data);
-
-	pointer->kinetic_scrolling.stop();
 
 	wlr_cursor_warp_absolute(pointer->cursor, event->device, event->x, event->y);
 
@@ -142,8 +139,6 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_axis);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_axis*>(data);
-
-	pointer->kinetic_scrolling.record_scroll_event(event);
 
 	/* Notify the client with pointer focus of the axis event. */
 	wlr_seat_pointer_notify_axis(server->seat,

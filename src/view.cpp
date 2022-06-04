@@ -115,7 +115,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 			server->surface_framebuffers.insert(
 				  std::pair(
 						view->id,
-						std::make_shared<SurfaceFramebuffer>(texture->width, texture->height)
+						std::make_shared<Framebuffer>(texture->width, texture->height)
 				  )
 			);
 		}
@@ -259,7 +259,7 @@ void surface_commit(wl_listener* listener, void* data) {
 		map.insert({EncodableValue("geometry_changed"), EncodableValue(false)});
 	}
 
-	std::shared_ptr<SurfaceFramebuffer> surface_framebuffer;
+	std::shared_ptr<Framebuffer> surface_framebuffer;
 	{
 		std::scoped_lock lock(server->surface_framebuffers_mutex);
 
@@ -275,13 +275,17 @@ void surface_commit(wl_listener* listener, void* data) {
 	std::scoped_lock lock(surface_framebuffer->mutex);
 
 	bool surface_size_changed = false;
-	if ((size_t) surface->current.buffer_width != surface_framebuffer->pending_width
-	    or (size_t) surface->current.buffer_height != surface_framebuffer->pending_height) {
+	if ((size_t) surface->current.buffer_width != surface_framebuffer->width
+	    or (size_t) surface->current.buffer_height != surface_framebuffer->height) {
 
 		surface_size_changed = true;
+
+		wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
+		wlr_egl_make_current(egl);
 		// The actual resizing is happening on a Flutter thread because resizing a texture is very slow, and I don't want
 		// to block the main thread causing input delay and other stuff.
-		surface_framebuffer->schedule_resize(surface->current.buffer_width, surface->current.buffer_height);
+		surface_framebuffer->resize(surface->current.buffer_width, surface->current.buffer_height);
+
 		map.insert({EncodableValue("surface_size_changed"), EncodableValue(true)});
 		map.insert({EncodableValue("surface_width"), EncodableValue((int64_t) surface->current.buffer_width)});
 		map.insert({EncodableValue("surface_height"), EncodableValue((int64_t) surface->current.buffer_height)});

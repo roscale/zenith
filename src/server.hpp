@@ -7,9 +7,9 @@
 #include <memory>
 #include <thread>
 #include "output.hpp"
-#include "keyboard.hpp"
-#include "pointer/pointer.hpp"
-#include "touch.hpp"
+#include "input/keyboard.hpp"
+#include "input/pointer.hpp"
+#include "input/touch.hpp"
 #include "view.hpp"
 
 extern "C" {
@@ -52,7 +52,7 @@ public:
 
 	std::unordered_map<wlr_surface*, size_t> view_id_by_wlr_surface{};
 	std::unordered_map<size_t, std::unique_ptr<ZenithView>> views_by_id{};
-	std::unordered_map<size_t, std::shared_ptr<SurfaceFramebuffer>> surface_framebuffers{};
+	std::unordered_map<size_t, std::shared_ptr<Framebuffer>> surface_framebuffers{};
 	std::mutex surface_framebuffers_mutex{};
 
 	wlr_seat* seat;

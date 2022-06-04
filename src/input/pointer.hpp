@@ -2,7 +2,6 @@
 
 #include <queue>
 #include "mouse_button_tracker.hpp"
-#include "kinetic_scrolling.hpp"
 
 extern "C" {
 #include "wlr/types/wlr_cursor.h"
@@ -27,8 +26,6 @@ struct ZenithPointer {
 	wl_listener cursor_button{};
 	wl_listener cursor_axis{};
 	wl_listener cursor_frame{};
-
-	KineticScrolling kinetic_scrolling{};
 };
 
 /*

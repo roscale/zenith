@@ -6,9 +6,8 @@
 #include "platform_channels/binary_messenger.hpp"
 #include "platform_channels/incoming_message_dispatcher.hpp"
 #include "platform_channels/method_channel.h"
-#include "util/fix_y_flip.hpp"
 #include "util/render_to_texture_shader.hpp"
-#include "util/surface_framebuffer.hpp"
+#include "util/framebuffer.hpp"
 #include "task_runner.hpp"
 #include "gl_mutex.hpp"
 
@@ -25,7 +24,7 @@ struct FlutterEngineState {
 
 	void start_engine();
 
-	void register_host_api();
+	void register_platform_api();
 
 	void send_window_metrics(FlutterWindowMetricsEvent& metrics);
 
@@ -47,9 +46,9 @@ struct FlutterEngineState {
 	intptr_t baton = 0;
 	bool new_baton = false;
 	std::mutex baton_mutex{};
-	fix_y_flip_state fix_y_flip{};
-	GLMutex gl_mutex{};
 
-	std::unique_ptr<SurfaceFramebuffer> present_fbo = nullptr;
-	std::list<std::shared_ptr<SurfaceFramebuffer>> framebuffers_in_use{};
+	std::unique_ptr<Framebuffer> output_framebuffer = nullptr;
+	GLMutex output_gl_mutex{}; // use output_framebuffer->mutex to lock this variable
+
+	std::list<std::shared_ptr<Framebuffer>> surface_framebuffers_in_use{};
 };

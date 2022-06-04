@@ -1,12 +1,13 @@
-#include "surface_framebuffer.hpp"
+#include "framebuffer.hpp"
 #include "render_to_texture_shader.hpp"
 #include <cassert>
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
 
-SurfaceFramebuffer::SurfaceFramebuffer(size_t width, size_t height)
-	  : width(width), height(height), pending_width(width), pending_height(height) {
+Framebuffer::Framebuffer(size_t width, size_t height)
+	  : width(width), height(height) {
 
+	assert(eglGetCurrentContext() != EGL_NO_CONTEXT);
 	// Backup context state.
 	GLint framebuffer_binding;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
@@ -37,55 +38,48 @@ SurfaceFramebuffer::SurfaceFramebuffer(size_t width, size_t height)
 	glBindTexture(GL_TEXTURE_2D, texture_binding);
 }
 
-void SurfaceFramebuffer::schedule_resize(size_t new_width, size_t new_height) {
-	pending_width = new_width;
-	pending_height = new_height;
-}
-
-bool SurfaceFramebuffer::apply_pending_resize() {
-	if (width == pending_width && height == pending_height) {
-		return false;
+void Framebuffer::resize(size_t new_width, size_t new_height) {
+	assert(eglGetCurrentContext() != EGL_NO_CONTEXT);
+	if (width == new_width && height == new_height) {
+		return;
 	}
-
 	// Backup context state.
 	GLint framebuffer_binding;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
 	GLint texture_binding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture_binding);
 
-	// Create a texture and attach it to the framebuffer.
+	// Create a texture that having the new dimensions.
 	GLuint resized_texture;
 	glGenTextures(1, &resized_texture);
 
 	glBindTexture(GL_TEXTURE_2D, resized_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int) pending_width, (int) pending_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-	             nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int) new_width, (int) new_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
+	// Attach the new texture to the framebuffer.
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, resized_texture, 0);
 
-	// Copy the current texture into the resized texture to avoid flickering.
-	glClearColor(0, 0, 0, 0);
+	// Copy the current texture into the resized texture to avoid visual artifacts from uninitialized VRAM.
+	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 	RenderToTextureShader::instance()->render(texture, 0, 0, width, height, framebuffer);
 
 	glDeleteTextures(1, &texture);
 
-	width = pending_width;
-	height = pending_height;
+	width = new_width;
+	height = new_height;
 	texture = resized_texture;
 
 	// Restore context state.
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);
 	glBindTexture(GL_TEXTURE_2D, texture_binding);
-
-	return true;
 }
 
-SurfaceFramebuffer::~SurfaceFramebuffer() {
+Framebuffer::~Framebuffer() {
 	assert(eglGetCurrentContext() != EGL_NO_CONTEXT);
 	glDeleteTextures(1, &texture);
 	glDeleteFramebuffers(1, &framebuffer);

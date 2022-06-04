@@ -28,21 +28,23 @@ bool flutter_clear_current(void* userdata) {
 bool flutter_present(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
 
-	state->framebuffers_in_use.clear();
+	state->surface_framebuffers_in_use.clear();
 
-	std::scoped_lock lock(state->present_fbo->mutex);
-	GLScopedLock gl_lock(state->gl_mutex);
+	std::scoped_lock lock(state->output_framebuffer->mutex);
+	GLScopedLock gl_lock(state->output_gl_mutex);
 
-//	render_to_fbo(&state->fix_y_flip, state->present_fbo->framebuffer);
+	// FIXME: FlutterEngineMarkExternalTextureFrameAvailable does not trigger a VSync fast enough,
+	// so Flutter will only VSync every second frame. Marking a texture after FlutterEngineOnVsync
+	// only fixes the problem partially because Flutter will still skip frames every once in a while.
+	// This forces Flutter to always schedule a new frame.
+	FlutterEngineScheduleFrame(state->engine);
 
 	return true;
 }
 
 uint32_t flutter_fbo_callback(void* userdata) {
 	auto* state = static_cast<FlutterEngineState*>(userdata);
-//	std::cout << "fbo" << std::endl;
-	return state->present_fbo->framebuffer;
-//	return state->fix_y_flip.offscreen_framebuffer;
+	return state->output_framebuffer->framebuffer;
 }
 
 void flutter_vsync_callback(void* userdata, intptr_t baton) {
@@ -60,7 +62,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	auto* state = static_cast<FlutterEngineState*>(userdata);
 	ZenithServer* server = state->server;
 
-	std::shared_ptr<SurfaceFramebuffer> surface_framebuffer;
+	std::shared_ptr<Framebuffer> surface_framebuffer;
 	{
 		std::scoped_lock lock(server->surface_framebuffers_mutex);
 
@@ -75,8 +77,6 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 
 	std::scoped_lock lock(surface_framebuffer->mutex);
 
-	surface_framebuffer->apply_pending_resize();
-
 	texture_out->target = GL_TEXTURE_2D;
 	texture_out->format = GL_RGBA8;
 	texture_out->name = surface_framebuffer->texture;
@@ -85,7 +85,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	// shared_ptr happens to be the only copy left. We don't want the destructor to run and delete
 	// the texture because Flutter is going to render it later. We can safely clear this list
 	// after all the rendering is done.
-	state->framebuffers_in_use.push_back(surface_framebuffer);
+	state->surface_framebuffers_in_use.push_back(surface_framebuffer);
 	return true;
 }
 

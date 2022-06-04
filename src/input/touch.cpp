@@ -72,12 +72,12 @@ void touch_up_handle(wl_listener* listener, void* data) {
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = kUp;
 
-	auto last_coordiates = touch_device->last_touch_coordinates[event->touch_id];
-	e.x = last_coordiates.first * server->output->wlr_output->width;
-	e.y = last_coordiates.second * server->output->wlr_output->height;
+	auto last_coordinates = touch_device->last_touch_coordinates[event->touch_id];
+	// Map from [0, 1] to [screen_width, screen_height].
+	e.x = last_coordinates.first * server->output->wlr_output->width;
+	e.y = last_coordinates.second * server->output->wlr_output->height;
 
 	e.timestamp = current_time_microseconds();
-	// Map from [0, 1] to [screen_width, screen_height].
 	e.device_kind = kFlutterPointerDeviceKindTouch;
 	e.signal_kind = kFlutterPointerSignalKindNone;
 	e.device = event->touch_id;
@@ -94,9 +94,9 @@ void touch_cancel_handle(wl_listener* listener, void* data) {
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = kCancel;
 
-	auto last_coordiates = touch_device->last_touch_coordinates[event->touch_id];
-	e.x = last_coordiates.first * server->output->wlr_output->width;
-	e.y = last_coordiates.second * server->output->wlr_output->height;
+	auto last_coordinates = touch_device->last_touch_coordinates[event->touch_id];
+	e.x = last_coordinates.first * server->output->wlr_output->width;
+	e.y = last_coordinates.second * server->output->wlr_output->height;
 
 	e.timestamp = current_time_microseconds();
 	// Map from [0, 1] to [screen_width, screen_height].

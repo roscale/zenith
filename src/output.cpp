@@ -10,13 +10,6 @@ extern "C" {
 #undef static
 }
 
-static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo);
-
-struct render_data {
-	ZenithView* view;
-	GLuint view_fbo;
-};
-
 ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	  : server(server), wlr_output(wlr_output) {
 
@@ -25,6 +18,13 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	mode_changed.notify = mode_changed_event;
 	wl_signal_add(&wlr_output->events.mode, &mode_changed);
 }
+
+static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo);
+
+struct RenderData {
+	ZenithView* view;
+	GLuint view_fbo;
+};
 
 void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
@@ -45,7 +45,7 @@ void output_frame(wl_listener* listener, void* data) {
 			continue;
 		}
 
-		std::shared_ptr<SurfaceFramebuffer> view_framebuffer;
+		std::shared_ptr<Framebuffer> view_framebuffer;
 
 		{
 			std::scoped_lock lock(server->surface_framebuffers_mutex);
@@ -97,12 +97,12 @@ void output_frame(wl_listener* listener, void* data) {
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
 
 	{
-		std::scoped_lock lock(flutter_engine_state->present_fbo->mutex);
-		GLScopedLock gl_lock(flutter_engine_state->gl_mutex);
+		std::scoped_lock lock(flutter_engine_state->output_framebuffer->mutex);
+		GLScopedLock gl_lock(flutter_engine_state->output_gl_mutex);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 		glClear(GL_COLOR_BUFFER_BIT);
-		RenderToTextureShader::instance()->render(flutter_engine_state->present_fbo->texture, 0, 0, width,
+		RenderToTextureShader::instance()->render(flutter_engine_state->output_framebuffer->texture, 0, 0, width,
 		                                          height, output_fbo, true);
 	}
 
@@ -116,10 +116,6 @@ void output_frame(wl_listener* listener, void* data) {
 
 	wlr_renderer_end(server->renderer);
 	wlr_output_commit(output->wlr_output);
-
-	// I tried using a timer to apply the scrolling but on high CPU load the timer is not triggered
-	// often enough. This is a good place because it forces the scroll to update on every frame.
-	server->pointer->kinetic_scrolling.apply_kinetic_scrolling(server->seat);
 }
 
 void mode_changed_event(wl_listener* listener, void* data) {
@@ -143,7 +139,7 @@ static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo) {
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	render_data rdata = {
+	RenderData rdata = {
 		  .view = view,
 		  .view_fbo = view_fbo,
 	};
@@ -153,7 +149,7 @@ static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo) {
 		wlr_xdg_surface_for_each_surface(
 			  view->xdg_surface,
 			  [](struct wlr_surface* surface, int sx, int sy, void* data) {
-				  auto* rdata = static_cast<render_data*>(data);
+				  auto* rdata = static_cast<RenderData*>(data);
 				  auto* view = rdata->view;
 
 				  if (surface != view->xdg_surface->surface && wlr_surface_is_xdg_surface(surface)) {
