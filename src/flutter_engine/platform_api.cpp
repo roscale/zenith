@@ -1,3 +1,4 @@
+#include <linux/input-event-codes.h>
 #include "platform_api.hpp"
 #include "server.hpp"
 #include "encodable_value.h"
@@ -71,8 +72,7 @@ void pointer_hover(ZenithServer* server,
 void pointer_exit(ZenithServer* server,
                   const flutter::MethodCall<>& call,
                   std::unique_ptr<flutter::MethodResult<>>&& result) {
-
-	wlr_seat_pointer_clear_focus(server->seat);
+	wlr_seat_pointer_notify_clear_focus(server->seat);
 	wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
 	result->Success();
 }
@@ -137,3 +137,41 @@ void closing_animation_finished(ZenithServer* server,
 
 	result->Success();
 }
+
+void mouse_button_event(ZenithServer* server, const flutter::MethodCall<>& call,
+                        std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	auto is_pressed = std::get<bool>(args[flutter::EncodableValue("is_pressed")]);
+	auto button = std::get<int>(args[flutter::EncodableValue("button")]);
+
+	int32_t linux_button = 0;
+	switch (button) {
+		case kFlutterPointerButtonMousePrimary:
+			linux_button = BTN_LEFT;
+			break;
+		case kFlutterPointerButtonMouseSecondary:
+			linux_button = BTN_RIGHT;
+			break;
+		case kFlutterPointerButtonMouseMiddle:
+			linux_button = BTN_MIDDLE;
+			break;
+		default:
+			break;
+	}
+
+	wlr_seat_pointer_notify_button(server->seat, current_time_milliseconds(), linux_button,
+	                               is_pressed ? WLR_BUTTON_PRESSED : WLR_BUTTON_RELEASED);
+	// FIXME:
+	// We should not manually trigger a frame event because one is received automatically by ZenithPointer at the right
+	// time. However, by the time this frame event is received, the button event has not finished routing through
+	// Flutter and back to the platform, therefore, it will be sent too early and their execution order is swapped.
+	// The frame event has to come after the button event, so call it manually here.
+	// There are now 2 frame events generated per button event, one before, and one after. It doesn't seem to cause any
+	// problems in the applications that I tested though.
+	// In any case, pointer support is considered a second-class citizen as this desktop environment is targeted towards
+	// mobile devices first and foremost, but the pointer is still useful during development.
+	wlr_seat_pointer_notify_frame(server->seat);
+	result->Success();
+}
+

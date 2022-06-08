@@ -1,5 +1,5 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:zenith/widgets/digital_clock.dart';
 
 class StatusBar extends StatelessWidget {
   final GestureDragStartCallback onVerticalDragStart;
@@ -25,14 +25,7 @@ class StatusBar extends StatelessWidget {
         child: Row(
           children: const [
             SizedBox(width: 20),
-            Text(
-              "5:10",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 18,
-              ),
-            ),
+            DigitalClock(),
             Spacer(),
             Icon(Icons.wifi, color: Colors.white),
             Icon(Icons.signal_cellular_4_bar, color: Colors.white),

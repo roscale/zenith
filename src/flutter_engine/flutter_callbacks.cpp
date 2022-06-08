@@ -7,7 +7,6 @@ extern "C" {
 #define static
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
-#include <wlr/types/wlr_output.h>
 #undef static
 }
 
@@ -32,12 +31,6 @@ bool flutter_present(void* userdata) {
 
 	std::scoped_lock lock(state->output_framebuffer->mutex);
 	GLScopedLock gl_lock(state->output_gl_mutex);
-
-	// FIXME: FlutterEngineMarkExternalTextureFrameAvailable does not trigger a VSync fast enough,
-	// so Flutter will only VSync every second frame. Marking a texture after FlutterEngineOnVsync
-	// only fixes the problem partially because Flutter will still skip frames every once in a while.
-	// This forces Flutter to always schedule a new frame.
-	FlutterEngineScheduleFrame(state->engine);
 
 	return true;
 }

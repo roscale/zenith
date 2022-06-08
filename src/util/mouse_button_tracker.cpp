@@ -1,5 +1,6 @@
 #include "mouse_button_tracker.hpp"
 #include <linux/input-event-codes.h>
+#include <iostream>
 #include "embedder.h"
 
 void MouseButtonTracker::press_button(uint32_t button) {
@@ -37,6 +38,8 @@ int64_t MouseButtonTracker::get_flutter_mouse_state() {
 			case BTN_FORWARD:
 				bitmap |= kFlutterPointerButtonMouseForward;
 				break;
+			default:
+				std::cerr << "Unrecognized mouse button " << button << std::endl;
 		}
 	}
 	return bitmap;

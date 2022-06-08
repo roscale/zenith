@@ -1,9 +1,9 @@
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/util/util.dart';
+import 'package:zenith/widgets/view_input_listener.dart';
 
 class Popup extends StatelessWidget {
   final PopupState state;
@@ -101,44 +101,42 @@ class _Surface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var state = context.read<PopupState>();
-    var surfaceSize = context.select((PopupState state) => state.surfaceSize);
-    var popups = context.select((PopupState state) => state.popups);
 
-    return SizedBox(
-      width: surfaceSize.width,
-      height: surfaceSize.height,
+    return Selector(
+      selector: (_, PopupState state) => state.surfaceSize,
+      builder: (_, Size size, Widget? child) {
+        return SizedBox(
+          width: size.width,
+          height: size.height,
+          child: child,
+        );
+      },
       child: DeferPointer(
         child: DeferredPointerHandler(
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Listener(
-                onPointerDown: (event) => pointerMoved(event, state.viewId),
-                onPointerUp: (event) => pointerMoved(event, state.viewId),
-                onPointerHover: (event) => pointerMoved(event, state.viewId),
-                onPointerMove: (event) => pointerMoved(event, state.viewId),
+              ViewInputListener(
+                viewId: state.viewId,
                 child: Texture(
                   key: state.textureKey,
                   filterQuality: FilterQuality.medium,
                   textureId: state.viewId,
                 ),
               ),
-              ...popups,
+              Selector(
+                selector: (_, PopupState popupState) => popupState.popups,
+                builder: (_, List<Popup> popups, __) {
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: popups,
+                  );
+                },
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  void pointerMoved(PointerEvent event, int viewId) {
-    DesktopState.platform.invokeMethod(
-      "pointer_hover",
-      {
-        "x": event.localPosition.dx,
-        "y": event.localPosition.dy,
-        "view_id": viewId,
-      },
     );
   }
 }

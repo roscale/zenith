@@ -7,7 +7,6 @@ import 'package:flutter/physics.dart';
 import 'package:provider/provider.dart';
 import 'package:vector_math/vector_math_64.dart' as math;
 import 'package:zenith/state/desktop_state.dart';
-import 'package:zenith/widgets/custom_stack.dart';
 import 'package:zenith/widgets/window.dart';
 
 class TaskSwitcher extends StatefulWidget {
@@ -58,7 +57,6 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      behavior: HitTestBehavior.translucent,
       onPanDown: (_) {
         if (overview) {
           _stopAnimations();
@@ -79,7 +77,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           this.constraints = constraints;
-          return CustomStack(
+          return Stack(
             children: [
               Positioned.fill(
                 child: Transform(
@@ -102,7 +100,6 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
                 left: 0,
                 right: 0,
                 child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
                   onPanStart: (_) => _stopAnimations(),
                   onPanUpdate: (DragUpdateDetails details) {
                     if (tasks.isNotEmpty) {
@@ -141,7 +138,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
                     }
                   },
                   child: Container(
-                    height: 50,
+                    height: 20,
                     color: Colors.transparent,
                   ),
                 ),

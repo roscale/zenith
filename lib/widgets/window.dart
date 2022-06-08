@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/state/window_state.dart';
+import 'package:zenith/widgets/popup.dart';
+import 'package:zenith/widgets/view_input_listener.dart';
 
 class Window extends StatelessWidget {
   final WindowState state;
@@ -75,46 +75,39 @@ class _Surface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var windowState = context.read<WindowState>();
-    var size = context.select((WindowState state) => state.surfaceSize);
-    var bounds = context.select((WindowState state) => state.visibleBounds);
-    var popups = context.select((WindowState state) => state.popups);
+    var state = context.read<WindowState>();
 
-    return SizedBox(
-      width: size.width,
-      height: size.height,
+    return Selector(
+      selector: (_, WindowState state) => state.surfaceSize,
+      builder: (_, Size size, Widget? child) {
+        return SizedBox(
+          width: size.width,
+          height: size.height,
+          child: child,
+        );
+      },
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Listener(
-            onPointerDown: (event) => pointerMoved(context, event),
-            onPointerUp: (event) => pointerMoved(context, event),
-            onPointerHover: (event) => pointerMoved(context, event),
-            onPointerMove: (event) => pointerMoved(context, event),
+          ViewInputListener(
+            viewId: state.viewId,
             child: Texture(
-              key: windowState.textureKey,
+              key: state.textureKey,
               filterQuality: FilterQuality.medium,
-              textureId: windowState.viewId,
+              textureId: state.viewId,
             ),
           ),
-          ...popups,
+          Selector(
+            selector: (_, WindowState windowState) => windowState.popups,
+            builder: (_, List<Popup> popups, __) {
+              return Stack(
+                clipBehavior: Clip.none,
+                children: popups,
+              );
+            },
+          ),
         ],
       ),
     );
-  }
-
-  void pointerMoved(BuildContext context, PointerEvent event) {
-    var windowState = context.read<WindowState>();
-
-    if (true) {
-      DesktopState.platform.invokeMethod(
-        "pointer_hover",
-        {
-          "x": event.localPosition.dx,
-          "y": event.localPosition.dy,
-          "view_id": windowState.viewId,
-        },
-      );
-    }
   }
 }

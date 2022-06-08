@@ -28,3 +28,7 @@ void resize_window(ZenithServer* server,
 void closing_animation_finished(ZenithServer* server,
                                 const flutter::MethodCall<>& call,
                                 std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void mouse_button_event(ZenithServer* server,
+                        const flutter::MethodCall<>& call,
+                        std::unique_ptr<flutter::MethodResult<>>&& result);

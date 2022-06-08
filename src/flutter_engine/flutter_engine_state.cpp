@@ -148,6 +148,8 @@ void FlutterEngineState::register_platform_api() {
 				  resize_window(server, call, std::move(result));
 			  } else if (call.method_name() == "closing_animation_finished") {
 				  closing_animation_finished(server, call, std::move(result));
+			  } else if (call.method_name() == "mouse_button_event") {
+				  mouse_button_event(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }
