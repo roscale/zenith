@@ -1,8 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zenith/state/desktop_state.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/view_input_listener.dart';
@@ -33,36 +31,16 @@ class _PointerListener extends StatefulWidget {
 }
 
 class _PointerListenerState extends State<_PointerListener> {
-  late StreamSubscription pointerUpStreamSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    pointerUpStreamSubscription = context.read<DesktopState>().pointerUpStream.stream.listen((_event) {
-      var windowState = context.read<WindowState>();
-      // windowState.stopMove();
-      // windowState.stopResize();
-    });
-  }
-
-  @override
-  void dispose() {
-    pointerUpStreamSubscription.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    // var position = context.select((WindowState state) => state.position).rounded();
-    var visibleBounds = context.select((WindowState state) => state.visibleBounds);
-    var isClosing = context.select((WindowState state) => state.isClosing);
+    bool isClosing = context.select((WindowState state) => state.isClosing);
 
     return IgnorePointer(
       ignoring: isClosing,
       child: Listener(
         onPointerDown: (_) {
-          var windowState = context.read<WindowState>();
-          context.read<DesktopState>().activateWindow(windowState.viewId);
+          var state = context.read<WindowState>();
+          PlatformApi.activateWindow(state.viewId);
         },
         child: widget.child,
       ),

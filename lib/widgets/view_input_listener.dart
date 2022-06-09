@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/services.dart';
-import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/util/mouse_button_tracker.dart';
 import 'package:zenith/util/pointer_focus_manager.dart';
 
@@ -56,25 +56,10 @@ class ViewInputListener extends StatelessWidget {
   }
 
   Future<void> mouseButtonEvent(MouseButtonEvent event) {
-    // One might find surprising that the view id is not sent to the platform. This is because the view id is only sent
-    // when the pointer moves, and when a button event happens, the platform already knows which view it hovers.
-    return DesktopState.platform.invokeMethod(
-      "mouse_button_event",
-      {
-        "is_pressed": event.state == MouseButtonState.pressed,
-        "button": event.button,
-      },
-    );
+    return PlatformApi.sendMouseButtonEventToView(event.button, event.state == MouseButtonState.pressed);
   }
 
   Future<void> pointerMoved(PointerEvent event) {
-    return DesktopState.platform.invokeMethod(
-      "pointer_hover",
-      {
-        "x": event.localPosition.dx,
-        "y": event.localPosition.dy,
-        "view_id": viewId,
-      },
-    );
+    return PlatformApi.pointerHoversView(viewId, event.localPosition.dx, event.localPosition.dy);
   }
 }

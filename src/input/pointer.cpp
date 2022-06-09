@@ -147,8 +147,6 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 	                             event->time_msec, event->orientation, event->delta,
 	                             event->delta_discrete, event->source);
 
-	std::cout << "axis " << event->orientation << std::endl;
-
 	bool are_any_buttons_pressed = pointer->mouse_button_tracker.are_any_buttons_pressed();
 
 	FlutterPointerEvent e = {};

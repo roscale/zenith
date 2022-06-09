@@ -2,42 +2,34 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:zenith/enums.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/state/window_state.dart';
-import 'package:zenith/util/util.dart';
 import 'package:zenith/widgets/desktop.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/window.dart';
 
 class DesktopState with ChangeNotifier {
+  final Set<StreamSubscription> _streamSubscriptions = {};
+
   // Keeps track of all windows and popups alive. The widget is of type Window or Popup.
   Map<int, Widget> views = {};
 
-  // Sends global pointer up events to windows. Listening for this event at the window level is not
-  // reliable because sometimes it is not getting emitted when the pointer quickly leaves the window
-  // which causes the window to be impossible to interact with.
-  var pointerUpStream = StreamController<PointerUpEvent>.broadcast();
-
-  static const EventChannel windowMappedEvent = EventChannel('window_mapped');
-  static const EventChannel windowUnmappedEvent = EventChannel('window_unmapped');
-  static const EventChannel popupMappedEvent = EventChannel('popup_mapped');
-  static const EventChannel popupUnmappedEvent = EventChannel('popup_unmapped');
-  static const EventChannel requestMoveEvent = EventChannel('request_move');
-  static const EventChannel requestResizeEvent = EventChannel('request_resize');
-  static const EventChannel configureSurfaceEvent = EventChannel('configure_surface');
-
-  static const MethodChannel platform = MethodChannel('platform');
-
-  Offset pointerPosition = window.physicalGeometry.center;
-
   DesktopState() {
-    windowMappedEvent.receiveBroadcastStream().listen(windowMapped);
-    windowUnmappedEvent.receiveBroadcastStream().listen(windowUnmapped);
-    popupMappedEvent.receiveBroadcastStream().listen(popupMapped);
-    popupUnmappedEvent.receiveBroadcastStream().listen(popupUnmapped);
-    configureSurfaceEvent.receiveBroadcastStream().listen(configureSurface);
+    _streamSubscriptions.add(PlatformApi.windowMappedStream.listen(windowMapped));
+    _streamSubscriptions.add(PlatformApi.windowUnmappedStream.listen(windowUnmapped));
+    _streamSubscriptions.add(PlatformApi.popupMappedStream.listen(popupMapped));
+    _streamSubscriptions.add(PlatformApi.popupUnmappedStream.listen(popupUnmapped));
+    _streamSubscriptions.add(PlatformApi.configureSurfaceStream.listen(configureSurface));
+  }
+
+  @override
+  void dispose() {
+    for (var subscription in _streamSubscriptions) {
+      subscription.cancel();
+    }
+    super.dispose();
   }
 
   void windowMapped(dynamic event) {
@@ -52,20 +44,6 @@ class DesktopState with ChangeNotifier {
       visibleBoundsMap["y"]!.toDouble(),
       visibleBoundsMap["width"]!.toDouble(),
       visibleBoundsMap["height"]!.toDouble(),
-    );
-
-    var initialWindowPosition = Rect.fromCenter(
-      center: pointerPosition,
-      width: visibleBounds.width,
-      height: visibleBounds.height,
-    );
-    initialWindowPosition = initialWindowPosition.clampTo(
-      Rect.fromLTRB(
-        window.physicalGeometry.left,
-        window.physicalGeometry.top + 40,
-        window.physicalGeometry.right,
-        window.physicalGeometry.bottom,
-      ),
     );
 
     var clientWindow = Window(WindowState(
@@ -85,7 +63,7 @@ class DesktopState with ChangeNotifier {
     await taskSwitcherKey.currentState!.stopTask(window);
     views.remove(viewId);
 
-    platform.invokeMethod('closing_animation_finished', window.state.viewId);
+    PlatformApi.viewClosingAnimationFinished(window.state.viewId);
     notifyListeners();
   }
 
@@ -137,7 +115,7 @@ class DesktopState with ChangeNotifier {
       parent.state.removePopup(popup);
     }
 
-    platform.invokeMethod('closing_animation_finished', popup.state.viewId);
+    PlatformApi.viewClosingAnimationFinished(popup.state.viewId);
     notifyListeners();
   }
 
@@ -186,11 +164,5 @@ class DesktopState with ChangeNotifier {
         assert(false, "xdg_surface has no role, this should never happen.");
         break;
     }
-  }
-
-  void activateWindow(int viewId) {
-    var window = views[viewId] as Window;
-    platform.invokeMethod('activate_window', window.state.viewId);
-    notifyListeners();
   }
 }

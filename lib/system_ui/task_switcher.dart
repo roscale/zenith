@@ -4,9 +4,8 @@ import 'dart:math';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
-import 'package:provider/provider.dart';
 import 'package:vector_math/vector_math_64.dart' as math;
-import 'package:zenith/state/desktop_state.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/widgets/window.dart';
 
 class TaskSwitcher extends StatefulWidget {
@@ -248,7 +247,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     double targetTranslation = _offset(targetIndex);
 
     if (targetIndex != -1) {
-      context.read<DesktopState>().activateWindow(tasks[targetIndex].state.viewId);
+      PlatformApi.activateWindow(tasks[targetIndex].state.viewId);
     }
 
     translationAnimation = controller!.drive(CurveTween(curve: Curves.easeOutCubic)).drive(
@@ -338,7 +337,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
   }
 
   void _switchToTaskByIndex(int index) {
-    context.read<DesktopState>().activateWindow(tasks[index].state.viewId);
+    PlatformApi.activateWindow(tasks[index].state.viewId);
     setState(() => overview = false);
 
     _stopAnimations();

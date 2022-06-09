@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:zenith/state/desktop_state.dart';
+import 'package:zenith/platform_api.dart';
 
 /// The problem:
 /// When moving the pointer between 2 MouseRegions, one would trigger an exit event, and the other one an enter event.
@@ -41,6 +41,6 @@ class PointerFocusManager {
   }
 
   void _scheduleExitEvent() {
-    _pointerExitTimer = Timer(Duration.zero, () => DesktopState.platform.invokeMethod("pointer_exit"));
+    _pointerExitTimer = Timer(Duration.zero, () => PlatformApi.pointerExitsView());
   }
 }
