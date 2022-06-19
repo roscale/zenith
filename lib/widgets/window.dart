@@ -12,8 +12,8 @@ class Window extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => state,
+    return ChangeNotifierProvider.value(
+      value: state,
       child: const _PointerListener(
         child: _Surface(),
       ),

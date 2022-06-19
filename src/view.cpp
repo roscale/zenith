@@ -79,8 +79,8 @@ void ZenithView::focus() {
 	 * track of this and automatically send key events to the appropriate
 	 * clients without additional work on your part.
 	 */
-	wlr_seat_keyboard_notify_enter(seat, xdg_surface->surface,
-	                               keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+	wlr_seat_keyboard_enter(seat, xdg_surface->surface,
+	                        keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
 }
 
 void xdg_surface_map(wl_listener* listener, void* data) {
@@ -282,8 +282,6 @@ void surface_commit(wl_listener* listener, void* data) {
 
 		wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 		wlr_egl_make_current(egl);
-		// The actual resizing is happening on a Flutter thread because resizing a texture is very slow, and I don't want
-		// to block the main thread causing input delay and other stuff.
 		surface_framebuffer->resize(surface->current.buffer_width, surface->current.buffer_height);
 
 		map.insert({EncodableValue("surface_size_changed"), EncodableValue(true)});

@@ -36,7 +36,7 @@ class PlatformApi {
     return _platform.invokeMethod('activate_window', viewId);
   }
 
-  static Future<void> viewClosingAnimationFinished(int viewId) {
-    return _platform.invokeMethod('closing_animation_finished', viewId);
+  static Future<void> unregisterViewTexture(int viewId) {
+    return _platform.invokeMethod('unregister_view_texture', viewId);
   }
 }

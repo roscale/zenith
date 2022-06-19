@@ -6,33 +6,38 @@ import 'package:zenith/enums.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/state/window_state.dart';
-import 'package:zenith/widgets/desktop.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/window.dart';
 
-class DesktopState with ChangeNotifier {
+class DesktopState {
   final Set<StreamSubscription> _streamSubscriptions = {};
 
   // Keeps track of all windows and popups alive. The widget is of type Window or Popup.
-  Map<int, Widget> views = {};
+  final Map<int, Widget> _views = {};
+
+  final _windowMappedController = StreamController<Window>.broadcast();
+  late final windowMappedStream = _windowMappedController.stream;
+
+  final _windowUnmappedController = StreamController<Window>.broadcast();
+  late final windowUnmappedStream = _windowUnmappedController.stream;
 
   DesktopState() {
-    _streamSubscriptions.add(PlatformApi.windowMappedStream.listen(windowMapped));
-    _streamSubscriptions.add(PlatformApi.windowUnmappedStream.listen(windowUnmapped));
-    _streamSubscriptions.add(PlatformApi.popupMappedStream.listen(popupMapped));
-    _streamSubscriptions.add(PlatformApi.popupUnmappedStream.listen(popupUnmapped));
-    _streamSubscriptions.add(PlatformApi.configureSurfaceStream.listen(configureSurface));
+    _streamSubscriptions.add(PlatformApi.windowMappedStream.listen(_windowMapped));
+    _streamSubscriptions.add(PlatformApi.windowUnmappedStream.listen(_windowUnmapped));
+    _streamSubscriptions.add(PlatformApi.popupMappedStream.listen(_popupMapped));
+    _streamSubscriptions.add(PlatformApi.popupUnmappedStream.listen(_popupUnmapped));
+    _streamSubscriptions.add(PlatformApi.configureSurfaceStream.listen(_configureSurface));
   }
 
-  @override
   void dispose() {
     for (var subscription in _streamSubscriptions) {
       subscription.cancel();
     }
-    super.dispose();
+    _windowMappedController.close();
+    _windowUnmappedController.close();
   }
 
-  void windowMapped(dynamic event) {
+  void _windowMapped(dynamic event) {
     int viewId = event["view_id"];
     int surfaceWidth = event["surface_width"];
     int surfaceHeight = event["surface_height"];
@@ -51,23 +56,21 @@ class DesktopState with ChangeNotifier {
       surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
       visibleBounds: visibleBounds,
     ));
-    views[viewId] = clientWindow;
-    taskSwitcherKey.currentState!.spawnTask(clientWindow);
-    notifyListeners();
+    _views[viewId] = clientWindow;
+
+    _windowMappedController.add(clientWindow);
   }
 
-  void windowUnmapped(dynamic event) async {
+  void _windowUnmapped(dynamic event) async {
     int viewId = event["view_id"];
-    var window = views[viewId] as Window;
+    var window = _views[viewId] as Window;
 
-    await taskSwitcherKey.currentState!.stopTask(window);
-    views.remove(viewId);
+    _windowUnmappedController.add(window);
 
-    PlatformApi.viewClosingAnimationFinished(window.state.viewId);
-    notifyListeners();
+    _views.remove(viewId);
   }
 
-  void popupMapped(dynamic event) {
+  void _popupMapped(dynamic event) {
     int viewId = event["view_id"];
     int parentViewId = event["parent_view_id"];
     int x = event["x"];
@@ -89,37 +92,35 @@ class DesktopState with ChangeNotifier {
       visibleBounds: visibleBounds,
     ));
 
-    Widget parent = views[parentViewId]!;
+    Widget parent = _views[parentViewId]!;
     if (parent is Window) {
       parent.state.addPopup(popup);
     } else if (parent is Popup) {
       parent.state.addPopup(popup);
     }
 
-    views[viewId] = popup;
-    notifyListeners();
+    _views[viewId] = popup;
   }
 
-  void popupUnmapped(dynamic event) async {
+  void _popupUnmapped(dynamic event) async {
     int viewId = event["view_id"];
 
-    var popup = views[viewId] as Popup;
+    var popup = _views[viewId] as Popup;
     await popup.state.animateClosing();
 
-    views.remove(viewId);
+    _views.remove(viewId);
 
-    Widget parent = views[popup.state.parentViewId]!;
+    Widget? parent = _views[popup.state.parentViewId];
     if (parent is Window) {
       parent.state.removePopup(popup);
     } else if (parent is Popup) {
       parent.state.removePopup(popup);
     }
 
-    PlatformApi.viewClosingAnimationFinished(popup.state.viewId);
-    notifyListeners();
+    PlatformApi.unregisterViewTexture(popup.state.viewId);
   }
 
-  void configureSurface(dynamic event) {
+  void _configureSurface(dynamic event) {
     int viewId = event["view_id"];
     XdgSurfaceRole role = XdgSurfaceRole.values[event["surface_role"]];
 
@@ -143,13 +144,13 @@ class DesktopState with ChangeNotifier {
 
     switch (role) {
       case XdgSurfaceRole.toplevel:
-        var window = views[viewId] as Window;
+        var window = _views[viewId] as Window;
         window.state.surfaceSize = newSurfaceSize ?? window.state.surfaceSize;
         window.state.visibleBounds = newVisibleBounds ?? window.state.visibleBounds;
         break;
 
       case XdgSurfaceRole.popup:
-        var popup = views[viewId] as Popup;
+        var popup = _views[viewId] as Popup;
         popup.state.surfaceSize = newSurfaceSize ?? popup.state.surfaceSize;
         popup.state.visibleBounds = newVisibleBounds ?? popup.state.visibleBounds;
         if (event["popup_position_changed"]) {

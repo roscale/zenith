@@ -12,8 +12,8 @@ class Popup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => state,
+    return ChangeNotifierProvider.value(
+      value: state,
       child: _Positioner(
         child: _Animations(
           key: state.animationsKey,

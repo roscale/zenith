@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zenith/state/desktop_state.dart';
-import 'package:zenith/system_ui/task_switcher.dart';
+import 'package:zenith/system_ui/task_switcher/task_switcher.dart';
 import 'package:zenith/system_ui/top.dart';
-
-final taskSwitcherKey = GlobalKey<TaskSwitcherState>();
 
 class Desktop extends StatelessWidget {
   const Desktop({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
+    return Provider(
       create: (_) => DesktopState(),
+      dispose: (_, DesktopState value) => value.dispose(),
       lazy: false,
       child: Stack(
         fit: StackFit.expand,
         children: [
           Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
-          Padding(
-            padding: const EdgeInsets.only(top: 40.0),
+          const Padding(
+            padding: EdgeInsets.only(top: 40.0),
             child: TaskSwitcher(
-              key: taskSwitcherKey,
               spacing: 20,
             ),
           ),
@@ -30,11 +28,4 @@ class Desktop extends StatelessWidget {
       ),
     );
   }
-
-// void pointerMoved(BuildContext context, PointerEvent event) {
-//   context.read<DesktopState>().pointerPosition = Offset(
-//     event.position.dx.floorToDouble(),
-//     event.position.dy.floorToDouble(),
-//   );
-// }
 }

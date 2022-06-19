@@ -67,6 +67,26 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
             handleController(details.velocity.pixelsPerSecond.dy);
           },
         ),
+        AnimatedBuilder(
+          animation: controller,
+          builder: (BuildContext context, Widget? child) {
+            return IgnorePointer(
+              ignoring: controller.value.abs() < 0.1,
+              child: Container(
+                color: Colors.black.withOpacity(controller.value / 2),
+                child: child!,
+              ),
+            );
+          },
+          child: GestureDetector(
+            onVerticalDragUpdate: (details) {
+              controller.value += details.delta.dy / height;
+            },
+            onVerticalDragEnd: (details) {
+              handleController(details.velocity.pixelsPerSecond.dy);
+            },
+          ),
+        ),
         Positioned(
           left: (startDragHorizontalPosition - width / 2).clamp(0, MediaQuery.of(context).size.width - width),
           child: SlideTransition(

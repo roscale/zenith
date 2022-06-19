@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
 enum XdgSurfaceRole {
   none,
   toplevel,
@@ -30,5 +34,26 @@ extension EdgesExt on Edges {
 
   bool operator &(int bitmap) {
     return bitmap & id != 0;
+  }
+}
+
+extension ValueNotifierFutureExt<T> on ValueNotifier<T> {
+  Future<T> future() {
+    final completer = Completer<T>();
+
+    void valueChanged() {
+      removeListener(valueChanged);
+      completer.complete(value);
+    }
+
+    addListener(valueChanged);
+    return completer.future;
+  }
+
+  Future<void> waitUntil(bool Function(T) until) async {
+    if (until(value)) {
+      return;
+    }
+    while (!until(await future())) {}
   }
 }

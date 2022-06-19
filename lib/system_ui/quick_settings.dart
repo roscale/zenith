@@ -21,75 +21,69 @@ class _QuickSettingsState extends State<QuickSettings> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-          child: Card(
-            // clipBehavior: Clip.hardEdge,
-            color: Colors.white54,
-            shadowColor: Colors.transparent,
-            margin: const EdgeInsets.all(0),
-            child: Padding(
-              padding: const EdgeInsets.all(30.0),
-              child: Column(
+      child: Card(
+        elevation: 0,
+        color: Color.lerp(Colors.white, Colors.black, 0.2),
+        margin: const EdgeInsets.all(0),
+        child: Padding(
+          padding: const EdgeInsets.all(30.0),
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.wifi, size: 30),
-                        padding: EdgeInsets.zero,
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.import_export, size: 30),
-                        padding: EdgeInsets.zero,
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.bluetooth, size: 30),
-                        padding: EdgeInsets.zero,
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.screen_lock_rotation, size: 30),
-                        padding: EdgeInsets.zero,
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.battery_full, size: 30),
-                        padding: EdgeInsets.zero,
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.airplanemode_active, size: 30),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ],
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.wifi, size: 30),
+                    padding: EdgeInsets.zero,
                   ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      const Icon(Icons.brightness_6),
-                      Expanded(
-                        child: Slider(
-                          value: brightnessFraction,
-                          onChanged: (value) {
-                            setState(() {
-                              brightnessFraction = value;
-                              brightnessFile.writeAsString("${(brightnessFraction * maxBrightness).floor()}");
-                            });
-                          },
-                        ),
-                      ),
-                      const Icon(Icons.brightness_7),
-                    ],
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.import_export, size: 30),
+                    padding: EdgeInsets.zero,
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.bluetooth, size: 30),
+                    padding: EdgeInsets.zero,
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.screen_lock_rotation, size: 30),
+                    padding: EdgeInsets.zero,
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.battery_full, size: 30),
+                    padding: EdgeInsets.zero,
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.airplanemode_active, size: 30),
+                    padding: EdgeInsets.zero,
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  const Icon(Icons.brightness_6),
+                  Expanded(
+                    child: Slider(
+                      value: brightnessFraction,
+                      onChanged: (value) {
+                        setState(() {
+                          brightnessFraction = value;
+                          brightnessFile.writeAsString("${(brightnessFraction * maxBrightness).floor()}");
+                        });
+                      },
+                    ),
+                  ),
+                  const Icon(Icons.brightness_7),
+                ],
+              ),
+            ],
           ),
         ),
       ),

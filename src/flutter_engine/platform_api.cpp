@@ -118,9 +118,9 @@ void resize_window(ZenithServer* server,
 	result->Success();
 }
 
-void closing_animation_finished(ZenithServer* server,
-                                const flutter::MethodCall<>& call,
-                                std::unique_ptr<flutter::MethodResult<>>&& result) {
+void unregister_view_texture(ZenithServer* server,
+                             const flutter::MethodCall<>& call,
+                             std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
 

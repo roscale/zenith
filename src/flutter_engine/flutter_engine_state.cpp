@@ -146,8 +146,8 @@ void FlutterEngineState::register_platform_api() {
 				  close_window(server, call, std::move(result));
 			  } else if (call.method_name() == "resize_window") {
 				  resize_window(server, call, std::move(result));
-			  } else if (call.method_name() == "closing_animation_finished") {
-				  closing_animation_finished(server, call, std::move(result));
+			  } else if (call.method_name() == "unregister_view_texture") {
+				  unregister_view_texture(server, call, std::move(result));
 			  } else if (call.method_name() == "mouse_button_event") {
 				  mouse_button_event(server, call, std::move(result));
 			  } else {
