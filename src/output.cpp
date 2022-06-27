@@ -40,7 +40,7 @@ void output_frame(wl_listener* listener, void* data) {
 		size_t view_id = pair.first;
 		std::unique_ptr<ZenithView>& view = pair.second;
 
-		if (!view->mapped || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
+		if (!view->mapped || !view->visible || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
 			// An unmapped view should not be rendered.
 			continue;
 		}

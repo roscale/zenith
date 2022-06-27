@@ -36,6 +36,13 @@ class PlatformApi {
     return _platform.invokeMethod('activate_window', viewId);
   }
 
+  static Future<void> changeWindowVisibility(int viewId, bool visible) {
+    return _platform.invokeMethod('change_window_visibility', {
+      "view_id": viewId,
+      "visible": visible,
+    });
+  }
+
   static Future<void> unregisterViewTexture(int viewId) {
     return _platform.invokeMethod('unregister_view_texture', viewId);
   }

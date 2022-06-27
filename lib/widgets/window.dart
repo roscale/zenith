@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:zenith/widgets/popup.dart';
@@ -69,10 +70,17 @@ class _Surface extends StatelessWidget {
         children: [
           ViewInputListener(
             viewId: state.viewId,
-            child: Texture(
-              key: state.textureKey,
-              filterQuality: FilterQuality.medium,
-              textureId: state.viewId,
+            child: VisibilityDetector(
+              key: ValueKey(state.viewId),
+              onVisibilityChanged: (VisibilityInfo info) {
+                bool visible = !info.visibleBounds.isEmpty;
+                state.changeVisibility(visible);
+              },
+              child: Texture(
+                key: state.textureKey,
+                filterQuality: FilterQuality.medium,
+                textureId: state.viewId,
+              ),
             ),
           ),
           Selector(

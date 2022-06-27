@@ -150,6 +150,8 @@ void FlutterEngineState::register_platform_api() {
 				  unregister_view_texture(server, call, std::move(result));
 			  } else if (call.method_name() == "mouse_button_event") {
 				  mouse_button_event(server, call, std::move(result));
+			  } else if (call.method_name() == "change_window_visibility") {
+				  change_window_visibility(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }

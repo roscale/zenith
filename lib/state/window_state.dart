@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/widgets/popup.dart';
 
 class WindowState with ChangeNotifier {
@@ -16,6 +17,7 @@ class WindowState with ChangeNotifier {
   Rect _visibleBounds;
   final List<Popup> _popups = [];
 
+  bool _visible = true;
   bool _isClosing = false;
 
   Size get surfaceSize => _surfaceSize;
@@ -45,5 +47,12 @@ class WindowState with ChangeNotifier {
   void removePopup(Popup popup) {
     _popups.remove(popup);
     notifyListeners();
+  }
+
+  void changeVisibility(bool visible) {
+    if (_visible != visible) {
+      _visible = visible;
+      PlatformApi.changeWindowVisibility(viewId, visible);
+    }
   }
 }

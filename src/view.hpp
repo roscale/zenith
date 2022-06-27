@@ -20,6 +20,7 @@ struct ZenithView {
 	wlr_xdg_surface* xdg_surface;
 	size_t id;
 	bool mapped;
+	bool visible = true;
 	int x, y;
 	wlr_box geometry{};
 	/* callbacks */

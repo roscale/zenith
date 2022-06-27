@@ -175,3 +175,21 @@ void mouse_button_event(ZenithServer* server, const flutter::MethodCall<>& call,
 	result->Success();
 }
 
+void change_window_visibility(ZenithServer* server, const flutter::MethodCall<>& call,
+                              std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	auto visible = std::get<bool>(args[flutter::EncodableValue("visible")]);
+
+	auto view_it = server->views_by_id.find(view_id);
+	bool view_doesnt_exist = view_it == server->views_by_id.end();
+	if (view_doesnt_exist) {
+		result->Success();
+		return;
+	}
+	ZenithView* view = view_it->second.get();
+	view->visible = visible;
+
+	result->Success();
+}

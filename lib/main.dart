@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/services.dart';
 import 'package:zenith/widgets/desktop.dart';
 
@@ -11,6 +12,8 @@ void main() {
   WidgetsBinding.instance.addPersistentFrameCallback((_) {
     WidgetsBinding.instance.scheduleFrame();
   });
+
+  VisibilityDetectorController.instance.updateInterval = Duration.zero;
 
   registerServices();
   runApp(const Zenith());

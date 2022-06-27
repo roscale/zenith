@@ -31,3 +31,7 @@ void unregister_view_texture(ZenithServer* server,
 void mouse_button_event(ZenithServer* server,
                         const flutter::MethodCall<>& call,
                         std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void change_window_visibility(ZenithServer* server,
+                              const flutter::MethodCall<>& call,
+                              std::unique_ptr<flutter::MethodResult<>>&& result);
