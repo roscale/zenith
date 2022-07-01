@@ -3,6 +3,11 @@
 #include "time.hpp"
 #include "embedder.h"
 
+static int32_t device_id(int32_t touch_id) {
+	// Device id 0 is reserved for the cursor.
+	return touch_id + 1;
+}
+
 ZenithTouchDevice::ZenithTouchDevice(ZenithServer* server, wlr_input_device* wlr_device)
 	  : server(server), wlr_device(wlr_device) {
 	touch_down.notify = touch_down_handle;
@@ -35,7 +40,7 @@ void touch_down_handle(wl_listener* listener, void* data) {
 
 	e.device_kind = kFlutterPointerDeviceKindTouch;
 	e.signal_kind = kFlutterPointerSignalKindNone;
-	e.device = event->touch_id;
+	e.device = device_id(event->touch_id);
 
 	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
 }
@@ -58,7 +63,7 @@ void touch_motion_handle(wl_listener* listener, void* data) {
 
 	e.device_kind = kFlutterPointerDeviceKindTouch;
 	e.signal_kind = kFlutterPointerSignalKindNone;
-	e.device = event->touch_id;
+	e.device = device_id(event->touch_id);
 
 	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
 }
@@ -80,7 +85,7 @@ void touch_up_handle(wl_listener* listener, void* data) {
 	e.timestamp = current_time_microseconds();
 	e.device_kind = kFlutterPointerDeviceKindTouch;
 	e.signal_kind = kFlutterPointerSignalKindNone;
-	e.device = event->touch_id;
+	e.device = device_id(event->touch_id);
 
 	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
 }
@@ -102,7 +107,7 @@ void touch_cancel_handle(wl_listener* listener, void* data) {
 	// Map from [0, 1] to [screen_width, screen_height].
 	e.device_kind = kFlutterPointerDeviceKindTouch;
 	e.signal_kind = kFlutterPointerSignalKindNone;
-	e.device = event->touch_id;
+	e.device = device_id(event->touch_id);
 
 	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
 }

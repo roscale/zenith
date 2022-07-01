@@ -16,23 +16,26 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
 
   var startDragHorizontalPosition = 0.0;
 
-  late var controller = AnimationController(
+  late var quickSettingsController = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 1),
   );
 
-  late var quickSettingsAnimation = controller.drive(
+  late var quickSettingsAnimation = quickSettingsController.drive(
     Tween(
       begin: const Offset(0, -1),
       end: Offset.zero,
     ),
   );
 
+  // Fading is disabled while dragging the brightness slider.
+  final disableFading = ValueNotifier(false);
+
   double verticalExpansionThreshold = 0.0;
 
   @override
   void dispose() {
-    controller.dispose();
+    quickSettingsController.dispose();
     super.dispose();
   }
 
@@ -46,7 +49,7 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
         StatusBar(
           onVerticalDragStart: (details) {
             verticalExpansionThreshold = 0;
-            if (controller.value <= 0.0) {
+            if (quickSettingsController.value <= 0.0) {
               setState(() {
                 startDragHorizontalPosition = details.globalPosition.dx;
               });
@@ -58,8 +61,8 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
                 verticalExpansionThreshold != 0) {
               return;
             }
-            controller.value += details.delta.dy / height;
-            if (controller.value >= 1.0 && verticalExpansionThreshold == 0) {
+            quickSettingsController.value += details.delta.dy / height;
+            if (quickSettingsController.value >= 1.0 && verticalExpansionThreshold == 0) {
               verticalExpansionThreshold = details.globalPosition.dy;
             }
           },
@@ -68,19 +71,29 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
           },
         ),
         AnimatedBuilder(
-          animation: controller,
+          animation: quickSettingsController,
           builder: (BuildContext context, Widget? child) {
             return IgnorePointer(
-              ignoring: controller.value.abs() < 0.1,
-              child: Container(
-                color: Colors.black.withOpacity(controller.value / 2),
-                child: child!,
+              ignoring: quickSettingsController.value.abs() < 0.1,
+              child: AnimatedBuilder(
+                animation: disableFading,
+                builder: (_, __) {
+                  return AnimatedOpacity(
+                    opacity: disableFading.value ? 0 : 1,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child: Container(
+                      color: Colors.black.withOpacity(quickSettingsController.value / 2),
+                      child: child!,
+                    ),
+                  );
+                },
               ),
             );
           },
           child: GestureDetector(
             onVerticalDragUpdate: (details) {
-              controller.value += details.delta.dy / height;
+              quickSettingsController.value += details.delta.dy / height;
             },
             onVerticalDragEnd: (details) {
               handleController(details.velocity.pixelsPerSecond.dy);
@@ -95,9 +108,12 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
               width: width,
               height: height,
               child: GestureDetector(
-                child: const QuickSettings(),
+                child: QuickSettings(
+                  onChangeBrightnessStart: () => disableFading.value = true,
+                  onChangeBrightnessEnd: () => disableFading.value = false,
+                ),
                 onVerticalDragUpdate: (details) {
-                  controller.value += details.delta.dy / height;
+                  quickSettingsController.value += details.delta.dy / height;
                 },
                 onVerticalDragEnd: (details) {
                   // springDescription: SpringDescription.withDampingRatio(
@@ -116,16 +132,18 @@ class _TopState extends State<Top> with SingleTickerProviderStateMixin {
 
   void handleController(double velocity) {
     if (velocity.abs() > 300) {
+      // Flick.
       if (velocity > 0) {
-        controller.fling(velocity: 1);
+        quickSettingsController.fling(velocity: 1);
       } else {
-        controller.fling(velocity: -1);
+        quickSettingsController.fling(velocity: -1);
       }
     } else {
-      if (controller.value >= 0.5) {
-        controller.fling(velocity: 1);
+      if (quickSettingsController.value >= 0.5) {
+        // Half way down.
+        quickSettingsController.fling(velocity: 1);
       } else {
-        controller.fling(velocity: -1);
+        quickSettingsController.fling(velocity: -1);
       }
     }
   }

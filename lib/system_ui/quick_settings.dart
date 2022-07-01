@@ -1,21 +1,23 @@
-import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:zenith/display_brightness.dart';
 
 class QuickSettings extends StatefulWidget {
-  const QuickSettings({Key? key}) : super(key: key);
+  final VoidCallback? onChangeBrightnessStart;
+  final VoidCallback? onChangeBrightnessEnd;
+
+  const QuickSettings({
+    Key? key,
+    this.onChangeBrightnessStart,
+    this.onChangeBrightnessEnd,
+  }) : super(key: key);
 
   @override
   State<QuickSettings> createState() => _QuickSettingsState();
 }
 
 class _QuickSettingsState extends State<QuickSettings> {
-  final maxBrightnessFile = File("/sys/class/backlight/intel_backlight/max_brightness");
-  final brightnessFile = File("/sys/class/backlight/intel_backlight/brightness");
-
-  late int maxBrightness = int.parse(maxBrightnessFile.readAsStringSync());
-  late double brightnessFraction = double.parse(brightnessFile.readAsStringSync()) / maxBrightness;
+  final Future<DisplayBrightnessController> displayBrightnessControllerFuture =
+      DisplayBrightnessController.getDefault();
 
   @override
   Widget build(BuildContext context) {
@@ -65,28 +67,56 @@ class _QuickSettingsState extends State<QuickSettings> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  const Icon(Icons.brightness_6),
-                  Expanded(
-                    child: Slider(
-                      value: brightnessFraction,
-                      onChanged: (value) {
-                        setState(() {
-                          brightnessFraction = value;
-                          brightnessFile.writeAsString("${(brightnessFraction * maxBrightness).floor()}");
-                        });
-                      },
-                    ),
-                  ),
-                  const Icon(Icons.brightness_7),
-                ],
-              ),
+              _buildBrightnessSlider(),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBrightnessSlider() {
+    return FutureBuilder(
+      future: displayBrightnessControllerFuture,
+      builder: (BuildContext context, AsyncSnapshot<DisplayBrightnessController> snapshot) {
+        if (snapshot.hasError || !snapshot.hasData) {
+          // Don't show the slider if the display doesn't support changing the brightness.
+          return const SizedBox();
+        }
+        final controller = snapshot.data!;
+        return Column(
+          children: [
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Icon(Icons.brightness_6),
+                Expanded(
+                  child: ValueListenableBuilder(
+                    valueListenable: controller.brightness,
+                    builder: (BuildContext context, double brightness, __) {
+                      return Slider(
+                        value: brightness,
+                        onChanged: (double value) => controller.setBrightness(value),
+                        onChangeStart: (_) {
+                          if (widget.onChangeBrightnessStart != null) {
+                            widget.onChangeBrightnessStart!();
+                          }
+                        },
+                        onChangeEnd: (_) {
+                          if (widget.onChangeBrightnessEnd != null) {
+                            widget.onChangeBrightnessEnd!();
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const Icon(Icons.brightness_7),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }

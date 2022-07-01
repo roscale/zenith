@@ -14,7 +14,7 @@ class _InvisibleBottomBarState extends State<InvisibleBottomBar> {
   late VelocityTracker velocityTracker;
   ScrollDragController? drag;
   late var tm = context.read<TaskSwitcherState>();
-  int previouslyFocusedTask = 0;
+  int draggingTask = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +51,7 @@ class _InvisibleBottomBarState extends State<InvisibleBottomBar> {
       ),
       _disposeDrag,
     ) as ScrollDragController;
-    previouslyFocusedTask = tm.taskIndex(tm.pixels);
+    draggingTask = tm.taskIndex(tm.pixels);
   }
 
   void _onPointerMove(PointerMoveEvent details) {
@@ -104,9 +104,9 @@ class _InvisibleBottomBarState extends State<InvisibleBottomBar> {
       tm.switchToTaskByIndex(tm.taskIndex(tm.pixels));
     } else {
       // Lift finger while standing still.
-      int focusedTask = tm.taskIndex(tm.pixels);
-      if (focusedTask != previouslyFocusedTask || tm.scale.value > 0.9) {
-        tm.switchToTaskByIndex(focusedTask);
+      int taskInFront = tm.taskIndex(tm.pixels);
+      if (taskInFront != draggingTask || tm.scale.value > 0.9) {
+        tm.switchToTaskByIndex(taskInFront);
       } else {
         tm.showOverview();
       }
