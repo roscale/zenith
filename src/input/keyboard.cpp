@@ -83,11 +83,8 @@ bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, const
 		return false;
 	};
 
-	if ((modifiers & WLR_MODIFIER_CTRL) and
-	    (modifiers & WLR_MODIFIER_ALT) and
-	    (is_key_pressed(XKB_KEY_Delete) or
-	     is_key_pressed(XKB_KEY_KP_Delete))) {
-
+	// Alt + Esc
+	if ((modifiers & WLR_MODIFIER_ALT) and is_key_pressed(XKB_KEY_Escape)) {
 		wl_display_terminate(keyboard->server->display);
 		return true;
 	}

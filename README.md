@@ -96,7 +96,7 @@ show up as a window.
 
 **Do not just run `flutter run`. It will not work. It will use the GTK embedder instead of the wlroots embedder.**
 
-Press `Ctrl`+`Alt`+`Delete` to quit.
+Press `Alt`+`Esc` to quit.
 
 ## Attaching a debugger
 
