@@ -88,7 +88,7 @@ void FlutterEngineState::start_engine() {
 	task_runners.struct_size = sizeof(FlutterCustomTaskRunners);
 	task_runners.platform_task_runner = &platform_task_runner_description;
 
-	auto executable_path = std::filesystem::canonical("/proc/self/exe");
+	std::filesystem::path executable_path = std::filesystem::canonical("/proc/self/exe");
 	// Normally, the observatory is started on a random port with some random auth code, but we will
 	// set up a fixed URL in order to automate attaching a debugger which requires observatory's URL.
 	std::array command_line_argv = {
@@ -97,10 +97,14 @@ void FlutterEngineState::start_engine() {
 		  "--disable-service-auth-codes",
 	};
 
+	std::filesystem::path executable_directory = executable_path.parent_path();
+
 	FlutterProjectArgs args = {};
 	args.struct_size = sizeof(FlutterProjectArgs);
-	args.assets_path = "data/flutter_assets";
-	args.icu_data_path = "data/icudtl.dat";
+	std::filesystem::path assets_path = executable_directory / "data" / "flutter_assets";
+	args.assets_path = assets_path.c_str();
+	std::filesystem::path icu_data_path = executable_directory / "data" / "icudtl.dat";
+	args.icu_data_path = icu_data_path.c_str();
 	args.platform_message_callback = flutter_platform_message_callback;
 	args.vsync_callback = flutter_vsync_callback;
 	args.custom_task_runners = &task_runners;
@@ -111,11 +115,10 @@ void FlutterEngineState::start_engine() {
 	/*
 	 * Profile and release modes have to run in AOT mode.
 	 */
-	auto absolute_path = std::filesystem::canonical("lib/libapp.so");
-
 	FlutterEngineAOTDataSource data_source = {};
 	data_source.type = kFlutterEngineAOTDataSourceTypeElfPath;
-	data_source.elf_path = absolute_path.c_str();
+	std::filesystem::path elf_path = executable_directory / "lib" / "libapp.so";
+	data_source.elf_path = elf_path.c_str();
 
 	FlutterEngineAOTData aot_data;
 	FlutterEngineCreateAOTData(&data_source, &aot_data);
