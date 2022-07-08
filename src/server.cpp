@@ -229,7 +229,7 @@ void server_new_input(wl_listener* listener, void* data) {
 				server->pointer = std::make_unique<ZenithPointer>(server);
 			}
 
-			bool is_touchpad = wlr_device->type == WLR_INPUT_DEVICE_POINTER && wlr_input_device_is_libinput(wlr_device);
+			bool is_touchpad = wlr_input_device_is_libinput(wlr_device);
 			if (is_touchpad) {
 				// Enable tapping by default on all touchpads.
 				libinput_device* device = wlr_libinput_get_device_handle(wlr_device);
@@ -273,6 +273,8 @@ void server_seat_request_cursor(wl_listener* listener, void* data) {
 		 * provided surface as the cursor image. It will set the hardware cursor
 		 * on the output that it's currently on and continue to do so as the
 		 * cursor moves between outputs. */
-		wlr_cursor_set_surface(server->pointer->cursor, event->surface, event->hotspot_x, event->hotspot_y);
+		if (server->pointer != nullptr && server->pointer->is_visible()) {
+			wlr_cursor_set_surface(server->pointer->cursor, event->surface, event->hotspot_x, event->hotspot_y);
+		}
 	}
 }

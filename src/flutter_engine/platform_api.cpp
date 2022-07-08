@@ -73,7 +73,9 @@ void pointer_exit(ZenithServer* server,
                   const flutter::MethodCall<>& call,
                   std::unique_ptr<flutter::MethodResult<>>&& result) {
 	wlr_seat_pointer_notify_clear_focus(server->seat);
-	wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
+	if (server->pointer != nullptr && server->pointer->is_visible()) {
+		wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
+	}
 	result->Success();
 }
 

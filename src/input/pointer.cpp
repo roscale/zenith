@@ -61,6 +61,8 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion*>(data);
 
+	pointer->set_visible(true);
+
 	/* The cursor doesn't move unless we tell it to. The cursor automatically
 	 * handles constraining the motion to the output layout, as well as any
 	 * special configuration applied for the specific input device which
@@ -85,6 +87,8 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion_absolute*>(data);
 
+	pointer->set_visible(true);
+
 	wlr_cursor_warp_absolute(pointer->cursor, event->device, event->x, event->y);
 
 	FlutterPointerEvent e = {};
@@ -104,6 +108,8 @@ void server_cursor_button(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_button);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_button*>(data);
+
+	pointer->set_visible(true);
 
 	/* Notify the client with pointer focus that a button press has occurred */
 
@@ -141,6 +147,8 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_axis);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_axis*>(data);
+
+	pointer->set_visible(true);
 
 	/* Notify the client with pointer focus of the axis event. */
 	wlr_seat_pointer_notify_axis(server->seat,

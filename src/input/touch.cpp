@@ -28,6 +28,11 @@ void touch_down_handle(wl_listener* listener, void* data) {
 	ZenithServer* server = touch_device->server;
 	auto* event = static_cast<wlr_event_touch_down*>(data);
 
+	// Hide cursor
+	if (server->pointer != nullptr) {
+		server->pointer->set_visible(false);
+	}
+
 	FlutterPointerEvent e = {};
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = kDown;

@@ -26,6 +26,26 @@ struct ZenithPointer {
 	wl_listener cursor_button{};
 	wl_listener cursor_axis{};
 	wl_listener cursor_frame{};
+
+private:
+	bool visible = true;
+
+public:
+	bool is_visible() const {
+		return visible;
+	}
+
+	void set_visible(bool value) {
+		if (visible == value) {
+			return;
+		}
+		visible = value;
+		if (visible) {
+			wlr_xcursor_manager_set_cursor_image(cursor_mgr, "left_ptr", cursor);
+		} else {
+			wlr_cursor_set_surface(cursor, nullptr, 0, 0);
+		}
+	}
 };
 
 /*
