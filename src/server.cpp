@@ -184,14 +184,15 @@ void server_new_output(wl_listener* listener, void* data) {
 	auto output = std::make_unique<ZenithOutput>(server, wlr_output);
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
-	// Tell Flutter how big the screen is, so it can start rendering.
-	int width, height;
-	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+	// Cache the layout box.
+	wlr_box* box = wlr_output_layout_get_box(server->output_layout, nullptr);
+	server->output_layout_box = *box;
 
+	// Tell Flutter how big the screen is, so it can start rendering.
 	FlutterWindowMetricsEvent window_metrics = {};
 	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
-	window_metrics.width = width;
-	window_metrics.height = height;
+	window_metrics.width = box->width;
+	window_metrics.height = box->height;
 	window_metrics.pixel_ratio = 1.0;
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));

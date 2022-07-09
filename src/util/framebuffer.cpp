@@ -49,7 +49,7 @@ void Framebuffer::resize(size_t new_width, size_t new_height) {
 	GLint texture_binding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture_binding);
 
-	// Create a texture that having the new dimensions.
+	// Create a texture having the new dimensions.
 	GLuint resized_texture;
 	glGenTextures(1, &resized_texture);
 

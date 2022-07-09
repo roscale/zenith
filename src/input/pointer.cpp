@@ -95,9 +95,9 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover;
 	e.timestamp = current_time_microseconds();
-	// Map from [0, 1] to [screen_width, screen_height].
-	e.x = event->x * server->output->wlr_output->width;
-	e.y = event->y * server->output->wlr_output->height;
+	// Map from [0, 1] to [output_width, output_height].
+	e.x = event->x * server->output_layout_box.width;
+	e.y = event->y * server->output_layout_box.height;
 	e.device_kind = kFlutterPointerDeviceKindMouse;
 	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
