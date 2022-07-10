@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:zenith/system_ui/app_drawer.dart';
-import 'package:zenith/system_ui/invisible_drawer_bar.dart';
+import 'package:zenith/system_ui/app_drawer/app_drawer.dart';
+import 'package:zenith/system_ui/app_drawer/invisible_drawer_bar.dart';
 
 class Bottom extends StatefulWidget {
   const Bottom({Key? key}) : super(key: key);

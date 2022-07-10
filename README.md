@@ -19,7 +19,7 @@ Video demonstration: https://youtu.be/3Zh7Tk4oWo0
 
 ## Run without compiling
 
-### Debian 12 Bookworm / Ubuntu 22.04 LTS
+### Mobian / Debian 12 Bookworm / Ubuntu 22.04 LTS
 
 - Download the deb package from the [latest](https://github.com/roscale/zenith/releases/latest) release
 - Install it with `sudo apt install ./package.deb`

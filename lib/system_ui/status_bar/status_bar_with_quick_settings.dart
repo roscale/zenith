@@ -1,17 +1,17 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:zenith/system_ui/quick_settings.dart';
-import 'package:zenith/system_ui/status_bar.dart';
+import 'package:zenith/system_ui/status_bar/quick_settings.dart';
+import 'package:zenith/system_ui/status_bar/status_bar.dart';
 
-class Top extends StatefulWidget {
-  const Top({Key? key}) : super(key: key);
+class StatusBarWithQuickSettings extends StatefulWidget {
+  const StatusBarWithQuickSettings({Key? key}) : super(key: key);
 
   @override
-  State<Top> createState() => _TopState();
+  State<StatusBarWithQuickSettings> createState() => _StatusBarWithQuickSettingsState();
 }
 
-class _TopState extends State<Top> with SingleTickerProviderStateMixin {
+class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings> with SingleTickerProviderStateMixin {
   bool quickSettingsVisible = false;
 
   var startDragHorizontalPosition = 0.0;

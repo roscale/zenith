@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zenith/state/desktop_state.dart';
+import 'package:zenith/system_ui/status_bar/status_bar_with_quick_settings.dart';
 import 'package:zenith/system_ui/task_switcher/task_switcher.dart';
-import 'package:zenith/system_ui/top.dart';
 
 class Desktop extends StatelessWidget {
   const Desktop({Key? key}) : super(key: key);
@@ -23,7 +23,7 @@ class Desktop extends StatelessWidget {
               spacing: 20,
             ),
           ),
-          const Top(),
+          const StatusBarWithQuickSettings(),
         ],
       ),
     );
