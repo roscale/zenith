@@ -155,6 +155,12 @@ void FlutterEngineState::register_platform_api() {
 				  mouse_button_event(server, call, std::move(result));
 			  } else if (call.method_name() == "change_window_visibility") {
 				  change_window_visibility(server, call, std::move(result));
+			  } else if (call.method_name() == "touch_down") {
+				  touch_down(server, call, std::move(result));
+			  } else if (call.method_name() == "touch_motion") {
+				  touch_motion(server, call, std::move(result));
+			  } else if (call.method_name() == "touch_up") {
+				  touch_up(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }

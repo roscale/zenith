@@ -46,4 +46,27 @@ class PlatformApi {
   static Future<void> unregisterViewTexture(int viewId) {
     return _platform.invokeMethod('unregister_view_texture', viewId);
   }
+
+  static Future<void> touchDown(int viewId, int touchId, double x, double y) {
+    return _platform.invokeMethod('touch_down', {
+      "view_id": viewId,
+      "touch_id": touchId,
+      "x": x,
+      "y": y,
+    });
+  }
+
+  static Future<void> touchMotion(int touchId, double x, double y) {
+    return _platform.invokeMethod('touch_motion', {
+      "touch_id": touchId,
+      "x": x,
+      "y": y,
+    });
+  }
+
+  static Future<void> touchUp(int touchId) {
+    return _platform.invokeMethod('touch_up', {
+      "touch_id": touchId,
+    });
+  }
 }

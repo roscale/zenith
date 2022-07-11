@@ -35,3 +35,15 @@ void mouse_button_event(ZenithServer* server,
 void change_window_visibility(ZenithServer* server,
                               const flutter::MethodCall<>& call,
                               std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void touch_down(ZenithServer* server,
+                const flutter::MethodCall<>& call,
+                std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void touch_motion(ZenithServer* server,
+                  const flutter::MethodCall<>& call,
+                  std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void touch_up(ZenithServer* server,
+              const flutter::MethodCall<>& call,
+              std::unique_ptr<flutter::MethodResult<>>&& result);
