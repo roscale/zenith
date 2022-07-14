@@ -6,11 +6,13 @@
 #include <unordered_map>
 #include <memory>
 #include <thread>
+#include <unordered_set>
 #include "output.hpp"
 #include "input/keyboard.hpp"
 #include "input/pointer.hpp"
 #include "input/touch.hpp"
 #include "view.hpp"
+#include "point.hpp"
 
 extern "C" {
 #define static
@@ -66,6 +68,7 @@ public:
 	std::unique_ptr<ZenithPointer> pointer;
 	std::list<std::unique_ptr<ZenithKeyboard>> keyboards{};
 	std::list<std::unique_ptr<ZenithTouchDevice>> touch_devices{};
+	std::unordered_map<int, Point> leaf_surface_coords_per_device_id{};
 
 	wl_listener new_input{};
 	wl_listener request_cursor{};

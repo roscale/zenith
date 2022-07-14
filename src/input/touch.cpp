@@ -31,6 +31,8 @@ void touch_down_handle(wl_listener* listener, void* data) {
 	// Hide cursor
 	if (server->pointer != nullptr) {
 		server->pointer->set_visible(false);
+		// Clear the pointer focus, otherwise the hover effect will be visible as if the cursor was still there.
+		wlr_seat_pointer_notify_clear_focus(server->seat);
 	}
 
 	FlutterPointerEvent e = {};

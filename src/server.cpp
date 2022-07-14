@@ -60,6 +60,9 @@ ZenithServer::ZenithServer() {
 		wlr_log(WLR_ERROR, "Could not create wlroots compositor");
 		exit(4);
 	}
+//	surface_destroyed.notify = server_surface_destroyed;
+//	new_surface.notify = server_new_surface;
+//	wl_signal_add(&compositor->events.new_surface, &new_surface);
 
 	if (wlr_data_device_manager_create(display) == nullptr) {
 		wlr_log(WLR_ERROR, "Could not create wlroots data device manager");

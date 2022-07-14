@@ -211,8 +211,25 @@ void touch_down(ZenithServer* server, const flutter::MethodCall<>& call,
 		result->Success();
 		return;
 	}
-	wlr_surface* surface = view_it->second->xdg_surface->surface;
-	wlr_seat_touch_notify_down(server->seat, surface, current_time_milliseconds(), touch_id, x, y);
+	const std::unique_ptr<ZenithView>& view = view_it->second;
+
+	double leaf_x, leaf_y; // Coordinates in the leaf surface coordinate system.
+	wlr_surface* leaf_surface = wlr_surface_surface_at(view->xdg_surface->surface, x, y, &leaf_x, &leaf_y);
+
+	if (leaf_surface == nullptr) {
+		result->Success();
+		return;
+	}
+
+	Point leaf_surface_coords = {
+		  // Coordinates of the subsurface in the xdg_surface's coordinate system.
+		  .x = x - leaf_x,
+		  .y = y - leaf_y
+	};
+	// Remember the subsurface position under this finger.
+	server->leaf_surface_coords_per_device_id[touch_id] = leaf_surface_coords;
+
+	wlr_seat_touch_notify_down(server->seat, leaf_surface, current_time_milliseconds(), touch_id, leaf_x, leaf_y);
 	wlr_seat_touch_notify_frame(server->seat);
 	result->Success();
 }
@@ -225,8 +242,13 @@ void touch_motion(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto x = std::get<double>(args[flutter::EncodableValue("x")]);
 	auto y = std::get<double>(args[flutter::EncodableValue("y")]);
 
-	wlr_seat_touch_notify_motion(server->seat, current_time_milliseconds(), touch_id, x, y);
-	wlr_seat_touch_notify_frame(server->seat);
+	try {
+		const Point& leaf = server->leaf_surface_coords_per_device_id.at(touch_id);
+		wlr_seat_touch_notify_motion(server->seat, current_time_milliseconds(), touch_id, x - leaf.x, y - leaf.y);
+		wlr_seat_touch_notify_frame(server->seat);
+	} catch (std::out_of_range& unused) {
+	}
+
 	result->Success();
 }
 
@@ -235,6 +257,8 @@ void touch_up(ZenithServer* server, const flutter::MethodCall<>& call,
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	auto touch_id = std::get<int>(args[flutter::EncodableValue("touch_id")]);
+
+	server->leaf_surface_coords_per_device_id.erase(touch_id);
 
 	wlr_seat_touch_notify_up(server->seat, current_time_milliseconds(), touch_id);
 	wlr_seat_touch_notify_frame(server->seat);

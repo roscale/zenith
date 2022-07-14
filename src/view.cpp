@@ -299,8 +299,6 @@ void surface_commit(wl_listener* listener, void* data) {
 			view->x = xdg_surface->popup->geometry.x;
 			view->y = xdg_surface->popup->geometry.y;
 
-			std::cout << "position changed" << std::endl;
-
 			popup_position_changed = true;
 			map.insert({EncodableValue("popup_position_changed"), EncodableValue(true)});
 			map.insert({EncodableValue("x"), EncodableValue(xdg_surface->popup->geometry.x)});
