@@ -48,26 +48,22 @@ void pointer_hover(ZenithServer* server,
 	}
 	ZenithView* view = view_it->second.get();
 
+	// FIXME
+	// It should send events to the same surface if at least one mouse button is down, even when the pointer is hovering
+	// another surface. Sometimes events are sent to the wrong subsurface. This doesn't happen between xdg_surfaces
+	// because Flutter's Listener widget correctly grabs the input when a button is down, but it has no knowledge of
+	// subsurfaces.
 	double sub_x, sub_y;
-	wlr_surface* leaf_surface = wlr_xdg_surface_surface_at(view->xdg_surface, x, y, &sub_x, &sub_y);
+	wlr_surface* leaf_surface = wlr_surface_surface_at(view->xdg_surface->surface, x, y, &sub_x, &sub_y);
 	if (leaf_surface == nullptr) {
 		result->Success();
 		return;
 	}
 
-	if (!wlr_surface_is_xdg_surface(leaf_surface)) {
-		// Give pointer focus to an inner subsurface, if one exists.
-		// This fixes GTK popovers.
-		wlr_seat_pointer_notify_enter(server->seat, leaf_surface, sub_x, sub_y);
-		wlr_seat_pointer_notify_motion(server->seat, current_time_milliseconds(), sub_x, sub_y);
-	} else {
-		// This has to stay, otherwise down -> move -> up for selecting a popup entry doesn't work.
-		wlr_seat_pointer_notify_enter(server->seat, view->xdg_surface->surface, x, y);
-		wlr_seat_pointer_notify_motion(server->seat, current_time_milliseconds(), x, y);
-	}
+	wlr_seat_pointer_notify_enter(server->seat, leaf_surface, sub_x, sub_y);
+	wlr_seat_pointer_notify_motion(server->seat, current_time_milliseconds(), sub_x, sub_y);
 	result->Success();
 }
-
 
 void pointer_exit(ZenithServer* server,
                   const flutter::MethodCall<>& call,
