@@ -47,7 +47,6 @@ void ZenithView::focus() {
 	}
 
 	wlr_seat* seat = server->seat;
-	wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
 
 	wlr_surface* prev_surface = seat->keyboard_state.focused_surface;
 
@@ -79,8 +78,11 @@ void ZenithView::focus() {
 	 * track of this and automatically send key events to the appropriate
 	 * clients without additional work on your part.
 	 */
-	wlr_seat_keyboard_enter(seat, xdg_surface->surface,
-	                        keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+	wlr_keyboard* keyboard = wlr_seat_get_keyboard(seat);
+	if (keyboard != nullptr) {
+		wlr_seat_keyboard_enter(seat, xdg_surface->surface,
+		                        keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+	}
 }
 
 void xdg_surface_map(wl_listener* listener, void* data) {
