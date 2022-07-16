@@ -1,9 +1,12 @@
 #include "keyboard.hpp"
-#include <wayland-util.h>
-#include <malloc.h>
 #include "server.hpp"
 
 extern "C" {
+#include <wayland-util.h>
+#include <linux/vt.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #define static
 #include <wlr/interfaces/wlr_input_device.h>
 #include <wlr/types/wlr_xdg_shell.h>
@@ -74,19 +77,42 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 }
 
 bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, const xkb_keysym_t* syms, size_t nsyms) {
-	auto is_key_pressed = [syms, nsyms](uint64_t key) {
-		for (size_t i = 0; i < nsyms; i++) {
-			if (syms[i] == key) {
-				return true;
-			}
-		}
+	if (modifiers == 0) {
+		// No need to check shortcuts if no modifier is pressed.
 		return false;
+	}
+
+	std::unordered_set<xkb_keysym_t> sym_set{};
+
+	for (size_t i = 0; i < nsyms; i++) {
+		sym_set.insert(syms[i]);
+	}
+
+	auto is_key_pressed = [&sym_set](uint64_t key) {
+		return sym_set.find(key) != sym_set.end();
+	};
+
+	auto is_modifier_pressed = [&modifiers](wlr_keyboard_modifier modifier) {
+		return (modifiers & modifier) != 0;
 	};
 
 	// Alt + Esc
-	if ((modifiers & WLR_MODIFIER_ALT) and is_key_pressed(XKB_KEY_Escape)) {
+	if (is_modifier_pressed(WLR_MODIFIER_ALT) and is_key_pressed(XKB_KEY_Escape)) {
 		wl_display_terminate(keyboard->server->display);
 		return true;
+	}
+
+	// Ctrl + Alt + F<num>
+	for (int vt = 1; vt <= 12; vt++) {
+		if (is_key_pressed(XKB_KEY_XF86Switch_VT_1 + vt - 1)) {
+			int fd = open("/dev/tty", O_RDWR);
+			if (fd > 0) {
+				ioctl(fd, VT_ACTIVATE, vt);
+				ioctl(fd, VT_WAITACTIVE, vt);
+				close(fd);
+			}
+			return true;
+		}
 	}
 
 	return false;

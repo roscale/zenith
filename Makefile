@@ -147,6 +147,7 @@ release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
 	cp build/linux/$(ARCH)/release/bundle/lib/libapp.so $(dir $<)/lib
 	cp -r build/linux/$(ARCH)/release/bundle/data $(dir $<)
 
+# Usage: make deb_package VERSION=0.2
 deb_package: release_bundle
 	mkdir -p build/zenith/release/deb/debpkg
 	cp -r dpkg/* build/zenith/release/deb/debpkg
@@ -159,6 +160,8 @@ deb_package: release_bundle
 
 attach_debugger:
 	flutter attach --debug-uri=http://127.0.0.1:12345/
+
+all: debug_bundle profile_bundle release_bundle
 
 clean:
 	-rm -r $(DEBUG_BUILD_DIR)
