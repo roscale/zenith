@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/widgets/popup.dart';
@@ -7,23 +8,25 @@ class WindowState with ChangeNotifier {
     required this.viewId,
     required Size surfaceSize,
     required Rect visibleBounds,
-  })  : _surfaceSize = surfaceSize,
+  })  : _surfaceSize = ValueNotifier(surfaceSize),
         _visibleBounds = visibleBounds;
 
   final int viewId;
   final GlobalKey textureKey = GlobalKey();
 
-  Size _surfaceSize;
+  final ValueNotifier<Size> _surfaceSize;
   Rect _visibleBounds;
   final List<Popup> _popups = [];
 
   bool _visible = true;
   bool _isClosing = false;
 
-  Size get surfaceSize => _surfaceSize;
+  Size get surfaceSize => _surfaceSize.value;
+
+  ValueListenable<Size> get surfaceSizeListenable => _surfaceSize;
 
   set surfaceSize(Size surfaceSize) {
-    _surfaceSize = surfaceSize;
+    _surfaceSize.value = surfaceSize;
     notifyListeners();
   }
 

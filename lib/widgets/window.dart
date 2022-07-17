@@ -56,8 +56,8 @@ class _Surface extends StatelessWidget {
   Widget build(BuildContext context) {
     var state = context.read<WindowState>();
 
-    return Selector(
-      selector: (_, WindowState state) => state.surfaceSize,
+    return ValueListenableBuilder(
+      valueListenable: state.surfaceSizeListenable,
       builder: (_, Size size, Widget? child) {
         return SizedBox(
           width: size.width,

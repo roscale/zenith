@@ -236,7 +236,29 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
         child: ConstrainedBox(
           constraints: constraints.value,
           child: Center(
-            child: FittedBox(
+            child: ValueListenableBuilder(
+              valueListenable: task.state.surfaceSizeListenable,
+              builder: (BuildContext context, Size size, Widget? child) {
+                Size biggest = constraints.value.biggest;
+
+                if (size.width >= biggest.width || size.height >= biggest.height) {
+                  return FittedBox(child: child!);
+                }
+
+                // Flutter likes to position things at subpixel coordinates and the view texture ends up
+                // at non-integer coordinates, which means that the image will be a bit blurry.
+                // If this is the case, just shift the view by half a pixel in the appropriate directions.
+                bool shiftHorizontally = size.width % 2 != biggest.width % 2;
+                bool shiftVertically = size.height % 2 != biggest.height % 2;
+
+                return Transform.translate(
+                  child: child!,
+                  offset: Offset(
+                    shiftHorizontally ? -0.5 : 0,
+                    shiftVertically ? -0.5 : 0,
+                  ),
+                );
+              },
               child: task,
             ),
           ),
