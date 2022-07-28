@@ -232,14 +232,8 @@ void surface_commit(wl_listener* listener, void* data) {
 	wlr_xdg_surface* xdg_surface = view->xdg_surface;
 
 	auto map = EncodableMap{
-		  {EncodableValue("view_id"),        EncodableValue((int64_t) view->id)},
-		  {EncodableValue("surface_role"),   EncodableValue(xdg_surface->role)},
-		  {EncodableValue("visible_bounds"), EncodableValue(EncodableMap{
-				{EncodableValue("x"),      EncodableValue(xdg_surface->current.geometry.x)},
-				{EncodableValue("y"),      EncodableValue(xdg_surface->current.geometry.y)},
-				{EncodableValue("width"),  EncodableValue(xdg_surface->current.geometry.width)},
-				{EncodableValue("height"), EncodableValue(xdg_surface->current.geometry.height)},
-		  })}
+		  {EncodableValue("view_id"),      EncodableValue((int64_t) view->id)},
+		  {EncodableValue("surface_role"), EncodableValue(xdg_surface->role)},
 	};
 
 	wlr_box new_geometry = xdg_surface->current.geometry;
