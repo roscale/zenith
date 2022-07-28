@@ -9,7 +9,7 @@ import 'package:zenith/enums.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/system_ui/task_switcher/invisible_bottom_bar.dart';
-import 'package:zenith/util/change_notifier_list.dart';
+import 'package:zenith/util/listenable_list.dart';
 import 'package:zenith/widgets/window.dart';
 
 class TaskSwitcher extends StatefulWidget {
@@ -26,7 +26,7 @@ class TaskSwitcher extends StatefulWidget {
 
 class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixin implements ScrollContext {
   final overview = ValueNotifier(false);
-  final tasks = ChangeNotifierList<Window>();
+  final tasks = ListenableList<Window>();
 
   late final ScrollPosition scrollPosition;
   final scale = ValueNotifier(1.0);
@@ -237,11 +237,12 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
           constraints: constraints.value,
           child: Center(
             child: ValueListenableBuilder(
-              valueListenable: task.state.surfaceSizeListenable,
-              builder: (BuildContext context, Size size, Widget? child) {
+              valueListenable: task.state.visibleBounds,
+              builder: (BuildContext context, Rect visibleBounds, Widget? child) {
                 Size biggest = constraints.value.biggest;
+                Size size = visibleBounds.size;
 
-                if (size.width >= biggest.width || size.height >= biggest.height) {
+                if (size.width > biggest.width || size.height > biggest.height) {
                   return FittedBox(child: child!);
                 }
 
@@ -259,7 +260,9 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
                   ),
                 );
               },
-              child: task,
+              child: UnconstrainedBox(
+                child: task,
+              ),
             ),
           ),
         ),

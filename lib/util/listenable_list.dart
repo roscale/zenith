@@ -3,8 +3,10 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
-class ChangeNotifierList<E> extends DelegatingList<E> with ChangeNotifier {
-  ChangeNotifierList() : super(<E>[]);
+class ListenableList<E> extends DelegatingList<E> with ChangeNotifier {
+  ListenableList() : super(<E>[]);
+
+  ListenableList.of(Iterable<E> elements) : super(List.of(elements));
 
   @override
   void sort([int Function(E, E)? compare]) {

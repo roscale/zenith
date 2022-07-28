@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:zenith/enums.dart';
@@ -85,14 +84,21 @@ class DesktopState {
       visibleBoundsMap["height"]!.toDouble(),
     );
 
+    var parentVisibleBounds = Rect.zero;
+    Widget parent = _views[parentViewId]!;
+    if (parent is Window) {
+      parentVisibleBounds = parent.state.visibleBounds.value;
+    } else if (parent is Popup) {
+      parentVisibleBounds = parent.state.visibleBounds.value;
+    }
+
     var popup = Popup(PopupState(
       viewId: viewId,
-      position: Offset(x.toDouble(), y.toDouble()),
+      position: Offset(x.toDouble() + parentVisibleBounds.left, y.toDouble() + parentVisibleBounds.top),
       surfaceSize: Size(width.toDouble(), height.toDouble()),
       visibleBounds: visibleBounds,
     ));
 
-    Widget parent = _views[parentViewId]!;
     if (parent is Window) {
       parent.state.addPopup(popup);
     } else if (parent is Popup) {
@@ -145,19 +151,19 @@ class DesktopState {
     switch (role) {
       case XdgSurfaceRole.toplevel:
         var window = _views[viewId] as Window;
-        window.state.surfaceSize = newSurfaceSize ?? window.state.surfaceSize;
-        window.state.visibleBounds = newVisibleBounds ?? window.state.visibleBounds;
+        window.state.surfaceSize.value = newSurfaceSize ?? window.state.surfaceSize.value;
+        window.state.visibleBounds.value = newVisibleBounds ?? window.state.visibleBounds.value;
         break;
 
       case XdgSurfaceRole.popup:
         var popup = _views[viewId] as Popup;
-        popup.state.surfaceSize = newSurfaceSize ?? popup.state.surfaceSize;
-        popup.state.visibleBounds = newVisibleBounds ?? popup.state.visibleBounds;
+        popup.state.surfaceSize.value = newSurfaceSize ?? popup.state.surfaceSize.value;
+        popup.state.visibleBounds.value = newVisibleBounds ?? popup.state.visibleBounds.value;
         if (event["popup_position_changed"]) {
           // Position relative to the parent.
           int x = event["x"];
           int y = event["y"];
-          popup.state.position = Offset(x.toDouble(), y.toDouble());
+          popup.state.position.value = Offset(x.toDouble(), y.toDouble());
         }
         break;
 

@@ -101,10 +101,10 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 	// But Obsidian (Chromium-based) crashes if I put this in the callback where the xdg surface
 	// is created.
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		wlr_xdg_toplevel_set_maximized(xdg_surface, true);
 		const size_t status_bar_height = 40;
 		wlr_xdg_toplevel_set_size(xdg_surface, server->output_layout_box.width,
 		                          server->output_layout_box.height - status_bar_height);
+		wlr_xdg_toplevel_set_maximized(xdg_surface, true);
 	}
 
 	// Make sure a framebuffer exists for this xdg_surface.

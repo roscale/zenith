@@ -2,7 +2,7 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zenith/state/popup_state.dart';
-import 'package:zenith/util/util.dart';
+import 'package:zenith/util/multi_value_listenable_builder.dart';
 import 'package:zenith/widgets/view_input_listener.dart';
 
 class Popup extends StatelessWidget {
@@ -12,8 +12,9 @@ class Popup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: state,
+    return Provider(
+      create: (_) => state,
+      dispose: (_, PopupState state) => state.dispose(),
       child: _Positioner(
         child: _Animations(
           key: state.animationsKey,
@@ -31,16 +32,27 @@ class _Positioner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var position = context.select((PopupState state) => state.position).rounded();
-    var visibleBounds = context.select((PopupState state) => state.visibleBounds);
-    var isClosing = context.select((PopupState state) => state.isClosing);
+    var state = context.read<PopupState>();
 
-    return Positioned(
-      left: position.dx - visibleBounds.left,
-      top: position.dy - visibleBounds.top,
-      child: IgnorePointer(
+    return ValueListenableBuilder2(
+      first: state.position,
+      second: state.visibleBounds,
+      builder: (_, Offset position, Rect visibleBounds, Widget? child) {
+        return Positioned(
+          left: position.dx - visibleBounds.left,
+          top: position.dy - visibleBounds.top,
+          child: child!,
+        );
+      },
+      child: ValueListenableBuilder(
+        valueListenable: state.isClosing,
+        builder: (_, bool isClosing, Widget? child) {
+          return IgnorePointer(
+            ignoring: isClosing,
+            child: child,
+          );
+        },
         child: child,
-        ignoring: isClosing,
       ),
     );
   }
@@ -75,7 +87,7 @@ class AnimationsState extends State<_Animations> with SingleTickerProviderStateM
   )..forward();
 
   late final Animation<Offset> _offsetAnimation = Tween<Offset>(
-    begin: Offset(0.0, -10 / context.read<PopupState>().surfaceSize.height),
+    begin: Offset(0.0, -10 / context.read<PopupState>().surfaceSize.value.height),
     end: Offset.zero,
   ).animate(CurvedAnimation(
     parent: controller,
@@ -102,8 +114,8 @@ class _Surface extends StatelessWidget {
   Widget build(BuildContext context) {
     var state = context.read<PopupState>();
 
-    return Selector(
-      selector: (_, PopupState state) => state.surfaceSize,
+    return ValueListenableBuilder(
+      valueListenable: state.surfaceSize,
       builder: (_, Size size, Widget? child) {
         return SizedBox(
           width: size.width,
@@ -124,12 +136,12 @@ class _Surface extends StatelessWidget {
                   textureId: state.viewId,
                 ),
               ),
-              Selector(
-                selector: (_, PopupState popupState) => popupState.popups,
-                builder: (_, List<Popup> popups, __) {
+              AnimatedBuilder(
+                animation: state.popups,
+                builder: (_, __) {
                   return Stack(
                     clipBehavior: Clip.none,
-                    children: popups,
+                    children: state.popups,
                   );
                 },
               ),
