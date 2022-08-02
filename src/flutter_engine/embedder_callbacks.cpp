@@ -1,5 +1,5 @@
-#include "flutter_callbacks.hpp"
-#include "flutter_engine_state.hpp"
+#include "embedder_callbacks.hpp"
+#include "embedder_state.hpp"
 #include "server.hpp"
 #include "gl_mutex.hpp"
 
@@ -15,17 +15,17 @@ extern "C" {
 #include <iostream>
 
 bool flutter_make_current(void* userdata) {
-	auto* state = static_cast<FlutterEngineState*>(userdata);
+	auto* state = static_cast<EmbedderState*>(userdata);
 	return wlr_egl_make_current(state->flutter_gl_context);
 }
 
 bool flutter_clear_current(void* userdata) {
-	auto* state = static_cast<FlutterEngineState*>(userdata);
+	auto* state = static_cast<EmbedderState*>(userdata);
 	return wlr_egl_unset_current(state->flutter_gl_context);
 }
 
 bool flutter_present(void* userdata) {
-	auto* state = static_cast<FlutterEngineState*>(userdata);
+	auto* state = static_cast<EmbedderState*>(userdata);
 
 	state->surface_framebuffers_in_use.clear();
 
@@ -36,12 +36,12 @@ bool flutter_present(void* userdata) {
 }
 
 uint32_t flutter_fbo_callback(void* userdata) {
-	auto* state = static_cast<FlutterEngineState*>(userdata);
+	auto* state = static_cast<EmbedderState*>(userdata);
 	return state->output_framebuffer->framebuffer;
 }
 
 void flutter_vsync_callback(void* userdata, intptr_t baton) {
-	auto* state = static_cast<FlutterEngineState*>(userdata);
+	auto* state = static_cast<EmbedderState*>(userdata);
 
 	std::scoped_lock lock(state->baton_mutex);
 
@@ -52,7 +52,7 @@ void flutter_vsync_callback(void* userdata, intptr_t baton) {
 
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
-	auto* state = static_cast<FlutterEngineState*>(userdata);
+	auto* state = static_cast<EmbedderState*>(userdata);
 	ZenithServer* server = state->server;
 
 	std::shared_ptr<Framebuffer> surface_framebuffer;
@@ -83,7 +83,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 }
 
 void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata) {
-	auto* state = static_cast<FlutterEngineState*>(userdata);
+	auto* state = static_cast<EmbedderState*>(userdata);
 
 	if (message->struct_size != sizeof(FlutterPlatformMessage)) {
 		std::cerr << "ERROR: Invalid message size received. Expected: "
@@ -96,12 +96,12 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 }
 
 bool flutter_make_resource_current(void* userdata) {
-	auto* state = static_cast<FlutterEngineState*>(userdata);
+	auto* state = static_cast<EmbedderState*>(userdata);
 	return wlr_egl_make_current(state->flutter_resource_gl_context);
 }
 
 int flutter_execute_expired_tasks_timer(void* data) {
-	auto* state = static_cast<FlutterEngineState*>(data);
+	auto* state = static_cast<EmbedderState*>(data);
 
 	state->platform_task_runner.execute_expired_tasks();
 	// I would have preferred to have the delay represented in nanoseconds because I could reschedule

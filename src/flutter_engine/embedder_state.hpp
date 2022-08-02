@@ -17,8 +17,8 @@ extern "C" {
 
 struct ZenithServer;
 
-struct FlutterEngineState {
-	FlutterEngineState(ZenithServer* server, wlr_egl* main_egl);
+struct EmbedderState {
+	EmbedderState(ZenithServer* server, wlr_egl* main_egl);
 
 	void run_engine();
 

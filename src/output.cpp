@@ -1,7 +1,7 @@
 #include <cassert>
 #include "output.hpp"
 #include "server.hpp"
-#include "flutter_callbacks.hpp"
+#include "embedder_callbacks.hpp"
 #include "time.hpp"
 
 extern "C" {
@@ -29,7 +29,7 @@ struct RenderData {
 void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 	ZenithServer* server = output->server;
-	auto& flutter_engine_state = server->flutter_engine_state;
+	auto& flutter_engine_state = server->embedder_state;
 
 	uint64_t now = current_time_nanoseconds();
 
@@ -131,7 +131,7 @@ void mode_changed_event(wl_listener* listener, void* data) {
 	window_metrics.pixel_ratio = 1.0;
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
-	output->server->flutter_engine_state->send_window_metrics(window_metrics);
+	output->server->embedder_state->send_window_metrics(window_metrics);
 }
 
 static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo) {

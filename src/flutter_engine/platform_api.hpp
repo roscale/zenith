@@ -47,3 +47,7 @@ void touch_motion(ZenithServer* server,
 void touch_up(ZenithServer* server,
               const flutter::MethodCall<>& call,
               std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void insert_text(ZenithServer* server,
+                 const flutter::MethodCall<>& call,
+                 std::unique_ptr<flutter::MethodResult<>>&& result);

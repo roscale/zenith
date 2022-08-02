@@ -11,6 +11,7 @@
 #include "input/keyboard.hpp"
 #include "input/pointer.hpp"
 #include "input/touch.hpp"
+#include "input/text_input.hpp"
 #include "view.hpp"
 #include "point.hpp"
 
@@ -24,6 +25,7 @@ extern "C" {
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_text_input_v3.h>
 #undef static
 }
 
@@ -45,6 +47,7 @@ public:
 	wlr_allocator* allocator;
 	wlr_compositor* compositor;
 	wlr_xdg_shell* xdg_shell;
+	wlr_text_input_manager_v3* text_input_manager;
 
 	wlr_output_layout* output_layout;
 	std::unique_ptr<ZenithOutput> output; // We support a single output at the moment.
@@ -58,6 +61,9 @@ public:
 
 	wl_listener new_output{};
 	wl_listener new_xdg_surface{};
+	wl_listener new_input{};
+	wl_listener request_cursor{};
+	wl_listener new_text_input{};
 
 	std::unordered_map<wlr_surface*, size_t> view_id_by_wlr_surface{};
 	std::unordered_map<size_t, std::unique_ptr<ZenithView>> views_by_id{};
@@ -68,12 +74,10 @@ public:
 	std::unique_ptr<ZenithPointer> pointer;
 	std::list<std::unique_ptr<ZenithKeyboard>> keyboards{};
 	std::list<std::unique_ptr<ZenithTouchDevice>> touch_devices{};
+	std::list<std::unique_ptr<ZenithTextInput>> text_inputs{};
 	std::unordered_map<int, Point> leaf_surface_coords_per_device_id{};
 
-	wl_listener new_input{};
-	wl_listener request_cursor{};
-
-	std::unique_ptr<FlutterEngineState> flutter_engine_state{};
+	std::unique_ptr<EmbedderState> embedder_state{};
 };
 
 /*
@@ -98,3 +102,5 @@ void server_new_input(wl_listener* listener, void* data);
  * This event is raised by the seat when a client provides a cursor image.
  */
 void server_seat_request_cursor(wl_listener* listener, void* data);
+
+void server_new_text_input(wl_listener* listener, void* data);

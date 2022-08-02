@@ -11,6 +11,7 @@ import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/system_ui/task_switcher/invisible_bottom_bar.dart';
 import 'package:zenith/util/listenable_list.dart';
 import 'package:zenith/widgets/window.dart';
+import 'package:zenith/widgets/with_virtual_keyboard.dart';
 
 class TaskSwitcher extends StatefulWidget {
   final double spacing;
@@ -205,7 +206,48 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     double position = 0;
 
     for (Window task in tasks) {
-      var taskWidget = ValueListenableBuilder(
+      Widget taskWidget = UnconstrainedBox(
+        child: task,
+      );
+
+      taskWidget = ConstrainedBox(
+        constraints: constraints.value,
+        child: Center(
+          child: ValueListenableBuilder(
+            valueListenable: task.state.visibleBounds,
+            builder: (BuildContext context, Rect visibleBounds, Widget? child) {
+              Size biggest = constraints.value.biggest;
+              Size size = visibleBounds.size;
+
+              if (size.width > biggest.width || size.height > biggest.height) {
+                return FittedBox(child: child!);
+              }
+
+              // Flutter likes to position things at subpixel coordinates and the view texture ends up
+              // at non-integer coordinates, which means that the image will be a bit blurry.
+              // If this is the case, just shift the view by half a pixel in the appropriate directions.
+              bool shiftHorizontally = size.width % 2 != biggest.width % 2;
+              bool shiftVertically = size.height % 2 != biggest.height % 2;
+
+              return Transform.translate(
+                offset: Offset(
+                  shiftHorizontally ? -0.5 : 0,
+                  shiftVertically ? -0.5 : 0,
+                ),
+                child: child!,
+              );
+            },
+            child: taskWidget,
+          ),
+        ),
+      );
+
+      taskWidget = WithVirtualKeyboard(
+        viewId: task.state.viewId,
+        child: taskWidget,
+      );
+
+      taskWidget = ValueListenableBuilder(
         valueListenable: overview,
         builder: (_, bool overview, Widget? child) {
           if (overview) {
@@ -233,45 +275,20 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
             );
           }
         },
+        child: taskWidget,
+      );
+
+      taskWidget = Positioned(
+        left: position,
         child: ConstrainedBox(
-          constraints: constraints.value,
-          child: Center(
-            child: ValueListenableBuilder(
-              valueListenable: task.state.visibleBounds,
-              builder: (BuildContext context, Rect visibleBounds, Widget? child) {
-                Size biggest = constraints.value.biggest;
-                Size size = visibleBounds.size;
-
-                if (size.width > biggest.width || size.height > biggest.height) {
-                  return FittedBox(child: child!);
-                }
-
-                // Flutter likes to position things at subpixel coordinates and the view texture ends up
-                // at non-integer coordinates, which means that the image will be a bit blurry.
-                // If this is the case, just shift the view by half a pixel in the appropriate directions.
-                bool shiftHorizontally = size.width % 2 != biggest.width % 2;
-                bool shiftVertically = size.height % 2 != biggest.height % 2;
-
-                return Transform.translate(
-                  child: child!,
-                  offset: Offset(
-                    shiftHorizontally ? -0.5 : 0,
-                    shiftVertically ? -0.5 : 0,
-                  ),
-                );
-              },
-              child: UnconstrainedBox(
-                child: task,
-              ),
-            ),
+          constraints: constraints.value.loosen(),
+          child: DeferPointer(
+            child: taskWidget,
           ),
         ),
       );
 
-      yield Positioned(
-        left: position,
-        child: DeferPointer(child: taskWidget),
-      );
+      yield taskWidget;
 
       position += _taskToTaskOffset;
     }

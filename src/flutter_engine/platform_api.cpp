@@ -1,8 +1,10 @@
 #include <linux/input-event-codes.h>
+#include <xkbcommon/xkbcommon.h>
 #include "platform_api.hpp"
 #include "server.hpp"
 #include "encodable_value.h"
 #include "time.hpp"
+#include "string_to_keycode.hpp"
 
 extern "C" {
 #define static
@@ -131,7 +133,7 @@ void unregister_view_texture(ZenithServer* server,
 	std::scoped_lock lock(server->surface_framebuffers_mutex);
 	server->surface_framebuffers.erase(view_id);
 
-	FlutterEngineUnregisterExternalTexture(server->flutter_engine_state->engine, view_id);
+	FlutterEngineUnregisterExternalTexture(server->embedder_state->engine, view_id);
 
 	result->Success();
 }
@@ -258,5 +260,59 @@ void touch_up(ZenithServer* server, const flutter::MethodCall<>& call,
 
 	wlr_seat_touch_notify_up(server->seat, current_time_milliseconds(), touch_id);
 	wlr_seat_touch_notify_frame(server->seat);
+	result->Success();
+}
+
+void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
+                 std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	auto text = std::get<std::string>(args[flutter::EncodableValue("text")]);
+
+	auto view_it = server->views_by_id.find(view_id);
+	bool view_doesnt_exist = view_it == server->views_by_id.end();
+	if (view_doesnt_exist) {
+		result->Success();
+		return;
+	}
+	ZenithView* view = view_it->second.get();
+	if (view->active_text_input != nullptr) {
+		wlr_text_input_v3_send_commit_string(view->active_text_input->wlr_text_input, text.c_str());
+		wlr_text_input_v3_send_done(view->active_text_input->wlr_text_input);
+	} else {
+		wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->seat);
+
+//		auto name = xkb_keymap_key_get_name(keyboard->keymap, KEY_A + 8);
+//		std::cout << "name A: " << name << std::endl;
+//
+//		auto key_code = xkb_keymap_key_by_name(keyboard->keymap, text.c_str());
+//		std::cout << "keycode: " << key_code << std::endl;
+
+		//		xkb_keymap_key_by_name()
+//		auto str = xkb_keymap_get_as_string(wlr_seat_get_keyboard(server->seat)->keymap, XKB_KEYMAP_FORMAT_TEXT_V1);
+//		std::cout << "keymap:\n" << str << std::endl;
+
+//		wlr_seat_keyboard_notify_modifiers()
+		std::optional<KeyCombination> combination = string_to_keycode(text.c_str(), keyboard->xkb_state);
+		if (combination.has_value()) {
+			auto mods = wlr_keyboard_modifiers{
+				  .depressed = combination->modifiers,
+				  .latched = 0,
+				  .locked = 0,
+				  .group = 0,
+			};
+			auto previous_mods = keyboard->modifiers;
+
+			wlr_seat_keyboard_notify_modifiers(server->seat, &mods);
+			wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), combination->keycode - 8,
+			                             WL_KEYBOARD_KEY_STATE_PRESSED);
+			wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), combination->keycode - 8,
+			                             WL_KEYBOARD_KEY_STATE_RELEASED);
+			wlr_seat_keyboard_notify_modifiers(server->seat, &previous_mods);
+		}
+
+	}
+
 	result->Success();
 }

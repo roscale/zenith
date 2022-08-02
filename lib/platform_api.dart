@@ -8,6 +8,7 @@ class PlatformApi {
   static final Stream requestMoveStream = const EventChannel('request_move').receiveBroadcastStream();
   static final Stream requestResizeStream = const EventChannel('request_resize').receiveBroadcastStream();
   static final Stream configureSurfaceStream = const EventChannel('configure_surface').receiveBroadcastStream();
+  static final Stream textInputEventsStream = const EventChannel('text_input_events').receiveBroadcastStream();
 
   static const MethodChannel _platform = MethodChannel('platform');
 
@@ -69,4 +70,34 @@ class PlatformApi {
       "touch_id": touchId,
     });
   }
+
+  static Future<void> insertText(int viewId, String text) {
+    return _platform.invokeMethod('insert_text', {
+      "view_id": viewId,
+      "text": text,
+    });
+  }
+
+  static Stream<TextInputEvent> getTextInputEventsForViewId(int viewId) {
+    return PlatformApi.textInputEventsStream.where((event) => event["view_id"] == viewId).map((event) {
+      switch (event["type"]) {
+        case "enable":
+          return TextInputEnable();
+        case "disable":
+          return TextInputDisable();
+        case "commit":
+          return TextInputCommit();
+        default:
+          throw ArgumentError.value(event["type"], "Must be 'enable', 'disable', or 'commit'", "event['type']");
+      }
+    });
+  }
 }
+
+abstract class TextInputEvent {}
+
+class TextInputEnable extends TextInputEvent {}
+
+class TextInputDisable extends TextInputEvent {}
+
+class TextInputCommit extends TextInputEvent {}

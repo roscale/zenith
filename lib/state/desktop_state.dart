@@ -138,7 +138,7 @@ class DesktopState {
     }
 
     Rect? newVisibleBounds;
-    if (event["geometry_changed"]) {
+    if (event["visible_bounds_changed"]) {
       var visibleBoundsMap = event["visible_bounds"];
       newVisibleBounds = Rect.fromLTWH(
         visibleBoundsMap["x"]!.toDouble(),

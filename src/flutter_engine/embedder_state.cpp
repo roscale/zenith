@@ -1,6 +1,6 @@
-#include "flutter_engine_state.hpp"
+#include "embedder_state.hpp"
 #include "util/create_shared_egl_context.hpp"
-#include "flutter_callbacks.hpp"
+#include "embedder_callbacks.hpp"
 #include "platform_api.hpp"
 #include "standard_method_codec.h"
 #include <filesystem>
@@ -16,7 +16,7 @@ extern "C" {
 
 struct ZenithServer;
 
-FlutterEngineState::FlutterEngineState(ZenithServer* server, wlr_egl* main_egl)
+EmbedderState::EmbedderState(ZenithServer* server, wlr_egl* main_egl)
 	  : server(server), message_dispatcher(&messenger) {
 
 	messenger.SetMessageDispatcher(&message_dispatcher);
@@ -45,7 +45,7 @@ FlutterEngineState::FlutterEngineState(ZenithServer* server, wlr_egl* main_egl)
 	zenith_egl_restore_context(&saved_egl_context);
 }
 
-void FlutterEngineState::run_engine() {
+void EmbedderState::run_engine() {
 	start_engine();
 
 	platform_task_runner.set_engine(engine);
@@ -57,7 +57,7 @@ void FlutterEngineState::run_engine() {
 	register_platform_api();
 }
 
-void FlutterEngineState::start_engine() {
+void EmbedderState::start_engine() {
 	/*
 	 * Configure renderer, task runners, and project args.
 	 */
@@ -76,11 +76,11 @@ void FlutterEngineState::start_engine() {
 	platform_task_runner_description.user_data = this;
 	platform_task_runner_description.identifier = 1;
 	platform_task_runner_description.runs_task_on_current_thread_callback = [](void* userdata) {
-		auto* flutter_engine_state = static_cast<FlutterEngineState*>(userdata);
+		auto* flutter_engine_state = static_cast<EmbedderState*>(userdata);
 		return std::this_thread::get_id() == flutter_engine_state->server->main_thread_id;
 	};
 	platform_task_runner_description.post_task_callback = [](FlutterTask task, uint64_t target_time, void* userdata) {
-		auto* flutter_engine_state = static_cast<FlutterEngineState*>(userdata);
+		auto* flutter_engine_state = static_cast<EmbedderState*>(userdata);
 		flutter_engine_state->platform_task_runner.add_task(target_time, task);
 	};
 
@@ -130,7 +130,7 @@ void FlutterEngineState::start_engine() {
 	assert(result == kSuccess && engine != nullptr);
 }
 
-void FlutterEngineState::register_platform_api() {
+void EmbedderState::register_platform_api() {
 	auto& codec = flutter::StandardMethodCodec::GetInstance();
 
 	messenger.SetEngine(engine);
@@ -161,6 +161,8 @@ void FlutterEngineState::register_platform_api() {
 				  touch_motion(server, call, std::move(result));
 			  } else if (call.method_name() == "touch_up") {
 				  touch_up(server, call, std::move(result));
+			  } else if (call.method_name() == "insert_text") {
+				  insert_text(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }
@@ -168,11 +170,11 @@ void FlutterEngineState::register_platform_api() {
 	);
 }
 
-void FlutterEngineState::send_window_metrics(FlutterWindowMetricsEvent& metrics) {
-	std::scoped_lock lock(server->flutter_engine_state->output_framebuffer->mutex);
-	GLScopedLock gl_lock(server->flutter_engine_state->output_gl_mutex);
+void EmbedderState::send_window_metrics(FlutterWindowMetricsEvent& metrics) {
+	std::scoped_lock lock(server->embedder_state->output_framebuffer->mutex);
+	GLScopedLock gl_lock(server->embedder_state->output_gl_mutex);
 
-	FlutterEngineSendWindowMetricsEvent(server->flutter_engine_state->engine, &metrics);
+	FlutterEngineSendWindowMetricsEvent(server->embedder_state->engine, &metrics);
 
 	output_framebuffer->resize(metrics.width, metrics.height);
 }

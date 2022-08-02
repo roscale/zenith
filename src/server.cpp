@@ -92,6 +92,12 @@ ZenithServer::ZenithServer() {
 		exit(8);
 	}
 
+	text_input_manager = wlr_text_input_manager_v3_create(display);
+	if (text_input_manager == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create text input manager");
+		exit(-1);
+	}
+
 	// Called at the start for each available output, but also when the user plugs in a monitor.
 	new_output.notify = server_new_output;
 	wl_signal_add(&backend->events.new_output, &new_output);
@@ -106,16 +112,18 @@ ZenithServer::ZenithServer() {
 
 	// Programs can request to change the cursor image.
 	request_cursor.notify = server_seat_request_cursor;
-	wl_signal_add(&seat->events.request_set_cursor,
-	              &request_cursor);
+	wl_signal_add(&seat->events.request_set_cursor, &request_cursor);
+
+	new_text_input.notify = server_new_text_input;
+	wl_signal_add(&text_input_manager->events.text_input, &new_text_input);
 }
 
 void ZenithServer::run(char* startup_command) {
 	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
-	flutter_engine_state = std::make_unique<FlutterEngineState>(this, main_egl);
+	embedder_state = std::make_unique<EmbedderState>(this, main_egl);
 
 	// Run the engine.
-	flutter_engine_state->run_engine();
+	embedder_state->run_engine();
 
 	const char* socket = wl_display_add_socket_auto(display);
 	if (!socket) {
@@ -199,7 +207,7 @@ void server_new_output(wl_listener* listener, void* data) {
 	window_metrics.pixel_ratio = 1.0;
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
-	server->flutter_engine_state->send_window_metrics(window_metrics);
+	server->embedder_state->send_window_metrics(window_metrics);
 
 	server->output = std::move(output);
 }
@@ -285,4 +293,14 @@ void server_seat_request_cursor(wl_listener* listener, void* data) {
 			wlr_cursor_set_surface(server->pointer->cursor, event->surface, event->hotspot_x, event->hotspot_y);
 		}
 	}
+}
+
+void server_new_text_input(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, new_text_input);
+
+	auto* wlr_text_input = static_cast<wlr_text_input_v3*>(data);
+	auto text_input = std::make_unique<ZenithTextInput>(server, wlr_text_input);
+	server->text_inputs.push_back(std::move(text_input));
+
+	std::cout << "New text input " << wlr_text_input->resource->client << std::endl;
 }

@@ -79,7 +79,7 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	e.device_kind = kFlutterPointerDeviceKindMouse;
 	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
-	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
+	FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
 }
 
 void server_cursor_motion_absolute(wl_listener* listener, void* data) {
@@ -101,7 +101,7 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	e.device_kind = kFlutterPointerDeviceKindMouse;
 	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
-	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
+	FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
 }
 
 void server_cursor_button(wl_listener* listener, void* data) {
@@ -125,7 +125,7 @@ void server_cursor_button(wl_listener* listener, void* data) {
 		e.device_kind = kFlutterPointerDeviceKindMouse;
 		e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
-		FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
+		FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
 	} else {
 		bool are_any_buttons_pressed = pointer->mouse_button_tracker.are_any_buttons_pressed();
 		pointer->mouse_button_tracker.press_button(event->button);
@@ -139,7 +139,7 @@ void server_cursor_button(wl_listener* listener, void* data) {
 		e.device_kind = kFlutterPointerDeviceKindMouse;
 		e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
-		FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
+		FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
 	}
 }
 
@@ -174,7 +174,7 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 			e.scroll_delta_x = event->delta;
 			break;
 	}
-	FlutterEngineSendPointerEvent(server->flutter_engine_state->engine, &e, 1);
+	FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
 }
 
 void server_cursor_frame(wl_listener* listener, void* data) {

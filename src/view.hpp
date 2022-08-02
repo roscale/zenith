@@ -7,6 +7,7 @@ extern "C" {
 }
 
 struct ZenithServer;
+struct ZenithTextInput;
 
 struct ZenithView {
 	ZenithView(ZenithServer* server, wlr_xdg_surface* xdg_surface);
@@ -14,22 +15,22 @@ struct ZenithView {
 	/*
 	 * Activate the view and make the keyboard enter the surface of this view.
 	 */
-	void focus();
+	void focus() const;
 
 	ZenithServer* server;
 	wlr_xdg_surface* xdg_surface;
 	size_t id;
-	bool mapped;
+	bool mapped = false;
 	bool visible = true;
-	int x, y;
-	wlr_box geometry{};
+	wlr_box popup_geometry{};
+	wlr_box visible_bounds{};
+	ZenithTextInput* active_text_input = nullptr;
+
 	/* callbacks */
 	wl_listener map{};
 	wl_listener unmap{};
 	wl_listener destroy{};
 	wl_listener commit{};
-	wl_listener request_move{};
-	wl_listener request_resize{};
 };
 
 /*
@@ -46,21 +47,3 @@ void xdg_surface_unmap(wl_listener* listener, void* data);
  * Called when the surface is destroyed and should never be shown again.
  */
 void xdg_surface_destroy(wl_listener* listener, void* data);
-
-/*
- * This event is raised when a client would like to begin an interactive
- * move, typically because the user clicked on their client-side
- * decorations. Note that a more sophisticated compositor should check the
- * provided serial against a list of button press serials sent to this
- * client, to prevent the client from requesting this whenever they want.
- */
-void xdg_toplevel_request_move(wl_listener* listener, void* data);
-
-/*
- * This event is raised when a client would like to begin an interactive
- * resize, typically because the user clicked on their client-side
- * decorations. Note that a more sophisticated compositor should check the
- * provided serial against a list of button press serials sent to this
- * client, to prevent the client from requesting this whenever they want.
- */
-void xdg_toplevel_request_resize(wl_listener* listener, void* data);

@@ -5,7 +5,7 @@
 #include <platform_channels/method_channel.h>
 #include <memory>
 #include <mutex>
-#include "flutter_engine_state.hpp"
+#include "embedder_state.hpp"
 
 struct ZenithServer;
 
