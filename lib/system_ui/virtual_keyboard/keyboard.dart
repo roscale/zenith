@@ -2,15 +2,18 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:zenith/system_ui/virtual_keyboard/key.dart';
+import 'package:zenith/system_ui/virtual_keyboard/key_codes.dart';
 
 class VirtualKeyboard extends StatelessWidget {
   final VoidCallback onDismiss;
   final void Function(String) onCharacter;
+  final void Function(KeyCode) onKeyCode;
 
   const VirtualKeyboard({
     Key? key,
     required this.onDismiss,
     required this.onCharacter,
+    required this.onKeyCode,
   }) : super(key: key);
 
   @override
@@ -70,6 +73,7 @@ class VirtualKeyboard extends StatelessWidget {
           }
           forthRow.add(VirtualKeyboardKey(
             width: keyWidth * 1.5,
+            onTap: () => onKeyCode(KeyCode.backspace),
             child: const Icon(Icons.backspace_outlined),
           ));
 
@@ -105,6 +109,7 @@ class VirtualKeyboard extends StatelessWidget {
             ),
             VirtualKeyboardKey(
               width: keyWidth * 1.5,
+              onTap: () => onKeyCode(KeyCode.enter),
               child: const Icon(Icons.search),
             ),
           ]);

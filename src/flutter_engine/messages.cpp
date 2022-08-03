@@ -1,7 +1,3 @@
-//
-// Created by roscale on 8/2/22.
-//
-
 #include "messages.hpp"
 
 void send_window_mapped(BinaryMessenger& messenger, size_t view_id, int surface_width, int surface_height,

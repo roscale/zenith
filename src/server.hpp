@@ -57,7 +57,7 @@ public:
 	// If we are going to support multiple outputs in the future, we would have to create big framebuffer for all
 	// outputs of the size of this box and reserve a portion of the framebuffer for each.
 	// Right now, only one output is supported so the size of this box is essentially the size of the output.
-	wlr_box output_layout_box;
+	wlr_box output_layout_box{};
 
 	wl_listener new_output{};
 	wl_listener new_xdg_surface{};

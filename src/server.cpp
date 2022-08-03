@@ -301,6 +301,4 @@ void server_new_text_input(wl_listener* listener, void* data) {
 	auto* wlr_text_input = static_cast<wlr_text_input_v3*>(data);
 	auto text_input = std::make_unique<ZenithTextInput>(server, wlr_text_input);
 	server->text_inputs.push_back(std::move(text_input));
-
-	std::cout << "New text input " << wlr_text_input->resource->client << std::endl;
 }

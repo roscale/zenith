@@ -121,6 +121,10 @@ void output_frame(wl_listener* listener, void* data) {
 void mode_changed_event(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, mode_changed);
 
+	// Update the layout box when the mode changes.
+	wlr_box* box = wlr_output_layout_get_box(output->server->output_layout, nullptr);
+	output->server->output_layout_box = *box;
+
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 

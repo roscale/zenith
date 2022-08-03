@@ -78,6 +78,13 @@ class PlatformApi {
     });
   }
 
+  static Future<void> emulateKeyCode(int viewId, int keyCode) {
+    return _platform.invokeMethod('emulate_keycode', {
+      "view_id": viewId,
+      "keycode": keyCode,
+    });
+  }
+
   static Stream<TextInputEvent> getTextInputEventsForViewId(int viewId) {
     return PlatformApi.textInputEventsStream.where((event) => event["view_id"] == viewId).map((event) {
       switch (event["type"]) {

@@ -133,11 +133,11 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		}
 	}
 
-	FlutterEngineRegisterExternalTexture(view->server->embedder_state->engine, (int64_t) view->id);
+	FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) view->id);
 
-	switch (view->xdg_surface->role) {
+	switch (xdg_surface->role) {
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
-			send_window_mapped(view->server->embedder_state->messenger,
+			send_window_mapped(server->embedder_state->messenger,
 			                   view->id,
 			                   surface->current.width,
 			                   surface->current.height,
@@ -145,16 +145,22 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 			break;
 		}
 		case WLR_XDG_SURFACE_ROLE_POPUP: {
-			wlr_xdg_popup* popup = view->xdg_surface->popup;
-			view->popup_geometry = popup->geometry;
+			wlr_xdg_popup* popup = xdg_surface->popup;
+
+			view->popup_geometry = wlr_box{
+				  .x = popup->geometry.x,
+				  .y = popup->geometry.y,
+				  .width = surface->current.buffer_width,
+				  .height = surface->current.buffer_height,
+			};
 
 			wlr_xdg_surface* parent_xdg_surface = wlr_xdg_surface_from_wlr_surface(popup->parent);
-			size_t parent_view_id = view->server->view_id_by_wlr_surface[parent_xdg_surface->surface];
+			size_t parent_view_id = server->view_id_by_wlr_surface[parent_xdg_surface->surface];
 
-			send_popup_mapped(view->server->embedder_state->messenger,
+			send_popup_mapped(server->embedder_state->messenger,
 			                  view->id,
 			                  parent_view_id,
-			                  popup->geometry,
+			                  view->popup_geometry,
 			                  popup->base->current.geometry);
 			break;
 		}
@@ -246,10 +252,15 @@ void surface_commit(wl_listener* listener, void* data) {
 	}
 
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
-		wlr_box& popup_box = xdg_surface->popup->geometry;
+		wlr_box popup_box = {
+			  .x = xdg_surface->popup->geometry.x,
+			  .y = xdg_surface->popup->geometry.y,
+			  .width = surface->current.buffer_width,
+			  .height = surface->current.buffer_height,
+		};
 		if (popup_box.x != view->popup_geometry.x or popup_box.y != view->popup_geometry.y) {
 			view->popup_geometry = popup_box;
-			
+
 			new_popup_position = {popup_box.x, popup_box.y};
 		}
 	}

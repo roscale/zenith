@@ -33,9 +33,11 @@ int64_t MouseButtonTracker::get_flutter_mouse_state() {
 				bitmap |= kFlutterPointerButtonMouseMiddle;
 				break;
 			case BTN_BACK:
+			case BTN_SIDE:
 				bitmap |= kFlutterPointerButtonMouseBack;
 				break;
 			case BTN_FORWARD:
+			case BTN_EXTRA:
 				bitmap |= kFlutterPointerButtonMouseForward;
 				break;
 			default:

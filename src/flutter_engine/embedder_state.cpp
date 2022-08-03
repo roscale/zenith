@@ -163,6 +163,8 @@ void EmbedderState::register_platform_api() {
 				  touch_up(server, call, std::move(result));
 			  } else if (call.method_name() == "insert_text") {
 				  insert_text(server, call, std::move(result));
+			  } else if (call.method_name() == "emulate_keycode") {
+				  emulate_keycode(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }

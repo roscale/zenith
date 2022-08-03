@@ -5,6 +5,7 @@
 #include "encodable_value.h"
 #include "time.hpp"
 #include "string_to_keycode.hpp"
+#include "assert.hpp"
 
 extern "C" {
 #define static
@@ -282,6 +283,10 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 		wlr_text_input_v3_send_done(view->active_text_input->wlr_text_input);
 	} else {
 		wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->seat);
+		if (keyboard == nullptr) {
+			result->Success();
+			return;
+		}
 
 //		auto name = xkb_keymap_key_get_name(keyboard->keymap, KEY_A + 8);
 //		std::cout << "name A: " << name << std::endl;
@@ -295,7 +300,11 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 
 //		wlr_seat_keyboard_notify_modifiers()
 		std::optional<KeyCombination> combination = string_to_keycode(text.c_str(), keyboard->xkb_state);
-		if (combination.has_value()) {
+
+		ASSERT(combination.has_value(),
+		       "Character " << text << " cannot be emulated with the current keyboard layout.");
+
+		if (combination) {
 			auto mods = wlr_keyboard_modifiers{
 				  .depressed = combination->modifiers,
 				  .latched = 0,
@@ -311,8 +320,27 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 			                             WL_KEYBOARD_KEY_STATE_RELEASED);
 			wlr_seat_keyboard_notify_modifiers(server->seat, &previous_mods);
 		}
-
 	}
+
+	result->Success();
+}
+
+void emulate_keycode(ZenithServer* server, const flutter::MethodCall<>& call,
+                     std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	auto keycode = std::get<int>(args[flutter::EncodableValue("keycode")]);
+
+	wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->seat);
+	if (keyboard == nullptr) {
+		result->Success();
+		return;
+	}
+
+	wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), keycode,
+	                             WL_KEYBOARD_KEY_STATE_PRESSED);
+	wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), keycode,
+	                             WL_KEYBOARD_KEY_STATE_RELEASED);
 
 	result->Success();
 }
