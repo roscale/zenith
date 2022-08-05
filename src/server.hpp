@@ -13,7 +13,7 @@
 #include "input/touch.hpp"
 #include "input/text_input.hpp"
 #include "view.hpp"
-#include "point.hpp"
+#include "offset.hpp"
 
 extern "C" {
 #define static
@@ -59,6 +59,15 @@ public:
 	// Right now, only one output is supported so the size of this box is essentially the size of the output.
 	wlr_box output_layout_box{};
 
+	// The maximum size a window can be, which is basically the size of the screen minus the status bar and possibly
+	// other decorations.
+	// It's initialized with some dummy values but Flutter will notify the embedder about the available space when
+	// widgets are constructed.
+	Size max_window_size = {
+		  .width = 0,
+		  .height = 0,
+	};
+
 	wl_listener new_output{};
 	wl_listener new_xdg_surface{};
 	wl_listener new_input{};
@@ -75,7 +84,7 @@ public:
 	std::list<std::unique_ptr<ZenithKeyboard>> keyboards{};
 	std::list<std::unique_ptr<ZenithTouchDevice>> touch_devices{};
 	std::list<std::unique_ptr<ZenithTextInput>> text_inputs{};
-	std::unordered_map<int, Point> leaf_surface_coords_per_device_id{};
+	std::unordered_map<int, Offset> leaf_surface_coords_per_device_id{};
 
 	std::unique_ptr<EmbedderState> embedder_state{};
 };

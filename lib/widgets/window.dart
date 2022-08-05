@@ -9,7 +9,7 @@ import 'package:zenith/widgets/view_input_listener.dart';
 class Window extends StatelessWidget {
   final WindowState state;
 
-  Window(this.state) : super(key: GlobalKey());
+  Window(this.state) : super(key: state.widgetKey);
 
   @override
   Widget build(BuildContext context) {

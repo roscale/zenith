@@ -26,7 +26,7 @@ struct EmbedderState {
 
 	void register_platform_api();
 
-	void send_window_metrics(FlutterWindowMetricsEvent& metrics);
+	void send_window_metrics(FlutterWindowMetricsEvent& metrics) const;
 
 	ZenithServer* server = nullptr;
 	FlutterEngine engine = nullptr;

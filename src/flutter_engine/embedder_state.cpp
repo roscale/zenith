@@ -165,6 +165,8 @@ void EmbedderState::register_platform_api() {
 				  insert_text(server, call, std::move(result));
 			  } else if (call.method_name() == "emulate_keycode") {
 				  emulate_keycode(server, call, std::move(result));
+			  } else if (call.method_name() == "max_window_size") {
+				  max_window_size(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
 			  }
@@ -172,7 +174,7 @@ void EmbedderState::register_platform_api() {
 	);
 }
 
-void EmbedderState::send_window_metrics(FlutterWindowMetricsEvent& metrics) {
+void EmbedderState::send_window_metrics(FlutterWindowMetricsEvent& metrics) const {
 	std::scoped_lock lock(server->embedder_state->output_framebuffer->mutex);
 	GLScopedLock gl_lock(server->embedder_state->output_gl_mutex);
 

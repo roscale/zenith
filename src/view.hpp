@@ -17,6 +17,8 @@ struct ZenithView {
 	 */
 	void focus() const;
 
+	void maximize() const;
+
 	ZenithServer* server;
 	wlr_xdg_surface* xdg_surface;
 	size_t id;

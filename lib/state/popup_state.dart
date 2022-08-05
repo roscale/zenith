@@ -17,6 +17,7 @@ class PopupState {
 
   final int viewId;
   late int parentViewId;
+  final widgetKey = GlobalKey();
   final textureKey = GlobalKey();
   final animationsKey = GlobalKey<AnimationsState>();
   final popups = ListenableList<Popup>();

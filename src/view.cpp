@@ -3,6 +3,7 @@
 #include "platform_channels/encodable_value.h"
 #include "standard_method_codec.h"
 #include "messages.hpp"
+#include "assert.hpp"
 
 extern "C" {
 #define static
@@ -110,10 +111,7 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 	// But Obsidian (Chromium-based) crashes if I put this in the callback where the xdg surface
 	// is created.
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		const size_t status_bar_height = 40;
-		wlr_xdg_toplevel_set_size(xdg_surface, server->output_layout_box.width,
-		                          server->output_layout_box.height - status_bar_height);
-		wlr_xdg_toplevel_set_maximized(xdg_surface, true);
+		view->maximize();
 	}
 
 	// Make sure a framebuffer exists for this xdg_surface.
@@ -167,6 +165,14 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 		case WLR_XDG_SURFACE_ROLE_NONE:
 			break;
 	}
+}
+
+void ZenithView::maximize() const {
+	ASSERT(xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL,
+	       "View " << id << " cannot be maximized because it's not a top-level surface.");
+
+	wlr_xdg_toplevel_set_size(xdg_surface, server->max_window_size.width, server->max_window_size.height);
+	wlr_xdg_toplevel_set_maximized(xdg_surface, true);
 }
 
 void xdg_surface_unmap(wl_listener* listener, void* data) {

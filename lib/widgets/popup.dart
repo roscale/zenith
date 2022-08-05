@@ -8,7 +8,7 @@ import 'package:zenith/widgets/view_input_listener.dart';
 class Popup extends StatelessWidget {
   final PopupState state;
 
-  Popup(this.state) : super(key: GlobalKey());
+  Popup(this.state) : super(key: state.widgetKey);
 
   @override
   Widget build(BuildContext context) {

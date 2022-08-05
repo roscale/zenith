@@ -85,6 +85,13 @@ class PlatformApi {
     });
   }
 
+  static Future<void> maxWindowSize(int width, int height) {
+    return _platform.invokeMethod("max_window_size", {
+      "width": width,
+      "height": height,
+    });
+  }
+
   static Stream<TextInputEvent> getTextInputEventsForViewId(int viewId) {
     return PlatformApi.textInputEventsStream.where((event) => event["view_id"] == viewId).map((event) {
       switch (event["type"]) {

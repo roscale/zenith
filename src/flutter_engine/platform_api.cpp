@@ -220,10 +220,10 @@ void touch_down(ZenithServer* server, const flutter::MethodCall<>& call,
 		return;
 	}
 
-	Point leaf_surface_coords = {
+	Offset leaf_surface_coords = {
 		  // Coordinates of the subsurface in the xdg_surface's coordinate system.
-		  .x = x - leaf_x,
-		  .y = y - leaf_y
+		  .dx = x - leaf_x,
+		  .dy = y - leaf_y
 	};
 	// Remember the subsurface position under this finger.
 	server->leaf_surface_coords_per_device_id[touch_id] = leaf_surface_coords;
@@ -242,8 +242,8 @@ void touch_motion(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto y = std::get<double>(args[flutter::EncodableValue("y")]);
 
 	try {
-		const Point& leaf = server->leaf_surface_coords_per_device_id.at(touch_id);
-		wlr_seat_touch_notify_motion(server->seat, current_time_milliseconds(), touch_id, x - leaf.x, y - leaf.y);
+		const Offset& leaf = server->leaf_surface_coords_per_device_id.at(touch_id);
+		wlr_seat_touch_notify_motion(server->seat, current_time_milliseconds(), touch_id, x - leaf.dx, y - leaf.dy);
 		wlr_seat_touch_notify_frame(server->seat);
 	} catch (std::out_of_range& unused) {
 	}
@@ -342,5 +342,28 @@ void emulate_keycode(ZenithServer* server, const flutter::MethodCall<>& call,
 	wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), keycode,
 	                             WL_KEYBOARD_KEY_STATE_RELEASED);
 
+	result->Success();
+}
+
+void max_window_size(ZenithServer* server, const flutter::MethodCall<>& call,
+                     std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	auto width = std::get<int>(args[flutter::EncodableValue("width")]);
+	auto height = std::get<int>(args[flutter::EncodableValue("height")]);
+
+	ASSERT(width >= 0, "width must be >= 0");
+	ASSERT(height >= 0, "height must be >= 0");
+
+	server->max_window_size = Size{
+		  .width = static_cast<uint32_t>(width),
+		  .height = static_cast<uint32_t>(height),
+	};
+
+	for (const auto& [id, view]: server->views_by_id) {
+		if (view->xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+			view->maximize();
+		}
+	}
 	result->Success();
 }

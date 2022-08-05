@@ -15,6 +15,10 @@ DEBUG_BUILD_DIR := build/$(TARGET_EXEC)/debug
 PROFILE_BUILD_DIR := build/$(TARGET_EXEC)/profile
 RELEASE_BUILD_DIR := build/$(TARGET_EXEC)/release
 
+DEBUG_BUNDLE_DIR := $(DEBUG_BUILD_DIR)/bundle
+PROFILE_BUNDLE_DIR := $(PROFILE_BUILD_DIR)/bundle
+RELEASE_BUNDLE_DIR := $(RELEASE_BUILD_DIR)/bundle
+
 # Find all the C and C++ files we want to compile
 # Note the single quotes around the * expressions. Make will incorrectly expand these otherwise.
 SRCS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.cc' -or -name '*.c')
@@ -71,15 +75,15 @@ $(DEPS_DIR)/libflutter_engine_release.so:
 	mkdir -p deps
 	mv /tmp/libflutter_engine.so deps/libflutter_engine_release.so
 
-$(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC): $(DEBUG_OBJS) $(DEPS_DIR)/libflutter_engine_debug.so
+$(DEBUG_BUNDLE_DIR)/$(TARGET_EXEC): $(DEBUG_OBJS) $(DEPS_DIR)/libflutter_engine_debug.so
 	mkdir -p $(dir $@)
 	$(CXX) $(DEBUG_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(DEBUG_LDFLAGS)
 
-$(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC): $(PROFILE_OBJS) $(DEPS_DIR)/libflutter_engine_profile.so
+$(PROFILE_BUNDLE_DIR)/$(TARGET_EXEC): $(PROFILE_OBJS) $(DEPS_DIR)/libflutter_engine_profile.so
 	mkdir -p $(dir $@)
 	$(CXX) $(PROFILE_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(PROFILE_LDFLAGS)
 
-$(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC): $(RELEASE_OBJS) $(DEPS_DIR)/libflutter_engine_release.so
+$(RELEASE_BUNDLE_DIR)/$(TARGET_EXEC): $(RELEASE_OBJS) $(DEPS_DIR)/libflutter_engine_release.so
 	mkdir -p $(dir $@)
 	$(CXX) $(RELEASE_OBJS) -o $@ -Wl,-rpath='$$ORIGIN/lib' $(RELEASE_LDFLAGS)
 
@@ -122,30 +126,36 @@ $(RELEASE_BUILD_DIR)/%.cc.o: %.cc Makefile
 	mkdir -p $(dir $@)
 	$(CXX) $(RELEASE_CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: clean all debug_bundle profile_bundle release_bundle deb_package attach_debugger
+.PHONY: clean all \
+		flutter_debug flutter_profile flutter_release \
+ 		debug_bundle profile_bundle release_bundle \
+ 		deb_package attach_debugger
 
-debug_bundle: $(DEBUG_BUILD_DIR)/bundle/$(TARGET_EXEC)
+flutter_debug:
 	flutter build linux --debug
 
-	mkdir -p $(dir $<)/lib/
-	cp $(DEPS_DIR)/libflutter_engine_debug.so $(dir $<)/lib/libflutter_engine.so
-	cp -r build/linux/$(ARCH)/debug/bundle/data $(dir $<)
-
-profile_bundle: $(PROFILE_BUILD_DIR)/bundle/$(TARGET_EXEC)
+flutter_profile:
 	flutter build linux --profile
 
-	mkdir -p $(dir $<)/lib/
-	cp $(DEPS_DIR)/libflutter_engine_profile.so $(dir $<)/lib/libflutter_engine.so
-	cp build/linux/$(ARCH)/profile/bundle/lib/libapp.so $(dir $<)/lib
-	cp -r build/linux/$(ARCH)/profile/bundle/data $(dir $<)
-
-release_bundle: $(RELEASE_BUILD_DIR)/bundle/$(TARGET_EXEC)
+flutter_release:
 	flutter build linux --release
 
-	mkdir -p $(dir $<)/lib/
-	cp $(DEPS_DIR)/libflutter_engine_release.so $(dir $<)/lib/libflutter_engine.so
-	cp build/linux/$(ARCH)/release/bundle/lib/libapp.so $(dir $<)/lib
-	cp -r build/linux/$(ARCH)/release/bundle/data $(dir $<)
+debug_bundle: flutter_debug $(DEBUG_BUNDLE_DIR)/$(TARGET_EXEC)
+	mkdir -p $(DEBUG_BUNDLE_DIR)/lib/
+	cp $(DEPS_DIR)/libflutter_engine_debug.so $(DEBUG_BUNDLE_DIR)/lib/libflutter_engine.so
+	cp -r build/linux/$(ARCH)/debug/bundle/data $(DEBUG_BUNDLE_DIR)
+
+profile_bundle: flutter_profile $(PROFILE_BUNDLE_DIR)/$(TARGET_EXEC)
+	mkdir -p $(PROFILE_BUNDLE_DIR)/lib/
+	cp $(DEPS_DIR)/libflutter_engine_profile.so $(PROFILE_BUNDLE_DIR)/lib/libflutter_engine.so
+	cp build/linux/$(ARCH)/profile/bundle/lib/libapp.so $(PROFILE_BUNDLE_DIR)/lib
+	cp -r build/linux/$(ARCH)/profile/bundle/data $(PROFILE_BUNDLE_DIR)
+
+release_bundle: flutter_release $(RELEASE_BUNDLE_DIR)/$(TARGET_EXEC)
+	mkdir -p $(RELEASE_BUNDLE_DIR)/lib/
+	cp $(DEPS_DIR)/libflutter_engine_release.so $(RELEASE_BUNDLE_DIR)/lib/libflutter_engine.so
+	cp build/linux/$(ARCH)/release/bundle/lib/libapp.so $(RELEASE_BUNDLE_DIR)/lib
+	cp -r build/linux/$(ARCH)/release/bundle/data $(RELEASE_BUNDLE_DIR)
 
 # Usage: make deb_package VERSION=0.2
 deb_package: release_bundle

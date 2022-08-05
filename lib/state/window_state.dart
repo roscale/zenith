@@ -12,7 +12,9 @@ class WindowState {
         visibleBounds = ValueNotifier(visibleBounds);
 
   final int viewId;
-  final GlobalKey textureKey = GlobalKey();
+  final widgetKey = GlobalKey();
+  final textureKey = GlobalKey();
+  final virtualKeyboardKey = GlobalKey();
   bool _visible = true;
 
   final ValueNotifier<Size> surfaceSize;

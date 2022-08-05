@@ -73,13 +73,13 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
 
     // Avoid executing _spawnTask and _stopTask concurrently because it causes visual glitches.
     // Make sure the async tasks are executed one after the other.
-    Future<void> _chain = Future.value(null);
+    Future<void> chain = Future.value(null);
     final desktopState = context.read<DesktopState>();
     _streamSubscriptions.add(desktopState.windowMappedStream.listen((task) {
-      _chain = _chain.then((_) => _spawnTask(task));
+      chain = chain.then((_) => _spawnTask(task));
     }));
     _streamSubscriptions.add(desktopState.windowUnmappedStream.listen((task) {
-      _chain = _chain.then((_) => _stopTask(task));
+      chain = chain.then((_) => _stopTask(task));
     }));
   }
 
@@ -117,7 +117,6 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           this.constraints.value = constraints;
-
           return Stack(
             children: [
               Positioned.fill(
@@ -243,6 +242,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
       );
 
       taskWidget = WithVirtualKeyboard(
+        key: task.state.virtualKeyboardKey,
         viewId: task.state.viewId,
         child: taskWidget,
       );
@@ -260,7 +260,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
             );
           } else {
             return Listener(
-              child: child!,
+              child: child,
               onPointerDown: (_) async {
                 // Move the task to the end after the animations have finished.
                 if (tasks.last == task) {
