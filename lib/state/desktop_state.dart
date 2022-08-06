@@ -38,6 +38,7 @@ class DesktopState {
 
   void _windowMapped(dynamic event) {
     int viewId = event["view_id"];
+    int textureId = event["texture_id"];
     int surfaceWidth = event["surface_width"];
     int surfaceHeight = event["surface_height"];
 
@@ -52,6 +53,7 @@ class DesktopState {
 
     var clientWindow = Window(WindowState(
       viewId: viewId,
+      textureId: textureId,
       surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
       visibleBounds: visibleBounds,
     ));
@@ -71,6 +73,7 @@ class DesktopState {
 
   void _popupMapped(dynamic event) {
     int viewId = event["view_id"];
+    int textureId = event["texture_id"];
     int parentViewId = event["parent_view_id"];
     int x = event["x"];
     int y = event["y"];
@@ -94,6 +97,7 @@ class DesktopState {
 
     var popup = Popup(PopupState(
       viewId: viewId,
+      textureId: textureId,
       position: Offset(x.toDouble() + parentVisibleBounds.left, y.toDouble() + parentVisibleBounds.top),
       surfaceSize: Size(width.toDouble(), height.toDouble()),
       visibleBounds: visibleBounds,
@@ -123,7 +127,7 @@ class DesktopState {
       parent.state.removePopup(popup);
     }
 
-    PlatformApi.unregisterViewTexture(popup.state.viewId);
+    PlatformApi.unregisterViewTexture(popup.state.textureId.value);
   }
 
   void _configureSurface(dynamic event) {
@@ -131,7 +135,9 @@ class DesktopState {
     XdgSurfaceRole role = XdgSurfaceRole.values[event["surface_role"]];
 
     Size? newSurfaceSize;
+    int? newTextureId;
     if (event["surface_size_changed"]) {
+      newTextureId = event["texture_id"];
       int surfaceWidth = event["surface_width"];
       int surfaceHeight = event["surface_height"];
       newSurfaceSize = Size(surfaceWidth.toDouble(), surfaceHeight.toDouble());
@@ -151,12 +157,20 @@ class DesktopState {
     switch (role) {
       case XdgSurfaceRole.toplevel:
         var window = _views[viewId] as Window;
+        if (newTextureId != null) {
+          PlatformApi.unregisterViewTexture(window.state.textureId.value);
+          window.state.textureId.value = newTextureId;
+        }
         window.state.surfaceSize.value = newSurfaceSize ?? window.state.surfaceSize.value;
         window.state.visibleBounds.value = newVisibleBounds ?? window.state.visibleBounds.value;
         break;
 
       case XdgSurfaceRole.popup:
         var popup = _views[viewId] as Popup;
+        if (newTextureId != null) {
+          PlatformApi.unregisterViewTexture(popup.state.textureId.value);
+          popup.state.textureId.value = newTextureId;
+        }
         popup.state.surfaceSize.value = newSurfaceSize ?? popup.state.surfaceSize.value;
         popup.state.visibleBounds.value = newVisibleBounds ?? popup.state.visibleBounds.value;
         if (event["popup_position_changed"]) {

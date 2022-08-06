@@ -281,7 +281,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     scrollPosition.jumpTo(tasks.isNotEmpty ? position(tasks.length - 1) : 0);
   }
 
-  Future<void> _stopTask(window) async {
+  Future<void> _stopTask(Window window) async {
     int closingTask = tasks.indexOf(window);
     int? focusingTask = taskToFocusAfterClosing(closingTask);
     // Might be null if there's no task left, in which case there's nothing to animate.
@@ -298,7 +298,7 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
       disableUserControl.value = false;
     }
     _removeTask(window);
-    PlatformApi.unregisterViewTexture(window.state.viewId);
+    PlatformApi.unregisterViewTexture(window.state.textureId.value);
   }
 
   int? taskToFocusAfterClosing(int closingTaskIndex) {

@@ -9,10 +9,12 @@ class PopupState {
   PopupState({
     required this.viewId,
     required Offset position,
+    required int textureId,
     required Size surfaceSize,
     required Rect visibleBounds,
   })  : position = ValueNotifier(position),
         visibleBounds = ValueNotifier(visibleBounds),
+        textureId = ValueNotifier(textureId),
         surfaceSize = ValueNotifier(surfaceSize);
 
   final int viewId;
@@ -23,6 +25,7 @@ class PopupState {
   final popups = ListenableList<Popup>();
 
   final ValueNotifier<Offset> position;
+  final ValueNotifier<int> textureId;
   final ValueNotifier<Size> surfaceSize;
   final ValueNotifier<Rect> visibleBounds;
 

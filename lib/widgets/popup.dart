@@ -130,10 +130,15 @@ class _Surface extends StatelessWidget {
             children: [
               ViewInputListener(
                 viewId: state.viewId,
-                child: Texture(
-                  key: state.textureKey,
-                  filterQuality: FilterQuality.medium,
-                  textureId: state.viewId,
+                child: ValueListenableBuilder(
+                  valueListenable: state.textureId,
+                  builder: (BuildContext context, int textureId, Widget? child) {
+                    return Texture(
+                      key: state.textureKey,
+                      filterQuality: FilterQuality.medium,
+                      textureId: textureId,
+                    );
+                  },
                 ),
               ),
               AnimatedBuilder(

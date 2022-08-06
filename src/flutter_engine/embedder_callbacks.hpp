@@ -12,7 +12,7 @@ uint32_t flutter_fbo_callback(void* userdata);
 
 void flutter_vsync_callback(void* userdata, intptr_t baton);
 
-bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id, size_t width, size_t height,
+bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out);
 
 void flutter_platform_message_callback(const FlutterPlatformMessage* message, void* userdata);

@@ -3,6 +3,7 @@
 #include "server.hpp"
 #include "embedder_callbacks.hpp"
 #include "time.hpp"
+#include "render_view.hpp"
 
 extern "C" {
 #define static
@@ -19,13 +20,6 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	wl_signal_add(&wlr_output->events.mode, &mode_changed);
 }
 
-static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo);
-
-struct RenderData {
-	ZenithView* view;
-	GLuint view_fbo;
-};
-
 void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 	ZenithServer* server = output->server;
@@ -37,7 +31,7 @@ void output_frame(wl_listener* listener, void* data) {
 	wlr_egl_make_current(egl);
 
 	for (auto& pair: server->views_by_id) {
-		size_t view_id = pair.first;
+//		size_t view_id = pair.first;
 		std::unique_ptr<ZenithView>& view = pair.second;
 
 		if (!view->mapped || !view->visible || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
@@ -50,7 +44,7 @@ void output_frame(wl_listener* listener, void* data) {
 		{
 			std::scoped_lock lock(server->surface_framebuffers_mutex);
 
-			auto surface_framebuffer_it = server->surface_framebuffers.find(view->id);
+			auto surface_framebuffer_it = server->surface_framebuffers.find(view->active_texture);
 			assert(surface_framebuffer_it != server->surface_framebuffers.end());
 
 			view_framebuffer = surface_framebuffer_it->second;
@@ -61,7 +55,7 @@ void output_frame(wl_listener* listener, void* data) {
 		GLuint view_fbo = view_framebuffer->framebuffer;
 		render_view_to_framebuffer(view.get(), view_fbo);
 
-		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view_id);
+		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view->active_texture);
 	}
 
 	{
@@ -136,70 +130,4 @@ void mode_changed_event(wl_listener* listener, void* data) {
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 	output->server->embedder_state->send_window_metrics(window_metrics);
-}
-
-static void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo) {
-	glBindFramebuffer(GL_FRAMEBUFFER, view_fbo);
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	RenderData rdata = {
-		  .view = view,
-		  .view_fbo = view_fbo,
-	};
-
-	try {
-		// Render the subtree of subsurfaces starting from a toplevel or popup.
-		wlr_xdg_surface_for_each_surface(
-			  view->xdg_surface,
-			  [](struct wlr_surface* surface, int sx, int sy, void* data) {
-				  auto* rdata = static_cast<RenderData*>(data);
-				  auto* view = rdata->view;
-
-				  if (surface != view->xdg_surface->surface && wlr_surface_is_xdg_surface(surface)) {
-					  // Don't render child popups. They will be rendered separately on their own framebuffer,
-					  // so skip this subtree of surfaces.
-					  // There's no easy way to exit this recursive iterator, but we can still do this by throwing a
-					  // dummy exception.
-					  throw std::exception();
-				  }
-
-				  wlr_texture* texture = wlr_surface_get_texture(surface);
-				  if (texture == nullptr) {
-					  // I don't remember if it's possible to have a mapped surface without texture, but better to be
-					  // safe than sorry. Just skip it.
-					  return;
-				  }
-
-				  wlr_gles2_texture_attribs attribs{};
-				  wlr_gles2_texture_get_attribs(texture, &attribs);
-
-				  if (wlr_surface_is_xdg_surface(surface)) {
-					  // xdg_surfaces each have their own framebuffer, so they are always drawn at (0, 0).
-					  RenderToTextureShader::instance()->render(attribs.tex, 0, 0,
-					                                            surface->current.buffer_width,
-					                                            surface->current.buffer_height,
-					                                            rdata->view_fbo);
-				  } else {
-					  // This is true when the surface is a wayland subsurface and not an xdg_surface.
-					  // I decided to render subsurfaces on the framebuffer of the nearest xdg_surface parent.
-					  // One downside to this approach is that popups created using a subsurface instead of an xdg_popup
-					  // are clipped to the window and cannot be rendered outside the window bounds.
-					  // I don't really care because Gnome Shell takes the same approach, and it simplifies things a lot.
-					  // Interesting discussion: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/issues/24
-					  RenderToTextureShader::instance()->render(attribs.tex, sx, sy,
-					                                            surface->current.buffer_width,
-					                                            surface->current.buffer_height,
-					                                            rdata->view_fbo);
-				  }
-
-				  // Tell the client we are done rendering this surface.
-				  timespec now{};
-				  clock_gettime(CLOCK_MONOTONIC, &now);
-				  wlr_surface_send_frame_done(surface, &now);
-			  },
-			  &rdata
-		);
-	} catch (std::exception& unused) {
-	}
 }

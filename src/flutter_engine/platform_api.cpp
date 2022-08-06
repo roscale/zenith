@@ -123,7 +123,7 @@ void unregister_view_texture(ZenithServer* server,
                              const flutter::MethodCall<>& call,
                              std::unique_ptr<flutter::MethodResult<>>&& result) {
 
-	size_t view_id = std::get<int>(call.arguments()[0]);
+	size_t texture_id = std::get<int>(call.arguments()[0]);
 
 	if (eglGetCurrentContext() == nullptr) {
 		// wlroots is screwing with me and deactivates the gl context for some reason.
@@ -132,9 +132,9 @@ void unregister_view_texture(ZenithServer* server,
 	}
 
 	std::scoped_lock lock(server->surface_framebuffers_mutex);
-	server->surface_framebuffers.erase(view_id);
+	server->surface_framebuffers.erase(texture_id);
 
-	FlutterEngineUnregisterExternalTexture(server->embedder_state->engine, view_id);
+	FlutterEngineUnregisterExternalTexture(server->embedder_state->engine, (int64_t) texture_id);
 
 	result->Success();
 }

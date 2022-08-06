@@ -6,12 +6,15 @@ import 'package:zenith/widgets/popup.dart';
 class WindowState {
   WindowState({
     required this.viewId,
+    required int textureId,
     required Size surfaceSize,
     required Rect visibleBounds,
-  })  : surfaceSize = ValueNotifier(surfaceSize),
+  })  : textureId = ValueNotifier(textureId),
+        surfaceSize = ValueNotifier(surfaceSize),
         visibleBounds = ValueNotifier(visibleBounds);
 
   final int viewId;
+  final ValueNotifier<int> textureId;
   final widgetKey = GlobalKey();
   final textureKey = GlobalKey();
   final virtualKeyboardKey = GlobalKey();

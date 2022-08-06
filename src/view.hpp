@@ -27,6 +27,7 @@ struct ZenithView {
 	wlr_box popup_geometry{};
 	wlr_box visible_bounds{};
 	ZenithTextInput* active_text_input = nullptr;
+	size_t active_texture = 0;
 
 	/* callbacks */
 	wl_listener map{};

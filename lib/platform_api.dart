@@ -44,8 +44,8 @@ class PlatformApi {
     });
   }
 
-  static Future<void> unregisterViewTexture(int viewId) {
-    return _platform.invokeMethod('unregister_view_texture', viewId);
+  static Future<void> unregisterViewTexture(int textureId) {
+    return _platform.invokeMethod('unregister_view_texture', textureId);
   }
 
   static Future<void> touchDown(int viewId, int touchId, double x, double y) {

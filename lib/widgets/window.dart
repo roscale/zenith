@@ -98,10 +98,15 @@ class _Surface extends StatelessWidget {
               bool visible = !info.visibleBounds.isEmpty;
               state.changeVisibility(visible);
             },
-            child: Texture(
-              key: state.textureKey,
-              filterQuality: FilterQuality.medium,
-              textureId: state.viewId,
+            child: ValueListenableBuilder(
+              valueListenable: state.textureId,
+              builder: (BuildContext context, int textureId, Widget? child) {
+                return Texture(
+                  key: state.textureKey,
+                  filterQuality: FilterQuality.medium,
+                  textureId: textureId,
+                );
+              },
             ),
           ),
         ),

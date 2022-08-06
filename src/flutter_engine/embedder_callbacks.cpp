@@ -50,7 +50,7 @@ void flutter_vsync_callback(void* userdata, intptr_t baton) {
 	state->baton = baton;
 }
 
-bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id, size_t width, size_t height,
+bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
 	auto* state = static_cast<EmbedderState*>(userdata);
 	ZenithServer* server = state->server;
@@ -59,7 +59,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t view_id,
 	{
 		std::scoped_lock lock(server->surface_framebuffers_mutex);
 
-		auto it = server->surface_framebuffers.find(view_id);
+		auto it = server->surface_framebuffers.find(texture_id);
 		if (it == server->surface_framebuffers.end()) {
 			// This function could be called any time so we better check if the framebuffer still exists.
 			// Asynchronicity can be a pain sometimes.
