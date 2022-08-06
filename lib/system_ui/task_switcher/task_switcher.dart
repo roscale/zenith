@@ -117,6 +117,8 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           this.constraints.value = constraints;
+          PlatformApi.initial_window_size(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
+
           return Stack(
             children: [
               Positioned.fill(
@@ -205,46 +207,13 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     double position = 0;
 
     for (Window task in tasks) {
-      Widget taskWidget = UnconstrainedBox(
-        child: task,
-      );
-
-      taskWidget = ConstrainedBox(
-        constraints: constraints.value,
-        child: Center(
-          child: ValueListenableBuilder(
-            valueListenable: task.state.visibleBounds,
-            builder: (BuildContext context, Rect visibleBounds, Widget? child) {
-              Size biggest = constraints.value.biggest;
-              Size size = visibleBounds.size;
-
-              if (size.width > biggest.width || size.height > biggest.height) {
-                return FittedBox(child: child!);
-              }
-
-              // Flutter likes to position things at subpixel coordinates and the view texture ends up
-              // at non-integer coordinates, which means that the image will be a bit blurry.
-              // If this is the case, just shift the view by half a pixel in the appropriate directions.
-              bool shiftHorizontally = size.width % 2 != biggest.width % 2;
-              bool shiftVertically = size.height % 2 != biggest.height % 2;
-
-              return Transform.translate(
-                offset: Offset(
-                  shiftHorizontally ? -0.5 : 0,
-                  shiftVertically ? -0.5 : 0,
-                ),
-                child: child!,
-              );
-            },
-            child: taskWidget,
-          ),
-        ),
-      );
-
-      taskWidget = WithVirtualKeyboard(
+      Widget taskWidget = WithVirtualKeyboard(
         key: task.state.virtualKeyboardKey,
         viewId: task.state.viewId,
-        child: taskWidget,
+        child: _FittedWindow(
+          alignment: Alignment.topCenter,
+          window: task,
+        ),
       );
 
       taskWidget = ValueListenableBuilder(
@@ -260,18 +229,18 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
             );
           } else {
             return Listener(
-              child: child,
               onPointerDown: (_) async {
-                // Move the task to the end after the animations have finished.
                 if (tasks.last == task) {
                   return;
                 }
                 disableUserControl.value = true;
+                // Move the task to the end after the animations have finished.
                 await animationsOngoing.waitUntil((bool value) => value == false);
                 moveCurrentTaskToEnd();
                 jumpToLastTask();
                 disableUserControl.value = false;
               },
+              child: child,
             );
           }
         },
@@ -280,9 +249,9 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
 
       taskWidget = Positioned(
         left: position,
-        child: ConstrainedBox(
-          constraints: constraints.value.loosen(),
-          child: DeferPointer(
+        child: DeferPointer(
+          child: ConstrainedBox(
+            constraints: constraints.value,
             child: taskWidget,
           ),
         ),
@@ -537,4 +506,55 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
 
   @override
   TickerProvider get vsync => this;
+}
+
+class _FittedWindow extends StatelessWidget {
+  final Window window;
+  final Alignment alignment;
+
+  const _FittedWindow({
+    Key? key,
+    required this.window,
+    this.alignment = Alignment.center,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return SizedBox.expand(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: alignment,
+            child: ValueListenableBuilder(
+              valueListenable: window.state.visibleBounds,
+              builder: (BuildContext context, Rect visibleBounds, Widget? child) {
+                Size biggest = constraints.biggest;
+                Size size = visibleBounds.size;
+
+                // Flutter likes to position things at subpixel coordinates and the view texture ends up
+                // at non-integer coordinates, which means that the image will be a bit blurry.
+                // If this is the case, just shift the view by half a pixel in the appropriate directions.
+                // This is only a problem when the window fits in the available space. Otherwise, it's going
+                // to be scaled down so it will be a bit blurry anyway.
+                bool fits = size.width <= biggest.width && size.height <= biggest.height;
+
+                bool shiftHorizontally = fits && (size.width % 2 != biggest.width % 2);
+                bool shiftVertically = fits && (size.height % 2 != biggest.height % 2);
+
+                return Transform.translate(
+                  offset: Offset(
+                    shiftHorizontally ? -0.5 : 0,
+                    shiftVertically ? -0.5 : 0,
+                  ),
+                  child: child!,
+                );
+              },
+              child: window,
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

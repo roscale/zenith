@@ -85,8 +85,16 @@ class PlatformApi {
     });
   }
 
-  static Future<void> maxWindowSize(int width, int height) {
-    return _platform.invokeMethod("max_window_size", {
+  static Future<void> initial_window_size(int width, int height) {
+    return _platform.invokeMethod("initial_window_size", {
+      "width": width,
+      "height": height,
+    });
+  }
+
+  static Future<void> resizeWindow(int viewId, int width, int height) {
+    return _platform.invokeMethod("resize_window", {
+      "view_id": viewId,
       "width": width,
       "height": height,
     });

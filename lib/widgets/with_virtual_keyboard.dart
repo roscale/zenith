@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/system_ui/virtual_keyboard/key_codes.dart';
 import 'package:zenith/system_ui/virtual_keyboard/keyboard.dart';
+import 'package:zenith/util/multi_value_listenable_builder.dart';
 
 class WithVirtualKeyboard extends StatefulWidget {
   final int viewId;
@@ -20,7 +22,10 @@ class WithVirtualKeyboard extends StatefulWidget {
 }
 
 class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTickerProviderStateMixin {
-  bool shown = false;
+  final shown = ValueNotifier(false);
+
+  final key = GlobalKey();
+  var keyboardSize = ValueNotifier(Size.zero);
 
   late var slideAnimationController = AnimationController(
     vsync: this,
@@ -42,10 +47,10 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
   );
 
   void animateForward() {
-    if (shown) {
+    if (shown.value) {
       return;
     }
-    shown = true;
+    shown.value = true;
     slideAnimation.value = animation.drive(
       Tween(
         begin: slideAnimation.value.value,
@@ -58,10 +63,10 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
   }
 
   void animateBackward() {
-    if (!shown) {
+    if (!shown.value) {
       return;
     }
-    shown = false;
+    shown.value = false;
     slideAnimation.value = animation.drive(
       Tween(
         begin: slideAnimation.value.value,
@@ -97,38 +102,70 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
 
   @override
   Widget build(BuildContext context) {
+    SchedulerBinding.instance.addPostFrameCallback(_determineVirtualKeyboardSize);
+
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        PlatformApi.maxWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
-        
-        return Stack(
-          children: [
-            widget.child,
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SizedBox(
-                width: 500,
-                child: ClipRect(
-                  child: ValueListenableBuilder(
-                    valueListenable: slideAnimation,
-                    builder: (_, Animation<Offset> animation, Widget? child) {
-                      return SlideTransition(
-                        position: animation,
-                        child: child!,
-                      );
-                    },
-                    child: VirtualKeyboard(
-                      onDismiss: () => animateBackward(),
-                      onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
-                      onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
+        return ValueListenableBuilder2(
+          first: shown,
+          second: keyboardSize,
+          builder: (_, bool shown, Size keyboardSize, Widget? child) {
+            if (shown && keyboardSize != Size.zero) {
+              PlatformApi.resizeWindow(
+                widget.viewId,
+                constraints.maxWidth.toInt(),
+                (constraints.maxHeight - keyboardSize.height).toInt(),
+              );
+            } else {
+              PlatformApi.resizeWindow(
+                widget.viewId,
+                constraints.maxWidth.toInt(),
+                constraints.maxHeight.toInt(),
+              );
+            }
+
+            return Stack(
+              children: [
+                widget.child,
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SizedBox(
+                    child: ClipRect(
+                      child: ValueListenableBuilder(
+                        valueListenable: slideAnimation,
+                        builder: (_, Animation<Offset> animation, Widget? child) {
+                          return SlideTransition(
+                            position: animation,
+                            child: child!,
+                          );
+                        },
+                        child: VirtualKeyboard(
+                          key: key,
+                          onDismiss: () => animateBackward(),
+                          onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
+                          onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
+  }
+
+  void _determineVirtualKeyboardSize(Duration timestamp) {
+    var context = key.currentContext;
+    if (context == null) {
+      return;
+    }
+    final size = context.size;
+    if (size == null) {
+      return;
+    }
+    keyboardSize.value = size;
   }
 }

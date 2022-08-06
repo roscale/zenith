@@ -103,8 +103,8 @@ void resize_window(ZenithServer* server,
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
-	double width = std::get<double>(args[flutter::EncodableValue("width")]);
-	double height = std::get<double>(args[flutter::EncodableValue("height")]);
+	auto width = std::get<int>(args[flutter::EncodableValue("width")]);
+	auto height = std::get<int>(args[flutter::EncodableValue("height")]);
 
 	auto view_it = server->views_by_id.find(view_id);
 	bool view_doesnt_exist = view_it == server->views_by_id.end();
@@ -114,7 +114,7 @@ void resize_window(ZenithServer* server,
 	}
 	ZenithView* view = view_it->second.get();
 
-	wlr_xdg_toplevel_set_size(view->xdg_surface, (size_t) width, (size_t) height);
+	wlr_xdg_toplevel_set_size(view->xdg_surface, (uint32_t) width, (uint32_t) height);
 
 	result->Success();
 }
@@ -345,8 +345,8 @@ void emulate_keycode(ZenithServer* server, const flutter::MethodCall<>& call,
 	result->Success();
 }
 
-void max_window_size(ZenithServer* server, const flutter::MethodCall<>& call,
-                     std::unique_ptr<flutter::MethodResult<>>&& result) {
+void initial_window_size(ZenithServer* server, const flutter::MethodCall<>& call,
+                         std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	auto width = std::get<int>(args[flutter::EncodableValue("width")]);
@@ -360,10 +360,5 @@ void max_window_size(ZenithServer* server, const flutter::MethodCall<>& call,
 		  .height = static_cast<uint32_t>(height),
 	};
 
-	for (const auto& [id, view]: server->views_by_id) {
-		if (view->xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-			view->maximize();
-		}
-	}
 	result->Success();
 }
