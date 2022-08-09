@@ -30,10 +30,7 @@ void output_frame(wl_listener* listener, void* data) {
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 	wlr_egl_make_current(egl);
 
-	for (auto& pair: server->views_by_id) {
-//		size_t view_id = pair.first;
-		std::unique_ptr<ZenithView>& view = pair.second;
-
+	for (auto& [id, view]: server->views) {
 		if (!view->mapped || !view->visible || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
 			// An unmapped view should not be rendered.
 			continue;
@@ -53,7 +50,7 @@ void output_frame(wl_listener* listener, void* data) {
 		std::scoped_lock lock(view_framebuffer->mutex);
 
 		GLuint view_fbo = view_framebuffer->framebuffer;
-		render_view_to_framebuffer(view.get(), view_fbo);
+		render_view_to_framebuffer(view, view_fbo);
 
 		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view->active_texture);
 	}

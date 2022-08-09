@@ -217,11 +217,10 @@ void server_new_xdg_surface(wl_listener* listener, void* data) {
 	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
 
 	/* Allocate a ZenithView for this surface */
-	auto view = std::make_unique<ZenithView>(server, xdg_surface);
+	auto* view = new ZenithView(server, xdg_surface);
 
 	/* Add it to the list of views. */
-	server->view_id_by_wlr_surface.insert(std::make_pair(view->xdg_surface->surface, view->id));
-	server->views_by_id.insert(std::make_pair(view->id, std::move(view)));
+	server->views.insert(std::make_pair(view->id, view));
 }
 
 void server_new_input(wl_listener* listener, void* data) {
@@ -299,6 +298,6 @@ void server_new_text_input(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_text_input);
 
 	auto* wlr_text_input = static_cast<wlr_text_input_v3*>(data);
-	auto text_input = std::make_unique<ZenithTextInput>(server, wlr_text_input);
-	server->text_inputs.push_back(std::move(text_input));
+	auto text_input = new ZenithTextInput(server, wlr_text_input);
+	server->text_inputs.insert(text_input);
 }

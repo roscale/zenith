@@ -20,15 +20,16 @@ void activate_window(ZenithServer* server,
                      std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
-	auto view_it = server->views_by_id.find(view_id);
-	bool view_doesnt_exist = view_it == server->views_by_id.end();
-	if (view_doesnt_exist) {
+	auto view_it = server->views.find(view_id);
+	if (view_it == server->views.end()) {
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second.get();
+	auto* view = view_it->second;
 
-	view->focus();
+	if (view->xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+		view->focus();
+	}
 
 	result->Success();
 }
@@ -43,13 +44,12 @@ void pointer_hover(ZenithServer* server,
 	double y = std::get<double>(args[flutter::EncodableValue("y")]);
 	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 
-	auto view_it = server->views_by_id.find(view_id);
-	bool view_doesnt_exist = view_it == server->views_by_id.end();
-	if (view_doesnt_exist) {
+	auto view_it = server->views.find(view_id);
+	if (view_it == server->views.end()) {
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second.get();
+	ZenithView* view = view_it->second;
 
 	// FIXME
 	// It should send events to the same surface if at least one mouse button is down, even when the pointer is hovering
@@ -84,13 +84,12 @@ void close_window(ZenithServer* server,
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
 
-	auto view_it = server->views_by_id.find(view_id);
-	bool view_doesnt_exist = view_it == server->views_by_id.end();
-	if (view_doesnt_exist) {
+	auto view_it = server->views.find(view_id);
+	if (view_it == server->views.end()) {
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second.get();
+	ZenithView* view = view_it->second;
 
 	wlr_xdg_toplevel_send_close(view->xdg_surface);
 
@@ -106,13 +105,12 @@ void resize_window(ZenithServer* server,
 	auto width = std::get<int>(args[flutter::EncodableValue("width")]);
 	auto height = std::get<int>(args[flutter::EncodableValue("height")]);
 
-	auto view_it = server->views_by_id.find(view_id);
-	bool view_doesnt_exist = view_it == server->views_by_id.end();
-	if (view_doesnt_exist) {
+	auto view_it = server->views.find(view_id);
+	if (view_it == server->views.end()) {
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second.get();
+	ZenithView* view = view_it->second;
 
 	wlr_xdg_toplevel_set_size(view->xdg_surface, (uint32_t) width, (uint32_t) height);
 
@@ -183,13 +181,12 @@ void change_window_visibility(ZenithServer* server, const flutter::MethodCall<>&
 	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 	auto visible = std::get<bool>(args[flutter::EncodableValue("visible")]);
 
-	auto view_it = server->views_by_id.find(view_id);
-	bool view_doesnt_exist = view_it == server->views_by_id.end();
-	if (view_doesnt_exist) {
+	auto view_it = server->views.find(view_id);
+	if (view_it == server->views.end()) {
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second.get();
+	ZenithView* view = view_it->second;
 	view->visible = visible;
 
 	result->Success();
@@ -204,13 +201,12 @@ void touch_down(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto x = std::get<double>(args[flutter::EncodableValue("x")]);
 	auto y = std::get<double>(args[flutter::EncodableValue("y")]);
 
-	auto view_it = server->views_by_id.find(view_id);
-	bool view_doesnt_exist = view_it == server->views_by_id.end();
-	if (view_doesnt_exist) {
+	auto view_it = server->views.find(view_id);
+	if (view_it == server->views.end()) {
 		result->Success();
 		return;
 	}
-	const std::unique_ptr<ZenithView>& view = view_it->second;
+	ZenithView* view = view_it->second;
 
 	double leaf_x, leaf_y; // Coordinates in the leaf surface coordinate system.
 	wlr_surface* leaf_surface = wlr_surface_surface_at(view->xdg_surface->surface, x, y, &leaf_x, &leaf_y);
@@ -241,11 +237,11 @@ void touch_motion(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto x = std::get<double>(args[flutter::EncodableValue("x")]);
 	auto y = std::get<double>(args[flutter::EncodableValue("y")]);
 
-	try {
-		const Offset& leaf = server->leaf_surface_coords_per_device_id.at(touch_id);
+	auto leaf_it = server->leaf_surface_coords_per_device_id.find(touch_id);
+	if (leaf_it != server->leaf_surface_coords_per_device_id.end()) {
+		const Offset& leaf = leaf_it->second;
 		wlr_seat_touch_notify_motion(server->seat, current_time_milliseconds(), touch_id, x - leaf.dx, y - leaf.dy);
 		wlr_seat_touch_notify_frame(server->seat);
-	} catch (std::out_of_range& unused) {
 	}
 
 	result->Success();
@@ -271,13 +267,12 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 	auto text = std::get<std::string>(args[flutter::EncodableValue("text")]);
 
-	auto view_it = server->views_by_id.find(view_id);
-	bool view_doesnt_exist = view_it == server->views_by_id.end();
-	if (view_doesnt_exist) {
+	auto view_it = server->views.find(view_id);
+	if (view_it == server->views.end()) {
 		result->Success();
 		return;
 	}
-	ZenithView* view = view_it->second.get();
+	ZenithView* view = view_it->second;
 	if (view->active_text_input != nullptr) {
 		wlr_text_input_v3_send_commit_string(view->active_text_input->wlr_text_input, text.c_str());
 		wlr_text_input_v3_send_done(view->active_text_input->wlr_text_input);
@@ -288,17 +283,6 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 			return;
 		}
 
-//		auto name = xkb_keymap_key_get_name(keyboard->keymap, KEY_A + 8);
-//		std::cout << "name A: " << name << std::endl;
-//
-//		auto key_code = xkb_keymap_key_by_name(keyboard->keymap, text.c_str());
-//		std::cout << "keycode: " << key_code << std::endl;
-
-		//		xkb_keymap_key_by_name()
-//		auto str = xkb_keymap_get_as_string(wlr_seat_get_keyboard(server->seat)->keymap, XKB_KEYMAP_FORMAT_TEXT_V1);
-//		std::cout << "keymap:\n" << str << std::endl;
-
-//		wlr_seat_keyboard_notify_modifiers()
 		std::optional<KeyCombination> combination = string_to_keycode(text.c_str(), keyboard->xkb_state);
 
 		ASSERT(combination.has_value(),

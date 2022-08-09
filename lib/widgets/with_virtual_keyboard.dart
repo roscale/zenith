@@ -125,26 +125,25 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
             }
 
             return Stack(
+              clipBehavior: Clip.none,
               children: [
                 widget.child,
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: SizedBox(
-                    child: ClipRect(
-                      child: ValueListenableBuilder(
-                        valueListenable: slideAnimation,
-                        builder: (_, Animation<Offset> animation, Widget? child) {
-                          return SlideTransition(
-                            position: animation,
-                            child: child!,
-                          );
-                        },
-                        child: VirtualKeyboard(
-                          key: key,
-                          onDismiss: () => animateBackward(),
-                          onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
-                          onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
-                        ),
+                  child: ClipRect(
+                    child: ValueListenableBuilder(
+                      valueListenable: slideAnimation,
+                      builder: (_, Animation<Offset> animation, Widget? child) {
+                        return SlideTransition(
+                          position: animation,
+                          child: child!,
+                        );
+                      },
+                      child: VirtualKeyboard(
+                        key: key,
+                        onDismiss: () => animateBackward(),
+                        onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
+                        onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
                       ),
                     ),
                   ),

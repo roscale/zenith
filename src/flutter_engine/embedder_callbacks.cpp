@@ -27,8 +27,6 @@ bool flutter_clear_current(void* userdata) {
 bool flutter_present(void* userdata) {
 	auto* state = static_cast<EmbedderState*>(userdata);
 
-	state->surface_framebuffers_in_use.clear();
-
 	std::scoped_lock lock(state->output_framebuffer->mutex);
 	GLScopedLock gl_lock(state->output_gl_mutex);
 
@@ -74,11 +72,6 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 	texture_out->format = GL_RGBA8;
 	texture_out->name = surface_framebuffer->texture;
 
-	// Make sure the framebuffer doesn't get destroyed at the end of this function if this
-	// shared_ptr happens to be the only copy left. We don't want the destructor to run and delete
-	// the texture because Flutter is going to render it later. We can safely clear this list
-	// after all the rendering is done.
-	state->surface_framebuffers_in_use.push_back(surface_framebuffer);
 	return true;
 }
 

@@ -540,12 +540,11 @@ class _FittedWindow extends StatelessWidget {
                 bool fits = size.width <= biggest.width && size.height <= biggest.height;
 
                 bool shiftHorizontally = fits && (size.width % 2 != biggest.width % 2);
-                bool shiftVertically = fits && (size.height % 2 != biggest.height % 2);
 
                 return Transform.translate(
                   offset: Offset(
                     shiftHorizontally ? -0.5 : 0,
-                    shiftVertically ? -0.5 : 0,
+                    0,
                   ),
                   child: child!,
                 );

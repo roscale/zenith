@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:zenith/enums.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/popup_state.dart';
@@ -158,7 +159,10 @@ class DesktopState {
       case XdgSurfaceRole.toplevel:
         var window = _views[viewId] as Window;
         if (newTextureId != null) {
-          PlatformApi.unregisterViewTexture(window.state.textureId.value);
+          final oldTextureId = window.state.textureId.value;
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            PlatformApi.unregisterViewTexture(oldTextureId);
+          });
           window.state.textureId.value = newTextureId;
         }
         window.state.surfaceSize.value = newSurfaceSize ?? window.state.surfaceSize.value;
@@ -168,7 +172,10 @@ class DesktopState {
       case XdgSurfaceRole.popup:
         var popup = _views[viewId] as Popup;
         if (newTextureId != null) {
-          PlatformApi.unregisterViewTexture(popup.state.textureId.value);
+          final oldTextureId = popup.state.textureId.value;
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            PlatformApi.unregisterViewTexture(oldTextureId);
+          });
           popup.state.textureId.value = newTextureId;
         }
         popup.state.surfaceSize.value = newSurfaceSize ?? popup.state.surfaceSize.value;

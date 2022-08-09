@@ -3,6 +3,7 @@
 extern "C" {
 #define static
 #include <wlr/types/wlr_text_input_v3.h>
+#include <wlr/types/wlr_xdg_shell.h>
 #undef static
 }
 
@@ -19,7 +20,7 @@ struct ZenithTextInput {
 	wl_listener text_input_commit{};
 	wl_listener text_input_destroy{};
 
-	void enter(wlr_surface* surface) const;
+	void enter(wlr_xdg_surface* xdg_surface) const;
 
 	void leave() const;
 

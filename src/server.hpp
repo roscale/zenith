@@ -74,8 +74,7 @@ public:
 	wl_listener request_cursor{};
 	wl_listener new_text_input{};
 
-	std::unordered_map<wlr_surface*, size_t> view_id_by_wlr_surface{};
-	std::unordered_map<size_t, std::unique_ptr<ZenithView>> views_by_id{};
+	std::unordered_map<size_t, ZenithView*> views{};
 	std::unordered_map<size_t, std::shared_ptr<Framebuffer>> surface_framebuffers{};
 	std::mutex surface_framebuffers_mutex{};
 
@@ -83,7 +82,7 @@ public:
 	std::unique_ptr<ZenithPointer> pointer;
 	std::list<std::unique_ptr<ZenithKeyboard>> keyboards{};
 	std::list<std::unique_ptr<ZenithTouchDevice>> touch_devices{};
-	std::list<std::unique_ptr<ZenithTextInput>> text_inputs{};
+	std::unordered_set<ZenithTextInput*> text_inputs{};
 	std::unordered_map<int, Offset> leaf_surface_coords_per_device_id{};
 
 	std::unique_ptr<EmbedderState> embedder_state{};
