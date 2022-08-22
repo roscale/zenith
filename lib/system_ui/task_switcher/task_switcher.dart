@@ -207,12 +207,14 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     double position = 0;
 
     for (Window task in tasks) {
-      Widget taskWidget = WithVirtualKeyboard(
+      Widget taskWidget = ClipRect(
         key: task.state.virtualKeyboardKey,
-        viewId: task.state.viewId,
-        child: _FittedWindow(
-          alignment: Alignment.topCenter,
-          window: task,
+        child: WithVirtualKeyboard(
+          viewId: task.state.viewId,
+          child: _FittedWindow(
+            alignment: Alignment.topCenter,
+            window: task,
+          ),
         ),
       );
 
@@ -249,11 +251,10 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
 
       taskWidget = Positioned(
         left: position,
+        width: constraints.value.maxWidth,
+        height: constraints.value.maxHeight,
         child: DeferPointer(
-          child: ConstrainedBox(
-            constraints: constraints.value,
-            child: taskWidget,
-          ),
+          child: taskWidget,
         ),
       );
 

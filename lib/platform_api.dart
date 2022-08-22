@@ -12,6 +12,10 @@ class PlatformApi {
 
   static const MethodChannel _platform = MethodChannel('platform');
 
+  static Future<void> startupComplete() {
+    return _platform.invokeMethod("startup_complete");
+  }
+
   static Future<void> pointerHoversView(int viewId, double x, double y) {
     return _platform.invokeMethod("pointer_hover", {
       "view_id": viewId,

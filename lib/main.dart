@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/services.dart';
 import 'package:zenith/widgets/desktop.dart';
 
@@ -14,6 +16,10 @@ void main() {
   });
 
   VisibilityDetectorController.instance.updateInterval = Duration.zero;
+
+  SchedulerBinding.instance.addPostFrameCallback((_) {
+    PlatformApi.startupComplete();
+  });
 
   registerServices();
   runApp(const Zenith());

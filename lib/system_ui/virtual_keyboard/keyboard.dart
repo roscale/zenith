@@ -59,6 +59,7 @@ class VirtualKeyboard extends StatelessWidget {
           final forthRow = <Widget>[];
           forthRow.add(VirtualKeyboardKey(
             width: keyWidth * 1.5,
+            popUpOnPress: false,
             child: Transform.rotate(
               angle: -90 * math.pi / 180,
               child: const Icon(Icons.forward_outlined),
@@ -73,6 +74,8 @@ class VirtualKeyboard extends StatelessWidget {
           }
           forthRow.add(VirtualKeyboardKey(
             width: keyWidth * 1.5,
+            popUpOnPress: false,
+            repeatOnLongPress: true,
             onTap: () => onKeyCode(KeyCode.backspace),
             child: const Icon(Icons.backspace_outlined),
           ));
@@ -81,6 +84,7 @@ class VirtualKeyboard extends StatelessWidget {
           fifthRow.addAll([
             VirtualKeyboardKey(
               width: keyWidth * 1.5,
+              popUpOnPress: false,
               child: const Text(
                 "?123",
                 style: TextStyle(fontSize: 17),
@@ -93,11 +97,13 @@ class VirtualKeyboard extends StatelessWidget {
             ),
             VirtualKeyboardKey(
               width: keyWidth,
+              popUpOnPress: false,
               child: const Icon(Icons.language),
             ),
             Expanded(
               child: VirtualKeyboardKey(
                 width: double.infinity,
+                popUpOnPress: false,
                 onTap: () => onCharacter(" "),
                 child: const Text(" "),
               ),
@@ -109,6 +115,7 @@ class VirtualKeyboard extends StatelessWidget {
             ),
             VirtualKeyboardKey(
               width: keyWidth * 1.5,
+              popUpOnPress: false,
               onTap: () => onKeyCode(KeyCode.enter),
               child: const Icon(Icons.search),
             ),
@@ -134,12 +141,12 @@ class VirtualKeyboard extends StatelessWidget {
                   children: fifthRow,
                 ),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.keyboard_arrow_down),
+                      icon: const Icon(Icons.keyboard_arrow_down, size: 30),
                       padding: EdgeInsets.zero,
                       onPressed: onDismiss,
-                      // constraints: BoxConstraints.expand(width: 50, height: 50),
                     ),
                   ],
                 ),

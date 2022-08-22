@@ -59,3 +59,7 @@ void emulate_keycode(ZenithServer* server,
 void initial_window_size(ZenithServer* server,
                          const flutter::MethodCall<>& call,
                          std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void startup_complete(ZenithServer* p_server,
+                      const flutter::MethodCall<>& call,
+                      std::unique_ptr<flutter::MethodResult<>>&& unique_ptr);

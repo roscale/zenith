@@ -139,7 +139,9 @@ void EmbedderState::register_platform_api() {
 	ZenithServer* server = this->server;
 	platform_method_channel->SetMethodCallHandler(
 		  [server](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
-			  if (call.method_name() == "activate_window") {
+			  if (call.method_name() == "startup_complete") {
+				  startup_complete(server, call, std::move(result));
+			  } else if (call.method_name() == "activate_window") {
 				  activate_window(server, call, std::move(result));
 			  } else if (call.method_name() == "pointer_hover") {
 				  pointer_hover(server, call, std::move(result));

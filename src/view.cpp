@@ -5,6 +5,7 @@
 #include "messages.hpp"
 #include "assert.hpp"
 #include "framebuffer.hpp"
+#include "xdg_surface_get_visible_bounds.hpp"
 
 extern "C" {
 #define static
@@ -34,7 +35,7 @@ ZenithView::ZenithView(ZenithServer* server, wlr_xdg_surface* xdg_surface)
 	destroy.notify = xdg_surface_destroy;
 	wl_signal_add(&xdg_surface->events.destroy, &destroy);
 
-	commit.notify = surface_commit;
+	commit.notify = xdg_surface_commit;
 	wl_signal_add(&xdg_surface->surface->events.commit, &commit);
 
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
@@ -111,7 +112,83 @@ void ZenithView::maximize() const {
 	wlr_xdg_toplevel_set_maximized(xdg_surface, true);
 }
 
-void surface_commit(wl_listener* listener, void* data) {
+void xdg_surface_map(wl_listener* listener, void* data) {
+	ZenithView* view = wl_container_of(listener, view, map);
+	ZenithServer* server = view->server;
+	wlr_xdg_surface* xdg_surface = view->xdg_surface;
+	wlr_surface* surface = xdg_surface->surface;
+	wlr_texture* texture = wlr_surface_get_texture(surface);
+	assert(texture != nullptr);
+
+	view->mapped = true;
+
+	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+		view->focus();
+		view->maximize();
+	}
+
+	// Create a framebuffer for this xdg_surface.
+	{
+		wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
+		size_t texture_id = next_texture_id++;
+		auto framebuffer = std::make_shared<Framebuffer>(texture->width, texture->height);
+
+		{
+			std::scoped_lock lock(server->surface_framebuffers_mutex);
+			server->surface_framebuffers.insert(
+				  std::pair(
+						texture_id,
+						framebuffer
+				  )
+			);
+		}
+
+		view->active_texture = texture_id;
+
+		// TODO: The texture shouldn't be registered yet because nothing has been rendered to it.
+		FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) view->active_texture);
+	}
+
+	view->visible_bounds = xdg_surface_get_visible_bounds(xdg_surface);
+
+	switch (xdg_surface->role) {
+		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
+			send_window_mapped(server->embedder_state->messenger,
+			                   view->id,
+			                   view->active_texture,
+			                   surface->current.width,
+			                   surface->current.height,
+			                   view->visible_bounds);
+			break;
+		}
+		case WLR_XDG_SURFACE_ROLE_POPUP: {
+			wlr_xdg_popup* popup = xdg_surface->popup;
+
+			view->popup_geometry = wlr_box{
+				  .x = popup->geometry.x,
+				  .y = popup->geometry.y,
+				  .width = surface->current.buffer_width,
+				  .height = surface->current.buffer_height,
+			};
+
+			assert(popup->parent != nullptr);
+			wlr_xdg_surface* parent_xdg_surface = wlr_xdg_surface_from_wlr_surface(popup->parent);
+			auto* parent_view = static_cast<ZenithView*>(parent_xdg_surface->data);
+
+			send_popup_mapped(server->embedder_state->messenger,
+			                  view->id,
+			                  view->active_texture,
+			                  parent_view->id,
+			                  view->popup_geometry,
+			                  view->visible_bounds);
+			break;
+		}
+		case WLR_XDG_SURFACE_ROLE_NONE:
+			break;
+	}
+}
+
+void xdg_surface_commit(wl_listener* listener, void* data) {
 	auto* surface = static_cast<wlr_surface*>(data);
 	auto* server = ZenithServer::instance();
 
@@ -127,7 +204,8 @@ void surface_commit(wl_listener* listener, void* data) {
 	std::optional<std::pair<int, int>> new_surface_size{};
 	std::optional<std::pair<int, int>> new_popup_position{};
 
-	wlr_box& surface_bounds = xdg_surface->current.geometry;
+	wlr_box surface_bounds = xdg_surface_get_visible_bounds(xdg_surface);
+
 	if (view->visible_bounds.x != surface_bounds.x
 	    or view->visible_bounds.y != surface_bounds.y
 	    or view->visible_bounds.width != surface_bounds.width
@@ -137,27 +215,22 @@ void surface_commit(wl_listener* listener, void* data) {
 		new_visible_bounds = surface_bounds;
 	}
 
-	size_t surface_framebuffer_width;
-	size_t surface_framebuffer_height;
+	Size surface_framebuffer_size{};
 	{
 		std::shared_ptr<Framebuffer> surface_framebuffer;
 		{
 			std::scoped_lock lock(server->surface_framebuffers_mutex);
-			auto it = server->surface_framebuffers.find(view->active_texture);
-			if (it == server->surface_framebuffers.end()) {
-				return;
-			}
-			surface_framebuffer = it->second;
+			surface_framebuffer = server->surface_framebuffers.at(view->active_texture);
 		}
-
 		std::scoped_lock lock(surface_framebuffer->mutex);
-		surface_framebuffer_width = surface_framebuffer->width;
-		surface_framebuffer_height = surface_framebuffer->height;
+		surface_framebuffer_size = Size{
+			  .width = surface_framebuffer->width,
+			  .height = surface_framebuffer->height,
+		};
 	}
 
-	if ((size_t) surface->current.buffer_width != surface_framebuffer_width
-	    or (size_t) surface->current.buffer_height != surface_framebuffer_height) {
-
+	if ((size_t) surface->current.buffer_width != surface_framebuffer_size.width
+	    or (size_t) surface->current.buffer_height != surface_framebuffer_size.height) {
 		// Create a new framebuffer with the new size.
 		wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
 		wlr_egl_make_current(egl);
@@ -180,6 +253,8 @@ void surface_commit(wl_listener* listener, void* data) {
 
 		view->active_texture = texture_id;
 
+		// TODO: The texture shouldn't be registered yet because nothing has been rendered to it.
+		// It causes some flickers on rare occasions when the surface is resized.
 		FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) texture_id);
 
 		new_surface_size = {surface->current.buffer_width, surface->current.buffer_height};
@@ -206,75 +281,6 @@ void surface_commit(wl_listener* listener, void* data) {
 		                           new_texture_id,
 		                           new_surface_size,
 		                           new_popup_position);
-	}
-}
-
-void xdg_surface_map(wl_listener* listener, void* data) {
-	ZenithView* view = wl_container_of(listener, view, map);
-	ZenithServer* server = view->server;
-	wlr_xdg_surface* xdg_surface = view->xdg_surface;
-	wlr_surface* surface = xdg_surface->surface;
-	wlr_texture* texture = wlr_surface_get_texture(surface);
-	assert(texture != nullptr);
-
-	view->mapped = true;
-
-	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		view->focus();
-		view->maximize();
-	}
-
-	// Create a framebuffer for this xdg_surface.
-	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
-	size_t texture_id = next_texture_id++;
-	auto framebuffer = std::make_shared<Framebuffer>(texture->width, texture->height);
-	{
-		std::scoped_lock lock(server->surface_framebuffers_mutex);
-		server->surface_framebuffers.insert(
-			  std::pair(
-					texture_id,
-					framebuffer
-			  )
-		);
-	}
-	view->active_texture = texture_id;
-
-	FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) view->active_texture);
-
-	switch (xdg_surface->role) {
-		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
-			send_window_mapped(server->embedder_state->messenger,
-			                   view->id,
-			                   view->active_texture,
-			                   surface->current.width,
-			                   surface->current.height,
-			                   xdg_surface->current.geometry);
-			break;
-		}
-		case WLR_XDG_SURFACE_ROLE_POPUP: {
-			wlr_xdg_popup* popup = xdg_surface->popup;
-
-			view->popup_geometry = wlr_box{
-				  .x = popup->geometry.x,
-				  .y = popup->geometry.y,
-				  .width = surface->current.buffer_width,
-				  .height = surface->current.buffer_height,
-			};
-
-			assert(popup->parent != nullptr);
-			wlr_xdg_surface* parent_xdg_surface = wlr_xdg_surface_from_wlr_surface(popup->parent);
-			auto* parent_view = static_cast<ZenithView*>(parent_xdg_surface->data);
-
-			send_popup_mapped(server->embedder_state->messenger,
-			                  view->id,
-			                  view->active_texture,
-			                  parent_view->id,
-			                  view->popup_geometry,
-			                  popup->base->current.geometry);
-			break;
-		}
-		case WLR_XDG_SURFACE_ROLE_NONE:
-			break;
 	}
 }
 

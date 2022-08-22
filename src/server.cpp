@@ -119,6 +119,8 @@ ZenithServer::ZenithServer() {
 }
 
 void ZenithServer::run(char* startup_command) {
+	this->startup_command = startup_command;
+
 	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
 	embedder_state = std::make_unique<EmbedderState>(this, main_egl);
 
@@ -149,10 +151,6 @@ void ZenithServer::run(char* startup_command) {
 	setenv("XDG_SESSION_TYPE", "wayland", true);
 	setenv("GDK_BACKEND", "wayland", true); // Force GTK apps to run on Wayland.
 	setenv("QT_QPA_PLATFORM", "wayland", true); // Force QT apps to run on Wayland.
-
-	if (fork() == 0) {
-		execl("/bin/sh", "/bin/sh", "-c", startup_command, nullptr);
-	}
 
 	wl_display_run(display);
 

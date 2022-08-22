@@ -1,5 +1,6 @@
 #include <linux/input-event-codes.h>
 #include <xkbcommon/xkbcommon.h>
+#include <csignal>
 #include "platform_api.hpp"
 #include "server.hpp"
 #include "encodable_value.h"
@@ -13,6 +14,15 @@ extern "C" {
 #include "wlr/types/wlr_xdg_shell.h"
 #include <wlr/render/gles2.h>
 #undef static
+}
+
+void startup_complete(ZenithServer* p_server, const flutter::MethodCall<>& call,
+                      std::unique_ptr<flutter::MethodResult<>>&& unique_ptr) {
+
+	if (fork() == 0) {
+		execl("/bin/sh", "/bin/sh", "-c", p_server->startup_command.c_str(), nullptr);
+	}
+	unique_ptr->Success();
 }
 
 void activate_window(ZenithServer* server,

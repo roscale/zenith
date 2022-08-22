@@ -110,41 +110,32 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
           first: shown,
           second: keyboardSize,
           builder: (_, bool shown, Size keyboardSize, Widget? child) {
-            if (shown && keyboardSize != Size.zero) {
-              PlatformApi.resizeWindow(
-                widget.viewId,
-                constraints.maxWidth.toInt(),
-                (constraints.maxHeight - keyboardSize.height).toInt(),
-              );
-            } else {
-              PlatformApi.resizeWindow(
-                widget.viewId,
-                constraints.maxWidth.toInt(),
-                constraints.maxHeight.toInt(),
-              );
-            }
+            PlatformApi.resizeWindow(
+              widget.viewId,
+              constraints.maxWidth.toInt(),
+              shown && keyboardSize != Size.zero
+                  ? (constraints.maxHeight - keyboardSize.height).toInt()
+                  : constraints.maxHeight.toInt(),
+            );
 
             return Stack(
-              clipBehavior: Clip.none,
               children: [
                 widget.child,
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: ClipRect(
-                    child: ValueListenableBuilder(
-                      valueListenable: slideAnimation,
-                      builder: (_, Animation<Offset> animation, Widget? child) {
-                        return SlideTransition(
-                          position: animation,
-                          child: child!,
-                        );
-                      },
-                      child: VirtualKeyboard(
-                        key: key,
-                        onDismiss: () => animateBackward(),
-                        onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
-                        onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
-                      ),
+                  child: ValueListenableBuilder(
+                    valueListenable: slideAnimation,
+                    builder: (_, Animation<Offset> animation, Widget? child) {
+                      return SlideTransition(
+                        position: animation,
+                        child: child!,
+                      );
+                    },
+                    child: VirtualKeyboard(
+                      key: key,
+                      onDismiss: () => animateBackward(),
+                      onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
+                      onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
                     ),
                   ),
                 ),

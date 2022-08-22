@@ -4,7 +4,7 @@
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
 
-Framebuffer::Framebuffer(size_t width, size_t height)
+Framebuffer::Framebuffer(uint32_t width, uint32_t height)
 	  : width(width), height(height) {
 
 	assert(eglGetCurrentContext() != EGL_NO_CONTEXT);
@@ -22,7 +22,7 @@ Framebuffer::Framebuffer(size_t width, size_t height)
 	glGenTextures(1, &texture);
 
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int) width, (int) height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei) width, (GLsizei) height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -38,7 +38,7 @@ Framebuffer::Framebuffer(size_t width, size_t height)
 	glBindTexture(GL_TEXTURE_2D, texture_binding);
 }
 
-void Framebuffer::resize(size_t new_width, size_t new_height) {
+void Framebuffer::resize(uint32_t new_width, uint32_t new_height) {
 	assert(eglGetCurrentContext() != EGL_NO_CONTEXT);
 	if (width == new_width && height == new_height) {
 		return;
@@ -54,7 +54,8 @@ void Framebuffer::resize(size_t new_width, size_t new_height) {
 	glGenTextures(1, &resized_texture);
 
 	glBindTexture(GL_TEXTURE_2D, resized_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int) new_width, (int) new_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei) new_width, (GLsizei) new_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+	             nullptr);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

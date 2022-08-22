@@ -41,6 +41,8 @@ public:
 	void run(char* startup_command);
 
 	std::thread::id main_thread_id;
+	std::string startup_command{};
+
 	wl_display* display;
 	wlr_backend* backend;
 	wlr_renderer* renderer;
@@ -99,7 +101,7 @@ void server_new_output(wl_listener* listener, void* data);
  */
 void server_new_xdg_surface(wl_listener* listener, void* data);
 
-void surface_commit(wl_listener* listener, void* data);
+void xdg_surface_commit(wl_listener* listener, void* data);
 
 /*
  * This event is raised by the backend when a new input device becomes available.

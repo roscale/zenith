@@ -25,10 +25,10 @@ class IdentityClip extends CustomClipper<Rect> {
   }
 }
 
-class RectClip extends CustomClipper<Rect> {
+class RectClipper extends CustomClipper<Rect> {
   Rect rect;
 
-  RectClip(this.rect);
+  RectClipper(this.rect);
 
   @override
   Rect getClip(Size size) {
@@ -37,7 +37,7 @@ class RectClip extends CustomClipper<Rect> {
 
   @override
   bool shouldReclip(oldClipper) {
-    return rect != (oldClipper as RectClip).rect;
+    return rect != (oldClipper as RectClipper).rect;
   }
 }
 
@@ -50,5 +50,27 @@ extension RectClamp on Rect {
     double left = width > bigger.width ? 0 : this.left.clamp(bigger.left, bigger.right - width);
     double top = height > bigger.height ? 0 : this.top.clamp(bigger.top, bigger.bottom - height);
     return Rect.fromLTWH(left, top, width, height);
+  }
+}
+
+/// Extends the clipping area with some padding.
+class PaddedClipper extends CustomClipper<Rect> {
+  EdgeInsets padding;
+
+  PaddedClipper(this.padding);
+
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTRB(
+      -padding.left,
+      -padding.top,
+      size.width + padding.right,
+      size.height + padding.bottom,
+    );
+  }
+
+  @override
+  bool shouldReclip(oldClipper) {
+    return padding != (oldClipper as PaddedClipper).padding;
   }
 }
