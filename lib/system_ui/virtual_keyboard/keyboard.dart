@@ -117,7 +117,7 @@ class VirtualKeyboard extends StatelessWidget {
               width: keyWidth * 1.5,
               popUpOnPress: false,
               onTap: () => onKeyCode(KeyCode.enter),
-              child: const Icon(Icons.search),
+              child: const Icon(Icons.keyboard_return),
             ),
           ]);
 

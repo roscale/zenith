@@ -40,7 +40,7 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-ASAN := -g -fsanitize=address -fno-omit-frame-pointer -lasan -lrt
+ASAN := -g -fno-omit-frame-pointer -fsanitize=address -lasan -lrt
 WARNINGS := -Wall -Wextra -Wno-unused-parameter -Werror
 
 # The -MMD and -MP flags together generate Makefiles for us!

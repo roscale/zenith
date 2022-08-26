@@ -44,11 +44,11 @@ void ZenithTextInput::disable() const {
 	assert(wlr_text_input->focused_surface != nullptr);
 
 	wlr_xdg_surface* xdg_surface = wlr_xdg_surface_from_wlr_surface(wlr_text_input->focused_surface);
-
-	auto* view = static_cast<ZenithView*>(xdg_surface->data);
-	view->active_text_input = nullptr;
-
-	send_text_input_disabled(view->server->embedder_state->messenger, view->id);
+	if (xdg_surface != nullptr) {
+		auto* view = static_cast<ZenithView*>(xdg_surface->data);
+		view->active_text_input = nullptr;
+		send_text_input_disabled(view->server->embedder_state->messenger, view->id);
+	}
 }
 
 void text_input_enable_handle(wl_listener* listener, void* data) {

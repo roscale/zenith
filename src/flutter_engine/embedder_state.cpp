@@ -139,38 +139,39 @@ void EmbedderState::register_platform_api() {
 	ZenithServer* server = this->server;
 	platform_method_channel->SetMethodCallHandler(
 		  [server](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
-			  if (call.method_name() == "startup_complete") {
+			  const std::string& method_name = call.method_name();
+			  if (method_name == "startup_complete") {
 				  startup_complete(server, call, std::move(result));
-			  } else if (call.method_name() == "activate_window") {
+			  } else if (method_name == "activate_window") {
 				  activate_window(server, call, std::move(result));
-			  } else if (call.method_name() == "pointer_hover") {
+			  } else if (method_name == "pointer_hover") {
 				  pointer_hover(server, call, std::move(result));
-			  } else if (call.method_name() == "pointer_exit") {
+			  } else if (method_name == "pointer_exit") {
 				  pointer_exit(server, call, std::move(result));
-			  } else if (call.method_name() == "close_window") {
+			  } else if (method_name == "close_window") {
 				  close_window(server, call, std::move(result));
-			  } else if (call.method_name() == "resize_window") {
+			  } else if (method_name == "resize_window") {
 				  resize_window(server, call, std::move(result));
-			  } else if (call.method_name() == "unregister_view_texture") {
+			  } else if (method_name == "unregister_view_texture") {
 				  unregister_view_texture(server, call, std::move(result));
-			  } else if (call.method_name() == "mouse_button_event") {
+			  } else if (method_name == "mouse_button_event") {
 				  mouse_button_event(server, call, std::move(result));
-			  } else if (call.method_name() == "change_window_visibility") {
+			  } else if (method_name == "change_window_visibility") {
 				  change_window_visibility(server, call, std::move(result));
-			  } else if (call.method_name() == "touch_down") {
+			  } else if (method_name == "touch_down") {
 				  touch_down(server, call, std::move(result));
-			  } else if (call.method_name() == "touch_motion") {
+			  } else if (method_name == "touch_motion") {
 				  touch_motion(server, call, std::move(result));
-			  } else if (call.method_name() == "touch_up") {
+			  } else if (method_name == "touch_up") {
 				  touch_up(server, call, std::move(result));
-			  } else if (call.method_name() == "insert_text") {
+			  } else if (method_name == "insert_text") {
 				  insert_text(server, call, std::move(result));
-			  } else if (call.method_name() == "emulate_keycode") {
+			  } else if (method_name == "emulate_keycode") {
 				  emulate_keycode(server, call, std::move(result));
-			  } else if (call.method_name() == "initial_window_size") {
+			  } else if (method_name == "initial_window_size") {
 				  initial_window_size(server, call, std::move(result));
 			  } else {
-				  result->Error("method_does_not_exist", "Method " + call.method_name() + " does not exist");
+				  result->Error("method_does_not_exist", "Method " + method_name + " does not exist");
 			  }
 		  }
 	);
