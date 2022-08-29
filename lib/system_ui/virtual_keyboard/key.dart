@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 class VirtualKeyboardKey extends StatefulWidget {
   final double width;
   final Widget child;
-  final VoidCallback? onTap;
+  final GestureTapCallback? onTap;
+  final GestureTapCallback? onDoubleTap;
   final bool popUpOnPress;
   final bool repeatOnLongPress;
 
@@ -14,6 +15,7 @@ class VirtualKeyboardKey extends StatefulWidget {
     required this.width,
     required this.child,
     this.onTap,
+    this.onDoubleTap,
     this.popUpOnPress = true,
     this.repeatOnLongPress = false,
   }) : super(key: key);
@@ -108,29 +110,32 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
     return SizedBox(
       width: widget.width,
       height: 50,
-      child: Listener(
-        behavior: HitTestBehavior.translucent,
-        onPointerDown: (_) => pointerDown(),
-        onPointerUp: (_) {
-          if (repeatKeyTimer == null) {
-            actuate();
-          }
-          pointerUp();
-        },
-        child: ValueListenableBuilder(
-          valueListenable: beingPressed,
-          builder: (BuildContext context, bool beingPressed, Widget? child) {
-            return Card(
-              color: beingPressed ? Colors.grey.shade300 : null,
-              elevation: 2,
-              margin: const EdgeInsets.all(3),
-              child: child!,
-            );
+      child: GestureDetector(
+        onDoubleTap: widget.onDoubleTap,
+        child: Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (_) => pointerDown(),
+          onPointerUp: (_) {
+            if (repeatKeyTimer == null) {
+              actuate();
+            }
+            pointerUp();
           },
-          child: Center(
-            child: DefaultTextStyle(
-              style: const TextStyle(color: Colors.black, fontSize: 20),
-              child: widget.child,
+          child: ValueListenableBuilder(
+            valueListenable: beingPressed,
+            builder: (BuildContext context, bool beingPressed, Widget? child) {
+              return Card(
+                color: beingPressed ? Colors.grey.shade300 : null,
+                elevation: 2,
+                margin: const EdgeInsets.all(3),
+                child: child!,
+              );
+            },
+            child: Center(
+              child: DefaultTextStyle(
+                style: const TextStyle(color: Colors.black, fontSize: 20),
+                child: widget.child,
+              ),
             ),
           ),
         ),

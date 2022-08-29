@@ -9,9 +9,9 @@ import 'package:zenith/enums.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/desktop_state.dart';
 import 'package:zenith/system_ui/task_switcher/invisible_bottom_bar.dart';
+import 'package:zenith/system_ui/virtual_keyboard/with_virtual_keyboard.dart';
 import 'package:zenith/util/listenable_list.dart';
 import 'package:zenith/widgets/window.dart';
-import 'package:zenith/widgets/with_virtual_keyboard.dart';
 
 class TaskSwitcher extends StatefulWidget {
   final double spacing;
