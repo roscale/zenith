@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/system_ui/virtual_keyboard/key_codes.dart';
+import 'package:zenith/system_ui/virtual_keyboard/layouts.dart';
 import 'package:zenith/system_ui/virtual_keyboard/virtual_keyboard.dart';
 import 'package:zenith/util/multi_value_listenable_builder.dart';
 

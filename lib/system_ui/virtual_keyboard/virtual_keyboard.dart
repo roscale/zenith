@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:zenith/system_ui/virtual_keyboard/key.dart';
-import 'package:zenith/system_ui/virtual_keyboard/key_codes.dart';
 import 'package:zenith/system_ui/virtual_keyboard/layouts.dart';
 import 'package:zenith/util/multi_value_listenable_builder.dart';
 
@@ -23,8 +22,8 @@ class VirtualKeyboard extends StatefulWidget {
 }
 
 class VirtualKeyboardState extends State<VirtualKeyboard> {
-  var layout = ValueNotifier(layouts["en"]!);
-  var layer = ValueNotifier(VirtualKeyboardLayer.first);
+  var layout = ValueNotifier(KbLayouts.en.layout);
+  var layer = ValueNotifier(KbLayerEnum.first);
   var letterCase = ValueNotifier(Case.lowercase);
 
   @override
@@ -67,22 +66,22 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
       third: letterCase,
       builder: (
         BuildContext context,
-        VirtualKeyboardLayout layout,
-        VirtualKeyboardLayer layer,
+        KbLayout layout,
+        KbLayerEnum layer,
         Case letterCase,
         _,
       ) {
         List<List<Widget>> layerWidgets = [];
 
         switch (layer) {
-          case VirtualKeyboardLayer.first:
-            layerWidgets = buildFirstLayer(layout, keyWidth, letterCase);
+          case KbLayerEnum.first:
+            layerWidgets = buildFirstLayer(layout.firstLayer, keyWidth, letterCase);
             break;
-          case VirtualKeyboardLayer.second:
-            layerWidgets = buildSecondLayer(layout, keyWidth);
+          case KbLayerEnum.second:
+            layerWidgets = buildSecondLayer(layout.secondLayer, keyWidth);
             break;
-          case VirtualKeyboardLayer.third:
-            layerWidgets = buildThirdLayer(layout, keyWidth);
+          case KbLayerEnum.third:
+            layerWidgets = buildThirdLayer(layout.thirdLayer, keyWidth);
             break;
         }
 
@@ -106,7 +105,7 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
     }
   }
 
-  List<List<Widget>> buildFirstLayer(VirtualKeyboardLayout layout, double keyWidth, Case letterCase) {
+  List<List<Widget>> buildFirstLayer(KbLayer layer, double keyWidth, Case letterCase) {
     Widget letter(char) {
       if (letterCase != Case.lowercase) {
         char = char.toUpperCase();
@@ -119,8 +118,8 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
     }
 
     return [
-      [for (String char in layout.first[0]) letter(char)],
-      [for (String char in layout.first[1]) letter(char)],
+      [for (String char in layer[0]) letter(char)],
+      [for (String char in layer[1]) letter(char)],
       [
         VirtualKeyboardKey(
           width: keyWidth * 1.5,
@@ -141,7 +140,7 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
             ),
           ),
         ),
-        for (String char in layout.first[2]) letter(char),
+        for (String char in layer[2]) letter(char),
         VirtualKeyboardKey(
           width: keyWidth * 1.5,
           popUpOnPress: false,
@@ -158,12 +157,12 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
             "?123",
             style: TextStyle(fontSize: 17),
           ),
-          onTap: () => layer.value = VirtualKeyboardLayer.second,
+          onTap: () => this.layer.value = KbLayerEnum.second,
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.first[3][0]),
-          child: Text(layout.first[3][0]),
+          onTap: () => widget.onCharacter(layer[3][0]),
+          child: Text(layer[3][0]),
         ),
         VirtualKeyboardKey(
           width: keyWidth,
@@ -180,8 +179,8 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.first[3][1]),
-          child: Text(layout.first[3][1]),
+          onTap: () => widget.onCharacter(layer[3][1]),
+          child: Text(layer[3][1]),
         ),
         VirtualKeyboardKey(
           width: keyWidth * 1.5,
@@ -193,10 +192,10 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
     ];
   }
 
-  List<List<Widget>> buildSecondLayer(VirtualKeyboardLayout layout, double keyWidth) {
+  List<List<Widget>> buildSecondLayer(KbLayer layer, double keyWidth) {
     return [
       [
-        for (String char in layout.second[0])
+        for (String char in layer[0])
           VirtualKeyboardKey(
             width: keyWidth,
             onTap: () => widget.onCharacter(char),
@@ -204,7 +203,7 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
           ),
       ],
       [
-        for (String char in layout.second[1])
+        for (String char in layer[1])
           VirtualKeyboardKey(
             width: keyWidth,
             onTap: () => widget.onCharacter(char),
@@ -215,13 +214,13 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
         VirtualKeyboardKey(
           width: keyWidth * 1.5,
           popUpOnPress: false,
-          onTap: () => layer.value = VirtualKeyboardLayer.third,
+          onTap: () => this.layer.value = KbLayerEnum.third,
           child: const Text(
             "=\\<",
             style: TextStyle(fontSize: 17),
           ),
         ),
-        for (String char in layout.second[2])
+        for (String char in layer[2])
           VirtualKeyboardKey(
             width: keyWidth,
             onTap: () => widget.onCharacter(char),
@@ -243,17 +242,17 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
             "ABC",
             style: TextStyle(fontSize: 17),
           ),
-          onTap: () => layer.value = VirtualKeyboardLayer.first,
+          onTap: () => this.layer.value = KbLayerEnum.first,
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.second[3][0]),
-          child: Text(layout.second[3][0]),
+          onTap: () => widget.onCharacter(layer[3][0]),
+          child: Text(layer[3][0]),
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.second[3][1]),
-          child: Text(layout.second[3][1]),
+          onTap: () => widget.onCharacter(layer[3][1]),
+          child: Text(layer[3][1]),
         ),
         Expanded(
           child: VirtualKeyboardKey(
@@ -265,13 +264,13 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.second[3][2]),
-          child: Text(layout.second[3][2]),
+          onTap: () => widget.onCharacter(layer[3][2]),
+          child: Text(layer[3][2]),
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.second[3][3]),
-          child: Text(layout.second[3][3]),
+          onTap: () => widget.onCharacter(layer[3][3]),
+          child: Text(layer[3][3]),
         ),
         VirtualKeyboardKey(
           width: keyWidth * 1.5,
@@ -283,10 +282,10 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
     ];
   }
 
-  List<List<Widget>> buildThirdLayer(VirtualKeyboardLayout layout, double keyWidth) {
+  List<List<Widget>> buildThirdLayer(KbLayer layer, double keyWidth) {
     return [
       [
-        for (String char in layout.third[0])
+        for (String char in layer[0])
           VirtualKeyboardKey(
             width: keyWidth,
             onTap: () => widget.onCharacter(char),
@@ -294,7 +293,7 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
           ),
       ],
       [
-        for (String char in layout.third[1])
+        for (String char in layer[1])
           VirtualKeyboardKey(
             width: keyWidth,
             onTap: () => widget.onCharacter(char),
@@ -305,13 +304,13 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
         VirtualKeyboardKey(
           width: keyWidth * 1.5,
           popUpOnPress: false,
-          onTap: () => layer.value = VirtualKeyboardLayer.second,
+          onTap: () => this.layer.value = KbLayerEnum.second,
           child: const Text(
             "?123",
             style: TextStyle(fontSize: 17),
           ),
         ),
-        for (String char in layout.third[2])
+        for (String char in layer[2])
           VirtualKeyboardKey(
             width: keyWidth,
             onTap: () => widget.onCharacter(char),
@@ -333,17 +332,17 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
             "ABC",
             style: TextStyle(fontSize: 17),
           ),
-          onTap: () => layer.value = VirtualKeyboardLayer.first,
+          onTap: () => this.layer.value = KbLayerEnum.first,
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.third[3][0]),
-          child: Text(layout.third[3][0]),
+          onTap: () => widget.onCharacter(layer[3][0]),
+          child: Text(layer[3][0]),
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.third[3][1]),
-          child: Text(layout.third[3][1]),
+          onTap: () => widget.onCharacter(layer[3][1]),
+          child: Text(layer[3][1]),
         ),
         Expanded(
           child: VirtualKeyboardKey(
@@ -355,13 +354,13 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.third[3][2]),
-          child: Text(layout.third[3][2]),
+          onTap: () => widget.onCharacter(layer[3][2]),
+          child: Text(layer[3][2]),
         ),
         VirtualKeyboardKey(
           width: keyWidth,
-          onTap: () => widget.onCharacter(layout.third[3][3]),
-          child: Text(layout.third[3][3]),
+          onTap: () => widget.onCharacter(layer[3][3]),
+          child: Text(layer[3][3]),
         ),
         VirtualKeyboardKey(
           width: keyWidth * 1.5,
