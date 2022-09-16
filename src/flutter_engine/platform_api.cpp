@@ -1,5 +1,4 @@
 #include <linux/input-event-codes.h>
-#include <xkbcommon/xkbcommon.h>
 #include <csignal>
 #include "platform_api.hpp"
 #include "server.hpp"
@@ -7,6 +6,7 @@
 #include "time.hpp"
 #include "string_to_keycode.hpp"
 #include "assert.hpp"
+#include "wlr_extensions.hpp"
 
 extern "C" {
 #define static
@@ -266,6 +266,30 @@ void touch_up(ZenithServer* server, const flutter::MethodCall<>& call,
 	server->leaf_surface_coords_per_device_id.erase(touch_id);
 
 	wlr_seat_touch_notify_up(server->seat, current_time_milliseconds(), touch_id);
+	wlr_seat_touch_notify_frame(server->seat);
+	result->Success();
+}
+
+void touch_cancel(ZenithServer* server, const flutter::MethodCall<>& call,
+                  std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	auto touch_id = std::get<int>(args[flutter::EncodableValue("touch_id")]);
+
+	server->leaf_surface_coords_per_device_id.erase(touch_id);
+
+	wlr_touch_point* point = wlr_seat_touch_get_point(server->seat, touch_id);
+	if (point == nullptr) {
+		result->Success();
+		return;
+	}
+	struct wlr_surface* surface = point->surface;
+	if (surface == nullptr) {
+		result->Success();
+		return;
+	}
+
+	wlr_seat_touch_notify_cancel(server->seat, surface);
 	wlr_seat_touch_notify_frame(server->seat);
 	result->Success();
 }

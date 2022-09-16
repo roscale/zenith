@@ -4,60 +4,111 @@ import 'package:zenith/platform_api.dart';
 import 'package:zenith/services.dart';
 import 'package:zenith/util/mouse_button_tracker.dart';
 import 'package:zenith/util/pointer_focus_manager.dart';
+import 'package:zenith/util/raw_gesture_recognizer.dart';
 
 /// Handles all input events for a given window or popup, and redirects them to the platform which will them be
 /// forwarded to the appropriate surface.
-class ViewInputListener extends StatelessWidget {
+class ViewInputListener extends StatefulWidget {
   final int viewId;
   final Widget child;
 
-  late final pointerFocusManager = getIt<PointerFocusManager>();
-  late final mouseButtonTracker = getIt<MouseButtonTracker>();
-
-  ViewInputListener({
+  const ViewInputListener({
     Key? key,
     required this.viewId,
     required this.child,
   }) : super(key: key);
 
   @override
+  State<ViewInputListener> createState() => _ViewInputListenerState();
+}
+
+class ItemDrag extends Drag {
+  final int pointerId;
+  final void Function(DragUpdateDetails details, int pointerId) onUpdate;
+  final void Function(DragEndDetails details, int pointerId) onEnd;
+  final void Function(int pointerId) onCancel;
+
+  ItemDrag({
+    required this.pointerId,
+    required this.onUpdate,
+    required this.onEnd,
+    required this.onCancel,
+  });
+
+  @override
+  void update(DragUpdateDetails details) => onUpdate(details, pointerId);
+
+  @override
+  void end(DragEndDetails details) => onEnd(details, pointerId);
+
+  @override
+  void cancel() => onCancel(pointerId);
+}
+
+class _ViewInputListenerState extends State<ViewInputListener> {
+  late final pointerFocusManager = getIt<PointerFocusManager>();
+  late final mouseButtonTracker = getIt<MouseButtonTracker>();
+
+  @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: (PointerDownEvent event) async {
-        if (event.kind == PointerDeviceKind.mouse) {
-          await pointerMoved(event);
-          await sendMouseEventsToPlatform(event);
-          pointerFocusManager.startPotentialDrag();
-        } else if (event.kind == PointerDeviceKind.touch) {
-          await PlatformApi.touchDown(viewId, event.device, event.localPosition.dx, event.localPosition.dy);
-        }
+    // This is used instead of a Listener because there are other GestureDetectors on top of the view
+    // that need priority when some system-wide gestures occur.
+    // A Listener would always intercept events, but a [RawGestureRecognizer] will let other GestureDetectors handle the input.
+    // onPointerCancel is called when this handover occurs.
+    return RawGestureDetector(
+      gestures: <Type, GestureRecognizerFactory>{
+        RawGestureRecognizer: GestureRecognizerFactoryWithHandlers<RawGestureRecognizer>(
+          () => RawGestureRecognizer(),
+          (RawGestureRecognizer instance) {
+            instance.onPointerDown = (PointerDownEvent event) async {
+              if (event.kind == PointerDeviceKind.mouse) {
+                await pointerMoved(event);
+                await sendMouseEventsToPlatform(event);
+                pointerFocusManager.startPotentialDrag();
+              } else if (event.kind == PointerDeviceKind.touch) {
+                await PlatformApi.touchDown(
+                    widget.viewId, event.pointer, event.localPosition.dx, event.localPosition.dy);
+              }
+            };
+            instance.onPointerMove = (PointerMoveEvent event) async {
+              if (event.kind == PointerDeviceKind.mouse) {
+                // If a button is being pressed while another one is already down, it's considered a move event, not a down event.
+                await sendMouseEventsToPlatform(event);
+                await pointerMoved(event);
+              } else if (event.kind == PointerDeviceKind.touch) {
+                await PlatformApi.touchMotion(event.pointer, event.localPosition.dx, event.localPosition.dy);
+              }
+            };
+            instance.onPointerUp = (PointerUpEvent event) async {
+              if (event.kind == PointerDeviceKind.mouse) {
+                await sendMouseEventsToPlatform(event);
+                pointerFocusManager.stopPotentialDrag();
+              } else if (event.kind == PointerDeviceKind.touch) {
+                await PlatformApi.touchUp(event.pointer);
+              }
+            };
+            instance.onPointerCancel = (PointerCancelEvent event) async {
+              if (event.kind == PointerDeviceKind.mouse) {
+                await sendMouseEventsToPlatform(event);
+                pointerFocusManager.stopPotentialDrag();
+              } else if (event.kind == PointerDeviceKind.touch) {
+                await PlatformApi.touchCancel(event.pointer);
+              }
+            };
+          },
+        ),
       },
-      onPointerUp: (PointerUpEvent event) async {
-        if (event.kind == PointerDeviceKind.mouse) {
-          await sendMouseEventsToPlatform(event);
-          pointerFocusManager.stopPotentialDrag();
-        } else if (event.kind == PointerDeviceKind.touch) {
-          await PlatformApi.touchUp(event.device);
-        }
-      },
-      onPointerMove: (PointerMoveEvent event) async {
-        if (event.kind == PointerDeviceKind.mouse) {
-          // If a button is being pressed while another one is already down, it's considered a move event, not a down event.
-          await sendMouseEventsToPlatform(event);
-          await pointerMoved(event);
-        } else if (event.kind == PointerDeviceKind.touch) {
-          await PlatformApi.touchMotion(event.device, event.localPosition.dx, event.localPosition.dy);
-        }
-      },
-      onPointerHover: (PointerHoverEvent event) {
-        if (event.kind == PointerDeviceKind.mouse) {
-          pointerMoved(event);
-        }
-      },
-      child: MouseRegion(
-        onEnter: (_) => pointerFocusManager.enterSurface(),
-        onExit: (_) => pointerFocusManager.exitSurface(),
-        child: child,
+      child: Listener(
+        onPointerHover: (PointerHoverEvent event) {
+          if (event.kind == PointerDeviceKind.mouse) {
+            pointerMoved(event);
+          }
+        },
+        child: MouseRegion(
+          onEnter: (_) => pointerFocusManager.enterSurface(),
+          onExit: (_) => pointerFocusManager.exitSurface(),
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -76,6 +127,6 @@ class ViewInputListener extends StatelessWidget {
   }
 
   Future<void> pointerMoved(PointerEvent event) {
-    return PlatformApi.pointerHoversView(viewId, event.localPosition.dx, event.localPosition.dy);
+    return PlatformApi.pointerHoversView(widget.viewId, event.localPosition.dx, event.localPosition.dy);
   }
 }

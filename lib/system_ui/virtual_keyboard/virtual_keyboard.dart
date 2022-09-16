@@ -50,7 +50,6 @@ class VirtualKeyboardState extends State<VirtualKeyboard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           );

@@ -164,6 +164,8 @@ void EmbedderState::register_platform_api() {
 				  touch_motion(server, call, std::move(result));
 			  } else if (method_name == "touch_up") {
 				  touch_up(server, call, std::move(result));
+			  } else if (method_name == "touch_cancel") {
+				  touch_cancel(server, call, std::move(result));
 			  } else if (method_name == "insert_text") {
 				  insert_text(server, call, std::move(result));
 			  } else if (method_name == "emulate_keycode") {

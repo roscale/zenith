@@ -75,6 +75,12 @@ class PlatformApi {
     });
   }
 
+  static Future<void> touchCancel(int touchId) {
+    return _platform.invokeMethod('touch_cancel', {
+      "touch_id": touchId,
+    });
+  }
+
   static Future<void> insertText(int viewId, String text) {
     return _platform.invokeMethod('insert_text', {
       "view_id": viewId,

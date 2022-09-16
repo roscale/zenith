@@ -181,21 +181,25 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     return ValueListenableBuilder(
       valueListenable: overview,
       builder: (_, bool overview, Widget? child) {
+        Map<Type, GestureRecognizerFactory> gestures = overview
+            ? {
+                HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
+                  () => HorizontalDragGestureRecognizer(),
+                  (HorizontalDragGestureRecognizer instance) {
+                    instance
+                      ..onDown = _handleDragDown
+                      ..onStart = _handleDragStart
+                      ..onUpdate = _handleDragUpdate
+                      ..onEnd = _handleDragEnd
+                      ..onCancel = _handleDragCancel;
+                  },
+                ),
+              }
+            : {}; // Disable task switcher gestures when focused on an app.
+
         return RawGestureDetector(
           behavior: overview ? HitTestBehavior.opaque : HitTestBehavior.deferToChild,
-          gestures: <Type, GestureRecognizerFactory>{
-            HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
-              () => HorizontalDragGestureRecognizer(),
-              (HorizontalDragGestureRecognizer instance) {
-                instance
-                  ..onDown = _handleDragDown
-                  ..onStart = _handleDragStart
-                  ..onUpdate = _handleDragUpdate
-                  ..onEnd = _handleDragEnd
-                  ..onCancel = _handleDragCancel;
-              },
-            ),
-          },
+          gestures: gestures,
           child: child,
         );
       },
@@ -207,14 +211,12 @@ class TaskSwitcherState extends State<TaskSwitcher> with TickerProviderStateMixi
     double position = 0;
 
     for (Window task in tasks) {
-      Widget taskWidget = ClipRect(
+      Widget taskWidget = WithVirtualKeyboard(
         key: task.state.virtualKeyboardKey,
-        child: WithVirtualKeyboard(
-          viewId: task.state.viewId,
-          child: _FittedWindow(
-            alignment: Alignment.topCenter,
-            window: task,
-          ),
+        viewId: task.state.viewId,
+        child: _FittedWindow(
+          alignment: Alignment.topCenter,
+          window: task,
         ),
       );
 

@@ -70,11 +70,11 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
             handleController(details.velocity.pixelsPerSecond.dy);
           },
         ),
-        AnimatedBuilder(
-          animation: quickSettingsController,
-          builder: (BuildContext context, Widget? child) {
+        ValueListenableBuilder(
+          valueListenable: quickSettingsController,
+          builder: (BuildContext context, double animationValue, Widget? child) {
             return IgnorePointer(
-              ignoring: quickSettingsController.value.abs() < 0.1,
+              ignoring: animationValue.abs() < 0.1,
               child: AnimatedBuilder(
                 animation: disableFading,
                 builder: (_, __) {
@@ -83,7 +83,7 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeInOut,
                     child: Container(
-                      color: Colors.black.withOpacity(quickSettingsController.value / 2),
+                      color: Colors.black.withOpacity(animationValue / 2),
                       child: child!,
                     ),
                   );

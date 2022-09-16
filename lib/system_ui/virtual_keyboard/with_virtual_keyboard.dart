@@ -2,12 +2,74 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/system_ui/virtual_keyboard/layouts.dart';
 import 'package:zenith/system_ui/virtual_keyboard/virtual_keyboard.dart';
-import 'package:zenith/util/multi_value_listenable_builder.dart';
 
-class WithVirtualKeyboard extends StatefulWidget {
+final virtualKeyboardProvider = StateNotifierProvider.autoDispose
+    .family<WithVirtualKeyboardNotifier, WithVirtualKeyboardProviderState, int>((ref, int viewId) {
+  return WithVirtualKeyboardNotifier(const WithVirtualKeyboardProviderState.empty());
+});
+
+class WithVirtualKeyboardProviderState {
+  const WithVirtualKeyboardProviderState({
+    required this.activated,
+    required this.dragging,
+    required this.verticalDragOffset,
+    required this.keyboardSize,
+  });
+
+  const WithVirtualKeyboardProviderState.empty()
+      : this(
+          activated: false,
+          dragging: false,
+          verticalDragOffset: 0,
+          keyboardSize: Size.zero,
+        );
+
+  final bool activated;
+  final bool dragging;
+  final int verticalDragOffset;
+  final Size keyboardSize;
+
+  WithVirtualKeyboardProviderState copyWith({
+    bool? activated,
+    bool? dragging,
+    int? verticalDragOffset,
+    Size? keyboardSize,
+  }) {
+    return WithVirtualKeyboardProviderState(
+      activated: activated ?? this.activated,
+      dragging: dragging ?? this.dragging,
+      verticalDragOffset: verticalDragOffset ?? this.verticalDragOffset,
+      keyboardSize: keyboardSize ?? this.keyboardSize,
+    );
+  }
+}
+
+class WithVirtualKeyboardNotifier extends StateNotifier<WithVirtualKeyboardProviderState> {
+  WithVirtualKeyboardNotifier(state) : super(state);
+
+  set activated(bool value) => state = state.copyWith(activated: value);
+
+  set keyboardSize(Size value) => state = state.copyWith(keyboardSize: value);
+
+  void drag(int dy) {
+    state = state.copyWith(
+      dragging: true,
+      verticalDragOffset: dy,
+    );
+  }
+
+  void endDrag() {
+    state = state.copyWith(
+      dragging: false,
+    );
+  }
+}
+
+class WithVirtualKeyboard extends ConsumerStatefulWidget {
   final int viewId;
   final Widget child;
 
@@ -18,21 +80,19 @@ class WithVirtualKeyboard extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<WithVirtualKeyboard> createState() => _WithVirtualKeyboardState();
+  ConsumerState<WithVirtualKeyboard> createState() => WithVirtualKeyboardState();
 }
 
-class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTickerProviderStateMixin {
-  final shown = ValueNotifier(false);
-
+class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with SingleTickerProviderStateMixin {
   final key = GlobalKey();
   final overlayKey = GlobalKey<OverlayState>();
-  var keyboardSize = ValueNotifier(Size.zero);
 
   late var slideAnimationController = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 300),
   )..addStatusListener((status) {
-      if (status == AnimationStatus.completed && !shown.value) {
+      final state = ref.read(virtualKeyboardProvider(widget.viewId));
+      if (status == AnimationStatus.completed && !state.activated) {
         keyboardOverlay!.remove();
         keyboardOverlay = null;
       }
@@ -55,10 +115,6 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
   OverlayEntry? keyboardOverlay;
 
   void animateForward() {
-    if (shown.value) {
-      return;
-    }
-    shown.value = true;
     slideAnimation.value = animation.drive(
       Tween(
         begin: slideAnimation.value.value,
@@ -76,10 +132,6 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
   }
 
   void animateBackward() {
-    if (!shown.value) {
-      return;
-    }
-    shown.value = false;
     slideAnimation.value = animation.drive(
       Tween(
         begin: slideAnimation.value.value,
@@ -91,18 +143,40 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
       ..forward();
   }
 
+  void dragKeyboard(double dy) {
+    final notifier = ref.read(virtualKeyboardProvider(widget.viewId).notifier);
+    final state = ref.read(virtualKeyboardProvider(widget.viewId));
+
+    if (state.activated) {
+      slideAnimationController.value += dy / state.keyboardSize.height;
+      return;
+    }
+    notifier.activated = true;
+    slideAnimation.value = slideAnimationController.drive(
+      Tween(
+        begin: slideAnimation.value.value,
+        end: Offset.zero,
+      ),
+    );
+    if (keyboardOverlay == null) {
+      keyboardOverlay = newKeyboardOverlay();
+      overlayKey.currentState!.insert(keyboardOverlay!);
+    }
+  }
+
   StreamSubscription? textInputEventsSubscription;
 
   @override
   void initState() {
     super.initState();
     textInputEventsSubscription = PlatformApi.getTextInputEventsForViewId(widget.viewId).listen((event) {
+      final notifier = ref.read(virtualKeyboardProvider(widget.viewId).notifier);
       if (event is TextInputEnable) {
-        animateForward();
+        notifier.activated = true;
       } else if (event is TextInputDisable) {
-        animateBackward();
+        notifier.activated = false;
       } else if (event is TextInputCommit) {
-        animateForward();
+        notifier.activated = true;
       }
     });
   }
@@ -115,34 +189,42 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        return ValueListenableBuilder2(
-          first: shown,
-          second: keyboardSize,
-          builder: (_, bool shown, Size keyboardSize, Widget? child) {
-            if (shown && keyboardSize.isEmpty) {
-              SchedulerBinding.instance.addPostFrameCallback(_determineVirtualKeyboardSize);
-            }
+    ref.listen<bool>(virtualKeyboardProvider(widget.viewId).select((value) => value.activated), (previous, next) {
+      next ? animateForward() : animateBackward();
+    });
 
-            PlatformApi.resizeWindow(
-              widget.viewId,
-              constraints.maxWidth.toInt(),
-              shown && !keyboardSize.isEmpty
-                  ? (constraints.maxHeight - keyboardSize.height).toInt()
-                  : constraints.maxHeight.toInt(),
-            );
+    return ClipRect(
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return Consumer(
+            builder: (_, __, Widget? child) {
+              final shown = ref.watch(virtualKeyboardProvider(widget.viewId).select((value) => value.activated));
+              final keyboardSize =
+                  ref.watch(virtualKeyboardProvider(widget.viewId).select((value) => value.keyboardSize));
 
-            return child!;
-          },
-          child: Overlay(
-            key: overlayKey,
-            initialEntries: [
-              OverlayEntry(builder: (_) => widget.child),
-            ],
-          ),
-        );
-      },
+              if (shown && keyboardSize.isEmpty) {
+                SchedulerBinding.instance.addPostFrameCallback(_determineVirtualKeyboardSize);
+              }
+
+              PlatformApi.resizeWindow(
+                widget.viewId,
+                constraints.maxWidth.toInt(),
+                shown && !keyboardSize.isEmpty
+                    ? (constraints.maxHeight - keyboardSize.height).toInt()
+                    : constraints.maxHeight.toInt(),
+              );
+
+              return child!;
+            },
+            child: Overlay(
+              key: overlayKey,
+              initialEntries: [
+                OverlayEntry(builder: (_) => widget.child),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -155,7 +237,7 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
     if (size == null) {
       return;
     }
-    keyboardSize.value = size;
+    ref.read(virtualKeyboardProvider(widget.viewId).notifier).keyboardSize = size;
   }
 
   OverlayEntry? newKeyboardOverlay() {
@@ -172,7 +254,7 @@ class _WithVirtualKeyboardState extends State<WithVirtualKeyboard> with SingleTi
           },
           child: VirtualKeyboard(
             key: key,
-            onDismiss: () => animateBackward(),
+            onDismiss: () => ref.read(virtualKeyboardProvider(widget.viewId).notifier).activated = false,
             onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
             onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
           ),

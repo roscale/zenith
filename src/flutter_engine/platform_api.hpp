@@ -48,6 +48,10 @@ void touch_up(ZenithServer* server,
               const flutter::MethodCall<>& call,
               std::unique_ptr<flutter::MethodResult<>>&& result);
 
+void touch_cancel(ZenithServer* server,
+                  const flutter::MethodCall<>& call,
+                  std::unique_ptr<flutter::MethodResult<>>&& result);
+
 void insert_text(ZenithServer* server,
                  const flutter::MethodCall<>& call,
                  std::unique_ptr<flutter::MethodResult<>>&& result);

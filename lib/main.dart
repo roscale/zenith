@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/services.dart';
@@ -22,7 +23,7 @@ void main() {
   });
 
   registerServices();
-  runApp(const Zenith());
+  runApp(const ProviderScope(child: Zenith()));
 }
 
 class Zenith extends StatelessWidget {

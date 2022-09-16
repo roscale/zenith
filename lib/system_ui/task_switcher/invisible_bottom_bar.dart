@@ -1,16 +1,17 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:zenith/system_ui/task_switcher/task_switcher.dart';
 
-class InvisibleBottomBar extends StatefulWidget {
+class InvisibleBottomBar extends ConsumerStatefulWidget {
   const InvisibleBottomBar({Key? key}) : super(key: key);
 
   @override
-  State<InvisibleBottomBar> createState() => _InvisibleBottomBarState();
+  ConsumerState<InvisibleBottomBar> createState() => _InvisibleBottomBarState();
 }
 
-class _InvisibleBottomBarState extends State<InvisibleBottomBar> {
+class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   late VelocityTracker velocityTracker;
   ScrollDragController? drag;
   late var tm = context.read<TaskSwitcherState>();
@@ -26,26 +27,29 @@ class _InvisibleBottomBarState extends State<InvisibleBottomBar> {
           child: child!,
         );
       },
-      child: Listener(
-        onPointerDown: _onPointerDown,
-        onPointerMove: _onPointerMove,
-        onPointerUp: _onPointerUp,
-        child: Container(
-          height: 20,
-          color: Colors.transparent,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onPanStart: _onPointerDown,
+        onPanUpdate: _onPointerMove,
+        onPanEnd: _onPointerUp,
+        child: IgnorePointer(
+          child: Container(
+            height: 20,
+            color: Colors.transparent,
+          ),
         ),
       ),
     );
   }
 
-  void _onPointerDown(PointerDownEvent details) {
+  void _onPointerDown(DragStartDetails details) {
     tm.stopAnimations();
     velocityTracker = VelocityTracker.withKind(PointerDeviceKind.touch);
-    velocityTracker.addPosition(details.timeStamp, details.position);
+    velocityTracker.addPosition(details.sourceTimeStamp!, details.globalPosition);
     drag = tm.scrollPosition.drag(
       DragStartDetails(
-        sourceTimeStamp: details.timeStamp,
-        globalPosition: details.position,
+        sourceTimeStamp: details.sourceTimeStamp!,
+        globalPosition: details.globalPosition,
         localPosition: details.localPosition,
         kind: details.kind,
       ),
@@ -54,30 +58,30 @@ class _InvisibleBottomBarState extends State<InvisibleBottomBar> {
     draggingTask = tm.taskIndex(tm.pixels);
   }
 
-  void _onPointerMove(PointerMoveEvent details) {
+  void _onPointerMove(DragUpdateDetails details) {
     if (drag == null) {
       return;
     }
-    velocityTracker.addPosition(details.timeStamp, details.position);
+    velocityTracker.addPosition(details.sourceTimeStamp!, details.globalPosition);
     if (tm.tasks.isNotEmpty) {
       tm.scale.value += details.delta.dy / tm.constraints.value.maxHeight * 2;
       tm.scale.value = tm.scale.value.clamp(0.5, 1);
       drag?.update(DragUpdateDetails(
-        sourceTimeStamp: details.timeStamp,
-        globalPosition: details.position,
+        sourceTimeStamp: details.sourceTimeStamp!,
+        globalPosition: details.globalPosition,
         delta: Offset(details.delta.dx / tm.scale.value, 0),
         primaryDelta: details.delta.dx / tm.scale.value,
       ));
     }
   }
 
-  void _onPointerUp(PointerUpEvent details) {
+  void _onPointerUp(DragEndDetails details) {
     if (drag == null) {
       return;
     }
     drag?.cancel();
 
-    velocityTracker.addPosition(details.timeStamp, details.position);
+    // velocityTracker.addPosition(details.timeStamp, details.position);
     var vel = velocityTracker.getVelocity().pixelsPerSecond;
 
     var taskOffset = tm.position(tm.taskIndex(tm.pixels));
