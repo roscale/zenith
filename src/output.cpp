@@ -18,6 +18,8 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	wl_signal_add(&wlr_output->events.frame, &frame_listener);
 	mode_changed.notify = mode_changed_event;
 	wl_signal_add(&wlr_output->events.mode, &mode_changed);
+
+	wlr_output_set_scale(wlr_output, 2.0f);
 }
 
 void output_frame(wl_listener* listener, void* data) {
@@ -81,8 +83,8 @@ void output_frame(wl_listener* listener, void* data) {
 		return;
 	}
 
-	int width, height;
-	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+	int width = output->wlr_output->width;
+	int height = output->wlr_output->height;
 	wlr_renderer_begin(server->renderer, width, height);
 
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
@@ -121,9 +123,9 @@ void mode_changed_event(wl_listener* listener, void* data) {
 
 	FlutterWindowMetricsEvent window_metrics = {};
 	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
-	window_metrics.width = width;
-	window_metrics.height = height;
-	window_metrics.pixel_ratio = 1.0;
+	window_metrics.width = output->wlr_output->width;
+	window_metrics.height = output->wlr_output->height;
+	window_metrics.pixel_ratio = 2.0;
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 	output->server->embedder_state->send_window_metrics(window_metrics);

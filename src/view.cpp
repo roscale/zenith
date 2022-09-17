@@ -167,8 +167,8 @@ void xdg_surface_map(wl_listener* listener, void* data) {
 			view->popup_geometry = wlr_box{
 				  .x = popup->geometry.x,
 				  .y = popup->geometry.y,
-				  .width = surface->current.buffer_width,
-				  .height = surface->current.buffer_height,
+				  .width = surface->current.width,
+				  .height = surface->current.height,
 			};
 
 			assert(popup->parent != nullptr);
@@ -257,7 +257,7 @@ void xdg_surface_commit(wl_listener* listener, void* data) {
 		// It causes some flickers on rare occasions when the surface is resized.
 		FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) texture_id);
 
-		new_surface_size = {surface->current.buffer_width, surface->current.buffer_height};
+		new_surface_size = {surface->current.width, surface->current.height};
 		new_texture_id = texture_id;
 	}
 

@@ -74,8 +74,8 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover;
 	e.timestamp = current_time_microseconds();
-	e.x = pointer->cursor->x;
-	e.y = pointer->cursor->y;
+	e.x = pointer->cursor->x * server->output->wlr_output->scale;
+	e.y = pointer->cursor->y * server->output->wlr_output->scale;
 	e.device_kind = kFlutterPointerDeviceKindMouse;
 	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
@@ -95,9 +95,10 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kHover;
 	e.timestamp = current_time_microseconds();
+
 	// Map from [0, 1] to [output_width, output_height].
-	e.x = event->x * server->output_layout_box.width;
-	e.y = event->y * server->output_layout_box.height;
+	e.x = pointer->cursor->x * server->output->wlr_output->scale;
+	e.y = pointer->cursor->y * server->output->wlr_output->scale;
 	e.device_kind = kFlutterPointerDeviceKindMouse;
 	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
@@ -120,8 +121,8 @@ void server_cursor_button(wl_listener* listener, void* data) {
 		e.struct_size = sizeof(FlutterPointerEvent);
 		e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kUp;
 		e.timestamp = current_time_microseconds();
-		e.x = pointer->cursor->x;
-		e.y = pointer->cursor->y;
+		e.x = pointer->cursor->x * server->output->wlr_output->scale;
+		e.y = pointer->cursor->y * server->output->wlr_output->scale;
 		e.device_kind = kFlutterPointerDeviceKindMouse;
 		e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
@@ -134,8 +135,8 @@ void server_cursor_button(wl_listener* listener, void* data) {
 		e.struct_size = sizeof(FlutterPointerEvent);
 		e.phase = are_any_buttons_pressed ? kMove : kDown;
 		e.timestamp = current_time_microseconds();
-		e.x = pointer->cursor->x;
-		e.y = pointer->cursor->y;
+		e.x = pointer->cursor->x * server->output->wlr_output->scale;
+		e.y = pointer->cursor->y * server->output->wlr_output->scale;
 		e.device_kind = kFlutterPointerDeviceKindMouse;
 		e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 
@@ -161,8 +162,8 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 	e.struct_size = sizeof(FlutterPointerEvent);
 	e.phase = are_any_buttons_pressed ? kMove : kDown;
 	e.timestamp = current_time_microseconds();
-	e.x = pointer->cursor->x;
-	e.y = pointer->cursor->y;
+	e.x = pointer->cursor->x * server->output->wlr_output->scale;
+	e.y = pointer->cursor->y * server->output->wlr_output->scale;
 	e.device_kind = kFlutterPointerDeviceKindMouse;
 	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
 	e.signal_kind = kFlutterPointerSignalKindScroll;
