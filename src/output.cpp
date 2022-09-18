@@ -38,7 +38,7 @@ void output_frame(wl_listener* listener, void* data) {
 			continue;
 		}
 
-		std::shared_ptr<Framebuffer> view_framebuffer;
+		std::shared_ptr <Framebuffer> view_framebuffer;
 
 		{
 			std::scoped_lock lock(server->surface_framebuffers_mutex);
@@ -71,7 +71,7 @@ void output_frame(wl_listener* listener, void* data) {
 			                      ? (double) output->wlr_output->refresh / 1000
 			                      : 60; // Suppose it's 60Hz if the refresh rate is not available.
 
-			uint64_t next_frame = now + (uint64_t) (1'000'000'000ull / refresh_rate);
+			uint64_t next_frame = now + (uint64_t)(1'000'000'000ull / refresh_rate);
 			FlutterEngineOnVsync(flutter_engine_state->engine, baton, now, next_frame);
 		}
 	}
@@ -108,7 +108,9 @@ void output_frame(wl_listener* listener, void* data) {
 	wlr_output_render_software_cursors(output->wlr_output, nullptr);
 
 	wlr_renderer_end(server->renderer);
-	wlr_output_commit(output->wlr_output);
+	if (!wlr_output_commit(output->wlr_output)) {
+		wlr_output_schedule_frame(output->wlr_output);
+	}
 }
 
 void mode_changed_event(wl_listener* listener, void* data) {

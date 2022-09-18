@@ -121,6 +121,11 @@ ZenithServer::ZenithServer() {
 void ZenithServer::run(char* startup_command) {
 	this->startup_command = startup_command;
 
+	wlr_egl_make_current(wlr_gles2_renderer_get_egl(renderer));
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
 	embedder_state = std::make_unique<EmbedderState>(this, main_egl);
 
