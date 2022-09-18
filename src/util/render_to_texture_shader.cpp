@@ -132,6 +132,32 @@ void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, s
 	GLint texture_binding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture_binding);
 
+	GLint vertex_attrib_0_enabled;
+	glGetVertexAttribiv(0, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &vertex_attrib_0_enabled);
+	GLint vertex_attrib_0_size;
+	glGetVertexAttribiv(0, GL_VERTEX_ATTRIB_ARRAY_SIZE, &vertex_attrib_0_size);
+	GLint vertex_attrib_0_type;
+	glGetVertexAttribiv(0, GL_VERTEX_ATTRIB_ARRAY_TYPE, &vertex_attrib_0_type);
+	GLint vertex_attrib_0_normalized;
+	glGetVertexAttribiv(0, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &vertex_attrib_0_normalized);
+	GLint vertex_attrib_0_stride;
+	glGetVertexAttribiv(0, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &vertex_attrib_0_stride);
+	void* vertex_attrib_0_pointer;
+	glGetVertexAttribPointerv(0, GL_VERTEX_ATTRIB_ARRAY_POINTER, &vertex_attrib_0_pointer);
+
+	GLint vertex_attrib_1_enabled;
+	glGetVertexAttribiv(1, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &vertex_attrib_1_enabled);
+	GLint vertex_attrib_1_size;
+	glGetVertexAttribiv(1, GL_VERTEX_ATTRIB_ARRAY_SIZE, &vertex_attrib_1_size);
+	GLint vertex_attrib_1_type;
+	glGetVertexAttribiv(1, GL_VERTEX_ATTRIB_ARRAY_TYPE, &vertex_attrib_1_type);
+	GLint vertex_attrib_1_normalized;
+	glGetVertexAttribiv(1, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &vertex_attrib_1_normalized);
+	GLint vertex_attrib_1_stride;
+	glGetVertexAttribiv(1, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &vertex_attrib_1_stride);
+	void* vertex_attrib_1_pointer;
+	glGetVertexAttribPointerv(1, GL_VERTEX_ATTRIB_ARRAY_POINTER, &vertex_attrib_1_pointer);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
 	glBindBuffer(GL_ARRAY_BUFFER, flip_y_axis ? y_flipped_vbo : vbo);
@@ -170,6 +196,22 @@ void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, s
 	glUseProgram(current_program);
 	glActiveTexture(active_texture);
 	glBindTexture(GL_TEXTURE_2D, texture_binding);
+
+	if (vertex_attrib_0_enabled) {
+		glEnableVertexAttribArray(0);
+	} else {
+		glDisableVertexAttribArray(0);
+	}
+	glVertexAttribPointer(0, vertex_attrib_0_size, vertex_attrib_0_type, vertex_attrib_0_normalized,
+	                      vertex_attrib_0_stride, vertex_attrib_0_pointer);
+
+	if (vertex_attrib_1_enabled) {
+		glEnableVertexAttribArray(1);
+	} else {
+		glDisableVertexAttribArray(1);
+	}
+	glVertexAttribPointer(1, vertex_attrib_1_size, vertex_attrib_1_type, vertex_attrib_1_normalized,
+	                      vertex_attrib_1_stride, vertex_attrib_1_pointer);
 }
 
 RenderToTextureShader* RenderToTextureShader::_instance = nullptr;

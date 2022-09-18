@@ -90,12 +90,12 @@ void output_frame(wl_listener* listener, void* data) {
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
 
 	{
-		std::scoped_lock lock(flutter_engine_state->output_framebuffer->mutex);
+		std::scoped_lock lock(flutter_engine_state->copy_framebuffer->mutex);
 		GLScopedLock gl_lock(flutter_engine_state->output_gl_mutex);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 		glClear(GL_COLOR_BUFFER_BIT);
-		RenderToTextureShader::instance()->render(flutter_engine_state->output_framebuffer->texture, 0, 0, width,
+		RenderToTextureShader::instance()->render(flutter_engine_state->copy_framebuffer->texture, 0, 0, width,
 		                                          height, output_fbo, true);
 	}
 

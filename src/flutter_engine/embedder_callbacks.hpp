@@ -8,7 +8,7 @@ bool flutter_clear_current(void* userdata);
 
 bool flutter_present(void* userdata);
 
-uint32_t flutter_fbo_callback(void* userdata);
+uint32_t with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info);
 
 void flutter_vsync_callback(void* userdata, intptr_t baton);
 

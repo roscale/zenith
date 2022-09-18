@@ -6,6 +6,7 @@
 #include "assert.hpp"
 #include "framebuffer.hpp"
 #include "xdg_surface_get_visible_bounds.hpp"
+#include "render_view.hpp"
 
 extern "C" {
 #define static

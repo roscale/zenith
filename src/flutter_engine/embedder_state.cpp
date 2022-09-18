@@ -40,6 +40,7 @@ EmbedderState::EmbedderState(ZenithServer* server, wlr_egl* main_egl)
 	// resources using Flutter's context.
 	wlr_egl_make_current(flutter_gl_context);
 	output_framebuffer = std::make_unique<Framebuffer>(dummy_width, dummy_height);
+	copy_framebuffer = std::make_unique<Framebuffer>(dummy_width, dummy_height);
 	wlr_egl_unset_current(flutter_gl_context);
 
 	zenith_egl_restore_context(&saved_egl_context);
@@ -67,7 +68,7 @@ void EmbedderState::start_engine() {
 	config.open_gl.make_current = flutter_make_current;
 	config.open_gl.clear_current = flutter_clear_current;
 	config.open_gl.present = flutter_present;
-	config.open_gl.fbo_callback = flutter_fbo_callback;
+	config.open_gl.fbo_with_frame_info_callback = with_frame_info_callback;
 	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
 	config.open_gl.make_resource_current = flutter_make_resource_current;
 
@@ -180,10 +181,5 @@ void EmbedderState::register_platform_api() {
 }
 
 void EmbedderState::send_window_metrics(FlutterWindowMetricsEvent& metrics) const {
-	std::scoped_lock lock(server->embedder_state->output_framebuffer->mutex);
-	GLScopedLock gl_lock(server->embedder_state->output_gl_mutex);
-
 	FlutterEngineSendWindowMetricsEvent(server->embedder_state->engine, &metrics);
-
-	output_framebuffer->resize(metrics.width, metrics.height);
 }

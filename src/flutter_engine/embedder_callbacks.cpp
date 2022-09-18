@@ -25,16 +25,29 @@ bool flutter_clear_current(void* userdata) {
 }
 
 bool flutter_present(void* userdata) {
+	// https://community.arm.com/cfs-file/__key/telligent-evolution-components-attachments/01-2066-00-00-00-00-42-84/Whitepaper_2D00_ThreadSync.pdf
+
 	auto* state = static_cast<EmbedderState*>(userdata);
 
-	std::scoped_lock lock(state->output_framebuffer->mutex);
+	std::scoped_lock lock(state->copy_framebuffer->mutex);
 	GLScopedLock gl_lock(state->output_gl_mutex);
+
+	Framebuffer& output_framebuffer = *state->output_framebuffer;
+	Framebuffer& copy_framebuffer = *state->copy_framebuffer;
+
+	copy_framebuffer.resize(output_framebuffer.width, output_framebuffer.height);
+	RenderToTextureShader::instance()->render(output_framebuffer.texture, 0, 0, output_framebuffer.width,
+	                                          output_framebuffer.height, copy_framebuffer.framebuffer);
 
 	return true;
 }
 
-uint32_t flutter_fbo_callback(void* userdata) {
+uint32_t with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info) {
 	auto* state = static_cast<EmbedderState*>(userdata);
+
+	state->output_framebuffer->resize(frame_info->size.width, frame_info->size.height);
+
+	// No need for synchronization because the framebuffer field never changes after the object construction.
 	return state->output_framebuffer->framebuffer;
 }
 

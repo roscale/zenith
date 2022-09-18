@@ -1,7 +1,11 @@
 #include <iostream>
 #include "debug.hpp"
+#include <epoxy/gl.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 
 extern "C" {
+#include "stb_image_write.h"
 #include <wayland-util.h>
 #define static
 #include <wlr/types/wlr_surface.h>
@@ -115,4 +119,15 @@ void print_surface_tree_debug_info(wlr_surface* surface, int x, int y, int inden
 
 		print_surface_tree_debug_info(sub->surface, x + sx, y + sy, indents + 4, sub);
 	}
+}
+
+void dump_framebuffer_to_file(const char* filename, int framebuffer, int width, int height) {
+	GLint framebuffer_binding;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	auto* buf = new unsigned char[width * height * 4];
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+	stbi_write_bmp("frame-output.bmp", width, height, 4, buf);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);
+	delete[] buf;
 }

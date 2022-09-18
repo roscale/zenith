@@ -48,5 +48,6 @@ struct EmbedderState {
 	std::mutex baton_mutex{};
 
 	std::unique_ptr<Framebuffer> output_framebuffer = nullptr;
+	std::unique_ptr<Framebuffer> copy_framebuffer = nullptr;
 	GLMutex output_gl_mutex{}; // use output_framebuffer->mutex to lock this variable
 };
