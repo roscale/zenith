@@ -202,7 +202,7 @@ void server_new_output(wl_listener* listener, void* data) {
 	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
 	window_metrics.width = output->wlr_output->width;
 	window_metrics.height = output->wlr_output->height;
-	window_metrics.pixel_ratio = 2.0;
+	window_metrics.pixel_ratio = 3.0;
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
 	server->embedder_state->send_window_metrics(window_metrics);
