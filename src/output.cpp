@@ -38,7 +38,7 @@ void output_frame(wl_listener* listener, void* data) {
 			continue;
 		}
 
-		std::shared_ptr <Framebuffer> view_framebuffer;
+		std::shared_ptr<Framebuffer> view_framebuffer;
 
 		{
 			std::scoped_lock lock(server->surface_framebuffers_mutex);
@@ -71,7 +71,7 @@ void output_frame(wl_listener* listener, void* data) {
 			                      ? (double) output->wlr_output->refresh / 1000
 			                      : 60; // Suppose it's 60Hz if the refresh rate is not available.
 
-			uint64_t next_frame = now + (uint64_t)(1'000'000'000ull / refresh_rate);
+			uint64_t next_frame = now + (uint64_t) (1'000'000'000ull / refresh_rate);
 			FlutterEngineOnVsync(flutter_engine_state->engine, baton, now, next_frame);
 		}
 	}
@@ -90,13 +90,14 @@ void output_frame(wl_listener* listener, void* data) {
 	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
 
 	{
-		std::scoped_lock lock(flutter_engine_state->copy_framebuffer->mutex);
+		Framebuffer& copy_framebuffer = *flutter_engine_state->output_framebuffer;
+		std::scoped_lock lock(copy_framebuffer.mutex);
 		GLScopedLock gl_lock(flutter_engine_state->output_gl_mutex);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 		glClear(GL_COLOR_BUFFER_BIT);
-		RenderToTextureShader::instance()->render(flutter_engine_state->copy_framebuffer->texture, 0, 0, width,
-		                                          height, output_fbo, true);
+		RenderToTextureShader::instance()->render(copy_framebuffer.texture, 0, 0, copy_framebuffer.width,
+		                                          copy_framebuffer.height, output_fbo, true);
 	}
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be

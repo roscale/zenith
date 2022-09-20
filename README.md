@@ -9,6 +9,16 @@ Video demonstration: https://youtu.be/3Zh7Tk4oWo0
   <img src="screenshots/task_switcher.png" width="40%" />
 </p>
 
+## Why?
+
+- There are very few compositors for mobile devices compared to desktop.
+- Most (all?) mobile compositors are still pretty young and unpolished.
+- Preinstalled apps are not made for touch input first, and it shows.
+- Flutter is becoming more and more popular among app developers, and it will significantly lower the bar for
+  contributing to this project.
+- Flutter significantly reduces development time and it lets you easily design beautiful user interfaces that compete
+  with other platforms.
+
 ## Code navigation
 
 - `lib/` Compositor Flutter code

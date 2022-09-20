@@ -121,13 +121,13 @@ void print_surface_tree_debug_info(wlr_surface* surface, int x, int y, int inden
 	}
 }
 
-void dump_framebuffer_to_file(const char* filename, int framebuffer, int width, int height) {
+[[maybe_unused]] void dump_framebuffer_to_file(const char* filename, int framebuffer, int width, int height) {
 	GLint framebuffer_binding;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebuffer_binding);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 	auto* buf = new unsigned char[width * height * 4];
 	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-	stbi_write_bmp("frame-output.bmp", width, height, 4, buf);
+	stbi_write_bmp(filename, width, height, 4, buf);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);
 	delete[] buf;
 }

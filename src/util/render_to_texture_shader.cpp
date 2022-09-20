@@ -189,29 +189,29 @@ void RenderToTextureShader::render(GLuint texture, int x, int y, size_t width, s
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 	// Restore context state.
+	glUseProgram(current_program);
 	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_binding);
+	glBindTexture(GL_TEXTURE_2D, texture_binding);
+	glActiveTexture(active_texture);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_binding);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_binding);
-	glUseProgram(current_program);
-	glActiveTexture(active_texture);
-	glBindTexture(GL_TEXTURE_2D, texture_binding);
 
+	glVertexAttribPointer(0, vertex_attrib_0_size, vertex_attrib_0_type, vertex_attrib_0_normalized,
+	                      vertex_attrib_0_stride, vertex_attrib_0_pointer);
 	if (vertex_attrib_0_enabled) {
 		glEnableVertexAttribArray(0);
 	} else {
 		glDisableVertexAttribArray(0);
 	}
-	glVertexAttribPointer(0, vertex_attrib_0_size, vertex_attrib_0_type, vertex_attrib_0_normalized,
-	                      vertex_attrib_0_stride, vertex_attrib_0_pointer);
 
+	glVertexAttribPointer(1, vertex_attrib_1_size, vertex_attrib_1_type, vertex_attrib_1_normalized,
+	                      vertex_attrib_1_stride, vertex_attrib_1_pointer);
 	if (vertex_attrib_1_enabled) {
 		glEnableVertexAttribArray(1);
 	} else {
 		glDisableVertexAttribArray(1);
 	}
-	glVertexAttribPointer(1, vertex_attrib_1_size, vertex_attrib_1_type, vertex_attrib_1_normalized,
-	                      vertex_attrib_1_stride, vertex_attrib_1_pointer);
 }
 
 RenderToTextureShader* RenderToTextureShader::_instance = nullptr;

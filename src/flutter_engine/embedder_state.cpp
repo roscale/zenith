@@ -28,6 +28,7 @@ EmbedderState::EmbedderState(ZenithServer* server, wlr_egl* main_egl)
 	wlr_egl_make_current(main_egl);
 	flutter_gl_context = create_shared_egl_context(main_egl);
 	flutter_resource_gl_context = create_shared_egl_context(main_egl);
+	output_gl_context = create_shared_egl_context(main_egl);
 	wlr_egl_unset_current(main_egl);
 
 	// Flutter doesn't know the output dimensions, so initialize all required textures with the smallest
@@ -39,9 +40,9 @@ EmbedderState::EmbedderState(ZenithServer* server, wlr_egl* main_egl)
 	// FBOs cannot be shared between GL contexts. Since these FBOs will be used by a Flutter thread, create these
 	// resources using Flutter's context.
 	wlr_egl_make_current(flutter_gl_context);
+	flutter_framebuffer = std::make_unique<Framebuffer>(dummy_width, dummy_height);
+	wlr_egl_make_current(output_gl_context);
 	output_framebuffer = std::make_unique<Framebuffer>(dummy_width, dummy_height);
-	copy_framebuffer = std::make_unique<Framebuffer>(dummy_width, dummy_height);
-	wlr_egl_unset_current(flutter_gl_context);
 
 	zenith_egl_restore_context(&saved_egl_context);
 }

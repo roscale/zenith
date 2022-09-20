@@ -252,11 +252,13 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
               child: child!,
             );
           },
-          child: VirtualKeyboard(
-            key: key,
-            onDismiss: () => ref.read(virtualKeyboardProvider(widget.viewId).notifier).activated = false,
-            onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
-            onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
+          child: RepaintBoundary(
+            child: VirtualKeyboard(
+              key: key,
+              onDismiss: () => ref.read(virtualKeyboardProvider(widget.viewId).notifier).activated = false,
+              onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
+              onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
+            ),
           ),
         ),
       );
