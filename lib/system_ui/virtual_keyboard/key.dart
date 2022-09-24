@@ -124,10 +124,19 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
           child: ValueListenableBuilder(
             valueListenable: beingPressed,
             builder: (BuildContext context, bool beingPressed, Widget? child) {
-              return Card(
-                color: beingPressed ? Colors.grey.shade300 : null,
-                elevation: 2,
+              return Container(
                 margin: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4.0),
+                  color: beingPressed ? Colors.grey.shade300 : Theme.of(context).cardColor,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.grey,
+                      offset: Offset(0.0, 1.0),
+                      blurRadius: 1.0,
+                    ),
+                  ],
+                ),
                 child: child!,
               );
             },

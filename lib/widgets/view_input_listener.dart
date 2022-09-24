@@ -1,14 +1,14 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/services.dart';
 import 'package:zenith/util/mouse_button_tracker.dart';
 import 'package:zenith/util/pointer_focus_manager.dart';
 import 'package:zenith/util/raw_gesture_recognizer.dart';
 
 /// Handles all input events for a given window or popup, and redirects them to the platform which will them be
 /// forwarded to the appropriate surface.
-class ViewInputListener extends StatefulWidget {
+class ViewInputListener extends ConsumerStatefulWidget {
   final int viewId;
   final Widget child;
 
@@ -19,35 +19,12 @@ class ViewInputListener extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ViewInputListener> createState() => _ViewInputListenerState();
+  ConsumerState<ViewInputListener> createState() => _ViewInputListenerState();
 }
 
-class ItemDrag extends Drag {
-  final int pointerId;
-  final void Function(DragUpdateDetails details, int pointerId) onUpdate;
-  final void Function(DragEndDetails details, int pointerId) onEnd;
-  final void Function(int pointerId) onCancel;
-
-  ItemDrag({
-    required this.pointerId,
-    required this.onUpdate,
-    required this.onEnd,
-    required this.onCancel,
-  });
-
-  @override
-  void update(DragUpdateDetails details) => onUpdate(details, pointerId);
-
-  @override
-  void end(DragEndDetails details) => onEnd(details, pointerId);
-
-  @override
-  void cancel() => onCancel(pointerId);
-}
-
-class _ViewInputListenerState extends State<ViewInputListener> {
-  late final pointerFocusManager = getIt<PointerFocusManager>();
-  late final mouseButtonTracker = getIt<MouseButtonTracker>();
+class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
+  late final pointerFocusManager = ref.read(pointerFocusManagerProvider);
+  late final mouseButtonTracker = ref.read(mouseButtonTrackerProvider);
 
   @override
   Widget build(BuildContext context) {

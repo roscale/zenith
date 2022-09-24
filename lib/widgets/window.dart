@@ -1,21 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:zenith/util/rect_overflow_box.dart';
+import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/view_input_listener.dart';
 
-class Window extends StatelessWidget {
-  final WindowState state;
+final windowWidget = StateProvider.family<Window, int>((ref, int viewId) {
+  return const Window(key: Key(""), viewId: -1);
+});
 
-  Window(this.state) : super(key: state.widgetKey);
+// Overridden by the Window widget.
+final _viewId = Provider<int>((ref) => throw UnimplementedError());
+
+class Window extends StatelessWidget {
+  final int viewId;
+
+  const Window({
+    required Key key,
+    required this.viewId,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Provider(
-      create: (_) => state,
-      dispose: (_, WindowState state) => state.dispose(),
+    return ProviderScope(
+      overrides: [
+        _viewId.overrideWithValue(viewId),
+      ],
       child: const _PointerListener(
         child: _Size(
           child: _Surface(),
@@ -25,7 +38,7 @@ class Window extends StatelessWidget {
   }
 }
 
-class _PointerListener extends StatelessWidget {
+class _PointerListener extends ConsumerWidget {
   final Widget child;
 
   const _PointerListener({
@@ -34,18 +47,15 @@ class _PointerListener extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Listener(
-      onPointerDown: (_) {
-        var state = context.read<WindowState>();
-        PlatformApi.activateWindow(state.viewId);
-      },
+      onPointerDown: (_) => PlatformApi.activateWindow(ref.read(_viewId)),
       child: child,
     );
   }
 }
 
-class _Size extends StatelessWidget {
+class _Size extends ConsumerWidget {
   final Widget child;
 
   const _Size({
@@ -54,20 +64,20 @@ class _Size extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    var state = context.read<WindowState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewId = ref.watch(_viewId);
 
-    return ValueListenableBuilder(
-      valueListenable: state.visibleBounds,
-      builder: (_, Rect visibleBounds, Widget? child) {
+    return Consumer(
+      builder: (_, WidgetRef ref, Widget? child) {
+        Rect visibleBounds = ref.watch(baseViewState(viewId).select((v) => v.visibleBounds));
         return RectOverflowBox(
           rect: visibleBounds,
           child: child!,
         );
       },
-      child: ValueListenableBuilder(
-        valueListenable: state.surfaceSize,
-        builder: (_, Size surfaceSize, Widget? child) {
+      child: Consumer(
+        builder: (_, WidgetRef ref, Widget? child) {
+          Size surfaceSize = ref.watch(baseViewState(viewId).select((v) => v.surfaceSize));
           return SizedBox(
             width: surfaceSize.width,
             height: surfaceSize.height,
@@ -80,29 +90,30 @@ class _Size extends StatelessWidget {
   }
 }
 
-class _Surface extends StatelessWidget {
+class _Surface extends ConsumerWidget {
   const _Surface({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    var state = context.read<WindowState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewId = ref.watch(_viewId);
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         ViewInputListener(
-          viewId: state.viewId,
+          viewId: viewId,
           child: VisibilityDetector(
-            key: ValueKey(state.viewId),
+            key: ValueKey(viewId),
             onVisibilityChanged: (VisibilityInfo info) {
               bool visible = !info.visibleBounds.isEmpty;
-              state.changeVisibility(visible);
+              ref.read(windowState(viewId).notifier).visible = visible;
             },
-            child: ValueListenableBuilder(
-              valueListenable: state.textureId,
-              builder: (BuildContext context, int textureId, Widget? child) {
+            child: Consumer(
+              builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                Key textureKey = ref.watch(baseViewState(viewId).select((v) => v.textureKey));
+                int textureId = ref.watch(baseViewState(viewId).select((v) => v.textureId));
                 return Texture(
-                  key: state.textureKey,
+                  key: textureKey,
                   filterQuality: FilterQuality.medium,
                   textureId: textureId,
                 );
@@ -110,12 +121,14 @@ class _Surface extends StatelessWidget {
             ),
           ),
         ),
-        AnimatedBuilder(
-          animation: state.popups,
-          builder: (_, __) {
+        Consumer(
+          builder: (_, WidgetRef ref, __) {
+            List<int> popups = ref.watch(baseViewState(viewId).select((v) => v.popups));
+            List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
+
             return Stack(
               clipBehavior: Clip.none,
-              children: state.popups,
+              children: popupWidgets,
             );
           },
         ),

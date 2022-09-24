@@ -1,3 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final mouseButtonTrackerProvider = Provider((ref) => MouseButtonTracker());
+
 /// When receiving a pointer event in the Listener widget, we can only have a bitmap of all pressed mouse buttons, and
 /// not the button that has been pressed or released. This class tracks changes between such bitmaps and returns the
 /// difference in the form of a MouseButtonEvent object.

@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:zenith/system_ui/status_bar/quick_settings.dart';
-import 'package:zenith/system_ui/status_bar/status_bar.dart';
+import 'package:zenith/system_ui/quick_settings/quick_settings.dart';
+import 'package:zenith/system_ui/quick_settings/status_bar.dart';
 
 class StatusBarWithQuickSettings extends StatefulWidget {
   const StatusBarWithQuickSettings({Key? key}) : super(key: key);

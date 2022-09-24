@@ -1,23 +1,40 @@
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/state/popup_state.dart';
-import 'package:zenith/util/multi_value_listenable_builder.dart';
 import 'package:zenith/widgets/view_input_listener.dart';
 
-class Popup extends StatelessWidget {
-  final PopupState state;
+final popupWidget = StateProvider.family<Popup, int>((ref, int viewId) {
+  return const Popup(key: Key(""), viewId: -1);
+});
 
-  Popup(this.state) : super(key: state.widgetKey);
+final _viewId = Provider<int>((ref) => throw UnimplementedError());
+
+class Popup extends StatelessWidget {
+  final int viewId;
+
+  const Popup({
+    required Key key,
+    required this.viewId,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Provider(
-      create: (_) => state,
-      dispose: (_, PopupState state) => state.dispose(),
+    return ProviderScope(
+      overrides: [
+        _viewId.overrideWithValue(viewId),
+      ],
       child: _Positioner(
-        child: _Animations(
-          key: state.animationsKey,
+        child: Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            int viewId = ref.watch(_viewId);
+            Key key = ref.watch(popupState(viewId).select((v) => v.animationsKey));
+            return _Animations(
+              key: key,
+              child: child!,
+            );
+          },
           child: _Surface(),
         ),
       ),
@@ -25,28 +42,29 @@ class Popup extends StatelessWidget {
   }
 }
 
-class _Positioner extends StatelessWidget {
+class _Positioner extends ConsumerWidget {
   final Widget child;
 
   const _Positioner({Key? key, required this.child}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    var state = context.read<PopupState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    int viewId = ref.watch(_viewId);
 
-    return ValueListenableBuilder2(
-      first: state.position,
-      second: state.visibleBounds,
-      builder: (_, Offset position, Rect visibleBounds, Widget? child) {
+    return Consumer(
+      builder: (_, WidgetRef ref, Widget? child) {
+        Offset position = ref.watch(popupState(viewId).select((v) => v.position));
+        Rect visibleBounds = ref.watch(baseViewState(viewId).select((v) => v.visibleBounds));
+
         return Positioned(
           left: position.dx - visibleBounds.left,
           top: position.dy - visibleBounds.top,
           child: child!,
         );
       },
-      child: ValueListenableBuilder(
-        valueListenable: state.isClosing,
-        builder: (_, bool isClosing, Widget? child) {
+      child: Consumer(
+        builder: (_, WidgetRef ref, Widget? child) {
+          bool isClosing = ref.watch(popupState(viewId).select((v) => v.isClosing));
           return IgnorePointer(
             ignoring: isClosing,
             child: child,
@@ -58,16 +76,18 @@ class _Positioner extends StatelessWidget {
   }
 }
 
-class _Animations extends StatefulWidget {
+class _Animations extends ConsumerStatefulWidget {
   final Widget child;
 
   @override
-  State<_Animations> createState() => AnimationsState();
+  ConsumerState<_Animations> createState() => AnimationsState();
 
   const _Animations({Key? key, required this.child}) : super(key: key);
 }
 
-class AnimationsState extends State<_Animations> with SingleTickerProviderStateMixin {
+class AnimationsState extends ConsumerState<_Animations> with SingleTickerProviderStateMixin {
+  late final viewId = ref.read(_viewId);
+
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
@@ -87,7 +107,7 @@ class AnimationsState extends State<_Animations> with SingleTickerProviderStateM
   )..forward();
 
   late final Animation<Offset> _offsetAnimation = Tween<Offset>(
-    begin: Offset(0.0, -10 / context.read<PopupState>().surfaceSize.value.height),
+    begin: Offset(0.0, -10 / ref.read(baseViewState(viewId)).surfaceSize.height),
     end: Offset.zero,
   ).animate(CurvedAnimation(
     parent: controller,
@@ -109,14 +129,14 @@ class AnimationsState extends State<_Animations> with SingleTickerProviderStateM
   }
 }
 
-class _Surface extends StatelessWidget {
+class _Surface extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    var state = context.read<PopupState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    int viewId = ref.watch(_viewId);
 
-    return ValueListenableBuilder(
-      valueListenable: state.surfaceSize,
-      builder: (_, Size size, Widget? child) {
+    return Consumer(
+      builder: (_, WidgetRef ref, Widget? child) {
+        final size = ref.watch(baseViewState(viewId).select((v) => v.surfaceSize));
         return SizedBox(
           width: size.width,
           height: size.height,
@@ -129,24 +149,27 @@ class _Surface extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               ViewInputListener(
-                viewId: state.viewId,
-                child: ValueListenableBuilder(
-                  valueListenable: state.textureId,
-                  builder: (BuildContext context, int textureId, Widget? child) {
+                viewId: viewId,
+                child: Consumer(
+                  builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                    Key key = ref.watch(baseViewState(viewId).select((v) => v.textureKey));
+                    int textureId = ref.watch(baseViewState(viewId).select((v) => v.textureId));
                     return Texture(
-                      key: state.textureKey,
+                      key: key,
                       filterQuality: FilterQuality.medium,
                       textureId: textureId,
                     );
                   },
                 ),
               ),
-              AnimatedBuilder(
-                animation: state.popups,
-                builder: (_, __) {
+              Consumer(
+                builder: (_, WidgetRef ref, __) {
+                  List<int> popups = ref.watch(baseViewState(viewId).select((v) => v.popups));
+                  List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
+
                   return Stack(
                     clipBehavior: Clip.none,
-                    children: state.popups,
+                    children: popupWidgets,
                   );
                 },
               ),

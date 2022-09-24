@@ -14,6 +14,8 @@ extern "C" {
 ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	  : server(server), wlr_output(wlr_output) {
 
+	wlr_output_lock_software_cursors(wlr_output, true);
+
 	frame_listener.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &frame_listener);
 	mode_changed.notify = mode_changed_event;

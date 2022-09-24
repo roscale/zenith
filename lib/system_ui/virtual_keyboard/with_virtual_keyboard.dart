@@ -4,70 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/state/task_switcher_state.dart';
+import 'package:zenith/state/virtual_keyboard_state.dart';
 import 'package:zenith/system_ui/virtual_keyboard/layouts.dart';
 import 'package:zenith/system_ui/virtual_keyboard/virtual_keyboard.dart';
-
-final virtualKeyboardProvider = StateNotifierProvider.autoDispose
-    .family<WithVirtualKeyboardNotifier, WithVirtualKeyboardProviderState, int>((ref, int viewId) {
-  return WithVirtualKeyboardNotifier(const WithVirtualKeyboardProviderState.empty());
-});
-
-class WithVirtualKeyboardProviderState {
-  const WithVirtualKeyboardProviderState({
-    required this.activated,
-    required this.dragging,
-    required this.verticalDragOffset,
-    required this.keyboardSize,
-  });
-
-  const WithVirtualKeyboardProviderState.empty()
-      : this(
-          activated: false,
-          dragging: false,
-          verticalDragOffset: 0,
-          keyboardSize: Size.zero,
-        );
-
-  final bool activated;
-  final bool dragging;
-  final int verticalDragOffset;
-  final Size keyboardSize;
-
-  WithVirtualKeyboardProviderState copyWith({
-    bool? activated,
-    bool? dragging,
-    int? verticalDragOffset,
-    Size? keyboardSize,
-  }) {
-    return WithVirtualKeyboardProviderState(
-      activated: activated ?? this.activated,
-      dragging: dragging ?? this.dragging,
-      verticalDragOffset: verticalDragOffset ?? this.verticalDragOffset,
-      keyboardSize: keyboardSize ?? this.keyboardSize,
-    );
-  }
-}
-
-class WithVirtualKeyboardNotifier extends StateNotifier<WithVirtualKeyboardProviderState> {
-  WithVirtualKeyboardNotifier(state) : super(state);
-
-  set activated(bool value) => state = state.copyWith(activated: value);
-
-  set keyboardSize(Size value) => state = state.copyWith(keyboardSize: value);
-
-  void drag(int dy) {
-    state = state.copyWith(
-      dragging: true,
-      verticalDragOffset: dy,
-    );
-  }
-
-  void endDrag() {
-    state = state.copyWith(
-      dragging: false,
-    );
-  }
-}
 
 class WithVirtualKeyboard extends ConsumerStatefulWidget {
   final int viewId;
@@ -90,13 +30,7 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
   late var slideAnimationController = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 300),
-  )..addStatusListener((status) {
-      final state = ref.read(virtualKeyboardProvider(widget.viewId));
-      if (status == AnimationStatus.completed && !state.activated) {
-        keyboardOverlay!.remove();
-        keyboardOverlay = null;
-      }
-    });
+  );
 
   late var animation = CurvedAnimation(
     parent: slideAnimationController,
@@ -108,6 +42,32 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
       Tween(
         begin: const Offset(0, 1),
         end: Offset.zero,
+      ),
+    ),
+  );
+
+  late final keyboardWidget = Align(
+    alignment: Alignment.bottomCenter,
+    child: ValueListenableBuilder(
+      valueListenable: slideAnimation,
+      builder: (_, Animation<Offset> animation, Widget? child) {
+        return SlideTransition(
+          position: animation,
+          child: child!,
+        );
+      },
+      child: ProviderScope(
+        overrides: [
+          keyboardId.overrideWithValue(widget.viewId),
+        ],
+        child: RepaintBoundary(
+          child: VirtualKeyboard(
+            key: key,
+            onDismiss: () => ref.read(virtualKeyboardState(widget.viewId).notifier).activated = false,
+            onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
+            onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
+          ),
+        ),
       ),
     ),
   );
@@ -144,8 +104,8 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
   }
 
   void dragKeyboard(double dy) {
-    final notifier = ref.read(virtualKeyboardProvider(widget.viewId).notifier);
-    final state = ref.read(virtualKeyboardProvider(widget.viewId));
+    final notifier = ref.read(virtualKeyboardState(widget.viewId).notifier);
+    final state = ref.read(virtualKeyboardState(widget.viewId));
 
     if (state.activated) {
       slideAnimationController.value += dy / state.keyboardSize.height;
@@ -170,7 +130,7 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
   void initState() {
     super.initState();
     textInputEventsSubscription = PlatformApi.getTextInputEventsForViewId(widget.viewId).listen((event) {
-      final notifier = ref.read(virtualKeyboardProvider(widget.viewId).notifier);
+      final notifier = ref.read(virtualKeyboardState(widget.viewId).notifier);
       if (event is TextInputEnable) {
         notifier.activated = true;
       } else if (event is TextInputDisable) {
@@ -189,41 +149,37 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<bool>(virtualKeyboardProvider(widget.viewId).select((value) => value.activated), (previous, next) {
+    ref.listen<bool>(virtualKeyboardState(widget.viewId).select((value) => value.activated), (previous, next) {
       next ? animateForward() : animateBackward();
     });
 
     return ClipRect(
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          return Consumer(
-            builder: (_, __, Widget? child) {
-              final shown = ref.watch(virtualKeyboardProvider(widget.viewId).select((value) => value.activated));
-              final keyboardSize =
-                  ref.watch(virtualKeyboardProvider(widget.viewId).select((value) => value.keyboardSize));
+      child: Consumer(
+        builder: (_, WidgetRef ref, Widget? child) {
+          final constraints = ref.watch(taskSwitcherState.select((v) => v.constraints));
+          final keyboardActivated = ref.watch(virtualKeyboardState(widget.viewId).select((v) => v.activated));
+          final keyboardSize = ref.watch(virtualKeyboardState(widget.viewId).select((v) => v.keyboardSize));
 
-              if (shown && keyboardSize.isEmpty) {
-                SchedulerBinding.instance.addPostFrameCallback(_determineVirtualKeyboardSize);
-              }
+          if (keyboardActivated && keyboardSize.isEmpty) {
+            SchedulerBinding.instance.addPostFrameCallback(_determineVirtualKeyboardSize);
+          }
 
-              PlatformApi.resizeWindow(
-                widget.viewId,
-                constraints.maxWidth.toInt(),
-                shown && !keyboardSize.isEmpty
-                    ? (constraints.maxHeight - keyboardSize.height).toInt()
-                    : constraints.maxHeight.toInt(),
-              );
-
-              return child!;
-            },
-            child: Overlay(
-              key: overlayKey,
-              initialEntries: [
-                OverlayEntry(builder: (_) => widget.child),
-              ],
-            ),
+          PlatformApi.resizeWindow(
+            widget.viewId,
+            constraints.maxWidth.toInt(),
+            keyboardActivated && !keyboardSize.isEmpty
+                ? (constraints.maxHeight - keyboardSize.height).toInt()
+                : constraints.maxHeight.toInt(),
           );
+
+          return child!;
         },
+        child: Overlay(
+          key: overlayKey,
+          initialEntries: [
+            OverlayEntry(builder: (_) => widget.child),
+          ],
+        ),
       ),
     );
   }
@@ -237,31 +193,12 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
     if (size == null) {
       return;
     }
-    ref.read(virtualKeyboardProvider(widget.viewId).notifier).keyboardSize = size;
+    ref.read(virtualKeyboardState(widget.viewId).notifier).keyboardSize = size;
   }
 
   OverlayEntry? newKeyboardOverlay() {
-    return OverlayEntry(builder: (_) {
-      return Align(
-        alignment: Alignment.bottomCenter,
-        child: ValueListenableBuilder(
-          valueListenable: slideAnimation,
-          builder: (_, Animation<Offset> animation, Widget? child) {
-            return SlideTransition(
-              position: animation,
-              child: child!,
-            );
-          },
-          child: RepaintBoundary(
-            child: VirtualKeyboard(
-              key: key,
-              onDismiss: () => ref.read(virtualKeyboardProvider(widget.viewId).notifier).activated = false,
-              onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
-              onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
-            ),
-          ),
-        ),
-      );
-    });
+    return OverlayEntry(
+      builder: (_) => keyboardWidget,
+    );
   }
 }

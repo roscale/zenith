@@ -1,49 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/util/listenable_list.dart';
-import 'package:zenith/widgets/popup.dart';
+import 'package:zenith/state/base_view_state.dart';
 
-class WindowState {
-  WindowState({
-    required this.viewId,
+part 'window_state.freezed.dart';
+
+final windowState = StateNotifierProvider.family<WindowStateNotifier, WindowState, int>((ref, int viewId) {
+  return WindowStateNotifier(ref, viewId);
+});
+
+@freezed
+class WindowState with _$WindowState {
+  const factory WindowState({
+    required bool visible,
+    required Key virtualKeyboardKey,
+  }) = _WindowState;
+}
+
+class WindowStateNotifier extends StateNotifier<WindowState> {
+  final Ref _ref;
+  final int _viewId;
+
+  WindowStateNotifier(this._ref, this._viewId)
+      : super(WindowState(
+          visible: true,
+          virtualKeyboardKey: GlobalKey(),
+        ));
+
+  void initialize({
     required int textureId,
     required Size surfaceSize,
     required Rect visibleBounds,
-  })  : textureId = ValueNotifier(textureId),
-        surfaceSize = ValueNotifier(surfaceSize),
-        visibleBounds = ValueNotifier(visibleBounds);
-
-  final int viewId;
-  final ValueNotifier<int> textureId;
-  final widgetKey = GlobalKey();
-  final textureKey = GlobalKey();
-  final virtualKeyboardKey = GlobalKey();
-  bool _visible = true;
-
-  final ValueNotifier<Size> surfaceSize;
-  final ValueNotifier<Rect> visibleBounds;
-
-  final popups = ListenableList<Popup>();
-
-  void addPopup(Popup popup) {
-    popup.state.parentViewId = viewId;
-    popups.add(popup);
+  }) {
+    _ref.read(baseViewState(_viewId).notifier).initialize(
+          textureId: textureId,
+          surfaceSize: surfaceSize,
+          visibleBounds: visibleBounds,
+        );
   }
 
-  void removePopup(Popup popup) {
-    popups.remove(popup);
-  }
-
-  void changeVisibility(bool visible) {
-    if (_visible != visible) {
-      _visible = visible;
-      PlatformApi.changeWindowVisibility(viewId, visible);
+  set visible(bool value) {
+    if (value != state.visible) {
+      PlatformApi.changeWindowVisibility(_viewId, value);
     }
-  }
-
-  void dispose() {
-    surfaceSize.dispose();
-    visibleBounds.dispose();
-    popups.dispose();
+    state = state.copyWith(visible: value);
   }
 }

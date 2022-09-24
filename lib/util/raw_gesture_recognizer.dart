@@ -7,15 +7,9 @@ import 'package:flutter/rendering.dart';
 class RawGestureRecognizer extends GestureRecognizer {
   RawGestureRecognizer({
     Object? debugOwner,
-    @Deprecated(
-      'Migrate to supportedDevices. '
-      'This feature was deprecated after v2.3.0-1.0.pre.',
-    )
-        PointerDeviceKind? kind,
     Set<PointerDeviceKind>? supportedDevices,
   }) : super(
           debugOwner: debugOwner,
-          kind: kind,
           supportedDevices: supportedDevices,
         );
 
