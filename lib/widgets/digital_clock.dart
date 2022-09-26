@@ -33,7 +33,6 @@ class _DigitalClockState extends State<DigitalClock> {
       style: const TextStyle(
         fontWeight: FontWeight.w500,
         color: Colors.white,
-        fontSize: 18,
       ),
     );
   }

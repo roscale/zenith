@@ -24,6 +24,8 @@ void main() {
   runApp(const ProviderScope(child: Zenith()));
 }
 
+const _notchHeight = 80.0; // physical pixels
+
 class Zenith extends StatelessWidget {
   const Zenith({Key? key}) : super(key: key);
 
@@ -34,8 +36,17 @@ class Zenith extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const Scaffold(
-        body: Desktop(),
+      home: Builder(
+        builder: (context) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: EdgeInsets.only(top: _notchHeight / MediaQuery.of(context).devicePixelRatio),
+            ),
+            child: const Scaffold(
+              body: Desktop(),
+            ),
+          );
+        },
       ),
     );
   }

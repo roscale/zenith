@@ -42,6 +42,7 @@ public:
 
 	std::thread::id main_thread_id;
 	std::string startup_command{};
+	float display_scale = 1.0f;
 
 	wl_display* display;
 	wlr_backend* backend;

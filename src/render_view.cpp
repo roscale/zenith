@@ -3,6 +3,7 @@
 #include "render_view.hpp"
 #include "view.hpp"
 #include "render_to_texture_shader.hpp"
+#include "server.hpp"
 
 extern "C" {
 #define static
@@ -59,7 +60,15 @@ void render_view_to_framebuffer(ZenithView* view, GLuint view_fbo) {
 					  // are clipped to the window and cannot be rendered outside the window bounds.
 					  // I don't really care because Gnome Shell takes the same approach, and it simplifies things a lot.
 					  // Interesting discussion: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/issues/24
-					  RenderToTextureShader::instance()->render(attribs.tex, sx, sy,
+
+					  // Wayland surfaces only have integer scaling support. sx and sy are in the surface coordinate system,
+					  // and must be scaled by the buffer scaling.
+					  // https://wayland.app/protocols/wayland#wl_surface:request:set_buffer_scale
+					  // https://wayland.app/protocols/wayland#wl_subsurface:request:set_position
+					  int scaled_sx = sx * surface->current.scale;
+					  int scaled_sy = sy * surface->current.scale;
+
+					  RenderToTextureShader::instance()->render(attribs.tex, scaled_sx, scaled_sy,
 					                                            surface->current.buffer_width,
 					                                            surface->current.buffer_height,
 					                                            rdata->view_fbo);

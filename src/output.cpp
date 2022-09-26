@@ -21,7 +21,7 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	mode_changed.notify = mode_changed_event;
 	wl_signal_add(&wlr_output->events.mode, &mode_changed);
 
-	wlr_output_set_scale(wlr_output, 3.0f);
+	wlr_output_set_scale(wlr_output, server->display_scale);
 }
 
 void output_frame(wl_listener* listener, void* data) {
@@ -130,7 +130,7 @@ void mode_changed_event(wl_listener* listener, void* data) {
 	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
 	window_metrics.width = output->wlr_output->width;
 	window_metrics.height = output->wlr_output->height;
-	window_metrics.pixel_ratio = 3.0;
+	window_metrics.pixel_ratio = output->server->display_scale;
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
 	output->server->embedder_state->send_window_metrics(window_metrics);

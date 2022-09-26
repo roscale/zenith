@@ -11,8 +11,7 @@ class Desktop extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
-        const Padding(
-          padding: EdgeInsets.only(top: 40.0),
+        const SafeArea(
           child: TaskSwitcher(
             spacing: 20,
           ),

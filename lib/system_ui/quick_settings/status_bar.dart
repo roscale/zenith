@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:zenith/widgets/digital_clock.dart';
 
-class StatusBar extends StatelessWidget {
+/// The status bar has the same height as the notch, and widgets inside it are scaled the same
+/// regardless of the ratio between the physical and logical pixel.
+class StatusBar extends StatefulWidget {
   final GestureDragStartCallback onVerticalDragStart;
   final GestureDragUpdateCallback onVerticalDragUpdate;
   final GestureDragEndCallback onVerticalDragEnd;
@@ -14,35 +16,79 @@ class StatusBar extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<StatusBar> createState() => _StatusBarState();
+}
+
+class _StatusBarState extends State<StatusBar> {
+  late double pixelRatio;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    pixelRatio = MediaQuery.of(context).devicePixelRatio;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onVerticalDragStart: onVerticalDragStart,
-      onVerticalDragUpdate: onVerticalDragUpdate,
-      onVerticalDragEnd: onVerticalDragEnd,
+      onVerticalDragStart: widget.onVerticalDragStart,
+      onVerticalDragUpdate: widget.onVerticalDragUpdate,
+      onVerticalDragEnd: widget.onVerticalDragEnd,
       child: Container(
-        height: 40,
+        height: MediaQuery.of(context).padding.top,
         color: Colors.black38,
-        child: Row(
-          children: const [
-            SizedBox(width: 20),
-            DigitalClock(),
-            Spacer(),
-            Icon(Icons.wifi, color: Colors.white),
-            Icon(Icons.signal_cellular_4_bar, color: Colors.white),
-            SizedBox(width: 10),
-            Text(
-              "98%",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 18,
-              ),
-            ),
-            Icon(Icons.battery_charging_full, color: Colors.white),
-            SizedBox(width: 20),
-          ],
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: physicalToLogicalPixels(12)),
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return DefaultTextStyle(
+                style: TextStyle(
+                  fontSize: constraints.maxHeight * 0.8,
+                  height: null,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Dividing by pixelRatio makes the widget have the same size regardless of the
+                    // size of a logical pixel.
+                    SizedBox(width: physicalToLogicalPixels(30)),
+                    const DigitalClock(),
+                    const Spacer(),
+                    Icon(
+                      Icons.wifi,
+                      color: Colors.white,
+                      size: constraints.maxHeight,
+                    ),
+                    Icon(
+                      Icons.signal_cellular_4_bar,
+                      color: Colors.white,
+                      size: constraints.maxHeight,
+                    ),
+                    SizedBox(width: physicalToLogicalPixels(30)),
+                    const Text(
+                      "98%",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Icon(
+                      Icons.battery_charging_full,
+                      color: Colors.white,
+                      size: constraints.maxHeight,
+                    ),
+                    SizedBox(width: physicalToLogicalPixels(30)),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
+  }
+
+  double physicalToLogicalPixels(double pixels) {
+    return pixels / pixelRatio;
   }
 }

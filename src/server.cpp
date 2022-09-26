@@ -23,8 +23,12 @@ ZenithServer* ZenithServer::instance() {
 	return _instance;
 }
 
+static float read_display_scale();
+
 ZenithServer::ZenithServer() {
 	main_thread_id = std::this_thread::get_id();
+
+	display_scale = read_display_scale();
 
 	display = wl_display_create();
 	if (display == nullptr) {
@@ -163,6 +167,20 @@ void ZenithServer::run(char* startup_command) {
 	wl_display_destroy(display);
 }
 
+static float read_display_scale() {
+	static const char* display_scale_str = getenv("ZENITH_SCALE");
+	if (display_scale_str == nullptr) {
+		return 1.0f;
+	}
+	try {
+		return std::stof(display_scale_str);
+	} catch (std::invalid_argument&) {
+		return 1.0f;
+	} catch (std::out_of_range&) {
+		return 1.0f;
+	}
+}
+
 size_t i = 1;
 
 void server_new_output(wl_listener* listener, void* data) {
@@ -207,7 +225,7 @@ void server_new_output(wl_listener* listener, void* data) {
 	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
 	window_metrics.width = output->wlr_output->width;
 	window_metrics.height = output->wlr_output->height;
-	window_metrics.pixel_ratio = 3.0;
+	window_metrics.pixel_ratio = server->display_scale;
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
 	server->embedder_state->send_window_metrics(window_metrics);
