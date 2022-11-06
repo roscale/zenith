@@ -28,33 +28,37 @@ mixin _$WindowState {
 abstract class $WindowStateCopyWith<$Res> {
   factory $WindowStateCopyWith(
           WindowState value, $Res Function(WindowState) then) =
-      _$WindowStateCopyWithImpl<$Res>;
+      _$WindowStateCopyWithImpl<$Res, WindowState>;
+  @useResult
   $Res call({bool visible, Key virtualKeyboardKey});
 }
 
 /// @nodoc
-class _$WindowStateCopyWithImpl<$Res> implements $WindowStateCopyWith<$Res> {
+class _$WindowStateCopyWithImpl<$Res, $Val extends WindowState>
+    implements $WindowStateCopyWith<$Res> {
   _$WindowStateCopyWithImpl(this._value, this._then);
 
-  final WindowState _value;
   // ignore: unused_field
-  final $Res Function(WindowState) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? visible = freezed,
-    Object? virtualKeyboardKey = freezed,
+    Object? visible = null,
+    Object? virtualKeyboardKey = null,
   }) {
     return _then(_value.copyWith(
-      visible: visible == freezed
+      visible: null == visible
           ? _value.visible
           : visible // ignore: cast_nullable_to_non_nullable
               as bool,
-      virtualKeyboardKey: virtualKeyboardKey == freezed
+      virtualKeyboardKey: null == virtualKeyboardKey
           ? _value.virtualKeyboardKey
           : virtualKeyboardKey // ignore: cast_nullable_to_non_nullable
               as Key,
-    ));
+    ) as $Val);
   }
 }
 
@@ -65,30 +69,30 @@ abstract class _$$_WindowStateCopyWith<$Res>
           _$_WindowState value, $Res Function(_$_WindowState) then) =
       __$$_WindowStateCopyWithImpl<$Res>;
   @override
+  @useResult
   $Res call({bool visible, Key virtualKeyboardKey});
 }
 
 /// @nodoc
-class __$$_WindowStateCopyWithImpl<$Res> extends _$WindowStateCopyWithImpl<$Res>
+class __$$_WindowStateCopyWithImpl<$Res>
+    extends _$WindowStateCopyWithImpl<$Res, _$_WindowState>
     implements _$$_WindowStateCopyWith<$Res> {
   __$$_WindowStateCopyWithImpl(
       _$_WindowState _value, $Res Function(_$_WindowState) _then)
-      : super(_value, (v) => _then(v as _$_WindowState));
+      : super(_value, _then);
 
-  @override
-  _$_WindowState get _value => super._value as _$_WindowState;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? visible = freezed,
-    Object? virtualKeyboardKey = freezed,
+    Object? visible = null,
+    Object? virtualKeyboardKey = null,
   }) {
     return _then(_$_WindowState(
-      visible: visible == freezed
+      visible: null == visible
           ? _value.visible
           : visible // ignore: cast_nullable_to_non_nullable
               as bool,
-      virtualKeyboardKey: virtualKeyboardKey == freezed
+      virtualKeyboardKey: null == virtualKeyboardKey
           ? _value.virtualKeyboardKey
           : virtualKeyboardKey // ignore: cast_nullable_to_non_nullable
               as Key,
@@ -117,19 +121,17 @@ class _$_WindowState implements _WindowState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_WindowState &&
-            const DeepCollectionEquality().equals(other.visible, visible) &&
-            const DeepCollectionEquality()
-                .equals(other.virtualKeyboardKey, virtualKeyboardKey));
+            (identical(other.visible, visible) || other.visible == visible) &&
+            (identical(other.virtualKeyboardKey, virtualKeyboardKey) ||
+                other.virtualKeyboardKey == virtualKeyboardKey));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(visible),
-      const DeepCollectionEquality().hash(virtualKeyboardKey));
+  int get hashCode => Object.hash(runtimeType, visible, virtualKeyboardKey);
 
   @JsonKey(ignore: true)
   @override
+  @pragma('vm:prefer-inline')
   _$$_WindowStateCopyWith<_$_WindowState> get copyWith =>
       __$$_WindowStateCopyWithImpl<_$_WindowState>(this, _$identity);
 }

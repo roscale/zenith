@@ -32,7 +32,8 @@ mixin _$PopupState {
 abstract class $PopupStateCopyWith<$Res> {
   factory $PopupStateCopyWith(
           PopupState value, $Res Function(PopupState) then) =
-      _$PopupStateCopyWithImpl<$Res>;
+      _$PopupStateCopyWithImpl<$Res, PopupState>;
+  @useResult
   $Res call(
       {int parentViewId,
       Offset position,
@@ -42,43 +43,46 @@ abstract class $PopupStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$PopupStateCopyWithImpl<$Res> implements $PopupStateCopyWith<$Res> {
+class _$PopupStateCopyWithImpl<$Res, $Val extends PopupState>
+    implements $PopupStateCopyWith<$Res> {
   _$PopupStateCopyWithImpl(this._value, this._then);
 
-  final PopupState _value;
   // ignore: unused_field
-  final $Res Function(PopupState) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? parentViewId = freezed,
-    Object? position = freezed,
-    Object? visible = freezed,
-    Object? animationsKey = freezed,
-    Object? isClosing = freezed,
+    Object? parentViewId = null,
+    Object? position = null,
+    Object? visible = null,
+    Object? animationsKey = null,
+    Object? isClosing = null,
   }) {
     return _then(_value.copyWith(
-      parentViewId: parentViewId == freezed
+      parentViewId: null == parentViewId
           ? _value.parentViewId
           : parentViewId // ignore: cast_nullable_to_non_nullable
               as int,
-      position: position == freezed
+      position: null == position
           ? _value.position
           : position // ignore: cast_nullable_to_non_nullable
               as Offset,
-      visible: visible == freezed
+      visible: null == visible
           ? _value.visible
           : visible // ignore: cast_nullable_to_non_nullable
               as bool,
-      animationsKey: animationsKey == freezed
+      animationsKey: null == animationsKey
           ? _value.animationsKey
           : animationsKey // ignore: cast_nullable_to_non_nullable
               as GlobalKey<AnimationsState>,
-      isClosing: isClosing == freezed
+      isClosing: null == isClosing
           ? _value.isClosing
           : isClosing // ignore: cast_nullable_to_non_nullable
               as bool,
-    ));
+    ) as $Val);
   }
 }
 
@@ -89,6 +93,7 @@ abstract class _$$_PopupStateCopyWith<$Res>
           _$_PopupState value, $Res Function(_$_PopupState) then) =
       __$$_PopupStateCopyWithImpl<$Res>;
   @override
+  @useResult
   $Res call(
       {int parentViewId,
       Offset position,
@@ -98,41 +103,40 @@ abstract class _$$_PopupStateCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_PopupStateCopyWithImpl<$Res> extends _$PopupStateCopyWithImpl<$Res>
+class __$$_PopupStateCopyWithImpl<$Res>
+    extends _$PopupStateCopyWithImpl<$Res, _$_PopupState>
     implements _$$_PopupStateCopyWith<$Res> {
   __$$_PopupStateCopyWithImpl(
       _$_PopupState _value, $Res Function(_$_PopupState) _then)
-      : super(_value, (v) => _then(v as _$_PopupState));
+      : super(_value, _then);
 
-  @override
-  _$_PopupState get _value => super._value as _$_PopupState;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? parentViewId = freezed,
-    Object? position = freezed,
-    Object? visible = freezed,
-    Object? animationsKey = freezed,
-    Object? isClosing = freezed,
+    Object? parentViewId = null,
+    Object? position = null,
+    Object? visible = null,
+    Object? animationsKey = null,
+    Object? isClosing = null,
   }) {
     return _then(_$_PopupState(
-      parentViewId: parentViewId == freezed
+      parentViewId: null == parentViewId
           ? _value.parentViewId
           : parentViewId // ignore: cast_nullable_to_non_nullable
               as int,
-      position: position == freezed
+      position: null == position
           ? _value.position
           : position // ignore: cast_nullable_to_non_nullable
               as Offset,
-      visible: visible == freezed
+      visible: null == visible
           ? _value.visible
           : visible // ignore: cast_nullable_to_non_nullable
               as bool,
-      animationsKey: animationsKey == freezed
+      animationsKey: null == animationsKey
           ? _value.animationsKey
           : animationsKey // ignore: cast_nullable_to_non_nullable
               as GlobalKey<AnimationsState>,
-      isClosing: isClosing == freezed
+      isClosing: null == isClosing
           ? _value.isClosing
           : isClosing // ignore: cast_nullable_to_non_nullable
               as bool,
@@ -183,26 +187,24 @@ class _$_PopupState with DiagnosticableTreeMixin implements _PopupState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_PopupState &&
-            const DeepCollectionEquality()
-                .equals(other.parentViewId, parentViewId) &&
-            const DeepCollectionEquality().equals(other.position, position) &&
-            const DeepCollectionEquality().equals(other.visible, visible) &&
-            const DeepCollectionEquality()
-                .equals(other.animationsKey, animationsKey) &&
-            const DeepCollectionEquality().equals(other.isClosing, isClosing));
+            (identical(other.parentViewId, parentViewId) ||
+                other.parentViewId == parentViewId) &&
+            (identical(other.position, position) ||
+                other.position == position) &&
+            (identical(other.visible, visible) || other.visible == visible) &&
+            (identical(other.animationsKey, animationsKey) ||
+                other.animationsKey == animationsKey) &&
+            (identical(other.isClosing, isClosing) ||
+                other.isClosing == isClosing));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(parentViewId),
-      const DeepCollectionEquality().hash(position),
-      const DeepCollectionEquality().hash(visible),
-      const DeepCollectionEquality().hash(animationsKey),
-      const DeepCollectionEquality().hash(isClosing));
+      runtimeType, parentViewId, position, visible, animationsKey, isClosing);
 
   @JsonKey(ignore: true)
   @override
+  @pragma('vm:prefer-inline')
   _$$_PopupStateCopyWith<_$_PopupState> get copyWith =>
       __$$_PopupStateCopyWithImpl<_$_PopupState>(this, _$identity);
 }

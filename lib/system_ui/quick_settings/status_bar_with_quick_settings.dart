@@ -67,7 +67,7 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
             }
           },
           onVerticalDragEnd: (details) {
-            handleController(details.velocity.pixelsPerSecond.dy);
+            startSlideAnimation(details.velocity.pixelsPerSecond.dy);
           },
         ),
         ValueListenableBuilder(
@@ -96,7 +96,7 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
               quickSettingsController.value += details.delta.dy / height;
             },
             onVerticalDragEnd: (details) {
-              handleController(details.velocity.pixelsPerSecond.dy);
+              startSlideAnimation(details.velocity.pixelsPerSecond.dy);
             },
           ),
         ),
@@ -116,11 +116,7 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
                   quickSettingsController.value += details.delta.dy / height;
                 },
                 onVerticalDragEnd: (details) {
-                  // springDescription: SpringDescription.withDampingRatio(
-                  //   mass: 1,
-                  //   stiffness: 10,
-                  // ),
-                  handleController(details.velocity.pixelsPerSecond.dy);
+                  startSlideAnimation(details.velocity.pixelsPerSecond.dy);
                 },
               ),
             ),
@@ -130,7 +126,7 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
     );
   }
 
-  void handleController(double velocity) {
+  void startSlideAnimation(double velocity) {
     if (velocity.abs() > 300) {
       // Flick.
       if (velocity > 0) {

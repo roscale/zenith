@@ -11,9 +11,15 @@ class Desktop extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
-        const SafeArea(
-          child: TaskSwitcher(
-            spacing: 20,
+        SafeArea(
+          child: Overlay(
+            initialEntries: [
+              OverlayEntry(
+                builder: (_) => const TaskSwitcher(
+                  spacing: 20,
+                ),
+              ),
+            ],
           ),
         ),
         const StatusBarWithQuickSettings(),

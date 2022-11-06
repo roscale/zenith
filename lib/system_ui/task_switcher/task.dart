@@ -97,7 +97,7 @@ Future<void> _untilAnimationsStopped(WidgetRef ref) {
     completer.complete();
   } else {
     late ProviderSubscription<bool> subscription;
-    subscription = ref.listenOnce(
+    subscription = ref.listenManual(
       taskSwitcherState.select((v) => v.areAnimationsPlaying),
       (_, bool animationsPlaying) {
         if (!animationsPlaying) {

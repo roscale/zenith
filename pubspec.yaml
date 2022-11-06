@@ -31,11 +31,15 @@ dependencies:
     sdk: flutter
 
   flutter_riverpod: ^2.0.0-dev.9
+  riverpod_annotation: ^1.0.4
   defer_pointer: ^0.0.2
   intl: ^0.17.0
   visibility_detector: ^0.3.3
   freezed: ^2.1.1
   freezed_annotation: ^2.1.0
+  tuple: ^2.0.1
+  freedesktop_desktop_entry: ^0.3.4
+  jovial_svg: ^1.1.6
 
 dev_dependencies:
   flutter_test:
@@ -48,6 +52,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^2.0.1
   build_runner: ^2.2.1
+  riverpod_generator: ^1.0.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

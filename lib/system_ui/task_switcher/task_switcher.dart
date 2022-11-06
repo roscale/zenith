@@ -9,6 +9,7 @@ import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:zenith/surface_manager.dart';
+import 'package:zenith/system_ui/task_switcher/app_drawer/handle.dart';
 import 'package:zenith/system_ui/task_switcher/invisible_bottom_bar.dart';
 import 'package:zenith/system_ui/task_switcher/task.dart';
 import 'package:zenith/system_ui/task_switcher/task_switcher_scroller.dart';
@@ -54,7 +55,8 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   @override
   void initState() {
     super.initState();
-    ref.read(taskSwitcherWidgetState.notifier).state = this;
+
+    Future.microtask(() => ref.read(taskSwitcherWidgetState.notifier).state = this);
 
     scrollPosition = ScrollPositionWithSingleContext(
       physics: const BouncingScrollPhysics(),
@@ -67,12 +69,12 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
       scrollPosition.applyContentDimensions(0, length <= 1 ? 0 : (length - 1) * _taskToTaskOffset);
     }
 
-    ref.listenOnce(taskSwitcherState.select((v) => v.constraints), (_, BoxConstraints constraints) {
+    ref.listenManual(taskSwitcherState.select((v) => v.constraints), (_, BoxConstraints constraints) {
       scrollPosition.applyViewportDimension(constraints.maxWidth);
       updateContentDimensions();
     });
 
-    ref.listenOnce(taskList, (_, List<int> next) {
+    ref.listenManual(taskList, (_, List<int> next) {
       for (int i = 0; i < next.length; i++) {
         ref.read(taskPositionProvider(next[i]).notifier).state = taskIndexToPosition(i);
       }
@@ -83,13 +85,13 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     // Make sure the async tasks are executed one after the other.
     Future<void> chain = Future.value(null);
 
-    ref.listenOnce(windowMappedStreamProvider, (_, AsyncValue<int> next) {
+    ref.listenManual(windowMappedStreamProvider, (_, AsyncValue<int> next) {
       next.whenData((int viewId) {
         chain = chain.then((_) => _spawnTask(viewId));
       });
     });
 
-    ref.listenOnce(windowUnmappedStreamProvider, (_, AsyncValue<int> next) {
+    ref.listenManual(windowUnmappedStreamProvider, (_, AsyncValue<int> next) {
       next.whenData((int viewId) {
         chain = chain.then((_) => _stopTask(viewId));
       });
@@ -114,19 +116,29 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
             Positioned.fill(
               child: TaskSwitcherScroller(
                 scrollPosition: scrollPosition,
-                child: TaskSwitcherViewport(
-                  scrollPosition: scrollPosition,
-                  child: DeferredPointerHandler(
-                    child: Consumer(
-                      builder: (_, WidgetRef ref, __) {
-                        final tasks = ref.watch(taskList);
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [for (int viewId in tasks) ref.watch(taskWidgetProvider(viewId))],
-                        );
-                      },
+                child: Stack(
+                  children: [
+                    const Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: AppDrawerHandle(),
                     ),
-                  ),
+                    TaskSwitcherViewport(
+                      scrollPosition: scrollPosition,
+                      child: DeferredPointerHandler(
+                        child: Consumer(
+                          builder: (_, WidgetRef ref, __) {
+                            final tasks = ref.watch(taskList);
+                            return Stack(
+                              clipBehavior: Clip.none,
+                              children: [for (int viewId in tasks) ref.watch(taskWidgetProvider(viewId))],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

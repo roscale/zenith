@@ -28,34 +28,38 @@ mixin _$VirtualKeyboardState {
 abstract class $VirtualKeyboardStateCopyWith<$Res> {
   factory $VirtualKeyboardStateCopyWith(VirtualKeyboardState value,
           $Res Function(VirtualKeyboardState) then) =
-      _$VirtualKeyboardStateCopyWithImpl<$Res>;
+      _$VirtualKeyboardStateCopyWithImpl<$Res, VirtualKeyboardState>;
+  @useResult
   $Res call({bool activated, Size keyboardSize});
 }
 
 /// @nodoc
-class _$VirtualKeyboardStateCopyWithImpl<$Res>
+class _$VirtualKeyboardStateCopyWithImpl<$Res,
+        $Val extends VirtualKeyboardState>
     implements $VirtualKeyboardStateCopyWith<$Res> {
   _$VirtualKeyboardStateCopyWithImpl(this._value, this._then);
 
-  final VirtualKeyboardState _value;
   // ignore: unused_field
-  final $Res Function(VirtualKeyboardState) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? activated = freezed,
-    Object? keyboardSize = freezed,
+    Object? activated = null,
+    Object? keyboardSize = null,
   }) {
     return _then(_value.copyWith(
-      activated: activated == freezed
+      activated: null == activated
           ? _value.activated
           : activated // ignore: cast_nullable_to_non_nullable
               as bool,
-      keyboardSize: keyboardSize == freezed
+      keyboardSize: null == keyboardSize
           ? _value.keyboardSize
           : keyboardSize // ignore: cast_nullable_to_non_nullable
               as Size,
-    ));
+    ) as $Val);
   }
 }
 
@@ -66,31 +70,30 @@ abstract class _$$_VirtualKeyboardStateCopyWith<$Res>
           $Res Function(_$_VirtualKeyboardState) then) =
       __$$_VirtualKeyboardStateCopyWithImpl<$Res>;
   @override
+  @useResult
   $Res call({bool activated, Size keyboardSize});
 }
 
 /// @nodoc
 class __$$_VirtualKeyboardStateCopyWithImpl<$Res>
-    extends _$VirtualKeyboardStateCopyWithImpl<$Res>
+    extends _$VirtualKeyboardStateCopyWithImpl<$Res, _$_VirtualKeyboardState>
     implements _$$_VirtualKeyboardStateCopyWith<$Res> {
   __$$_VirtualKeyboardStateCopyWithImpl(_$_VirtualKeyboardState _value,
       $Res Function(_$_VirtualKeyboardState) _then)
-      : super(_value, (v) => _then(v as _$_VirtualKeyboardState));
+      : super(_value, _then);
 
-  @override
-  _$_VirtualKeyboardState get _value => super._value as _$_VirtualKeyboardState;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? activated = freezed,
-    Object? keyboardSize = freezed,
+    Object? activated = null,
+    Object? keyboardSize = null,
   }) {
     return _then(_$_VirtualKeyboardState(
-      activated: activated == freezed
+      activated: null == activated
           ? _value.activated
           : activated // ignore: cast_nullable_to_non_nullable
               as bool,
-      keyboardSize: keyboardSize == freezed
+      keyboardSize: null == keyboardSize
           ? _value.keyboardSize
           : keyboardSize // ignore: cast_nullable_to_non_nullable
               as Size,
@@ -119,19 +122,18 @@ class _$_VirtualKeyboardState implements _VirtualKeyboardState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_VirtualKeyboardState &&
-            const DeepCollectionEquality().equals(other.activated, activated) &&
-            const DeepCollectionEquality()
-                .equals(other.keyboardSize, keyboardSize));
+            (identical(other.activated, activated) ||
+                other.activated == activated) &&
+            (identical(other.keyboardSize, keyboardSize) ||
+                other.keyboardSize == keyboardSize));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(activated),
-      const DeepCollectionEquality().hash(keyboardSize));
+  int get hashCode => Object.hash(runtimeType, activated, keyboardSize);
 
   @JsonKey(ignore: true)
   @override
+  @pragma('vm:prefer-inline')
   _$$_VirtualKeyboardStateCopyWith<_$_VirtualKeyboardState> get copyWith =>
       __$$_VirtualKeyboardStateCopyWithImpl<_$_VirtualKeyboardState>(
           this, _$identity);

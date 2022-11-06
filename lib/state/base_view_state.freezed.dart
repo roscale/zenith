@@ -33,7 +33,8 @@ mixin _$BaseViewState {
 abstract class $BaseViewStateCopyWith<$Res> {
   factory $BaseViewStateCopyWith(
           BaseViewState value, $Res Function(BaseViewState) then) =
-      _$BaseViewStateCopyWithImpl<$Res>;
+      _$BaseViewStateCopyWithImpl<$Res, BaseViewState>;
+  @useResult
   $Res call(
       {int viewId,
       int textureId,
@@ -45,54 +46,56 @@ abstract class $BaseViewStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$BaseViewStateCopyWithImpl<$Res>
+class _$BaseViewStateCopyWithImpl<$Res, $Val extends BaseViewState>
     implements $BaseViewStateCopyWith<$Res> {
   _$BaseViewStateCopyWithImpl(this._value, this._then);
 
-  final BaseViewState _value;
   // ignore: unused_field
-  final $Res Function(BaseViewState) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? viewId = freezed,
-    Object? textureId = freezed,
-    Object? surfaceSize = freezed,
-    Object? visibleBounds = freezed,
-    Object? popups = freezed,
-    Object? widgetKey = freezed,
-    Object? textureKey = freezed,
+    Object? viewId = null,
+    Object? textureId = null,
+    Object? surfaceSize = null,
+    Object? visibleBounds = null,
+    Object? popups = null,
+    Object? widgetKey = null,
+    Object? textureKey = null,
   }) {
     return _then(_value.copyWith(
-      viewId: viewId == freezed
+      viewId: null == viewId
           ? _value.viewId
           : viewId // ignore: cast_nullable_to_non_nullable
               as int,
-      textureId: textureId == freezed
+      textureId: null == textureId
           ? _value.textureId
           : textureId // ignore: cast_nullable_to_non_nullable
               as int,
-      surfaceSize: surfaceSize == freezed
+      surfaceSize: null == surfaceSize
           ? _value.surfaceSize
           : surfaceSize // ignore: cast_nullable_to_non_nullable
               as Size,
-      visibleBounds: visibleBounds == freezed
+      visibleBounds: null == visibleBounds
           ? _value.visibleBounds
           : visibleBounds // ignore: cast_nullable_to_non_nullable
               as Rect,
-      popups: popups == freezed
+      popups: null == popups
           ? _value.popups
           : popups // ignore: cast_nullable_to_non_nullable
               as List<int>,
-      widgetKey: widgetKey == freezed
+      widgetKey: null == widgetKey
           ? _value.widgetKey
           : widgetKey // ignore: cast_nullable_to_non_nullable
               as Key,
-      textureKey: textureKey == freezed
+      textureKey: null == textureKey
           ? _value.textureKey
           : textureKey // ignore: cast_nullable_to_non_nullable
               as Key,
-    ));
+    ) as $Val);
   }
 }
 
@@ -103,6 +106,7 @@ abstract class _$$_BaseViewStateCopyWith<$Res>
           _$_BaseViewState value, $Res Function(_$_BaseViewState) then) =
       __$$_BaseViewStateCopyWithImpl<$Res>;
   @override
+  @useResult
   $Res call(
       {int viewId,
       int textureId,
@@ -115,51 +119,49 @@ abstract class _$$_BaseViewStateCopyWith<$Res>
 
 /// @nodoc
 class __$$_BaseViewStateCopyWithImpl<$Res>
-    extends _$BaseViewStateCopyWithImpl<$Res>
+    extends _$BaseViewStateCopyWithImpl<$Res, _$_BaseViewState>
     implements _$$_BaseViewStateCopyWith<$Res> {
   __$$_BaseViewStateCopyWithImpl(
       _$_BaseViewState _value, $Res Function(_$_BaseViewState) _then)
-      : super(_value, (v) => _then(v as _$_BaseViewState));
+      : super(_value, _then);
 
-  @override
-  _$_BaseViewState get _value => super._value as _$_BaseViewState;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? viewId = freezed,
-    Object? textureId = freezed,
-    Object? surfaceSize = freezed,
-    Object? visibleBounds = freezed,
-    Object? popups = freezed,
-    Object? widgetKey = freezed,
-    Object? textureKey = freezed,
+    Object? viewId = null,
+    Object? textureId = null,
+    Object? surfaceSize = null,
+    Object? visibleBounds = null,
+    Object? popups = null,
+    Object? widgetKey = null,
+    Object? textureKey = null,
   }) {
     return _then(_$_BaseViewState(
-      viewId: viewId == freezed
+      viewId: null == viewId
           ? _value.viewId
           : viewId // ignore: cast_nullable_to_non_nullable
               as int,
-      textureId: textureId == freezed
+      textureId: null == textureId
           ? _value.textureId
           : textureId // ignore: cast_nullable_to_non_nullable
               as int,
-      surfaceSize: surfaceSize == freezed
+      surfaceSize: null == surfaceSize
           ? _value.surfaceSize
           : surfaceSize // ignore: cast_nullable_to_non_nullable
               as Size,
-      visibleBounds: visibleBounds == freezed
+      visibleBounds: null == visibleBounds
           ? _value.visibleBounds
           : visibleBounds // ignore: cast_nullable_to_non_nullable
               as Rect,
-      popups: popups == freezed
+      popups: null == popups
           ? _value._popups
           : popups // ignore: cast_nullable_to_non_nullable
               as List<int>,
-      widgetKey: widgetKey == freezed
+      widgetKey: null == widgetKey
           ? _value.widgetKey
           : widgetKey // ignore: cast_nullable_to_non_nullable
               as Key,
-      textureKey: textureKey == freezed
+      textureKey: null == textureKey
           ? _value.textureKey
           : textureKey // ignore: cast_nullable_to_non_nullable
               as Key,
@@ -224,31 +226,34 @@ class _$_BaseViewState with DiagnosticableTreeMixin implements _BaseViewState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_BaseViewState &&
-            const DeepCollectionEquality().equals(other.viewId, viewId) &&
-            const DeepCollectionEquality().equals(other.textureId, textureId) &&
-            const DeepCollectionEquality()
-                .equals(other.surfaceSize, surfaceSize) &&
-            const DeepCollectionEquality()
-                .equals(other.visibleBounds, visibleBounds) &&
+            (identical(other.viewId, viewId) || other.viewId == viewId) &&
+            (identical(other.textureId, textureId) ||
+                other.textureId == textureId) &&
+            (identical(other.surfaceSize, surfaceSize) ||
+                other.surfaceSize == surfaceSize) &&
+            (identical(other.visibleBounds, visibleBounds) ||
+                other.visibleBounds == visibleBounds) &&
             const DeepCollectionEquality().equals(other._popups, _popups) &&
-            const DeepCollectionEquality().equals(other.widgetKey, widgetKey) &&
-            const DeepCollectionEquality()
-                .equals(other.textureKey, textureKey));
+            (identical(other.widgetKey, widgetKey) ||
+                other.widgetKey == widgetKey) &&
+            (identical(other.textureKey, textureKey) ||
+                other.textureKey == textureKey));
   }
 
   @override
   int get hashCode => Object.hash(
       runtimeType,
-      const DeepCollectionEquality().hash(viewId),
-      const DeepCollectionEquality().hash(textureId),
-      const DeepCollectionEquality().hash(surfaceSize),
-      const DeepCollectionEquality().hash(visibleBounds),
+      viewId,
+      textureId,
+      surfaceSize,
+      visibleBounds,
       const DeepCollectionEquality().hash(_popups),
-      const DeepCollectionEquality().hash(widgetKey),
-      const DeepCollectionEquality().hash(textureKey));
+      widgetKey,
+      textureKey);
 
   @JsonKey(ignore: true)
   @override
+  @pragma('vm:prefer-inline')
   _$$_BaseViewStateCopyWith<_$_BaseViewState> get copyWith =>
       __$$_BaseViewStateCopyWithImpl<_$_BaseViewState>(this, _$identity);
 }

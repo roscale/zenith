@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +37,17 @@ class Zenith extends StatelessWidget {
       title: 'Zenith',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+      ),
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        // Enable scrolling by dragging the mouse cursor.
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.invertedStylus,
+          PointerDeviceKind.trackpad,
+          PointerDeviceKind.unknown,
+        },
       ),
       home: Builder(
         builder: (context) {

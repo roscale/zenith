@@ -32,7 +32,8 @@ mixin _$TaskSwitcherState {
 abstract class $TaskSwitcherStateCopyWith<$Res> {
   factory $TaskSwitcherStateCopyWith(
           TaskSwitcherState value, $Res Function(TaskSwitcherState) then) =
-      _$TaskSwitcherStateCopyWithImpl<$Res>;
+      _$TaskSwitcherStateCopyWithImpl<$Res, TaskSwitcherState>;
+  @useResult
   $Res call(
       {bool inOverview,
       double scale,
@@ -42,44 +43,46 @@ abstract class $TaskSwitcherStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$TaskSwitcherStateCopyWithImpl<$Res>
+class _$TaskSwitcherStateCopyWithImpl<$Res, $Val extends TaskSwitcherState>
     implements $TaskSwitcherStateCopyWith<$Res> {
   _$TaskSwitcherStateCopyWithImpl(this._value, this._then);
 
-  final TaskSwitcherState _value;
   // ignore: unused_field
-  final $Res Function(TaskSwitcherState) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? inOverview = freezed,
-    Object? scale = freezed,
-    Object? disableUserControl = freezed,
-    Object? areAnimationsPlaying = freezed,
-    Object? constraints = freezed,
+    Object? inOverview = null,
+    Object? scale = null,
+    Object? disableUserControl = null,
+    Object? areAnimationsPlaying = null,
+    Object? constraints = null,
   }) {
     return _then(_value.copyWith(
-      inOverview: inOverview == freezed
+      inOverview: null == inOverview
           ? _value.inOverview
           : inOverview // ignore: cast_nullable_to_non_nullable
               as bool,
-      scale: scale == freezed
+      scale: null == scale
           ? _value.scale
           : scale // ignore: cast_nullable_to_non_nullable
               as double,
-      disableUserControl: disableUserControl == freezed
+      disableUserControl: null == disableUserControl
           ? _value.disableUserControl
           : disableUserControl // ignore: cast_nullable_to_non_nullable
               as bool,
-      areAnimationsPlaying: areAnimationsPlaying == freezed
+      areAnimationsPlaying: null == areAnimationsPlaying
           ? _value.areAnimationsPlaying
           : areAnimationsPlaying // ignore: cast_nullable_to_non_nullable
               as bool,
-      constraints: constraints == freezed
+      constraints: null == constraints
           ? _value.constraints
           : constraints // ignore: cast_nullable_to_non_nullable
               as BoxConstraints,
-    ));
+    ) as $Val);
   }
 }
 
@@ -90,6 +93,7 @@ abstract class _$$_TaskSwitcherStateCopyWith<$Res>
           $Res Function(_$_TaskSwitcherState) then) =
       __$$_TaskSwitcherStateCopyWithImpl<$Res>;
   @override
+  @useResult
   $Res call(
       {bool inOverview,
       double scale,
@@ -100,41 +104,39 @@ abstract class _$$_TaskSwitcherStateCopyWith<$Res>
 
 /// @nodoc
 class __$$_TaskSwitcherStateCopyWithImpl<$Res>
-    extends _$TaskSwitcherStateCopyWithImpl<$Res>
+    extends _$TaskSwitcherStateCopyWithImpl<$Res, _$_TaskSwitcherState>
     implements _$$_TaskSwitcherStateCopyWith<$Res> {
   __$$_TaskSwitcherStateCopyWithImpl(
       _$_TaskSwitcherState _value, $Res Function(_$_TaskSwitcherState) _then)
-      : super(_value, (v) => _then(v as _$_TaskSwitcherState));
+      : super(_value, _then);
 
-  @override
-  _$_TaskSwitcherState get _value => super._value as _$_TaskSwitcherState;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? inOverview = freezed,
-    Object? scale = freezed,
-    Object? disableUserControl = freezed,
-    Object? areAnimationsPlaying = freezed,
-    Object? constraints = freezed,
+    Object? inOverview = null,
+    Object? scale = null,
+    Object? disableUserControl = null,
+    Object? areAnimationsPlaying = null,
+    Object? constraints = null,
   }) {
     return _then(_$_TaskSwitcherState(
-      inOverview: inOverview == freezed
+      inOverview: null == inOverview
           ? _value.inOverview
           : inOverview // ignore: cast_nullable_to_non_nullable
               as bool,
-      scale: scale == freezed
+      scale: null == scale
           ? _value.scale
           : scale // ignore: cast_nullable_to_non_nullable
               as double,
-      disableUserControl: disableUserControl == freezed
+      disableUserControl: null == disableUserControl
           ? _value.disableUserControl
           : disableUserControl // ignore: cast_nullable_to_non_nullable
               as bool,
-      areAnimationsPlaying: areAnimationsPlaying == freezed
+      areAnimationsPlaying: null == areAnimationsPlaying
           ? _value.areAnimationsPlaying
           : areAnimationsPlaying // ignore: cast_nullable_to_non_nullable
               as bool,
-      constraints: constraints == freezed
+      constraints: null == constraints
           ? _value.constraints
           : constraints // ignore: cast_nullable_to_non_nullable
               as BoxConstraints,
@@ -174,28 +176,24 @@ class _$_TaskSwitcherState implements _TaskSwitcherState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_TaskSwitcherState &&
-            const DeepCollectionEquality()
-                .equals(other.inOverview, inOverview) &&
-            const DeepCollectionEquality().equals(other.scale, scale) &&
-            const DeepCollectionEquality()
-                .equals(other.disableUserControl, disableUserControl) &&
-            const DeepCollectionEquality()
-                .equals(other.areAnimationsPlaying, areAnimationsPlaying) &&
-            const DeepCollectionEquality()
-                .equals(other.constraints, constraints));
+            (identical(other.inOverview, inOverview) ||
+                other.inOverview == inOverview) &&
+            (identical(other.scale, scale) || other.scale == scale) &&
+            (identical(other.disableUserControl, disableUserControl) ||
+                other.disableUserControl == disableUserControl) &&
+            (identical(other.areAnimationsPlaying, areAnimationsPlaying) ||
+                other.areAnimationsPlaying == areAnimationsPlaying) &&
+            (identical(other.constraints, constraints) ||
+                other.constraints == constraints));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(inOverview),
-      const DeepCollectionEquality().hash(scale),
-      const DeepCollectionEquality().hash(disableUserControl),
-      const DeepCollectionEquality().hash(areAnimationsPlaying),
-      const DeepCollectionEquality().hash(constraints));
+  int get hashCode => Object.hash(runtimeType, inOverview, scale,
+      disableUserControl, areAnimationsPlaying, constraints);
 
   @JsonKey(ignore: true)
   @override
+  @pragma('vm:prefer-inline')
   _$$_TaskSwitcherStateCopyWith<_$_TaskSwitcherState> get copyWith =>
       __$$_TaskSwitcherStateCopyWithImpl<_$_TaskSwitcherState>(
           this, _$identity);
