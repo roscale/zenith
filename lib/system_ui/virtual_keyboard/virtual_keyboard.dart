@@ -31,7 +31,7 @@ class VirtualKeyboard extends ConsumerWidget {
         builder: (BuildContext context, BoxConstraints constraints) {
           double keyWidth = constraints.maxWidth / 10;
           final id = ref.watch(keyboardId);
-          ref.read(keyboardKeyWidth(id).notifier).state = keyWidth;
+          Future.microtask(() => ref.read(keyboardKeyWidth(id).notifier).state = keyWidth);
 
           return Material(
             color: Color.lerp(Colors.black, Colors.white, 0.9),

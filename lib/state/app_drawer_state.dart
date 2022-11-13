@@ -1,13 +1,12 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
-import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart' as freedesktop;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:jovial_svg/jovial_svg.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:zenith/system_ui/task_switcher/app_drawer/app_drawer.dart';
+import 'package:zenith/system_ui/app_drawer/app_drawer.dart';
 
 part 'app_drawer_state.freezed.dart';
 
@@ -20,6 +19,9 @@ final appDrawerStateProvider = StateProvider(
 
     /// The user is actively dragging the drawer.
     dragging: false,
+
+    /// You can interact with the drawer and taps won't just go though it.
+    interactable: false,
 
     /// The finger velocity when the drag ends.
     dragVelocity: 0,
@@ -34,9 +36,6 @@ final appDrawerStateProvider = StateProvider(
     /// The actual drawer widget that is inserted into the Overlay.
     overlayEntry: OverlayEntry(builder: (_) => const AppDrawer()),
 
-    /// There is no way to query if the OverlayEntry is inserted into the overlay, so we do it ourselves.
-    overlayEntryInserted: false,
-
     /// Event to notify the drawer to initiate the closing animations.
     /// Just assigning a new Object() will do the trick because 2 different Object instances will always be unequal.
     closePanel: Object(),
@@ -48,11 +47,11 @@ class AppDrawerState with _$AppDrawerState {
   const factory AppDrawerState({
     required bool draggable,
     required bool dragging,
+    required bool interactable,
     required double dragVelocity,
     required double offset,
     required double slideDistance,
     required OverlayEntry overlayEntry,
-    required bool overlayEntryInserted,
     required Object closePanel,
   }) = _AppDrawerState;
 }
@@ -69,8 +68,8 @@ Future<List<LocalizedDesktopEntry>> desktopEntries(DesktopEntriesRef ref) {
 }
 
 @Riverpod(keepAlive: true)
-Future<freedesktop.IconTheme> defaultIconTheme(DefaultIconThemeRef ref) {
-  return freedesktop.IconTheme.load('breeze-dark');
+Future<FreedesktopIconTheme> defaultIconTheme(DefaultIconThemeRef ref) {
+  return FreedesktopIconTheme.load('Adwaita');
 }
 
 Stream<File> _getAllDesktopEntryFiles() async* {

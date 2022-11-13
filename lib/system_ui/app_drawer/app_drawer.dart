@@ -1,9 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tuple/tuple.dart';
 import 'package:zenith/state/app_drawer_state.dart';
-import 'package:zenith/system_ui/task_switcher/app_drawer/app_grid.dart';
+import 'package:zenith/system_ui/app_drawer/app_grid.dart';
 
 class AppDrawer extends ConsumerStatefulWidget {
   const AppDrawer({super.key});
@@ -47,13 +46,13 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
       }
     });
 
-    ref.listenManual(appDrawerStateProvider.select((value) => Tuple2(value.dragging, value.offset)),
-        (previous, Tuple2<bool, double> next) {
-      final appDrawerState = ref.read(appDrawerStateProvider);
-      if (!next.item1 && next.item2 == appDrawerState.slideDistance) {
-        appDrawerState.overlayEntry.remove();
-      }
-    });
+    // ref.listenManual(appDrawerStateProvider.select((value) => Tuple2(value.dragging, value.offset)),
+    //     (previous, Tuple2<bool, double> next) {
+    //   final appDrawerState = ref.read(appDrawerStateProvider);
+    //   if (!next.item1 && next.item2 == appDrawerState.slideDistance) {
+    //     appDrawerState.overlayEntry.remove();
+    //   }
+    // });
 
     ref.listenManual(appDrawerStateProvider.select((value) => value.closePanel), (_, __) {
       animateClosing(1);
@@ -66,11 +65,13 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
   }
 
   void animateOpening(double velocity) {
+    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(interactable: true));
     cancelAnimations();
     animateTo(0, velocity);
   }
 
   void animateClosing(double velocity) {
+    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(interactable: false));
     cancelAnimations();
     animateTo(ref.read(appDrawerStateProvider).slideDistance, velocity);
   }
@@ -100,12 +101,16 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
   Widget build(BuildContext context) {
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
+        bool interactable = ref.watch(appDrawerStateProvider.select((value) => value.interactable));
         double offset = ref.watch(appDrawerStateProvider.select((value) => value.offset));
         double slideDistance = ref.watch(appDrawerStateProvider.select((value) => value.slideDistance));
 
-        return Opacity(
-          opacity: 1 - offset / slideDistance,
-          child: child,
+        return IgnorePointer(
+          ignoring: !interactable,
+          child: Opacity(
+            opacity: 1 - offset / slideDistance,
+            child: child,
+          ),
         );
       },
       child: Consumer(
@@ -119,16 +124,11 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
           onPointerDown: (e) {
             _velocityTracker = VelocityTracker.withKind(PointerDeviceKind.touch);
             _velocityTracker.addPosition(e.timeStamp, e.localPosition);
-            print('huh dd');
           },
           onPointerMove: (e) {
             final appDrawerState = ref.read(appDrawerStateProvider);
 
-            print('huh');
-
             if (appDrawerState.draggable) {
-              print('move');
-
               ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(
                     dragging: true,
                     offset: (state.offset + e.delta.dy).clamp(0, appDrawerState.slideDistance),
@@ -137,8 +137,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
             }
           },
           onPointerUp: (e) {
-            print('huh up');
-
             _velocityTracker.addPosition(e.timeStamp, e.localPosition);
 
             final doesntScroll =
@@ -156,7 +154,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
             color: Colors.black.withOpacity(0.8),
             child: Column(
               children: [
-                const TextField(),
                 Expanded(
                   child: AppDrawerScrollNotificationListener(
                     child: AppGrid(scrollController: _scrollController),

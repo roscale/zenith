@@ -9,12 +9,12 @@ class AppDrawerHandle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onPanStart: (DragStartDetails details) {
-        Overlay.of(context)?.insert(ref.read(appDrawerStateProvider).overlayEntry);
-        ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(
-              overlayEntryInserted: true,
-              dragging: true,
-              offset: state.slideDistance,
-            ));
+        ref.read(appDrawerStateProvider.notifier).update(
+              (state) => state.copyWith(
+                dragging: true,
+                offset: state.slideDistance,
+              ),
+            );
       },
       onPanEnd: (DragEndDetails details) {
         ref.read(appDrawerStateProvider.notifier).update(

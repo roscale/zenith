@@ -9,7 +9,7 @@ import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:zenith/surface_manager.dart';
-import 'package:zenith/system_ui/task_switcher/app_drawer/handle.dart';
+import 'package:zenith/system_ui/app_drawer/handle.dart';
 import 'package:zenith/system_ui/task_switcher/invisible_bottom_bar.dart';
 import 'package:zenith/system_ui/task_switcher/task.dart';
 import 'package:zenith/system_ui/task_switcher/task_switcher_scroller.dart';

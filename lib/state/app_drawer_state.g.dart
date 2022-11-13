@@ -111,14 +111,14 @@ final desktopEntriesProvider = FutureProvider<List<LocalizedDesktopEntry>>(
       : $desktopEntriesHash,
 );
 typedef DesktopEntriesRef = FutureProviderRef<List<LocalizedDesktopEntry>>;
-String $defaultIconThemeHash() => r'79007c08190c70b87508641a1b92a2aaffdfd96c';
+String $defaultIconThemeHash() => r'f82c403a2eef9a725fcfc5014c1ac9b84c534831';
 
 /// See also [defaultIconTheme].
-final defaultIconThemeProvider = FutureProvider<dynamic>(
+final defaultIconThemeProvider = FutureProvider<FreedesktopIconTheme>(
   defaultIconTheme,
   name: r'defaultIconThemeProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : $defaultIconThemeHash,
 );
-typedef DefaultIconThemeRef = FutureProviderRef<dynamic>;
+typedef DefaultIconThemeRef = FutureProviderRef<FreedesktopIconTheme>;

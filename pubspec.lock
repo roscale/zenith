@@ -213,7 +213,7 @@ packages:
       name: freedesktop_desktop_entry
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.4"
+    version: "0.4.0"
   freezed:
     dependency: "direct main"
     description:
@@ -437,7 +437,7 @@ packages:
       name: shelf_web_socket
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.2"
+    version: "1.0.3"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -484,7 +484,7 @@ packages:
       name: stream_transform
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.1"
+    version: "2.1.0"
   string_scanner:
     dependency: transitive
     description:

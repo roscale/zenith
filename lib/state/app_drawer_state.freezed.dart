@@ -18,11 +18,11 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$AppDrawerState {
   bool get draggable => throw _privateConstructorUsedError;
   bool get dragging => throw _privateConstructorUsedError;
+  bool get interactable => throw _privateConstructorUsedError;
   double get dragVelocity => throw _privateConstructorUsedError;
   double get offset => throw _privateConstructorUsedError;
   double get slideDistance => throw _privateConstructorUsedError;
   OverlayEntry get overlayEntry => throw _privateConstructorUsedError;
-  bool get overlayEntryInserted => throw _privateConstructorUsedError;
   Object get closePanel => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -39,11 +39,11 @@ abstract class $AppDrawerStateCopyWith<$Res> {
   $Res call(
       {bool draggable,
       bool dragging,
+      bool interactable,
       double dragVelocity,
       double offset,
       double slideDistance,
       OverlayEntry overlayEntry,
-      bool overlayEntryInserted,
       Object closePanel});
 }
 
@@ -62,11 +62,11 @@ class _$AppDrawerStateCopyWithImpl<$Res, $Val extends AppDrawerState>
   $Res call({
     Object? draggable = null,
     Object? dragging = null,
+    Object? interactable = null,
     Object? dragVelocity = null,
     Object? offset = null,
     Object? slideDistance = null,
     Object? overlayEntry = null,
-    Object? overlayEntryInserted = null,
     Object? closePanel = null,
   }) {
     return _then(_value.copyWith(
@@ -77,6 +77,10 @@ class _$AppDrawerStateCopyWithImpl<$Res, $Val extends AppDrawerState>
       dragging: null == dragging
           ? _value.dragging
           : dragging // ignore: cast_nullable_to_non_nullable
+              as bool,
+      interactable: null == interactable
+          ? _value.interactable
+          : interactable // ignore: cast_nullable_to_non_nullable
               as bool,
       dragVelocity: null == dragVelocity
           ? _value.dragVelocity
@@ -94,10 +98,6 @@ class _$AppDrawerStateCopyWithImpl<$Res, $Val extends AppDrawerState>
           ? _value.overlayEntry
           : overlayEntry // ignore: cast_nullable_to_non_nullable
               as OverlayEntry,
-      overlayEntryInserted: null == overlayEntryInserted
-          ? _value.overlayEntryInserted
-          : overlayEntryInserted // ignore: cast_nullable_to_non_nullable
-              as bool,
       closePanel: null == closePanel ? _value.closePanel : closePanel,
     ) as $Val);
   }
@@ -114,11 +114,11 @@ abstract class _$$_AppDrawerStateCopyWith<$Res>
   $Res call(
       {bool draggable,
       bool dragging,
+      bool interactable,
       double dragVelocity,
       double offset,
       double slideDistance,
       OverlayEntry overlayEntry,
-      bool overlayEntryInserted,
       Object closePanel});
 }
 
@@ -135,11 +135,11 @@ class __$$_AppDrawerStateCopyWithImpl<$Res>
   $Res call({
     Object? draggable = null,
     Object? dragging = null,
+    Object? interactable = null,
     Object? dragVelocity = null,
     Object? offset = null,
     Object? slideDistance = null,
     Object? overlayEntry = null,
-    Object? overlayEntryInserted = null,
     Object? closePanel = null,
   }) {
     return _then(_$_AppDrawerState(
@@ -150,6 +150,10 @@ class __$$_AppDrawerStateCopyWithImpl<$Res>
       dragging: null == dragging
           ? _value.dragging
           : dragging // ignore: cast_nullable_to_non_nullable
+              as bool,
+      interactable: null == interactable
+          ? _value.interactable
+          : interactable // ignore: cast_nullable_to_non_nullable
               as bool,
       dragVelocity: null == dragVelocity
           ? _value.dragVelocity
@@ -167,10 +171,6 @@ class __$$_AppDrawerStateCopyWithImpl<$Res>
           ? _value.overlayEntry
           : overlayEntry // ignore: cast_nullable_to_non_nullable
               as OverlayEntry,
-      overlayEntryInserted: null == overlayEntryInserted
-          ? _value.overlayEntryInserted
-          : overlayEntryInserted // ignore: cast_nullable_to_non_nullable
-              as bool,
       closePanel: null == closePanel ? _value.closePanel : closePanel,
     ));
   }
@@ -182,17 +182,19 @@ class _$_AppDrawerState implements _AppDrawerState {
   const _$_AppDrawerState(
       {required this.draggable,
       required this.dragging,
+      required this.interactable,
       required this.dragVelocity,
       required this.offset,
       required this.slideDistance,
       required this.overlayEntry,
-      required this.overlayEntryInserted,
       required this.closePanel});
 
   @override
   final bool draggable;
   @override
   final bool dragging;
+  @override
+  final bool interactable;
   @override
   final double dragVelocity;
   @override
@@ -202,13 +204,11 @@ class _$_AppDrawerState implements _AppDrawerState {
   @override
   final OverlayEntry overlayEntry;
   @override
-  final bool overlayEntryInserted;
-  @override
   final Object closePanel;
 
   @override
   String toString() {
-    return 'AppDrawerState(draggable: $draggable, dragging: $dragging, dragVelocity: $dragVelocity, offset: $offset, slideDistance: $slideDistance, overlayEntry: $overlayEntry, overlayEntryInserted: $overlayEntryInserted, closePanel: $closePanel)';
+    return 'AppDrawerState(draggable: $draggable, dragging: $dragging, interactable: $interactable, dragVelocity: $dragVelocity, offset: $offset, slideDistance: $slideDistance, overlayEntry: $overlayEntry, closePanel: $closePanel)';
   }
 
   @override
@@ -220,6 +220,8 @@ class _$_AppDrawerState implements _AppDrawerState {
                 other.draggable == draggable) &&
             (identical(other.dragging, dragging) ||
                 other.dragging == dragging) &&
+            (identical(other.interactable, interactable) ||
+                other.interactable == interactable) &&
             (identical(other.dragVelocity, dragVelocity) ||
                 other.dragVelocity == dragVelocity) &&
             (identical(other.offset, offset) || other.offset == offset) &&
@@ -227,8 +229,6 @@ class _$_AppDrawerState implements _AppDrawerState {
                 other.slideDistance == slideDistance) &&
             (identical(other.overlayEntry, overlayEntry) ||
                 other.overlayEntry == overlayEntry) &&
-            (identical(other.overlayEntryInserted, overlayEntryInserted) ||
-                other.overlayEntryInserted == overlayEntryInserted) &&
             const DeepCollectionEquality()
                 .equals(other.closePanel, closePanel));
   }
@@ -238,11 +238,11 @@ class _$_AppDrawerState implements _AppDrawerState {
       runtimeType,
       draggable,
       dragging,
+      interactable,
       dragVelocity,
       offset,
       slideDistance,
       overlayEntry,
-      overlayEntryInserted,
       const DeepCollectionEquality().hash(closePanel));
 
   @JsonKey(ignore: true)
@@ -256,17 +256,19 @@ abstract class _AppDrawerState implements AppDrawerState {
   const factory _AppDrawerState(
       {required final bool draggable,
       required final bool dragging,
+      required final bool interactable,
       required final double dragVelocity,
       required final double offset,
       required final double slideDistance,
       required final OverlayEntry overlayEntry,
-      required final bool overlayEntryInserted,
       required final Object closePanel}) = _$_AppDrawerState;
 
   @override
   bool get draggable;
   @override
   bool get dragging;
+  @override
+  bool get interactable;
   @override
   double get dragVelocity;
   @override
@@ -275,8 +277,6 @@ abstract class _AppDrawerState implements AppDrawerState {
   double get slideDistance;
   @override
   OverlayEntry get overlayEntry;
-  @override
-  bool get overlayEntryInserted;
   @override
   Object get closePanel;
   @override

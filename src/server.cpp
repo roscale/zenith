@@ -130,18 +130,27 @@ void ZenithServer::run(char* startup_command) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
-	embedder_state = std::make_unique<EmbedderState>(this, main_egl);
-
-	// Run the engine.
-	embedder_state->run_engine();
-
 	const char* socket = wl_display_add_socket_auto(display);
 	if (!socket) {
 		wlr_log(WLR_ERROR, "Could not create a Wayland socket");
 		wlr_backend_destroy(backend);
 		exit(9);
 	}
+
+    // Make sure the X11 session from the host is not visible because some programs prefer talking
+    // to the X server instead of defaulting to Wayland.
+    unsetenv("DISPLAY");
+
+    setenv("WAYLAND_DISPLAY", socket, true);
+    setenv("XDG_SESSION_TYPE", "wayland", true);
+    setenv("GDK_BACKEND", "wayland", true); // Force GTK apps to run on Wayland.
+    setenv("QT_QPA_PLATFORM", "wayland", true); // Force QT apps to run on Wayland.
+
+    wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
+    embedder_state = std::make_unique<EmbedderState>(this, main_egl);
+
+    // Run the engine.
+    embedder_state->run_engine();
 
 	if (!wlr_backend_start(backend)) {
 		wlr_log(WLR_ERROR, "Could not start backend");
@@ -151,15 +160,6 @@ void ZenithServer::run(char* startup_command) {
 	}
 
 	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
-
-	// Make sure the X11 session from the host is not visible because some programs prefer talking
-	// to the X server instead of defaulting to Wayland.
-	unsetenv("DISPLAY");
-
-	setenv("WAYLAND_DISPLAY", socket, true);
-	setenv("XDG_SESSION_TYPE", "wayland", true);
-	setenv("GDK_BACKEND", "wayland", true); // Force GTK apps to run on Wayland.
-	setenv("QT_QPA_PLATFORM", "wayland", true); // Force QT apps to run on Wayland.
 
 	wl_display_run(display);
 

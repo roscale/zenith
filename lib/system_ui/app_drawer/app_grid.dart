@@ -3,40 +3,47 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
-import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart' as freedesktop;
 import 'package:jovial_svg/jovial_svg.dart';
 import 'package:zenith/state/app_drawer_state.dart';
 
-class AppGrid extends ConsumerWidget {
+final _appWidgetCacheProvider = Provider<List<Widget>>((ref) {
+  return ref.watch(desktopEntriesProvider).when(
+        data: (List<LocalizedDesktopEntry> desktopEntries) {
+          return desktopEntries
+              .map(
+                (desktopEntry) => Padding(
+                  padding: const EdgeInsets.all(0.0),
+                  child: AppEntry(desktopEntry: desktopEntry),
+                ),
+              )
+              .toList();
+        },
+        error: (_, __) => [],
+        loading: () => [],
+      );
+});
+
+class AppGrid extends ConsumerStatefulWidget {
   final ScrollController scrollController;
 
   const AppGrid({super.key, required this.scrollController});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppGrid> createState() => _AppGridState();
+}
+
+class _AppGridState extends ConsumerState<AppGrid> {
+  @override
+  Widget build(BuildContext context) {
+    final widgets = ref.watch(_appWidgetCacheProvider);
     bool dragging = ref.watch(appDrawerStateProvider.select((value) => value.dragging));
 
-    return ref.watch(desktopEntriesProvider).when(
-          data: (desktopEntries) => _buildList(desktopEntries, dragging),
-          error: (_, __) => const SizedBox(),
-          loading: () => const SizedBox(),
-        );
-  }
-
-  Widget _buildList(List<LocalizedDesktopEntry> desktopEntries, bool dragging) {
     return GridView.builder(
-      controller: scrollController,
+      controller: widget.scrollController,
       physics: dragging ? const NeverScrollableScrollPhysics() : const ClampingScrollPhysics(),
-      itemCount: desktopEntries.length,
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 150,
-      ),
-      itemBuilder: (BuildContext context, int index) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: AppEntry(desktopEntry: desktopEntries[index]),
-        );
-      },
+      itemCount: widgets.length,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 100),
+      itemBuilder: (BuildContext context, int index) => widgets[index],
     );
   }
 }
@@ -60,13 +67,18 @@ class AppEntry extends ConsumerWidget {
 
         // FIXME
         exec = exec.replaceAll(RegExp(r'( %.?)'), '');
+        debugPrint(exec);
 
         final bool terminal = desktopEntry.entries[DesktopEntryKey.terminal.string]?.getBoolean() ?? false;
 
-        if (terminal) {
-          await Process.start('konsole', ['-e', exec]);
-        } else {
-          await Process.start('/bin/sh', ['-c', exec]);
+        try {
+          if (terminal) {
+            await Process.start('konsole', ['-e', exec]);
+          } else {
+            await Process.start('/bin/sh', ['-c', exec]);
+          }
+        } catch (e) {
+          debugPrint(e.toString());
         }
 
         ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(closePanel: Object()));
@@ -122,7 +134,7 @@ class AppIcon extends StatelessWidget {
     );
   }
 
-  Widget _buildIcon(freedesktop.IconTheme iconTheme, String icon) {
+  Widget _buildIcon(FreedesktopIconTheme iconTheme, String icon) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         File? file = iconTheme.findIcon(
@@ -145,7 +157,7 @@ class AppIcon extends StatelessWidget {
                   ),
                 );
               },
-              error: (e, st) {
+              error: (Object error, StackTrace stackTrace) {
                 return const SizedBox();
               },
               loading: () {
