@@ -124,6 +124,12 @@ class PlatformApi {
       }
     });
   }
+
+  static Future<void> closeView(int viewId) {
+    return _platform.invokeMethod("close_window", {
+      "view_id": viewId,
+    });
+  }
 }
 
 abstract class TextInputEvent {}

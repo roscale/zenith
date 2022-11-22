@@ -25,6 +25,10 @@ final taskPositionProvider = StateProvider.family<double, int>((ref, int viewId)
   return 0.0;
 });
 
+final taskVerticalPositionProvider = StateProvider.family<double, int>((ref, int viewId) {
+  return 0.0;
+});
+
 final taskWidgetProvider = StateProvider.family<Widget, int>((ref, int viewId) {
   return const SizedBox();
 });
@@ -181,6 +185,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
 
     ref.read(taskList.notifier).add(viewId);
     ref.read(taskWidgetProvider(viewId).notifier).state = Task(
+      key: ValueKey(viewId),
       viewId: viewId,
       switchToTask: () => _switchToTask(viewId),
     );
@@ -205,23 +210,26 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   Future<void> _stopTask(int viewId) async {
-    final tasks = ref.read(taskList);
-    int closingTask = tasks.indexOf(viewId);
-    int? focusingTask = taskToFocusAfterClosing(closingTask);
-    // Might be null if there's no task left, in which case there's nothing to animate.
-    if (focusingTask != null) {
-      var currentTaskIndex = positionToTaskIndex(position);
-      final notifier = ref.read(taskSwitcherState.notifier);
+    if (!ref.read(taskSwitcherState).inOverview) {
+      final tasks = ref.read(taskList);
+      int closingTask = tasks.indexOf(viewId);
+      int? focusingTask = taskToFocusAfterClosing(closingTask);
+      // Might be null if there's no task left, in which case there's nothing to animate.
+      if (focusingTask != null) {
+        var currentTaskIndex = positionToTaskIndex(position);
+        final notifier = ref.read(taskSwitcherState.notifier);
 
-      // Don't let the user interact with the task switcher while the animation is ongoing.
-      notifier.disableUserControl = true;
-      if (currentTaskIndex == closingTask) {
-        await switchToTaskByIndex(focusingTask, zoomOut: true);
-      } else {
-        await switchToTaskByIndex(currentTaskIndex);
+        // Don't let the user interact with the task switcher while the animation is ongoing.
+        notifier.disableUserControl = true;
+        if (currentTaskIndex == closingTask) {
+          await switchToTaskByIndex(focusingTask, zoomOut: true);
+        } else {
+          await switchToTaskByIndex(currentTaskIndex);
+        }
+        notifier.disableUserControl = false;
       }
-      notifier.disableUserControl = false;
     }
+
     _removeTask(viewId);
 
     final textureId = ref.read(baseViewState(viewId)).textureId;

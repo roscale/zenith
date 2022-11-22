@@ -92,7 +92,8 @@ void close_window(ZenithServer* server,
                   const flutter::MethodCall<>& call,
                   std::unique_ptr<flutter::MethodResult<>>&& result) {
 
-	size_t view_id = std::get<int>(call.arguments()[0]);
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 
 	auto view_it = server->views.find(view_id);
 	if (view_it == server->views.end()) {
