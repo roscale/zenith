@@ -26,7 +26,7 @@ void main() {
   runApp(const ProviderScope(child: Zenith()));
 }
 
-const _notchHeight = 80.0; // physical pixels
+const _notchHeight = 40.0; // physical pixels
 
 class Zenith extends StatelessWidget {
   const Zenith({Key? key}) : super(key: key);
