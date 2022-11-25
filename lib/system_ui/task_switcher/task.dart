@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/state/task_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:zenith/system_ui/task_switcher/fitted_window.dart';
@@ -12,31 +12,62 @@ import 'package:zenith/system_ui/task_switcher/task_switcher.dart';
 import 'package:zenith/system_ui/virtual_keyboard/with_virtual_keyboard.dart';
 import 'package:zenith/widgets/window.dart';
 
-class Task extends HookConsumerWidget {
+class Task extends ConsumerStatefulWidget {
   final int viewId;
-  final VoidCallback switchToTask;
+  final VoidCallback onTap;
+  final VoidCallback onClosed;
 
   const Task({
     Key? key,
     required this.viewId,
-    required this.switchToTask,
+    required this.onTap,
+    required this.onClosed,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final controller = useAnimationController(duration: const Duration(milliseconds: 250));
-    final animation = useRef(Tween(begin: 0.0, end: 0.0).animate(controller));
+  ConsumerState<Task> createState() => _TaskState();
+}
 
-    useEffect(() {
-      controller.addListener(() {
-        ref.read(taskVerticalPositionProvider(viewId).notifier).state = animation.value.value;
-      });
-      return null;
+class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin {
+  late final controller = AnimationController(
+    duration: const Duration(milliseconds: 250),
+    vsync: this,
+  );
+
+  late var animation = Tween(begin: 0.0, end: 0.0).animate(controller);
+
+  @override
+  void initState() {
+    super.initState();
+    controller.addListener(() {
+      ref.read(taskVerticalPositionProvider(widget.viewId).notifier).state = animation.value;
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(taskStateProvider(widget.viewId).select((value) => value.startDismissAnimation), (_, __) async {
+      final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
+      notifier.dismissState = TaskDismissState.dismissing;
+      await _startSlideClosingAnimation();
+      notifier.dismissState = TaskDismissState.dismissed;
+    });
+
+    ref.listen(taskStateProvider(widget.viewId).select((value) => value.cancelDismissAnimation), (_, __) {
+      final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
+      notifier.dismissState = TaskDismissState.open;
+      _animateBackToPosition();
     });
 
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        final position = ref.watch(taskPositionProvider(viewId));
+        final position = ref.watch(taskPositionProvider(widget.viewId));
         final constraints = ref.watch(taskSwitcherState.select((v) => v.constraints));
 
         return Positioned(
@@ -49,7 +80,7 @@ class Task extends HookConsumerWidget {
       child: DeferPointer(
         child: Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            double position = ref.watch(taskVerticalPositionProvider(viewId));
+            double position = ref.watch(taskVerticalPositionProvider(widget.viewId));
 
             return Transform.translate(
               offset: Offset(0, position),
@@ -66,45 +97,24 @@ class Task extends HookConsumerWidget {
               // Doing my best to not change the depth of the tree to avoid rebuilding the whole subtree.
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: inOverview ? () => switchToTask() : null,
+                onTap: inOverview ? () => widget.onTap() : null,
                 onVerticalDragUpdate: inOverview
                     ? (DragUpdateDetails details) {
                         ref
-                            .read(taskVerticalPositionProvider(viewId).notifier)
+                            .read(taskVerticalPositionProvider(widget.viewId).notifier)
                             .update((state) => (state + details.primaryDelta!).clamp(-double.infinity, 0));
                       }
                     : null,
-                onVerticalDragDown: inOverview
-                    ? (_) {
-                        controller.stop();
-                      }
-                    : null,
-                onVerticalDragCancel: inOverview
-                    ? () {
-                        animation.value = Tween(
-                          begin: ref.read(taskVerticalPositionProvider(viewId)),
-                          end: 0.0,
-                        ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
-
-                        controller.forward(from: 0);
-                      }
-                    : null,
+                onVerticalDragDown: inOverview ? (_) => controller.stop() : null,
+                onVerticalDragCancel: inOverview ? _animateBackToPosition : null,
                 onVerticalDragEnd: inOverview
-                    ? (DragEndDetails details) {
+                    ? (DragEndDetails details) async {
                         if (details.primaryVelocity! < -1000) {
-                          animation.value = Tween(
-                            begin: ref.read(taskVerticalPositionProvider(viewId)),
-                            end: -1000.0,
-                          ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
-
-                          PlatformApi.closeView(viewId);
+                          PlatformApi.closeView(widget.viewId);
+                          ref.read(taskStateProvider(widget.viewId).notifier).startDismissAnimation();
                         } else {
-                          animation.value = Tween(
-                            begin: ref.read(taskVerticalPositionProvider(viewId)),
-                            end: 0.0,
-                          ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
+                          ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
                         }
-                        controller.forward(from: 0);
                       }
                     : null,
                 child: IgnorePointer(
@@ -118,19 +128,19 @@ class Task extends HookConsumerWidget {
             },
             child: Consumer(
               builder: (_, WidgetRef ref, Widget? child) {
-                final virtualKeyboardKey = ref.watch(windowState(viewId).select((v) => v.virtualKeyboardKey));
+                final virtualKeyboardKey = ref.watch(windowState(widget.viewId).select((v) => v.virtualKeyboardKey));
                 return WithVirtualKeyboard(
                   key: virtualKeyboardKey,
-                  viewId: viewId,
+                  viewId: widget.viewId,
                   child: child!,
                 );
               },
               child: Consumer(
                 builder: (_, WidgetRef ref, __) {
-                  final widget = ref.watch(windowWidget(viewId));
+                  final window = ref.watch(windowWidget(widget.viewId));
                   return FittedWindow(
                     alignment: Alignment.topCenter,
-                    window: widget,
+                    window: window,
                   );
                 },
               ),
@@ -142,7 +152,7 @@ class Task extends HookConsumerWidget {
   }
 
   void _moveTaskToTheEnd(WidgetRef ref) async {
-    if (ref.read(taskList).last == viewId) {
+    if (ref.read(taskListProvider).last == widget.viewId) {
       return;
     }
     final notifier = ref.read(taskSwitcherState.notifier);
@@ -152,6 +162,24 @@ class Task extends HookConsumerWidget {
     // moveCurrentTaskToEnd();
     // jumpToLastTask();
     notifier.disableUserControl = false;
+  }
+
+  Future<void> _startSlideClosingAnimation() {
+    animation = Tween(
+      begin: ref.read(taskVerticalPositionProvider(widget.viewId)),
+      end: -1000.0,
+    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
+
+    return controller.forward(from: 0);
+  }
+
+  Future<void> _animateBackToPosition() {
+    animation = Tween(
+      begin: ref.read(taskVerticalPositionProvider(widget.viewId)),
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
+
+    return controller.forward(from: 0);
   }
 }
 

@@ -14,7 +14,7 @@ class InvisibleBottomBar extends ConsumerStatefulWidget {
 class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   late VelocityTracker velocityTracker;
   ScrollDragController? drag;
-  late var tm = ref.read(taskSwitcherWidgetState);
+  late var tm = ref.read(taskSwitcherWidgetStateProvider);
   int draggingTask = 0;
 
   @override
@@ -65,7 +65,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
     final notifier = ref.read(taskSwitcherState.notifier);
 
     velocityTracker.addPosition(details.sourceTimeStamp!, details.globalPosition);
-    if (ref.read(taskList).isNotEmpty) {
+    if (ref.read(taskListProvider).isNotEmpty) {
       double scale = ref.read(taskSwitcherState).scale;
       notifier.scale = (scale + details.delta.dy / ref.read(taskSwitcherState).constraints.maxHeight * 2).clamp(0.5, 1);
       scale = ref.read(taskSwitcherState).scale;
@@ -80,7 +80,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   }
 
   void _onPointerUp(DragEndDetails details) {
-    final tasks = ref.read(taskList);
+    final tasks = ref.read(taskListProvider);
 
     if (drag == null) {
       return;

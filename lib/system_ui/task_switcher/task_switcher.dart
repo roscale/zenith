@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/base_view_state.dart';
+import 'package:zenith/state/task_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
 import 'package:zenith/state/window_state.dart';
 import 'package:zenith/surface_manager.dart';
@@ -17,7 +18,11 @@ import 'package:zenith/system_ui/task_switcher/task_switcher_viewport.dart';
 import 'package:zenith/util/state_notifier_list.dart';
 import 'package:zenith/widgets/window.dart';
 
-final taskList = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
+final taskListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
+  return StateNotifierList<int>();
+});
+
+final closingTaskListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
   return StateNotifierList<int>();
 });
 
@@ -33,7 +38,7 @@ final taskWidgetProvider = StateProvider.family<Widget, int>((ref, int viewId) {
   return const SizedBox();
 });
 
-final taskSwitcherWidgetState = StateProvider((ref) => _TaskSwitcherState());
+final taskSwitcherWidgetStateProvider = StateProvider((ref) => _TaskSwitcherState());
 
 class TaskSwitcher extends ConsumerStatefulWidget {
   final double spacing;
@@ -62,7 +67,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   void initState() {
     super.initState();
 
-    Future.microtask(() => ref.read(taskSwitcherWidgetState.notifier).state = this);
+    Future.microtask(() => ref.read(taskSwitcherWidgetStateProvider.notifier).state = this);
 
     scrollPosition = ScrollPositionWithSingleContext(
       physics: const BouncingScrollPhysics(),
@@ -130,10 +135,14 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
                       child: DeferredPointerHandler(
                         child: Consumer(
                           builder: (_, WidgetRef ref, __) {
-                            final tasks = ref.watch(taskList);
+                            final tasks = ref.watch(taskListProvider);
+                            final closingTasks = ref.watch(closingTaskListProvider);
                             return Stack(
                               clipBehavior: Clip.none,
-                              children: [for (int viewId in tasks) ref.watch(taskWidgetProvider(viewId))],
+                              children: [
+                                for (int viewId in tasks) ref.watch(taskWidgetProvider(viewId)),
+                                for (int viewId in closingTasks) ref.watch(taskWidgetProvider(viewId)),
+                              ],
                             );
                           },
                         ),
@@ -156,12 +165,12 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   void _updateContentDimensions() {
-    int length = ref.read(taskList).length;
+    int length = ref.read(taskListProvider).length;
     scrollPosition.applyContentDimensions(0, length <= 1 ? 0 : (length - 1) * _taskToTaskOffset);
   }
 
   void _repositionTasks() {
-    final List<int> tasks = ref.read(taskList);
+    final List<int> tasks = ref.read(taskListProvider);
     for (int i = 0; i < tasks.length; i++) {
       ref.read(taskPositionProvider(tasks[i]).notifier).state = taskIndexToPosition(i);
     }
@@ -172,7 +181,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   double taskIndexToPosition(int taskIndex) => taskIndex * _taskToTaskOffset;
 
   int positionToTaskIndex(double position) {
-    final taskListLength = ref.read(taskList).length;
+    final taskListLength = ref.read(taskListProvider).length;
     if (taskListLength == 0) {
       return 0;
     }
@@ -183,13 +192,14 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   Future<void> _spawnTask(int viewId) {
-    final taskIndex = ref.read(taskList).length;
+    final taskIndex = ref.read(taskListProvider).length;
 
-    ref.read(taskList.notifier).add(viewId);
+    ref.read(taskListProvider.notifier).add(viewId);
     ref.read(taskWidgetProvider(viewId).notifier).state = Task(
       key: ValueKey(viewId),
       viewId: viewId,
-      switchToTask: () => _switchToTask(viewId),
+      onTap: () => _switchToTask(viewId),
+      onClosed: () {},
     );
     ref.read(taskPositionProvider(viewId).notifier).state = taskIndexToPosition(taskIndex);
 
@@ -199,24 +209,26 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   void moveCurrentTaskToEnd() {
-    if (ref.read(taskList).isNotEmpty) {
+    if (ref.read(taskListProvider).isNotEmpty) {
       int currentTaskIndex = positionToTaskIndex(position);
       // Make the current task in last one.
-      final notifier = ref.read(taskList.notifier);
+      final notifier = ref.read(taskListProvider.notifier);
       var task = notifier.removeAt(currentTaskIndex);
       notifier.add(task);
     }
   }
 
   void jumpToLastTask() {
-    final tasks = ref.read(taskList);
+    final tasks = ref.read(taskListProvider);
     scrollPosition.jumpTo(tasks.isNotEmpty ? taskIndexToPosition(tasks.length - 1) : 0);
   }
 
   Future<void> _stopTask(int viewId) async {
     bool inOverview = ref.read(taskSwitcherState).inOverview;
-    final tasks = ref.read(taskList);
+    final tasks = ref.read(taskListProvider);
     final notifier = ref.read(taskSwitcherState.notifier);
+
+    ref.read(taskStateProvider(viewId).notifier).open = false;
 
     if (!inOverview) {
       int closingTask = tasks.indexOf(viewId);
@@ -257,6 +269,8 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
         animateRight = false;
       }
 
+      _removeTask(viewId);
+
       if (animateRight) {
         for (int i = closingTaskIndex + 1; i < tasks.length; i++) {
           Animation<double> animation = Tween(
@@ -294,10 +308,11 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
       }
     }
 
-    _removeTask(viewId);
     _repositionTasks();
     _updateContentDimensions();
+  }
 
+  void _destroyTask(int viewId) {
     final textureId = ref.read(baseViewState(viewId)).textureId;
     PlatformApi.unregisterViewTexture(textureId);
 
@@ -306,10 +321,11 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     ref.invalidate(windowWidget(viewId));
     ref.invalidate(taskPositionProvider(viewId));
     ref.invalidate(taskWidgetProvider(viewId));
+    ref.invalidate(taskStateProvider(viewId));
   }
 
   int? taskToFocusAfterClosing(int closingTaskIndex) {
-    if (ref.read(taskList).length <= 1) {
+    if (ref.read(taskListProvider).length <= 1) {
       return null;
     } else if (closingTaskIndex == 0) {
       return 1;
@@ -319,7 +335,8 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   void _removeTask(int viewId) {
-    ref.read(taskList.notifier).remove(viewId);
+    ref.read(taskListProvider.notifier).remove(viewId);
+    ref.read(closingTaskListProvider.notifier).add(viewId);
   }
 
   void stopAnimations() {
@@ -329,13 +346,13 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   Future<void> _switchToTask(int viewId) {
-    return switchToTaskByIndex(ref.read(taskList).indexOf(viewId));
+    return switchToTaskByIndex(ref.read(taskListProvider).indexOf(viewId));
   }
 
   Future<void> switchToTaskByIndex(int index, {bool zoomOut = false}) async {
     ref.read(taskSwitcherState.notifier).inOverview = false;
 
-    PlatformApi.activateWindow(ref.read(taskList)[index]);
+    PlatformApi.activateWindow(ref.read(taskListProvider)[index]);
 
     stopAnimations();
     _scaleAnimationController = AnimationController(
