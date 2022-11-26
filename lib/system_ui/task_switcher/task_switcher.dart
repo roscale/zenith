@@ -80,13 +80,6 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
       _updateContentDimensions();
     });
 
-    // ref.listenManual(taskList, (_, List<int> next) {
-    //   for (int i = 0; i < next.length; i++) {
-    //     ref.read(taskPositionProvider(next[i]).notifier).state = taskIndexToPosition(i);
-    //   }
-    //   updateContentDimensions();
-    // });
-
     // Avoid executing _spawnTask and _stopTask concurrently because it causes visual glitches.
     // Make sure the async tasks are executed one after the other.
     Future<void> chain = Future.value(null);
@@ -200,7 +193,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
 
     ref.read(taskListProvider.notifier).add(viewId);
     ref.read(taskWidgetProvider(viewId).notifier).state = Task(
-      key: ValueKey(viewId),
+      key: ref.read(taskStateProvider(viewId).notifier).state.key,
       viewId: viewId,
       onTap: () => _switchToTask(viewId),
       onClosed: () {},
@@ -291,7 +284,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     return switchToTaskByIndex(taskIndex, zoomOut: true);
   }
 
-  void moveCurrentTaskToEnd() {
+  void _moveCurrentTaskToEnd() {
     if (ref.read(taskListProvider).isNotEmpty) {
       int currentTaskIndex = positionToTaskIndex(position);
       // Make the current task in last one.
@@ -301,7 +294,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     }
   }
 
-  void jumpToLastTask() {
+  void _jumpToLastTask() {
     final tasks = ref.read(taskListProvider);
     scrollPosition.jumpTo(tasks.isNotEmpty ? taskIndexToPosition(tasks.length - 1) : 0);
   }
@@ -385,8 +378,17 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     _scaleAnimationController = null;
   }
 
-  Future<void> _switchToTask(int viewId) {
-    return switchToTaskByIndex(ref.read(taskListProvider).indexOf(viewId));
+  Future<void> _switchToTask(int viewId) async {
+    final notifier = ref.read(taskSwitcherState.notifier);
+    notifier.areAnimationsPlaying = true;
+    try {
+      await switchToTaskByIndex(ref.read(taskListProvider).indexOf(viewId));
+      _moveCurrentTaskToEnd();
+      _repositionTasks();
+      _jumpToLastTask();
+    } finally {
+      notifier.areAnimationsPlaying = false;
+    }
   }
 
   Future<void> switchToTaskByIndex(int index, {bool zoomOut = false}) async {
@@ -437,7 +439,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     final scaleAnimation = _scaleAnimationController!.drive(scaleAnimatable);
     scaleAnimation.addListener(() => notifier.scale = scaleAnimation.value);
 
-    final scaleAnimationFuture = _scaleAnimationController!.forward().orCancel.catchError((_) => null);
+    final scaleAnimationFuture = _scaleAnimationController!.forward();
 
     notifier.areAnimationsPlaying = true;
     await Future.wait([positionAnimationFuture, scaleAnimationFuture]);

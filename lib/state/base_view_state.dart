@@ -83,7 +83,6 @@ class BaseViewStateNotifier extends StateNotifier<BaseViewState> {
   set visible(bool value) {
     if (value != state.visible) {
       PlatformApi.changeWindowVisibility(state.viewId, value);
-      print("visi: ${state.viewId} $value");
       state = state.copyWith(visible: value);
     }
   }

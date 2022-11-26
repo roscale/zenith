@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -10,7 +11,8 @@ final taskStateProvider = StateNotifierProvider.family<TaskStateNotifier, TaskSt
 class TaskStateNotifier extends StateNotifier<TaskState> {
   TaskStateNotifier()
       : super(
-          const TaskState(
+          TaskState(
+            key: GlobalKey(),
             open: true,
             dismissState: TaskDismissState.open,
             startDismissAnimation: Object(),
@@ -35,6 +37,7 @@ class TaskStateNotifier extends StateNotifier<TaskState> {
 @freezed
 class TaskState with _$TaskState {
   const factory TaskState({
+    required Key key,
     required bool open,
     required TaskDismissState dismissState,
     required Object startDismissAnimation,
