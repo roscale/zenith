@@ -54,6 +54,11 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     ref.listen(taskStateProvider(widget.viewId).select((value) => value.startDismissAnimation), (_, __) async {
       final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
+      TaskDismissState dismissState = notifier.state.dismissState;
+      if (dismissState != TaskDismissState.open) {
+        return;
+      }
+
       notifier.dismissState = TaskDismissState.dismissing;
       await _startSlideClosingAnimation();
       notifier.dismissState = TaskDismissState.dismissed;
@@ -63,6 +68,16 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
       final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
       notifier.dismissState = TaskDismissState.open;
       _animateBackToPosition();
+    });
+
+    ref.listen(taskStateProvider(widget.viewId).select((value) => value.dismissState),
+        (_, TaskDismissState dismissState) async {
+      if (dismissState == TaskDismissState.dismissing) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+        }
+      }
     });
 
     return Consumer(
@@ -93,35 +108,40 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
           child: Consumer(
             builder: (_, WidgetRef ref, Widget? child) {
               final inOverview = ref.watch(taskSwitcherState.select((v) => v.inOverview));
+              final dismissState = ref.watch(taskStateProvider(widget.viewId).select((v) => v.dismissState));
 
               // Doing my best to not change the depth of the tree to avoid rebuilding the whole subtree.
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: inOverview ? () => widget.onTap() : null,
-                onVerticalDragUpdate: inOverview
-                    ? (DragUpdateDetails details) {
-                        ref
-                            .read(taskVerticalPositionProvider(widget.viewId).notifier)
-                            .update((state) => (state + details.primaryDelta!).clamp(-double.infinity, 0));
-                      }
-                    : null,
-                onVerticalDragDown: inOverview ? (_) => controller.stop() : null,
-                onVerticalDragCancel: inOverview ? _animateBackToPosition : null,
-                onVerticalDragEnd: inOverview
-                    ? (DragEndDetails details) async {
-                        if (details.primaryVelocity! < -1000) {
-                          PlatformApi.closeView(widget.viewId);
-                          ref.read(taskStateProvider(widget.viewId).notifier).startDismissAnimation();
-                        } else {
-                          ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+              return IgnorePointer(
+                ignoring: dismissState != TaskDismissState.open,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: inOverview ? () => widget.onTap() : null,
+                  onVerticalDragUpdate: inOverview
+                      ? (DragUpdateDetails details) {
+                          ref
+                              .read(taskVerticalPositionProvider(widget.viewId).notifier)
+                              .update((state) => (state + details.primaryDelta!).clamp(-double.infinity, 0));
                         }
-                      }
-                    : null,
-                child: IgnorePointer(
-                  ignoring: inOverview,
-                  child: Listener(
-                    onPointerDown: !inOverview ? (_) => _moveTaskToTheEnd(ref) : (_) {},
-                    child: child,
+                      : null,
+                  onVerticalDragDown: inOverview ? (_) => controller.stop() : null,
+                  onVerticalDragCancel:
+                      inOverview ? ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation : null,
+                  onVerticalDragEnd: inOverview
+                      ? (DragEndDetails details) async {
+                          if (details.primaryVelocity! < -1000) {
+                            PlatformApi.closeView(widget.viewId);
+                            ref.read(taskStateProvider(widget.viewId).notifier).startDismissAnimation();
+                          } else {
+                            ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+                          }
+                        }
+                      : null,
+                  child: IgnorePointer(
+                    ignoring: inOverview,
+                    child: Listener(
+                      onPointerDown: !inOverview ? (_) => _moveTaskToTheEnd(ref) : (_) {},
+                      child: child,
+                    ),
                   ),
                 ),
               );
