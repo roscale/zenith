@@ -18,7 +18,6 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$PopupState {
   int get parentViewId => throw _privateConstructorUsedError;
   Offset get position => throw _privateConstructorUsedError;
-  bool get visible => throw _privateConstructorUsedError;
   GlobalKey<AnimationsState> get animationsKey =>
       throw _privateConstructorUsedError;
   bool get isClosing => throw _privateConstructorUsedError;
@@ -37,7 +36,6 @@ abstract class $PopupStateCopyWith<$Res> {
   $Res call(
       {int parentViewId,
       Offset position,
-      bool visible,
       GlobalKey<AnimationsState> animationsKey,
       bool isClosing});
 }
@@ -57,7 +55,6 @@ class _$PopupStateCopyWithImpl<$Res, $Val extends PopupState>
   $Res call({
     Object? parentViewId = null,
     Object? position = null,
-    Object? visible = null,
     Object? animationsKey = null,
     Object? isClosing = null,
   }) {
@@ -70,10 +67,6 @@ class _$PopupStateCopyWithImpl<$Res, $Val extends PopupState>
           ? _value.position
           : position // ignore: cast_nullable_to_non_nullable
               as Offset,
-      visible: null == visible
-          ? _value.visible
-          : visible // ignore: cast_nullable_to_non_nullable
-              as bool,
       animationsKey: null == animationsKey
           ? _value.animationsKey
           : animationsKey // ignore: cast_nullable_to_non_nullable
@@ -97,7 +90,6 @@ abstract class _$$_PopupStateCopyWith<$Res>
   $Res call(
       {int parentViewId,
       Offset position,
-      bool visible,
       GlobalKey<AnimationsState> animationsKey,
       bool isClosing});
 }
@@ -115,7 +107,6 @@ class __$$_PopupStateCopyWithImpl<$Res>
   $Res call({
     Object? parentViewId = null,
     Object? position = null,
-    Object? visible = null,
     Object? animationsKey = null,
     Object? isClosing = null,
   }) {
@@ -128,10 +119,6 @@ class __$$_PopupStateCopyWithImpl<$Res>
           ? _value.position
           : position // ignore: cast_nullable_to_non_nullable
               as Offset,
-      visible: null == visible
-          ? _value.visible
-          : visible // ignore: cast_nullable_to_non_nullable
-              as bool,
       animationsKey: null == animationsKey
           ? _value.animationsKey
           : animationsKey // ignore: cast_nullable_to_non_nullable
@@ -150,7 +137,6 @@ class _$_PopupState with DiagnosticableTreeMixin implements _PopupState {
   const _$_PopupState(
       {required this.parentViewId,
       required this.position,
-      required this.visible,
       required this.animationsKey,
       required this.isClosing});
 
@@ -159,15 +145,13 @@ class _$_PopupState with DiagnosticableTreeMixin implements _PopupState {
   @override
   final Offset position;
   @override
-  final bool visible;
-  @override
   final GlobalKey<AnimationsState> animationsKey;
   @override
   final bool isClosing;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'PopupState(parentViewId: $parentViewId, position: $position, visible: $visible, animationsKey: $animationsKey, isClosing: $isClosing)';
+    return 'PopupState(parentViewId: $parentViewId, position: $position, animationsKey: $animationsKey, isClosing: $isClosing)';
   }
 
   @override
@@ -177,7 +161,6 @@ class _$_PopupState with DiagnosticableTreeMixin implements _PopupState {
       ..add(DiagnosticsProperty('type', 'PopupState'))
       ..add(DiagnosticsProperty('parentViewId', parentViewId))
       ..add(DiagnosticsProperty('position', position))
-      ..add(DiagnosticsProperty('visible', visible))
       ..add(DiagnosticsProperty('animationsKey', animationsKey))
       ..add(DiagnosticsProperty('isClosing', isClosing));
   }
@@ -191,7 +174,6 @@ class _$_PopupState with DiagnosticableTreeMixin implements _PopupState {
                 other.parentViewId == parentViewId) &&
             (identical(other.position, position) ||
                 other.position == position) &&
-            (identical(other.visible, visible) || other.visible == visible) &&
             (identical(other.animationsKey, animationsKey) ||
                 other.animationsKey == animationsKey) &&
             (identical(other.isClosing, isClosing) ||
@@ -200,7 +182,7 @@ class _$_PopupState with DiagnosticableTreeMixin implements _PopupState {
 
   @override
   int get hashCode => Object.hash(
-      runtimeType, parentViewId, position, visible, animationsKey, isClosing);
+      runtimeType, parentViewId, position, animationsKey, isClosing);
 
   @JsonKey(ignore: true)
   @override
@@ -213,7 +195,6 @@ abstract class _PopupState implements PopupState {
   const factory _PopupState(
       {required final int parentViewId,
       required final Offset position,
-      required final bool visible,
       required final GlobalKey<AnimationsState> animationsKey,
       required final bool isClosing}) = _$_PopupState;
 
@@ -221,8 +202,6 @@ abstract class _PopupState implements PopupState {
   int get parentViewId;
   @override
   Offset get position;
-  @override
-  bool get visible;
   @override
   GlobalKey<AnimationsState> get animationsKey;
   @override

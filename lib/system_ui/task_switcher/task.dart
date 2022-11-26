@@ -61,7 +61,9 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
 
       notifier.dismissState = TaskDismissState.dismissing;
       await _startSlideClosingAnimation();
-      notifier.dismissState = TaskDismissState.dismissed;
+      if (mounted) {
+        notifier.dismissState = TaskDismissState.dismissed;
+      }
     });
 
     ref.listen(taskStateProvider(widget.viewId).select((value) => value.cancelDismissAnimation), (_, __) {

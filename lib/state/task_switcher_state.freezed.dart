@@ -22,6 +22,7 @@ mixin _$TaskSwitcherState {
       throw _privateConstructorUsedError; // Disables the ability to switch between tasks using gestures.
   bool get areAnimationsPlaying => throw _privateConstructorUsedError;
   BoxConstraints get constraints => throw _privateConstructorUsedError;
+  Set<int> get visibleTasks => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $TaskSwitcherStateCopyWith<TaskSwitcherState> get copyWith =>
@@ -39,7 +40,8 @@ abstract class $TaskSwitcherStateCopyWith<$Res> {
       double scale,
       bool disableUserControl,
       bool areAnimationsPlaying,
-      BoxConstraints constraints});
+      BoxConstraints constraints,
+      Set<int> visibleTasks});
 }
 
 /// @nodoc
@@ -60,6 +62,7 @@ class _$TaskSwitcherStateCopyWithImpl<$Res, $Val extends TaskSwitcherState>
     Object? disableUserControl = null,
     Object? areAnimationsPlaying = null,
     Object? constraints = null,
+    Object? visibleTasks = null,
   }) {
     return _then(_value.copyWith(
       inOverview: null == inOverview
@@ -82,6 +85,10 @@ class _$TaskSwitcherStateCopyWithImpl<$Res, $Val extends TaskSwitcherState>
           ? _value.constraints
           : constraints // ignore: cast_nullable_to_non_nullable
               as BoxConstraints,
+      visibleTasks: null == visibleTasks
+          ? _value.visibleTasks
+          : visibleTasks // ignore: cast_nullable_to_non_nullable
+              as Set<int>,
     ) as $Val);
   }
 }
@@ -99,7 +106,8 @@ abstract class _$$_TaskSwitcherStateCopyWith<$Res>
       double scale,
       bool disableUserControl,
       bool areAnimationsPlaying,
-      BoxConstraints constraints});
+      BoxConstraints constraints,
+      Set<int> visibleTasks});
 }
 
 /// @nodoc
@@ -118,6 +126,7 @@ class __$$_TaskSwitcherStateCopyWithImpl<$Res>
     Object? disableUserControl = null,
     Object? areAnimationsPlaying = null,
     Object? constraints = null,
+    Object? visibleTasks = null,
   }) {
     return _then(_$_TaskSwitcherState(
       inOverview: null == inOverview
@@ -140,6 +149,10 @@ class __$$_TaskSwitcherStateCopyWithImpl<$Res>
           ? _value.constraints
           : constraints // ignore: cast_nullable_to_non_nullable
               as BoxConstraints,
+      visibleTasks: null == visibleTasks
+          ? _value._visibleTasks
+          : visibleTasks // ignore: cast_nullable_to_non_nullable
+              as Set<int>,
     ));
   }
 }
@@ -152,7 +165,9 @@ class _$_TaskSwitcherState implements _TaskSwitcherState {
       required this.scale,
       required this.disableUserControl,
       required this.areAnimationsPlaying,
-      required this.constraints});
+      required this.constraints,
+      required final Set<int> visibleTasks})
+      : _visibleTasks = visibleTasks;
 
   @override
   final bool inOverview;
@@ -165,10 +180,16 @@ class _$_TaskSwitcherState implements _TaskSwitcherState {
   final bool areAnimationsPlaying;
   @override
   final BoxConstraints constraints;
+  final Set<int> _visibleTasks;
+  @override
+  Set<int> get visibleTasks {
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableSetView(_visibleTasks);
+  }
 
   @override
   String toString() {
-    return 'TaskSwitcherState(inOverview: $inOverview, scale: $scale, disableUserControl: $disableUserControl, areAnimationsPlaying: $areAnimationsPlaying, constraints: $constraints)';
+    return 'TaskSwitcherState(inOverview: $inOverview, scale: $scale, disableUserControl: $disableUserControl, areAnimationsPlaying: $areAnimationsPlaying, constraints: $constraints, visibleTasks: $visibleTasks)';
   }
 
   @override
@@ -184,12 +205,20 @@ class _$_TaskSwitcherState implements _TaskSwitcherState {
             (identical(other.areAnimationsPlaying, areAnimationsPlaying) ||
                 other.areAnimationsPlaying == areAnimationsPlaying) &&
             (identical(other.constraints, constraints) ||
-                other.constraints == constraints));
+                other.constraints == constraints) &&
+            const DeepCollectionEquality()
+                .equals(other._visibleTasks, _visibleTasks));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, inOverview, scale,
-      disableUserControl, areAnimationsPlaying, constraints);
+  int get hashCode => Object.hash(
+      runtimeType,
+      inOverview,
+      scale,
+      disableUserControl,
+      areAnimationsPlaying,
+      constraints,
+      const DeepCollectionEquality().hash(_visibleTasks));
 
   @JsonKey(ignore: true)
   @override
@@ -205,7 +234,8 @@ abstract class _TaskSwitcherState implements TaskSwitcherState {
       required final double scale,
       required final bool disableUserControl,
       required final bool areAnimationsPlaying,
-      required final BoxConstraints constraints}) = _$_TaskSwitcherState;
+      required final BoxConstraints constraints,
+      required final Set<int> visibleTasks}) = _$_TaskSwitcherState;
 
   @override
   bool get inOverview;
@@ -217,6 +247,8 @@ abstract class _TaskSwitcherState implements TaskSwitcherState {
   bool get areAnimationsPlaying;
   @override
   BoxConstraints get constraints;
+  @override
+  Set<int> get visibleTasks;
   @override
   @JsonKey(ignore: true)
   _$$_TaskSwitcherStateCopyWith<_$_TaskSwitcherState> get copyWith =>

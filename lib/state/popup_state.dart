@@ -18,7 +18,6 @@ class PopupState with _$PopupState {
   const factory PopupState({
     required int parentViewId,
     required Offset position,
-    required bool visible,
     required GlobalKey<AnimationsState> animationsKey,
     required bool isClosing,
   }) = _PopupState;
@@ -32,7 +31,6 @@ class PopupStateNotifier extends StateNotifier<PopupState> {
       : super(PopupState(
           parentViewId: -1,
           position: Offset.zero,
-          visible: true,
           animationsKey: GlobalKey<AnimationsState>(),
           isClosing: false,
         ));

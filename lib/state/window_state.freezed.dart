@@ -16,7 +16,6 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$WindowState {
-  bool get visible => throw _privateConstructorUsedError;
   Key get virtualKeyboardKey => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -30,7 +29,7 @@ abstract class $WindowStateCopyWith<$Res> {
           WindowState value, $Res Function(WindowState) then) =
       _$WindowStateCopyWithImpl<$Res, WindowState>;
   @useResult
-  $Res call({bool visible, Key virtualKeyboardKey});
+  $Res call({Key virtualKeyboardKey});
 }
 
 /// @nodoc
@@ -46,14 +45,9 @@ class _$WindowStateCopyWithImpl<$Res, $Val extends WindowState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? visible = null,
     Object? virtualKeyboardKey = null,
   }) {
     return _then(_value.copyWith(
-      visible: null == visible
-          ? _value.visible
-          : visible // ignore: cast_nullable_to_non_nullable
-              as bool,
       virtualKeyboardKey: null == virtualKeyboardKey
           ? _value.virtualKeyboardKey
           : virtualKeyboardKey // ignore: cast_nullable_to_non_nullable
@@ -70,7 +64,7 @@ abstract class _$$_WindowStateCopyWith<$Res>
       __$$_WindowStateCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool visible, Key virtualKeyboardKey});
+  $Res call({Key virtualKeyboardKey});
 }
 
 /// @nodoc
@@ -84,14 +78,9 @@ class __$$_WindowStateCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? visible = null,
     Object? virtualKeyboardKey = null,
   }) {
     return _then(_$_WindowState(
-      visible: null == visible
-          ? _value.visible
-          : visible // ignore: cast_nullable_to_non_nullable
-              as bool,
       virtualKeyboardKey: null == virtualKeyboardKey
           ? _value.virtualKeyboardKey
           : virtualKeyboardKey // ignore: cast_nullable_to_non_nullable
@@ -103,17 +92,14 @@ class __$$_WindowStateCopyWithImpl<$Res>
 /// @nodoc
 
 class _$_WindowState implements _WindowState {
-  const _$_WindowState(
-      {required this.visible, required this.virtualKeyboardKey});
+  const _$_WindowState({required this.virtualKeyboardKey});
 
-  @override
-  final bool visible;
   @override
   final Key virtualKeyboardKey;
 
   @override
   String toString() {
-    return 'WindowState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey)';
+    return 'WindowState(virtualKeyboardKey: $virtualKeyboardKey)';
   }
 
   @override
@@ -121,13 +107,12 @@ class _$_WindowState implements _WindowState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_WindowState &&
-            (identical(other.visible, visible) || other.visible == visible) &&
             (identical(other.virtualKeyboardKey, virtualKeyboardKey) ||
                 other.virtualKeyboardKey == virtualKeyboardKey));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, visible, virtualKeyboardKey);
+  int get hashCode => Object.hash(runtimeType, virtualKeyboardKey);
 
   @JsonKey(ignore: true)
   @override
@@ -137,12 +122,9 @@ class _$_WindowState implements _WindowState {
 }
 
 abstract class _WindowState implements WindowState {
-  const factory _WindowState(
-      {required final bool visible,
-      required final Key virtualKeyboardKey}) = _$_WindowState;
+  const factory _WindowState({required final Key virtualKeyboardKey}) =
+      _$_WindowState;
 
-  @override
-  bool get visible;
   @override
   Key get virtualKeyboardKey;
   @override

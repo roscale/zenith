@@ -23,6 +23,7 @@ mixin _$BaseViewState {
   List<int> get popups => throw _privateConstructorUsedError;
   Key get widgetKey => throw _privateConstructorUsedError;
   Key get textureKey => throw _privateConstructorUsedError;
+  bool get visible => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $BaseViewStateCopyWith<BaseViewState> get copyWith =>
@@ -42,7 +43,8 @@ abstract class $BaseViewStateCopyWith<$Res> {
       Rect visibleBounds,
       List<int> popups,
       Key widgetKey,
-      Key textureKey});
+      Key textureKey,
+      bool visible});
 }
 
 /// @nodoc
@@ -65,6 +67,7 @@ class _$BaseViewStateCopyWithImpl<$Res, $Val extends BaseViewState>
     Object? popups = null,
     Object? widgetKey = null,
     Object? textureKey = null,
+    Object? visible = null,
   }) {
     return _then(_value.copyWith(
       viewId: null == viewId
@@ -95,6 +98,10 @@ class _$BaseViewStateCopyWithImpl<$Res, $Val extends BaseViewState>
           ? _value.textureKey
           : textureKey // ignore: cast_nullable_to_non_nullable
               as Key,
+      visible: null == visible
+          ? _value.visible
+          : visible // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -114,7 +121,8 @@ abstract class _$$_BaseViewStateCopyWith<$Res>
       Rect visibleBounds,
       List<int> popups,
       Key widgetKey,
-      Key textureKey});
+      Key textureKey,
+      bool visible});
 }
 
 /// @nodoc
@@ -135,6 +143,7 @@ class __$$_BaseViewStateCopyWithImpl<$Res>
     Object? popups = null,
     Object? widgetKey = null,
     Object? textureKey = null,
+    Object? visible = null,
   }) {
     return _then(_$_BaseViewState(
       viewId: null == viewId
@@ -165,6 +174,10 @@ class __$$_BaseViewStateCopyWithImpl<$Res>
           ? _value.textureKey
           : textureKey // ignore: cast_nullable_to_non_nullable
               as Key,
+      visible: null == visible
+          ? _value.visible
+          : visible // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -179,7 +192,8 @@ class _$_BaseViewState with DiagnosticableTreeMixin implements _BaseViewState {
       required this.visibleBounds,
       required final List<int> popups,
       required this.widgetKey,
-      required this.textureKey})
+      required this.textureKey,
+      required this.visible})
       : _popups = popups;
 
   @override
@@ -201,10 +215,12 @@ class _$_BaseViewState with DiagnosticableTreeMixin implements _BaseViewState {
   final Key widgetKey;
   @override
   final Key textureKey;
+  @override
+  final bool visible;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'BaseViewState(viewId: $viewId, textureId: $textureId, surfaceSize: $surfaceSize, visibleBounds: $visibleBounds, popups: $popups, widgetKey: $widgetKey, textureKey: $textureKey)';
+    return 'BaseViewState(viewId: $viewId, textureId: $textureId, surfaceSize: $surfaceSize, visibleBounds: $visibleBounds, popups: $popups, widgetKey: $widgetKey, textureKey: $textureKey, visible: $visible)';
   }
 
   @override
@@ -218,7 +234,8 @@ class _$_BaseViewState with DiagnosticableTreeMixin implements _BaseViewState {
       ..add(DiagnosticsProperty('visibleBounds', visibleBounds))
       ..add(DiagnosticsProperty('popups', popups))
       ..add(DiagnosticsProperty('widgetKey', widgetKey))
-      ..add(DiagnosticsProperty('textureKey', textureKey));
+      ..add(DiagnosticsProperty('textureKey', textureKey))
+      ..add(DiagnosticsProperty('visible', visible));
   }
 
   @override
@@ -237,7 +254,8 @@ class _$_BaseViewState with DiagnosticableTreeMixin implements _BaseViewState {
             (identical(other.widgetKey, widgetKey) ||
                 other.widgetKey == widgetKey) &&
             (identical(other.textureKey, textureKey) ||
-                other.textureKey == textureKey));
+                other.textureKey == textureKey) &&
+            (identical(other.visible, visible) || other.visible == visible));
   }
 
   @override
@@ -249,7 +267,8 @@ class _$_BaseViewState with DiagnosticableTreeMixin implements _BaseViewState {
       visibleBounds,
       const DeepCollectionEquality().hash(_popups),
       widgetKey,
-      textureKey);
+      textureKey,
+      visible);
 
   @JsonKey(ignore: true)
   @override
@@ -266,7 +285,8 @@ abstract class _BaseViewState implements BaseViewState {
       required final Rect visibleBounds,
       required final List<int> popups,
       required final Key widgetKey,
-      required final Key textureKey}) = _$_BaseViewState;
+      required final Key textureKey,
+      required final bool visible}) = _$_BaseViewState;
 
   @override
   int get viewId;
@@ -282,6 +302,8 @@ abstract class _BaseViewState implements BaseViewState {
   Key get widgetKey;
   @override
   Key get textureKey;
+  @override
+  bool get visible;
   @override
   @JsonKey(ignore: true)
   _$$_BaseViewStateCopyWith<_$_BaseViewState> get copyWith =>

@@ -242,9 +242,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
           animateRight = false;
         }
 
-
         if (animateRight) {
-
           for (int i = closingTaskIndex + 1; i < tasks.length; i++) {
             Animation<double> animation = Tween(
               begin: ref.read(taskPositionProvider(tasks[i])),
@@ -313,37 +311,42 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     final tasks = ref.read(taskListProvider);
     final notifier = ref.read(taskSwitcherState.notifier);
 
-    if (!inOverview) {
-      int closingTask = tasks.indexOf(viewId);
-      int? focusingTask = taskToFocusAfterClosing(closingTask);
-      // Might be null if there's no task left, in which case there's nothing to animate.
-      if (focusingTask != null) {
-        var currentTaskIndex = positionToTaskIndex(position);
-
-        // Don't let the user interact with the task switcher while the animation is ongoing.
-        notifier.disableUserControl = true;
-        if (currentTaskIndex == closingTask) {
-          await switchToTaskByIndex(focusingTask, zoomOut: true);
-        } else {
-          await switchToTaskByIndex(currentTaskIndex);
-        }
-        notifier.disableUserControl = false;
-
-        _destroyTask(viewId);
-
-        if (focusingTask > closingTask) {
-          _updateContentDimensions(minScrollExtent: scrollPosition.minScrollExtent + _taskToTaskOffset);
-        }
-      } else {
-        _updateContentDimensions();
-      }
-
-      _repositionTasks();
-    } else {
+    if (inOverview) {
       ref.read(taskStateProvider(viewId).notifier)
         ..open = false
         ..startDismissAnimation();
+      return;
     }
+
+    int closingTask = tasks.indexOf(viewId);
+    int? focusingTask = taskToFocusAfterClosing(closingTask);
+    // Might be null if there's no task left, in which case there's nothing to animate.
+    if (focusingTask != null) {
+      var currentTaskIndex = positionToTaskIndex(position);
+
+      // Don't let the user interact with the task switcher while the animation is ongoing.
+      notifier.disableUserControl = true;
+      if (currentTaskIndex == closingTask) {
+        await switchToTaskByIndex(focusingTask, zoomOut: true);
+      } else {
+        await switchToTaskByIndex(currentTaskIndex);
+      }
+      notifier.disableUserControl = false;
+
+      _destroyTask(viewId);
+
+      if (focusingTask > closingTask) {
+        _updateContentDimensions(minScrollExtent: scrollPosition.minScrollExtent + _taskToTaskOffset);
+      } else {
+        _updateContentDimensions();
+      }
+    } else {
+      _destroyTask(viewId);
+      _updateContentDimensions();
+    }
+
+    // Just to ensure proper positioning in case the animations glitch out.
+    _repositionTasks();
   }
 
   void _destroyTask(int viewId) {
@@ -387,9 +390,14 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   Future<void> switchToTaskByIndex(int index, {bool zoomOut = false}) async {
-    ref.read(taskSwitcherState.notifier).inOverview = false;
+    final viewId = ref.read(taskListProvider)[index];
 
-    PlatformApi.activateWindow(ref.read(taskListProvider)[index]);
+    ref.read(taskSwitcherState.notifier)
+      ..inOverview = false
+      ..clearVisibleTasks()
+      ..makeTaskVisible(viewId);
+
+    PlatformApi.activateWindow(viewId);
 
     stopAnimations();
     _scaleAnimationController = AnimationController(

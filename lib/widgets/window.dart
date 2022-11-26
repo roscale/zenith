@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/base_view_state.dart';
-import 'package:zenith/state/window_state.dart';
 import 'package:zenith/util/rect_overflow_box.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/view_input_listener.dart';
@@ -102,23 +100,16 @@ class _Surface extends ConsumerWidget {
       children: [
         ViewInputListener(
           viewId: viewId,
-          child: VisibilityDetector(
-            key: ValueKey(viewId),
-            onVisibilityChanged: (VisibilityInfo info) {
-              bool visible = !info.visibleBounds.isEmpty;
-              ref.read(windowState(viewId).notifier).visible = visible;
+          child: Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              Key textureKey = ref.watch(baseViewState(viewId).select((v) => v.textureKey));
+              int textureId = ref.watch(baseViewState(viewId).select((v) => v.textureId));
+              return Texture(
+                key: textureKey,
+                filterQuality: FilterQuality.medium,
+                textureId: textureId,
+              );
             },
-            child: Consumer(
-              builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                Key textureKey = ref.watch(baseViewState(viewId).select((v) => v.textureKey));
-                int textureId = ref.watch(baseViewState(viewId).select((v) => v.textureId));
-                return Texture(
-                  key: textureKey,
-                  filterQuality: FilterQuality.medium,
-                  textureId: textureId,
-                );
-              },
-            ),
           ),
         ),
         Consumer(

@@ -13,7 +13,6 @@ final windowState = StateNotifierProvider.family<WindowStateNotifier, WindowStat
 @freezed
 class WindowState with _$WindowState {
   const factory WindowState({
-    required bool visible,
     required Key virtualKeyboardKey,
   }) = _WindowState;
 }
@@ -24,7 +23,6 @@ class WindowStateNotifier extends StateNotifier<WindowState> {
 
   WindowStateNotifier(this._ref, this._viewId)
       : super(WindowState(
-          visible: true,
           virtualKeyboardKey: GlobalKey(),
         ));
 
@@ -38,12 +36,5 @@ class WindowStateNotifier extends StateNotifier<WindowState> {
           surfaceSize: surfaceSize,
           visibleBounds: visibleBounds,
         );
-  }
-
-  set visible(bool value) {
-    if (value != state.visible) {
-      PlatformApi.changeWindowVisibility(_viewId, value);
-    }
-    state = state.copyWith(visible: value);
   }
 }

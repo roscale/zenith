@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/widgets/desktop.dart';
 
@@ -16,8 +15,6 @@ void main() {
   WidgetsBinding.instance.addPersistentFrameCallback((_) {
     WidgetsBinding.instance.scheduleFrame();
   });
-
-  VisibilityDetectorController.instance.updateInterval = Duration.zero;
 
   SchedulerBinding.instance.addPostFrameCallback((_) {
     PlatformApi.startupComplete();

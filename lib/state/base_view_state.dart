@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/popup_state.dart';
 
 part 'base_view_state.freezed.dart';
@@ -22,6 +23,7 @@ class BaseViewState with _$BaseViewState {
     required List<int> popups,
     required Key widgetKey,
     required Key textureKey,
+    required bool visible,
   }) = _BaseViewState;
 }
 
@@ -37,6 +39,7 @@ class BaseViewStateNotifier extends StateNotifier<BaseViewState> {
           popups: [],
           widgetKey: GlobalKey(),
           textureKey: GlobalKey(),
+          visible: true,
         ));
 
   void initialize({
@@ -75,5 +78,13 @@ class BaseViewStateNotifier extends StateNotifier<BaseViewState> {
       for (int id in state.popups)
         if (id != viewId) id
     ]);
+  }
+
+  set visible(bool value) {
+    if (value != state.visible) {
+      PlatformApi.changeWindowVisibility(state.viewId, value);
+      print("visi: ${state.viewId} $value");
+      state = state.copyWith(visible: value);
+    }
   }
 }
