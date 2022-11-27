@@ -102,6 +102,12 @@ ZenithServer::ZenithServer() {
 		exit(-1);
 	}
 
+	decoration_manager = wlr_xdg_decoration_manager_v1_create(display);
+	if (decoration_manager == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create text input manager");
+		exit(-1);
+	}
+
 	// Called at the start for each available output, but also when the user plugs in a monitor.
 	new_output.notify = server_new_output;
 	wl_signal_add(&backend->events.new_output, &new_output);
@@ -120,6 +126,9 @@ ZenithServer::ZenithServer() {
 
 	new_text_input.notify = server_new_text_input;
 	wl_signal_add(&text_input_manager->events.text_input, &new_text_input);
+
+	new_toplevel_decoration.notify = server_new_toplevel_decoration;
+	wl_signal_add(&decoration_manager->events.new_toplevel_decoration, &new_toplevel_decoration);
 }
 
 void ZenithServer::run(char* startup_command) {
@@ -137,20 +146,20 @@ void ZenithServer::run(char* startup_command) {
 		exit(9);
 	}
 
-    // Make sure the X11 session from the host is not visible because some programs prefer talking
-    // to the X server instead of defaulting to Wayland.
-    unsetenv("DISPLAY");
+	// Make sure the X11 session from the host is not visible because some programs prefer talking
+	// to the X server instead of defaulting to Wayland.
+	unsetenv("DISPLAY");
 
-    setenv("WAYLAND_DISPLAY", socket, true);
-    setenv("XDG_SESSION_TYPE", "wayland", true);
-    setenv("GDK_BACKEND", "wayland", true); // Force GTK apps to run on Wayland.
-    setenv("QT_QPA_PLATFORM", "wayland", true); // Force QT apps to run on Wayland.
+	setenv("WAYLAND_DISPLAY", socket, true);
+	setenv("XDG_SESSION_TYPE", "wayland", true);
+	setenv("GDK_BACKEND", "wayland", true); // Force GTK apps to run on Wayland.
+	setenv("QT_QPA_PLATFORM", "wayland", true); // Force QT apps to run on Wayland.
 
-    wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
-    embedder_state = std::make_unique<EmbedderState>(this, main_egl);
+	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
+	embedder_state = std::make_unique<EmbedderState>(this, main_egl);
 
-    // Run the engine.
-    embedder_state->run_engine();
+	// Run the engine.
+	embedder_state->run_engine();
 
 	if (!wlr_backend_start(backend)) {
 		wlr_log(WLR_ERROR, "Could not start backend");
@@ -321,4 +330,9 @@ void server_new_text_input(wl_listener* listener, void* data) {
 	auto* wlr_text_input = static_cast<wlr_text_input_v3*>(data);
 	auto text_input = new ZenithTextInput(server, wlr_text_input);
 	server->text_inputs.insert(text_input);
+}
+
+void server_new_toplevel_decoration(wl_listener* listener, void* data) {
+	auto* wlr_toplevel_decoration = static_cast<wlr_xdg_toplevel_decoration_v1*>(data);
+	wlr_xdg_toplevel_decoration_v1_set_mode(wlr_toplevel_decoration, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 }

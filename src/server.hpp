@@ -26,6 +26,7 @@ extern "C" {
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_text_input_v3.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #undef static
 }
 
@@ -51,6 +52,7 @@ public:
 	wlr_compositor* compositor;
 	wlr_xdg_shell* xdg_shell;
 	wlr_text_input_manager_v3* text_input_manager;
+	wlr_xdg_decoration_manager_v1* decoration_manager;
 
 	wlr_output_layout* output_layout;
 	std::unique_ptr<ZenithOutput> output; // We support a single output at the moment.
@@ -76,6 +78,7 @@ public:
 	wl_listener new_input{};
 	wl_listener request_cursor{};
 	wl_listener new_text_input{};
+	wl_listener new_toplevel_decoration{};
 
 	std::unordered_map<size_t, ZenithView*> views{};
 	std::unordered_map<size_t, std::shared_ptr<Framebuffer>> surface_framebuffers{};
@@ -115,3 +118,5 @@ void server_new_input(wl_listener* listener, void* data);
 void server_seat_request_cursor(wl_listener* listener, void* data);
 
 void server_new_text_input(wl_listener* listener, void* data);
+
+void server_new_toplevel_decoration(wl_listener* listener, void* data);
