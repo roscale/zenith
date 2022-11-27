@@ -29,7 +29,7 @@ class Popup extends StatelessWidget {
         child: Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
             int viewId = ref.watch(_viewId);
-            Key key = ref.watch(popupState(viewId).select((v) => v.animationsKey));
+            Key key = ref.watch(popupStateProvider(viewId).select((v) => v.animationsKey));
             return _Animations(
               key: key,
               child: child!,
@@ -53,8 +53,8 @@ class _Positioner extends ConsumerWidget {
 
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        Offset position = ref.watch(popupState(viewId).select((v) => v.position));
-        Rect visibleBounds = ref.watch(baseViewState(viewId).select((v) => v.visibleBounds));
+        Offset position = ref.watch(popupStateProvider(viewId).select((v) => v.position));
+        Rect visibleBounds = ref.watch(baseViewStateProvider(viewId).select((v) => v.visibleBounds));
 
         return Positioned(
           left: position.dx - visibleBounds.left,
@@ -64,7 +64,7 @@ class _Positioner extends ConsumerWidget {
       },
       child: Consumer(
         builder: (_, WidgetRef ref, Widget? child) {
-          bool isClosing = ref.watch(popupState(viewId).select((v) => v.isClosing));
+          bool isClosing = ref.watch(popupStateProvider(viewId).select((v) => v.isClosing));
           return IgnorePointer(
             ignoring: isClosing,
             child: child,
@@ -107,7 +107,7 @@ class AnimationsState extends ConsumerState<_Animations> with SingleTickerProvid
   )..forward();
 
   late final Animation<Offset> _offsetAnimation = Tween<Offset>(
-    begin: Offset(0.0, -10 / ref.read(baseViewState(viewId)).surfaceSize.height),
+    begin: Offset(0.0, -10 / ref.read(baseViewStateProvider(viewId)).surfaceSize.height),
     end: Offset.zero,
   ).animate(CurvedAnimation(
     parent: controller,
@@ -136,7 +136,7 @@ class _Surface extends ConsumerWidget {
 
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        final size = ref.watch(baseViewState(viewId).select((v) => v.surfaceSize));
+        final size = ref.watch(baseViewStateProvider(viewId).select((v) => v.surfaceSize));
         return SizedBox(
           width: size.width,
           height: size.height,
@@ -152,8 +152,8 @@ class _Surface extends ConsumerWidget {
                 viewId: viewId,
                 child: Consumer(
                   builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                    Key key = ref.watch(baseViewState(viewId).select((v) => v.textureKey));
-                    int textureId = ref.watch(baseViewState(viewId).select((v) => v.textureId));
+                    Key key = ref.watch(baseViewStateProvider(viewId).select((v) => v.textureKey));
+                    int textureId = ref.watch(baseViewStateProvider(viewId).select((v) => v.textureId));
                     return Texture(
                       key: key,
                       filterQuality: FilterQuality.medium,
@@ -164,7 +164,7 @@ class _Surface extends ConsumerWidget {
               ),
               Consumer(
                 builder: (_, WidgetRef ref, __) {
-                  List<int> popups = ref.watch(baseViewState(viewId).select((v) => v.popups));
+                  List<int> popups = ref.watch(baseViewStateProvider(viewId).select((v) => v.popups));
                   List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
 
                   return Stack(

@@ -58,12 +58,12 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
       },
       child: ProviderScope(
         overrides: [
-          keyboardId.overrideWithValue(widget.viewId),
+          keyboardIdProvider.overrideWithValue(widget.viewId),
         ],
         child: RepaintBoundary(
           child: VirtualKeyboard(
             key: key,
-            onDismiss: () => ref.read(virtualKeyboardState(widget.viewId).notifier).activated = false,
+            onDismiss: () => ref.read(virtualKeyboardStateProvider(widget.viewId).notifier).activated = false,
             onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
             onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
           ),
@@ -104,8 +104,8 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
   }
 
   void dragKeyboard(double dy) {
-    final notifier = ref.read(virtualKeyboardState(widget.viewId).notifier);
-    final state = ref.read(virtualKeyboardState(widget.viewId));
+    final notifier = ref.read(virtualKeyboardStateProvider(widget.viewId).notifier);
+    final state = ref.read(virtualKeyboardStateProvider(widget.viewId));
 
     if (state.activated) {
       slideAnimationController.value += dy / state.keyboardSize.height;
@@ -130,7 +130,7 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
   void initState() {
     super.initState();
     textInputEventsSubscription = PlatformApi.getTextInputEventsForViewId(widget.viewId).listen((event) {
-      final notifier = ref.read(virtualKeyboardState(widget.viewId).notifier);
+      final notifier = ref.read(virtualKeyboardStateProvider(widget.viewId).notifier);
       if (event is TextInputEnable) {
         notifier.activated = true;
       } else if (event is TextInputDisable) {
@@ -149,16 +149,16 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<bool>(virtualKeyboardState(widget.viewId).select((value) => value.activated), (previous, next) {
+    ref.listen<bool>(virtualKeyboardStateProvider(widget.viewId).select((value) => value.activated), (previous, next) {
       next ? animateForward() : animateBackward();
     });
 
     return ClipRect(
       child: Consumer(
         builder: (_, WidgetRef ref, Widget? child) {
-          final constraints = ref.watch(taskSwitcherState.select((v) => v.constraints));
-          final keyboardActivated = ref.watch(virtualKeyboardState(widget.viewId).select((v) => v.activated));
-          final keyboardSize = ref.watch(virtualKeyboardState(widget.viewId).select((v) => v.keyboardSize));
+          final constraints = ref.watch(taskSwitcherStateProvider.select((v) => v.constraints));
+          final keyboardActivated = ref.watch(virtualKeyboardStateProvider(widget.viewId).select((v) => v.activated));
+          final keyboardSize = ref.watch(virtualKeyboardStateProvider(widget.viewId).select((v) => v.keyboardSize));
 
           if (keyboardActivated && keyboardSize.isEmpty) {
             SchedulerBinding.instance.addPostFrameCallback(_determineVirtualKeyboardSize);
@@ -193,7 +193,7 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
     if (size == null) {
       return;
     }
-    ref.read(virtualKeyboardState(widget.viewId).notifier).keyboardSize = size;
+    ref.read(virtualKeyboardStateProvider(widget.viewId).notifier).keyboardSize = size;
   }
 
   OverlayEntry? newKeyboardOverlay() {

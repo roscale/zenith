@@ -17,7 +17,7 @@ class TaskSwitcherViewport extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Consumer(
       builder: (_, WidgetRef ref, __) {
-        double scale = ref.watch(taskSwitcherState.select((v) => v.scale));
+        double scale = ref.watch(taskSwitcherStateProvider.select((v) => v.scale));
         return AnimatedBuilder(
           animation: scrollPosition,
           builder: (_, __) => Transform(

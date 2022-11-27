@@ -4,7 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'virtual_keyboard_state.freezed.dart';
 
-final virtualKeyboardState = StateNotifierProvider.autoDispose
+final virtualKeyboardStateProvider = StateNotifierProvider.autoDispose
     .family<VirtualKeyboardStateNotifier, VirtualKeyboardState, int>((ref, int viewId) {
   return VirtualKeyboardStateNotifier();
 });

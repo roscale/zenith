@@ -5,7 +5,7 @@ import 'package:zenith/state/base_view_state.dart';
 
 part 'task_switcher_state.freezed.dart';
 
-final taskSwitcherState = StateNotifierProvider<TaskSwitcherStateNotifier, TaskSwitcherState>((ref) {
+final taskSwitcherStateProvider = StateNotifierProvider<TaskSwitcherStateNotifier, TaskSwitcherState>((ref) {
   return TaskSwitcherStateNotifier(ref);
 });
 
@@ -55,13 +55,13 @@ class TaskSwitcherStateNotifier extends StateNotifier<TaskSwitcherState> {
   }
 
   void makeTaskVisible(int viewId) {
-    ref.read(baseViewState(viewId).notifier).visible = true;
+    ref.read(baseViewStateProvider(viewId).notifier).visible = true;
     state = state.copyWith(visibleTasks: {...state.visibleTasks, viewId});
   }
 
   void clearVisibleTasks() {
     for (int viewId in state.visibleTasks) {
-      ref.read(baseViewState(viewId).notifier).visible = false;
+      ref.read(baseViewStateProvider(viewId).notifier).visible = false;
     }
     state = state.copyWith(visibleTasks: {});
   }

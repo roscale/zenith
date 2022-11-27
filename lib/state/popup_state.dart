@@ -9,7 +9,7 @@ import 'package:zenith/widgets/popup.dart';
 
 part 'popup_state.freezed.dart';
 
-final popupState = StateNotifierProvider.family<PopupStateNotifier, PopupState, int>((ref, int viewId) {
+final popupStateProvider = StateNotifierProvider.family<PopupStateNotifier, PopupState, int>((ref, int viewId) {
   return PopupStateNotifier(ref, viewId);
 });
 
@@ -42,7 +42,7 @@ class PopupStateNotifier extends StateNotifier<PopupState> {
     required Rect visibleBounds,
   }) {
     state = state.copyWith(position: position);
-    _ref.read(baseViewState(_viewId).notifier).initialize(
+    _ref.read(baseViewStateProvider(_viewId).notifier).initialize(
           textureId: textureId,
           surfaceSize: surfaceSize,
           visibleBounds: visibleBounds,

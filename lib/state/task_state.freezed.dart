@@ -16,8 +16,6 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$TaskState {
-  Key get key => throw _privateConstructorUsedError;
-  bool get open => throw _privateConstructorUsedError;
   TaskDismissState get dismissState => throw _privateConstructorUsedError;
   Object get startDismissAnimation => throw _privateConstructorUsedError;
   Object get cancelDismissAnimation => throw _privateConstructorUsedError;
@@ -33,9 +31,7 @@ abstract class $TaskStateCopyWith<$Res> {
       _$TaskStateCopyWithImpl<$Res, TaskState>;
   @useResult
   $Res call(
-      {Key key,
-      bool open,
-      TaskDismissState dismissState,
+      {TaskDismissState dismissState,
       Object startDismissAnimation,
       Object cancelDismissAnimation});
 }
@@ -53,21 +49,11 @@ class _$TaskStateCopyWithImpl<$Res, $Val extends TaskState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? key = null,
-    Object? open = null,
     Object? dismissState = null,
     Object? startDismissAnimation = null,
     Object? cancelDismissAnimation = null,
   }) {
     return _then(_value.copyWith(
-      key: null == key
-          ? _value.key
-          : key // ignore: cast_nullable_to_non_nullable
-              as Key,
-      open: null == open
-          ? _value.open
-          : open // ignore: cast_nullable_to_non_nullable
-              as bool,
       dismissState: null == dismissState
           ? _value.dismissState
           : dismissState // ignore: cast_nullable_to_non_nullable
@@ -90,9 +76,7 @@ abstract class _$$_TaskStateCopyWith<$Res> implements $TaskStateCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {Key key,
-      bool open,
-      TaskDismissState dismissState,
+      {TaskDismissState dismissState,
       Object startDismissAnimation,
       Object cancelDismissAnimation});
 }
@@ -108,21 +92,11 @@ class __$$_TaskStateCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? key = null,
-    Object? open = null,
     Object? dismissState = null,
     Object? startDismissAnimation = null,
     Object? cancelDismissAnimation = null,
   }) {
     return _then(_$_TaskState(
-      key: null == key
-          ? _value.key
-          : key // ignore: cast_nullable_to_non_nullable
-              as Key,
-      open: null == open
-          ? _value.open
-          : open // ignore: cast_nullable_to_non_nullable
-              as bool,
       dismissState: null == dismissState
           ? _value.dismissState
           : dismissState // ignore: cast_nullable_to_non_nullable
@@ -141,16 +115,10 @@ class __$$_TaskStateCopyWithImpl<$Res>
 
 class _$_TaskState implements _TaskState {
   const _$_TaskState(
-      {required this.key,
-      required this.open,
-      required this.dismissState,
+      {required this.dismissState,
       required this.startDismissAnimation,
       required this.cancelDismissAnimation});
 
-  @override
-  final Key key;
-  @override
-  final bool open;
   @override
   final TaskDismissState dismissState;
   @override
@@ -160,7 +128,7 @@ class _$_TaskState implements _TaskState {
 
   @override
   String toString() {
-    return 'TaskState(key: $key, open: $open, dismissState: $dismissState, startDismissAnimation: $startDismissAnimation, cancelDismissAnimation: $cancelDismissAnimation)';
+    return 'TaskState(dismissState: $dismissState, startDismissAnimation: $startDismissAnimation, cancelDismissAnimation: $cancelDismissAnimation)';
   }
 
   @override
@@ -168,8 +136,6 @@ class _$_TaskState implements _TaskState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_TaskState &&
-            (identical(other.key, key) || other.key == key) &&
-            (identical(other.open, open) || other.open == open) &&
             (identical(other.dismissState, dismissState) ||
                 other.dismissState == dismissState) &&
             const DeepCollectionEquality()
@@ -181,8 +147,6 @@ class _$_TaskState implements _TaskState {
   @override
   int get hashCode => Object.hash(
       runtimeType,
-      key,
-      open,
       dismissState,
       const DeepCollectionEquality().hash(startDismissAnimation),
       const DeepCollectionEquality().hash(cancelDismissAnimation));
@@ -196,16 +160,10 @@ class _$_TaskState implements _TaskState {
 
 abstract class _TaskState implements TaskState {
   const factory _TaskState(
-      {required final Key key,
-      required final bool open,
-      required final TaskDismissState dismissState,
+      {required final TaskDismissState dismissState,
       required final Object startDismissAnimation,
       required final Object cancelDismissAnimation}) = _$_TaskState;
 
-  @override
-  Key get key;
-  @override
-  bool get open;
   @override
   TaskDismissState get dismissState;
   @override

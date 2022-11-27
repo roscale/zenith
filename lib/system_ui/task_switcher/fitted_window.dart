@@ -25,7 +25,7 @@ class FittedWindow extends ConsumerWidget {
             alignment: alignment,
             child: Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                Rect visibleBounds = ref.watch(baseViewState(window.viewId).select((v) => v.visibleBounds));
+                Rect visibleBounds = ref.watch(baseViewStateProvider(window.viewId).select((v) => v.visibleBounds));
 
                 Size biggest = constraints.biggest;
                 Size size = visibleBounds.size;

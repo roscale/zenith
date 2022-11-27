@@ -8,23 +8,29 @@ final taskStateProvider = StateNotifierProvider.family<TaskStateNotifier, TaskSt
   return TaskStateNotifier();
 });
 
+final taskPositionProvider = StateProvider.family<double, int>((ref, int viewId) {
+  return 0.0;
+});
+
+final taskVerticalPositionProvider = StateProvider.family<double, int>((ref, int viewId) {
+  return 0.0;
+});
+
+final taskWidgetProvider = StateProvider.family<Widget, int>((ref, int viewId) {
+  return const SizedBox();
+});
+
 class TaskStateNotifier extends StateNotifier<TaskState> {
   TaskStateNotifier()
       : super(
-          TaskState(
-            key: GlobalKey(),
-            open: true,
-            dismissState: TaskDismissState.open,
+          const TaskState(
+            dismissState: TaskDismissState.notDismissed,
             startDismissAnimation: Object(),
             cancelDismissAnimation: Object(),
           ),
         );
 
-  // TaskOpenState get openState => state.openState;
-
-  set open(bool open) => state = state.copyWith(open: open);
-
-  set dismissState(TaskDismissState dismissState) => state = state.copyWith(dismissState: dismissState);
+  set dismissState(TaskDismissState value) => state = state.copyWith(dismissState: value);
 
   void startDismissAnimation() => state = state.copyWith(startDismissAnimation: Object());
 
@@ -37,8 +43,6 @@ class TaskStateNotifier extends StateNotifier<TaskState> {
 @freezed
 class TaskState with _$TaskState {
   const factory TaskState({
-    required Key key,
-    required bool open,
     required TaskDismissState dismissState,
     required Object startDismissAnimation,
     required Object cancelDismissAnimation,
@@ -46,7 +50,7 @@ class TaskState with _$TaskState {
 }
 
 enum TaskDismissState {
-  open,
+  notDismissed,
   dismissing,
   dismissed,
 }

@@ -8,7 +8,7 @@ import 'package:zenith/state/popup_state.dart';
 
 part 'base_view_state.freezed.dart';
 
-final baseViewState = StateNotifierProvider.family<BaseViewStateNotifier, BaseViewState, int>((ref, int viewId) {
+final baseViewStateProvider = StateNotifierProvider.family<BaseViewStateNotifier, BaseViewState, int>((ref, int viewId) {
   return BaseViewStateNotifier(ref, viewId);
 });
 
@@ -70,7 +70,7 @@ class BaseViewStateNotifier extends StateNotifier<BaseViewState> {
 
   void addPopup(int viewId) {
     state = state.copyWith(popups: [...state.popups, viewId]);
-    ref.read(popupState(viewId).notifier).parentViewId = state.viewId;
+    ref.read(popupStateProvider(viewId).notifier).parentViewId = state.viewId;
   }
 
   void removePopup(int viewId) {

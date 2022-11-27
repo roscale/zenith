@@ -26,18 +26,6 @@ final closingTaskListProvider = StateNotifierProvider<StateNotifierList<int>, Li
   return StateNotifierList<int>();
 });
 
-final taskPositionProvider = StateProvider.family<double, int>((ref, int viewId) {
-  return 0.0;
-});
-
-final taskVerticalPositionProvider = StateProvider.family<double, int>((ref, int viewId) {
-  return 0.0;
-});
-
-final taskWidgetProvider = StateProvider.family<Widget, int>((ref, int viewId) {
-  return const SizedBox();
-});
-
 final taskSwitcherWidgetStateProvider = StateProvider((ref) => _TaskSwitcherState());
 
 class TaskSwitcher extends ConsumerStatefulWidget {
@@ -59,8 +47,6 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
 
   AnimationController? _scaleAnimationController;
 
-  final Set<StreamSubscription> _streamSubscriptions = {};
-
   AnimationController? _taskPositionAnimationController;
 
   @override
@@ -75,11 +61,6 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
       debugLabel: "TaskSwitcher.scrollPosition",
     );
 
-    ref.listenManual(taskSwitcherState.select((v) => v.constraints), (_, BoxConstraints constraints) {
-      scrollPosition.applyViewportDimension(constraints.maxWidth);
-      _updateContentDimensions();
-    });
-
     // Avoid executing _spawnTask and _stopTask concurrently because it causes visual glitches.
     // Make sure the async tasks are executed one after the other.
     Future<void> chain = Future.value(null);
@@ -92,7 +73,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
 
     ref.listenManual(windowUnmappedStreamProvider, (_, AsyncValue<int> next) {
       next.whenData((int viewId) {
-        chain = chain.then((_) => _stopTask(viewId));
+        chain = chain.then((_) => _closeTask(viewId));
       });
     });
   }
@@ -101,14 +82,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          // addPostFrameCallback needed because it triggers setState which cannot be called during build.
-          ref.read(taskSwitcherState.notifier).constraints = constraints;
-          _repositionTasks();
-          scrollPosition.jumpTo(taskIndexToPosition(positionToTaskIndex(position)));
-        });
-
-        PlatformApi.initial_window_size(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
+        _constraintsChanged(constraints);
 
         return Stack(
           children: [
@@ -157,15 +131,56 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     );
   }
 
+  Future<void> _spawnTask(int viewId) {
+    final taskIndex = ref.read(taskListProvider).length;
+
+    ref.read(taskListProvider.notifier).add(viewId);
+    ref.read(taskWidgetProvider(viewId).notifier).state = Task(
+      key: ValueKey(viewId),
+      viewId: viewId,
+      onTap: () => _switchToTask(viewId),
+    );
+    ref.read(taskPositionProvider(viewId).notifier).state = taskIndexToPosition(taskIndex);
+
+    _updateContentDimensions();
+
+    return switchToTaskByIndex(taskIndex, zoomOut: true);
+  }
+
+  Future<void> _closeTask(int viewId) async {
+    bool inOverview = ref.read(taskSwitcherStateProvider).inOverview;
+    if (inOverview) {
+      return _closeTaskInOverview(viewId);
+    } else {
+      return _closeTaskNotInOverview(viewId);
+    }
+  }
+
+  void _constraintsChanged(BoxConstraints constraints) {
+    PlatformApi.initial_window_size(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
+
+    // addPostFrameCallback needed because riverpod triggers setState which cannot be called during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(taskSwitcherStateProvider.notifier).constraints = constraints;
+      scrollPosition.applyViewportDimension(constraints.maxWidth);
+      _updateContentDimensions();
+      _repositionTasks();
+      // Snap to the nearest task.
+      scrollPosition.jumpTo(taskIndexToPosition(taskPositionToIndex(position)));
+    });
+  }
+
+  /// Readjust the scrollable area.
   void _updateContentDimensions({double? minScrollExtent}) {
     int length = ref.read(taskListProvider).length;
     minScrollExtent = minScrollExtent ?? (scrollPosition.hasContentDimensions ? scrollPosition.minScrollExtent : 0);
     scrollPosition.applyContentDimensions(
       minScrollExtent,
-      minScrollExtent + (length <= 1 ? 0 : (length - 1) * _taskToTaskOffset),
+      minScrollExtent + (length <= 1 ? 0 : (length - 1) * _interTaskOffset),
     );
   }
 
+  /// Resets the position of all tasks where they all should be after the animations are finished.
   void _repositionTasks() {
     final List<int> tasks = ref.read(taskListProvider);
     for (int i = 0; i < tasks.length; i++) {
@@ -173,186 +188,141 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     }
   }
 
-  double get _taskToTaskOffset => ref.read(taskSwitcherState).constraints.maxWidth + widget.spacing;
+  double taskIndexToPosition(int taskIndex) => scrollPosition.minScrollExtent + taskIndex * _interTaskOffset;
 
-  double taskIndexToPosition(int taskIndex) => scrollPosition.minScrollExtent + taskIndex * _taskToTaskOffset;
-
-  int positionToTaskIndex(double position) {
+  int taskPositionToIndex(double position) {
     final taskListLength = ref.read(taskListProvider).length;
     if (taskListLength == 0) {
       return 0;
     }
     // 0 is the center of the first task.
-    var offset = (position - scrollPosition.minScrollExtent) + _taskToTaskOffset / 2;
-    var index = offset ~/ _taskToTaskOffset;
+    var offset = (position - scrollPosition.minScrollExtent) + _interTaskOffset / 2;
+    var index = offset ~/ _interTaskOffset;
     return index.clamp(0, taskListLength - 1);
   }
 
-  Future<void> _spawnTask(int viewId) {
-    final taskIndex = ref.read(taskListProvider).length;
+  double get _interTaskOffset => ref.read(taskSwitcherStateProvider).constraints.maxWidth + widget.spacing;
 
-    ref.read(taskListProvider.notifier).add(viewId);
-    ref.read(taskWidgetProvider(viewId).notifier).state = Task(
-      key: ref.read(taskStateProvider(viewId).notifier).state.key,
-      viewId: viewId,
-      onTap: () => _switchToTask(viewId),
-      onClosed: () {},
-    );
-    ref.read(taskPositionProvider(viewId).notifier).state = taskIndexToPosition(taskIndex);
+  void _closeTaskInOverview(int viewId) async {
+    ref.read(taskStateProvider(viewId).notifier).startDismissAnimation();
 
-    _updateContentDimensions();
+    final tasks = ref.read(taskListProvider);
+    var closingTaskIndex = tasks.indexOf(viewId);
 
-    filter(TaskState state) => state.open;
-    listener(_, bool next) async {
-      // bool open = next.item1;
-      // TaskDismissState dismissState = next.item2;
-      bool open = next;
+    // Dispose the controller instead of just stopping it because we want to clear the listeners.
+    _taskPositionAnimationController?.dispose();
+    _taskPositionAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    final controller = _taskPositionAnimationController!;
 
-      bool inOverview = ref.read(taskSwitcherState).inOverview;
-      final tasks = ref.read(taskListProvider);
+    int taskIndexUnder = taskPositionToIndex(position);
 
-      if (!open && inOverview) {
-        var closingTaskIndex = tasks.indexOf(viewId);
-
-        _taskPositionAnimationController?.dispose();
-        _taskPositionAnimationController =
-            AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
-        final controller = _taskPositionAnimationController!;
-
-        int taskIndexUnder = positionToTaskIndex(position);
-
-        bool animateRight = false;
-        if (taskIndexUnder == closingTaskIndex) {
-          if (closingTaskIndex == tasks.length - 1) {
-            // Closing the last task in the list.
-            animateRight = false;
-          } else {
-            animateRight = true;
-          }
-        } else if (closingTaskIndex > taskIndexUnder) {
-          animateRight = true;
-        } else if (closingTaskIndex < taskIndexUnder) {
-          animateRight = false;
-        }
-
-        if (animateRight) {
-          for (int i = closingTaskIndex + 1; i < tasks.length; i++) {
-            Animation<double> animation = Tween(
-              begin: ref.read(taskPositionProvider(tasks[i])),
-              end: taskIndexToPosition(i - 1),
-            ).animate(CurvedAnimation(
-              parent: controller,
-              curve: Curves.easeOutCubic,
-            ));
-
-            controller.addListener(() {
-              ref.read(taskPositionProvider(tasks[i]).notifier).state = animation.value;
-            });
-          }
-
-          _removeTask(viewId);
-          _updateContentDimensions();
-        } else {
-          for (int i = 0; i < closingTaskIndex; i++) {
-            Animation<double> animation = Tween(
-              begin: ref.read(taskPositionProvider(tasks[i])),
-              end: taskIndexToPosition(i + 1),
-            ).animate(CurvedAnimation(
-              parent: controller,
-              curve: Curves.easeOutCubic,
-            ));
-
-            controller.addListener(() {
-              ref.read(taskPositionProvider(tasks[i]).notifier).state = animation.value;
-            });
-          }
-
-          _removeTask(viewId);
-          _updateContentDimensions(minScrollExtent: scrollPosition.minScrollExtent + _taskToTaskOffset);
-        }
-
-        // await Future.delayed(Duration(microseconds: 1));
-        await controller.forward(from: 0).orCancel.catchError((_) => null);
-        _destroyTask(viewId);
-
-        // _repositionTasks();
+    // When a task is closed, all tasks to the left or to the right have to move in order to fill the gap.
+    bool animateRightSide = false;
+    if (taskIndexUnder == closingTaskIndex) {
+      if (closingTaskIndex == tasks.length - 1) {
+        animateRightSide = false;
+      } else {
+        animateRightSide = true;
       }
+    } else if (closingTaskIndex > taskIndexUnder) {
+      animateRightSide = true;
+    } else if (closingTaskIndex < taskIndexUnder) {
+      animateRightSide = false;
     }
 
-    ref.listenManual(taskStateProvider(viewId).select(filter), listener);
+    _putTaskBehind(viewId);
 
-    return switchToTaskByIndex(taskIndex, zoomOut: true);
-  }
+    if (animateRightSide) {
+      for (int i = closingTaskIndex + 1; i < tasks.length; i++) {
+        Animation<double> animation = Tween(
+          begin: ref.read(taskPositionProvider(tasks[i])),
+          end: taskIndexToPosition(i - 1),
+        ).animate(CurvedAnimation(
+          parent: controller,
+          curve: Curves.easeOutCubic,
+        ));
 
-  void _moveCurrentTaskToEnd() {
-    if (ref.read(taskListProvider).isNotEmpty) {
-      int currentTaskIndex = positionToTaskIndex(position);
-      // Make the current task in last one.
-      final notifier = ref.read(taskListProvider.notifier);
-      var task = notifier.removeAt(currentTaskIndex);
-      notifier.add(task);
+        controller.addListener(() {
+          ref.read(taskPositionProvider(tasks[i]).notifier).state = animation.value;
+        });
+      }
+      _updateContentDimensions();
+    } else {
+      for (int i = 0; i < closingTaskIndex; i++) {
+        Animation<double> animation = Tween(
+          begin: ref.read(taskPositionProvider(tasks[i])),
+          end: taskIndexToPosition(i + 1),
+        ).animate(CurvedAnimation(
+          parent: controller,
+          curve: Curves.easeOutCubic,
+        ));
+
+        controller.addListener(() {
+          ref.read(taskPositionProvider(tasks[i]).notifier).state = animation.value;
+        });
+      }
+      _updateContentDimensions(minScrollExtent: scrollPosition.minScrollExtent + _interTaskOffset);
     }
+
+    await controller.forward(from: 0).orCancel.catchError((ignore) => null);
+    _destroyTask(viewId);
   }
 
-  void _jumpToLastTask() {
+  void _closeTaskNotInOverview(int viewId) async {
     final tasks = ref.read(taskListProvider);
-    scrollPosition.jumpTo(tasks.isNotEmpty ? taskIndexToPosition(tasks.length - 1) : 0);
-  }
-
-  Future<void> _stopTask(int viewId) async {
-    bool inOverview = ref.read(taskSwitcherState).inOverview;
-    final tasks = ref.read(taskListProvider);
-    final notifier = ref.read(taskSwitcherState.notifier);
-
-    if (inOverview) {
-      ref.read(taskStateProvider(viewId).notifier)
-        ..open = false
-        ..startDismissAnimation();
-      return;
-    }
+    final notifier = ref.read(taskSwitcherStateProvider.notifier);
 
     int closingTask = tasks.indexOf(viewId);
     int? focusingTask = taskToFocusAfterClosing(closingTask);
-    // Might be null if there's no task left, in which case there's nothing to animate.
-    if (focusingTask != null) {
-      var currentTaskIndex = positionToTaskIndex(position);
 
-      // Don't let the user interact with the task switcher while the animation is ongoing.
-      notifier.disableUserControl = true;
-      if (currentTaskIndex == closingTask) {
-        await switchToTaskByIndex(focusingTask, zoomOut: true);
-      } else {
-        await switchToTaskByIndex(currentTaskIndex);
-      }
-      notifier.disableUserControl = false;
-
+    if (focusingTask == null) {
+      // No task left, nothing to animate.
       _destroyTask(viewId);
-
-      if (focusingTask > closingTask) {
-        _updateContentDimensions(minScrollExtent: scrollPosition.minScrollExtent + _taskToTaskOffset);
-      } else {
-        _updateContentDimensions();
-      }
-    } else {
-      _destroyTask(viewId);
+      _repositionTasks();
       _updateContentDimensions();
+      return;
     }
+
+    var currentTask = taskPositionToIndex(position);
+
+    bool zoomOut;
+    if (currentTask == closingTask) {
+      zoomOut = true;
+    } else {
+      focusingTask = currentTask;
+      zoomOut = false;
+    }
+
+    // Don't let the user interact with the task switcher while the animation is ongoing.
+    notifier.disableUserControl = true;
+    try {
+      await switchToTaskByIndex(focusingTask, zoomOut: zoomOut);
+    } finally {
+      notifier.disableUserControl = false;
+    }
+
+    _destroyTask(viewId);
+
+    final minScrollExtent =
+        focusingTask > closingTask ? scrollPosition.minScrollExtent + _interTaskOffset : scrollPosition.minScrollExtent;
+    _updateContentDimensions(minScrollExtent: minScrollExtent);
 
     // Just to ensure proper positioning in case the animations glitch out.
     _repositionTasks();
   }
 
   void _destroyTask(int viewId) {
-    final textureId = ref.read(baseViewState(viewId)).textureId;
+    final textureId = ref.read(baseViewStateProvider(viewId)).textureId;
     PlatformApi.unregisterViewTexture(textureId);
 
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).remove(viewId);
 
-    ref.invalidate(baseViewState(viewId));
-    ref.invalidate(windowState(viewId));
+    ref.invalidate(baseViewStateProvider(viewId));
+    ref.invalidate(windowStateProvider(viewId));
     ref.invalidate(windowWidget(viewId));
     ref.invalidate(taskPositionProvider(viewId));
+    ref.invalidate(taskVerticalPositionProvider(viewId));
     ref.invalidate(taskWidgetProvider(viewId));
     ref.invalidate(taskStateProvider(viewId));
   }
@@ -367,23 +337,25 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     }
   }
 
-  void _removeTask(int viewId) {
+  /// Puts the task on another layer behind all other tasks. All tasks soon to be destroyed are put
+  /// on this layer while they are animating.
+  void _putTaskBehind(int viewId) {
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).add(viewId);
   }
 
-  void stopAnimations() {
+  void stopScaleAnimation() {
     _scaleAnimationController?.stop();
     _scaleAnimationController?.dispose();
     _scaleAnimationController = null;
   }
 
   Future<void> _switchToTask(int viewId) async {
-    final notifier = ref.read(taskSwitcherState.notifier);
+    final notifier = ref.read(taskSwitcherStateProvider.notifier);
     notifier.areAnimationsPlaying = true;
     try {
       await switchToTaskByIndex(ref.read(taskListProvider).indexOf(viewId));
-      _moveCurrentTaskToEnd();
+      _moveCurrentTaskToTheEnd();
       _repositionTasks();
       _jumpToLastTask();
     } finally {
@@ -394,14 +366,14 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   Future<void> switchToTaskByIndex(int index, {bool zoomOut = false}) async {
     final viewId = ref.read(taskListProvider)[index];
 
-    ref.read(taskSwitcherState.notifier)
+    ref.read(taskSwitcherStateProvider.notifier)
       ..inOverview = false
       ..clearVisibleTasks()
       ..makeTaskVisible(viewId);
 
     PlatformApi.activateWindow(viewId);
 
-    stopAnimations();
+    stopScaleAnimation();
     _scaleAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -413,7 +385,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
       curve: Curves.easeOutCubic,
     );
 
-    final scale = ref.read(taskSwitcherState).scale;
+    final scale = ref.read(taskSwitcherStateProvider).scale;
 
     Animatable<double> scaleAnimatable;
     if (zoomOut) {
@@ -434,7 +406,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
       ).chain(CurveTween(curve: Curves.easeOutCubic));
     }
 
-    final notifier = ref.read(taskSwitcherState.notifier);
+    final notifier = ref.read(taskSwitcherStateProvider.notifier);
 
     final scaleAnimation = _scaleAnimationController!.drive(scaleAnimatable);
     scaleAnimation.addListener(() => notifier.scale = scaleAnimation.value);
@@ -446,31 +418,45 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     notifier.areAnimationsPlaying = false;
   }
 
+  void _moveCurrentTaskToTheEnd() {
+    if (ref.read(taskListProvider).isNotEmpty) {
+      int currentTaskIndex = taskPositionToIndex(position);
+      final notifier = ref.read(taskListProvider.notifier);
+      var task = notifier.removeAt(currentTaskIndex);
+      notifier.add(task);
+    }
+  }
+
+  void _jumpToLastTask() {
+    final tasks = ref.read(taskListProvider);
+    scrollPosition.jumpTo(tasks.isNotEmpty ? taskIndexToPosition(tasks.length - 1) : 0);
+  }
+
   Future<void> showOverview() async {
-    final notifier = ref.read(taskSwitcherState.notifier);
+    final notifier = ref.read(taskSwitcherStateProvider.notifier);
     notifier.inOverview = true;
 
-    stopAnimations();
+    stopScaleAnimation();
     _scaleAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
 
     final positionAnimationFuture = scrollPosition.animateTo(
-      taskIndexToPosition(positionToTaskIndex(position)),
+      taskIndexToPosition(taskPositionToIndex(position)),
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
     );
 
     final scaleAnimation = _scaleAnimationController!.drive(
       Tween(
-        begin: ref.read(taskSwitcherState).scale,
+        begin: ref.read(taskSwitcherStateProvider).scale,
         end: 0.6,
       ).chain(CurveTween(curve: Curves.easeOutCubic)),
     );
     scaleAnimation.addListener(() => notifier.scale = scaleAnimation.value);
 
-    final scaleAnimationFuture = _scaleAnimationController!.forward().orCancel.catchError((_) => null);
+    final scaleAnimationFuture = _scaleAnimationController!.forward().orCancel.catchError((ignore) => null);
 
     notifier.areAnimationsPlaying = true;
     await Future.wait([positionAnimationFuture, scaleAnimationFuture]);
@@ -481,9 +467,6 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   void dispose() {
     scrollPosition.dispose();
     _scaleAnimationController?.dispose();
-    for (var subscription in _streamSubscriptions) {
-      subscription.cancel();
-    }
     super.dispose();
   }
 

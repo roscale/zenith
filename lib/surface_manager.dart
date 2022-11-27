@@ -61,14 +61,14 @@ class SurfaceManager {
       visibleBoundsMap["height"]!.toDouble(),
     );
 
-    _ref.read(windowState(viewId).notifier).initialize(
+    _ref.read(windowStateProvider(viewId).notifier).initialize(
           textureId: textureId,
           surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
           visibleBounds: visibleBounds,
         );
 
     _ref.read(windowWidget(viewId).notifier).state = Window(
-      key: _ref.read(baseViewState(viewId)).widgetKey,
+      key: _ref.read(baseViewStateProvider(viewId)).widgetKey,
       viewId: viewId,
     );
 
@@ -96,9 +96,9 @@ class SurfaceManager {
       visibleBoundsMap["height"]!.toDouble(),
     );
 
-    var parentVisibleBounds = _ref.read(baseViewState(parentViewId)).visibleBounds;
+    var parentVisibleBounds = _ref.read(baseViewStateProvider(parentViewId)).visibleBounds;
 
-    _ref.read(popupState(viewId).notifier).initialize(
+    _ref.read(popupStateProvider(viewId).notifier).initialize(
           position: Offset(x.toDouble() + parentVisibleBounds.left, y.toDouble() + parentVisibleBounds.top),
           textureId: textureId,
           surfaceSize: Size(width.toDouble(), height.toDouble()),
@@ -106,26 +106,26 @@ class SurfaceManager {
         );
 
     _ref.read(popupWidget(viewId).notifier).state = Popup(
-      key: _ref.read(baseViewState(viewId)).widgetKey,
+      key: _ref.read(baseViewStateProvider(viewId)).widgetKey,
       viewId: viewId,
     );
 
-    _ref.read(baseViewState(parentViewId).notifier).addPopup(viewId);
+    _ref.read(baseViewStateProvider(parentViewId).notifier).addPopup(viewId);
   }
 
   void _popupUnmapped(dynamic event) async {
     int viewId = event["view_id"];
 
-    await _ref.read(popupState(viewId).notifier).animateClosing();
+    await _ref.read(popupStateProvider(viewId).notifier).animateClosing();
 
-    final state = _ref.read(popupState(viewId));
-    _ref.read(baseViewState(state.parentViewId).notifier).removePopup(viewId);
+    final state = _ref.read(popupStateProvider(viewId));
+    _ref.read(baseViewStateProvider(state.parentViewId).notifier).removePopup(viewId);
 
-    _ref.invalidate(baseViewState(viewId));
-    _ref.invalidate(popupState(viewId));
+    _ref.invalidate(baseViewStateProvider(viewId));
+    _ref.invalidate(popupStateProvider(viewId));
     _ref.invalidate(popupWidget(viewId));
 
-    PlatformApi.unregisterViewTexture(_ref.read(baseViewState(viewId)).textureId);
+    PlatformApi.unregisterViewTexture(_ref.read(baseViewStateProvider(viewId)).textureId);
   }
 
   void _configureSurface(dynamic event) {
@@ -154,8 +154,8 @@ class SurfaceManager {
 
     switch (role) {
       case XdgSurfaceRole.toplevel:
-        final state = _ref.read(baseViewState(viewId));
-        final notifier = _ref.read(baseViewState(viewId).notifier);
+        final state = _ref.read(baseViewStateProvider(viewId));
+        final notifier = _ref.read(baseViewStateProvider(viewId).notifier);
 
         if (newTextureId != null) {
           final oldTextureId = state.textureId;
@@ -169,8 +169,8 @@ class SurfaceManager {
         break;
 
       case XdgSurfaceRole.popup:
-        final state = _ref.read(baseViewState(viewId));
-        final notifier = _ref.read(baseViewState(viewId).notifier);
+        final state = _ref.read(baseViewStateProvider(viewId));
+        final notifier = _ref.read(baseViewStateProvider(viewId).notifier);
 
         if (newTextureId != null) {
           final oldTextureId = state.textureId;
@@ -185,7 +185,7 @@ class SurfaceManager {
           // Position relative to the parent.
           int x = event["x"];
           int y = event["y"];
-          _ref.read(popupState(viewId).notifier).position = Offset(x.toDouble(), y.toDouble());
+          _ref.read(popupStateProvider(viewId).notifier).position = Offset(x.toDouble(), y.toDouble());
         }
         break;
 

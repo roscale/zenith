@@ -15,13 +15,11 @@ import 'package:zenith/widgets/window.dart';
 class Task extends ConsumerStatefulWidget {
   final int viewId;
   final VoidCallback onTap;
-  final VoidCallback onClosed;
 
   const Task({
     Key? key,
     required this.viewId,
     required this.onTap,
-    required this.onClosed,
   }) : super(key: key);
 
   @override
@@ -29,63 +27,35 @@ class Task extends ConsumerStatefulWidget {
 }
 
 class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin {
-  late final controller = AnimationController(
+  late final animationController = AnimationController(
     duration: const Duration(milliseconds: 250),
     vsync: this,
   );
 
-  late var animation = Tween(begin: 0.0, end: 0.0).animate(controller);
+  late var verticalPositionAnimation = Tween(begin: 0.0, end: 0.0).animate(animationController);
 
   @override
   void initState() {
     super.initState();
-    controller.addListener(() {
-      ref.read(taskVerticalPositionProvider(widget.viewId).notifier).state = animation.value;
+    animationController.addListener(() {
+      ref.read(taskVerticalPositionProvider(widget.viewId).notifier).state = verticalPositionAnimation.value;
     });
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(taskStateProvider(widget.viewId).select((value) => value.startDismissAnimation), (_, __) async {
-      final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
-      TaskDismissState dismissState = notifier.state.dismissState;
-      if (dismissState != TaskDismissState.open) {
-        return;
-      }
-
-      notifier.dismissState = TaskDismissState.dismissing;
-      await _startSlideClosingAnimation();
-      if (mounted) {
-        notifier.dismissState = TaskDismissState.dismissed;
-      }
-    });
-
-    ref.listen(taskStateProvider(widget.viewId).select((value) => value.cancelDismissAnimation), (_, __) {
-      final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
-      notifier.dismissState = TaskDismissState.open;
-      _animateBackToPosition();
-    });
-
-    ref.listen(taskStateProvider(widget.viewId).select((value) => value.dismissState),
-        (_, TaskDismissState dismissState) async {
-      if (dismissState == TaskDismissState.dismissing) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) {
-          ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
-        }
-      }
-    });
+    _registerListeners();
 
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
         final position = ref.watch(taskPositionProvider(widget.viewId));
-        final constraints = ref.watch(taskSwitcherState.select((v) => v.constraints));
+        final constraints = ref.watch(taskSwitcherStateProvider.select((v) => v.constraints));
 
         return Positioned(
           left: position,
@@ -109,48 +79,30 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
           },
           child: Consumer(
             builder: (_, WidgetRef ref, Widget? child) {
-              final inOverview = ref.watch(taskSwitcherState.select((v) => v.inOverview));
+              final inOverview = ref.watch(taskSwitcherStateProvider.select((v) => v.inOverview));
               final dismissState = ref.watch(taskStateProvider(widget.viewId).select((v) => v.dismissState));
 
               // Doing my best to not change the depth of the tree to avoid rebuilding the whole subtree.
               return IgnorePointer(
-                ignoring: dismissState != TaskDismissState.open,
+                ignoring: dismissState != TaskDismissState.notDismissed,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: inOverview ? () => widget.onTap() : null,
-                  onVerticalDragUpdate: inOverview
-                      ? (DragUpdateDetails details) {
-                          ref
-                              .read(taskVerticalPositionProvider(widget.viewId).notifier)
-                              .update((state) => (state + details.primaryDelta!).clamp(-double.infinity, 0));
-                        }
-                      : null,
-                  onVerticalDragDown: inOverview ? (_) => controller.stop() : null,
-                  onVerticalDragCancel:
-                      inOverview ? ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation : null,
-                  onVerticalDragEnd: inOverview
-                      ? (DragEndDetails details) async {
-                          if (details.primaryVelocity! < -1000) {
-                            PlatformApi.closeView(widget.viewId);
-                            ref.read(taskStateProvider(widget.viewId).notifier).startDismissAnimation();
-                          } else {
-                            ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
-                          }
-                        }
-                      : null,
+                  onTap: inOverview ? _onTap : null,
+                  onVerticalDragDown: inOverview ? _onVerticalDragDown : null,
+                  onVerticalDragUpdate: inOverview ? _onVerticalDragUpdate : null,
+                  onVerticalDragEnd: inOverview ? _onVerticalDragEnd : null,
+                  onVerticalDragCancel: inOverview ? _onVerticalDragCancel : null,
                   child: IgnorePointer(
                     ignoring: inOverview,
-                    child: Listener(
-                      onPointerDown: !inOverview ? (_) => _moveTaskToTheEnd(ref) : (_) {},
-                      child: child,
-                    ),
+                    child: child,
                   ),
                 ),
               );
             },
             child: Consumer(
               builder: (_, WidgetRef ref, Widget? child) {
-                final virtualKeyboardKey = ref.watch(windowState(widget.viewId).select((v) => v.virtualKeyboardKey));
+                final virtualKeyboardKey =
+                    ref.watch(windowStateProvider(widget.viewId).select((v) => v.virtualKeyboardKey));
                 return WithVirtualKeyboard(
                   key: virtualKeyboardKey,
                   viewId: widget.viewId,
@@ -173,54 +125,76 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
     );
   }
 
-  void _moveTaskToTheEnd(WidgetRef ref) async {
-    if (ref.read(taskListProvider).last == widget.viewId) {
-      return;
-    }
-    final notifier = ref.read(taskSwitcherState.notifier);
-    notifier.disableUserControl = true;
-    // Move the task to the end after the animations have finished.
-    await _untilAnimationsStopped(ref);
-    // moveCurrentTaskToEnd();
-    // jumpToLastTask();
-    notifier.disableUserControl = false;
+  void _registerListeners() {
+    // Start dismiss animation.
+    ref.listen(taskStateProvider(widget.viewId).select((value) => value.startDismissAnimation), (_, __) async {
+      final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
+      TaskDismissState dismissState = notifier.state.dismissState;
+
+      if (dismissState != TaskDismissState.notDismissed) {
+        return;
+      }
+      notifier.dismissState = TaskDismissState.dismissing;
+
+      // If the task is not destroyed after some time, the dismiss is cancelled.
+      Future.delayed(const Duration(milliseconds: 500)).then((_) {
+        if (mounted) {
+          ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+        }
+      });
+
+      await _startDismissAnimation();
+      if (mounted) {
+        notifier.dismissState = TaskDismissState.dismissed;
+      }
+    });
+
+    // Cancel dismiss animation.
+    ref.listen(taskStateProvider(widget.viewId).select((value) => value.cancelDismissAnimation), (_, __) {
+      final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
+      notifier.dismissState = TaskDismissState.notDismissed;
+      _cancelDismissAnimation();
+    });
   }
 
-  Future<void> _startSlideClosingAnimation() {
-    animation = Tween(
+  void _onTap() => widget.onTap();
+
+  void _onVerticalDragDown(DragDownDetails _) => animationController.stop();
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) => ref
+      .read(taskVerticalPositionProvider(widget.viewId).notifier)
+      .update((state) => (state + details.primaryDelta!).clamp(-double.infinity, 0));
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (details.primaryVelocity! < -1000) {
+      PlatformApi.closeView(widget.viewId);
+      ref.read(taskStateProvider(widget.viewId).notifier).startDismissAnimation();
+    } else {
+      ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+    }
+  }
+
+  void _onVerticalDragCancel() {
+    if (ref.read(taskSwitcherStateProvider).inOverview) {
+      ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+    }
+  }
+
+  Future<void> _startDismissAnimation() {
+    verticalPositionAnimation = Tween(
       begin: ref.read(taskVerticalPositionProvider(widget.viewId)),
       end: -1000.0,
-    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
+    ).animate(CurvedAnimation(parent: animationController, curve: Curves.easeOutCubic));
 
-    return controller.forward(from: 0);
+    return animationController.forward(from: 0);
   }
 
-  Future<void> _animateBackToPosition() {
-    animation = Tween(
+  Future<void> _cancelDismissAnimation() {
+    verticalPositionAnimation = Tween(
       begin: ref.read(taskVerticalPositionProvider(widget.viewId)),
       end: 0.0,
-    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
+    ).animate(CurvedAnimation(parent: animationController, curve: Curves.easeOutCubic));
 
-    return controller.forward(from: 0);
+    return animationController.forward(from: 0);
   }
-}
-
-Future<void> _untilAnimationsStopped(WidgetRef ref) {
-  final completer = Completer<void>();
-
-  if (!ref.read(taskSwitcherState).areAnimationsPlaying) {
-    completer.complete();
-  } else {
-    late ProviderSubscription<bool> subscription;
-    subscription = ref.listenManual(
-      taskSwitcherState.select((v) => v.areAnimationsPlaying),
-      (_, bool animationsPlaying) {
-        if (!animationsPlaying) {
-          subscription.close();
-          completer.complete();
-        }
-      },
-    );
-  }
-  return completer.future;
 }

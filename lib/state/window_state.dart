@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/base_view_state.dart';
 
 part 'window_state.freezed.dart';
 
-final windowState = StateNotifierProvider.family<WindowStateNotifier, WindowState, int>((ref, int viewId) {
+final windowStateProvider = StateNotifierProvider.family<WindowStateNotifier, WindowState, int>((ref, int viewId) {
   return WindowStateNotifier(ref, viewId);
 });
 
@@ -31,7 +30,7 @@ class WindowStateNotifier extends StateNotifier<WindowState> {
     required Size surfaceSize,
     required Rect visibleBounds,
   }) {
-    _ref.read(baseViewState(_viewId).notifier).initialize(
+    _ref.read(baseViewStateProvider(_viewId).notifier).initialize(
           textureId: textureId,
           surfaceSize: surfaceSize,
           visibleBounds: visibleBounds,

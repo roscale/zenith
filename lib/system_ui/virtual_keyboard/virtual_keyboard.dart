@@ -6,10 +6,10 @@ import 'package:zenith/system_ui/virtual_keyboard/key.dart';
 import 'package:zenith/system_ui/virtual_keyboard/layouts.dart';
 
 final keyboardLayoutProvider = StateProvider<KbLayout>((ref) => KbLayouts.en.layout);
-final keyboardId = Provider<int>((ref) => throw UnimplementedError()); // will be overridden
+final keyboardIdProvider = Provider<int>((ref) => throw UnimplementedError()); // will be overridden
 final keyboardLayerProvider = StateProvider.autoDispose.family<KbLayerEnum, int>((ref, viewId) => KbLayerEnum.first);
 final keyboardCaseProvider = StateProvider.autoDispose.family<Case, int>((ref, viewId) => Case.lowercase);
-final keyboardKeyWidth = StateProvider.family<double, int>((ref, viewId) => 0);
+final keyboardKeyWidthProvider = StateProvider.family<double, int>((ref, viewId) => 0);
 
 class VirtualKeyboard extends ConsumerWidget {
   final VoidCallback onDismiss;
@@ -30,8 +30,8 @@ class VirtualKeyboard extends ConsumerWidget {
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           double keyWidth = constraints.maxWidth / 10;
-          final id = ref.watch(keyboardId);
-          Future.microtask(() => ref.read(keyboardKeyWidth(id).notifier).state = keyWidth);
+          final id = ref.watch(keyboardIdProvider);
+          Future.microtask(() => ref.read(keyboardKeyWidthProvider(id).notifier).state = keyWidth);
 
           return Material(
             color: Color.lerp(Colors.black, Colors.white, 0.9),
@@ -75,7 +75,7 @@ class KeyboardLayers extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final id = ref.watch(keyboardId);
+    final id = ref.watch(keyboardIdProvider);
     final layerIndex = ref.watch(keyboardLayerProvider(id)).index;
 
     return IndexedStack(
@@ -109,8 +109,8 @@ class KeyboardFirstLayer extends ConsumerWidget {
   }
 
   List<List<Widget>> _buildKeys(BuildContext context, WidgetRef ref, KbLayer layer) {
-    final id = ref.watch(keyboardId);
-    double keyWidth = ref.watch(keyboardKeyWidth(id));
+    final id = ref.watch(keyboardIdProvider);
+    double keyWidth = ref.watch(keyboardKeyWidthProvider(id));
 
     Widget letterKey(String letter) {
       return VirtualKeyboardLetterKey(
@@ -202,8 +202,8 @@ class KeyboardSecondLayer extends ConsumerWidget {
   }
 
   List<List<Widget>> _buildKeys(BuildContext context, WidgetRef ref, KbLayer layer) {
-    final id = ref.watch(keyboardId);
-    double keyWidth = ref.watch(keyboardKeyWidth(id));
+    final id = ref.watch(keyboardIdProvider);
+    double keyWidth = ref.watch(keyboardKeyWidthProvider(id));
 
     Widget slimCharacterKey(String char) {
       return VirtualKeyboardCharacterKey(
@@ -296,8 +296,8 @@ class KeyboardThirdLayer extends ConsumerWidget {
   }
 
   List<List<Widget>> _buildKeys(BuildContext context, WidgetRef ref, KbLayer layer) {
-    final id = ref.watch(keyboardId);
-    double keyWidth = ref.watch(keyboardKeyWidth(id));
+    final id = ref.watch(keyboardIdProvider);
+    double keyWidth = ref.watch(keyboardKeyWidthProvider(id));
 
     Widget slimCharacterKey(String char) {
       return VirtualKeyboardCharacterKey(

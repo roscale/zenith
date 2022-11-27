@@ -21,7 +21,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        final disableUserControl = ref.watch(taskSwitcherState.select((v) => v.disableUserControl));
+        final disableUserControl = ref.watch(taskSwitcherStateProvider.select((v) => v.disableUserControl));
         return AbsorbPointer(
           absorbing: disableUserControl,
           child: child!,
@@ -43,7 +43,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   }
 
   void _onPointerDown(DragStartDetails details) {
-    tm.stopAnimations();
+    tm.stopScaleAnimation();
     velocityTracker = VelocityTracker.withKind(PointerDeviceKind.touch);
     velocityTracker.addPosition(details.sourceTimeStamp!, details.globalPosition);
     drag = tm.scrollPosition.drag(
@@ -55,20 +55,20 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
       ),
       _disposeDrag,
     ) as ScrollDragController;
-    draggingTask = tm.positionToTaskIndex(tm.position);
+    draggingTask = tm.taskPositionToIndex(tm.position);
   }
 
   void _onPointerMove(DragUpdateDetails details) {
     if (drag == null) {
       return;
     }
-    final notifier = ref.read(taskSwitcherState.notifier);
+    final notifier = ref.read(taskSwitcherStateProvider.notifier);
 
     velocityTracker.addPosition(details.sourceTimeStamp!, details.globalPosition);
     if (ref.read(taskListProvider).isNotEmpty) {
-      double scale = ref.read(taskSwitcherState).scale;
-      notifier.scale = (scale + details.delta.dy / ref.read(taskSwitcherState).constraints.maxHeight * 2).clamp(0.5, 1);
-      scale = ref.read(taskSwitcherState).scale;
+      double scale = ref.read(taskSwitcherStateProvider).scale;
+      notifier.scale = (scale + details.delta.dy / ref.read(taskSwitcherStateProvider).constraints.maxHeight * 2).clamp(0.5, 1);
+      scale = ref.read(taskSwitcherStateProvider).scale;
 
       drag?.update(DragUpdateDetails(
         sourceTimeStamp: details.sourceTimeStamp!,
@@ -90,20 +90,20 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
     // velocityTracker.addPosition(details.timeStamp, details.position);
     var vel = velocityTracker.getVelocity().pixelsPerSecond;
 
-    var taskOffset = tm.taskIndexToPosition(tm.positionToTaskIndex(tm.position));
+    var taskOffset = tm.taskIndexToPosition(tm.taskPositionToIndex(tm.position));
 
     if (vel.dx.abs() > 365 && vel.dx.abs() > vel.dy.abs()) {
       // Flick to the left or right.
       int targetTaskIndex;
       if (vel.dx < 0 && tm.position > taskOffset) {
         // Next task.
-        targetTaskIndex = (tm.positionToTaskIndex(tm.position) + 1).clamp(0, tasks.length - 1);
+        targetTaskIndex = (tm.taskPositionToIndex(tm.position) + 1).clamp(0, tasks.length - 1);
       } else if (vel.dx > 0 && tm.position < taskOffset) {
         // Previous task.
-        targetTaskIndex = (tm.positionToTaskIndex(tm.position) - 1).clamp(0, tasks.length - 1);
+        targetTaskIndex = (tm.taskPositionToIndex(tm.position) - 1).clamp(0, tasks.length - 1);
       } else {
         // Same task.
-        targetTaskIndex = tm.positionToTaskIndex(tm.position);
+        targetTaskIndex = tm.taskPositionToIndex(tm.position);
       }
       tm.switchToTaskByIndex(targetTaskIndex);
     } else if (vel.dy < -200) {
@@ -111,11 +111,11 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
       tm.showOverview();
     } else if (vel.dy > 200) {
       // Flick down.
-      tm.switchToTaskByIndex(tm.positionToTaskIndex(tm.position));
+      tm.switchToTaskByIndex(tm.taskPositionToIndex(tm.position));
     } else {
       // Lift finger while standing still.
-      int taskInFront = tm.positionToTaskIndex(tm.position);
-      if (taskInFront != draggingTask || ref.read(taskSwitcherState).scale > 0.9) {
+      int taskInFront = tm.taskPositionToIndex(tm.position);
+      if (taskInFront != draggingTask || ref.read(taskSwitcherStateProvider).scale > 0.9) {
         tm.switchToTaskByIndex(taskInFront);
       } else {
         tm.showOverview();
