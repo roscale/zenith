@@ -1,6 +1,6 @@
 #include "task_runner.hpp"
 
-bool compare::operator()(const Task& t1, const Task& t2) {
+bool task_runner_compare::operator()(const Task& t1, const Task& t2) const {
 	return t1.first > t2.first;
 }
 

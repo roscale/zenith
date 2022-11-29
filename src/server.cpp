@@ -108,6 +108,12 @@ ZenithServer::ZenithServer() {
 		exit(-1);
 	}
 
+	data_device_manager = wlr_data_device_manager_create(display);
+	if (data_device_manager == nullptr) {
+		wlr_log(WLR_ERROR, "Could not create text input manager");
+		exit(-1);
+	}
+
 	// Called at the start for each available output, but also when the user plugs in a monitor.
 	new_output.notify = server_new_output;
 	wl_signal_add(&backend->events.new_output, &new_output);
@@ -129,6 +135,11 @@ ZenithServer::ZenithServer() {
 
 	new_toplevel_decoration.notify = server_new_toplevel_decoration;
 	wl_signal_add(&decoration_manager->events.new_toplevel_decoration, &new_toplevel_decoration);
+
+	request_set_selection.notify = server_seat_request_set_selection;
+	wl_signal_add(&seat->events.request_set_selection, &request_set_selection);
+
+	// TODO: Implement drag and drop.
 }
 
 void ZenithServer::run(char* startup_command) {
@@ -335,4 +346,11 @@ void server_new_text_input(wl_listener* listener, void* data) {
 void server_new_toplevel_decoration(wl_listener* listener, void* data) {
 	auto* wlr_toplevel_decoration = static_cast<wlr_xdg_toplevel_decoration_v1*>(data);
 	wlr_xdg_toplevel_decoration_v1_set_mode(wlr_toplevel_decoration, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+}
+
+void server_seat_request_set_selection(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, request_set_selection);
+	auto* event = static_cast<wlr_seat_request_set_selection_event*>(data);
+	wlr_seat_set_selection(server->seat, event->source, event->serial);
+	// TODO: Add security. Don't let any client overwrite the clipboard randomly.
 }
