@@ -8,6 +8,7 @@ extern "C" {
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/render/allocator.h>
 #include <wlr/backend/libinput.h>
+#include <wlr/backend/drm.h>
 #include <wlr/util/log.h>
 #include <wlr/render/gles2.h>
 #include <wlr/interfaces/wlr_touch.h>

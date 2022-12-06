@@ -3,6 +3,7 @@
 #include "embedder_callbacks.hpp"
 #include "platform_api.hpp"
 #include "standard_method_codec.h"
+#include "json_message_codec.h"
 #include <filesystem>
 #include <thread>
 #include "server.hpp"
@@ -17,7 +18,13 @@ extern "C" {
 struct ZenithServer;
 
 EmbedderState::EmbedderState(ZenithServer* server, wlr_egl* main_egl)
-	  : server(server), message_dispatcher(&messenger) {
+	  : server(server),
+	    message_dispatcher(&messenger),
+	    keyEventChannel(flutter::BasicMessageChannel<rapidjson::Document>(
+			  &messenger,
+			  "flutter/keyevent",
+			  &flutter::JsonMessageCodec::GetInstance()
+	    )) {
 
 	messenger.SetMessageDispatcher(&message_dispatcher);
 

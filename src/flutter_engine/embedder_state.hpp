@@ -10,6 +10,8 @@
 #include "util/framebuffer.hpp"
 #include "task_runner.hpp"
 #include "gl_mutex.hpp"
+#include "basic_message_channel.h"
+#include "document.h"
 
 extern "C" {
 #include <wlr/render/egl.h>
@@ -37,6 +39,8 @@ struct EmbedderState {
 	/// Send messages to Dart code.
 	BinaryMessenger messenger{};
 	IncomingMessageDispatcher message_dispatcher;
+	flutter::BasicMessageChannel<rapidjson::Document> keyEventChannel;
+
 	wlr_egl* flutter_gl_context = nullptr;
 	wlr_egl* flutter_resource_gl_context = nullptr;
 	wlr_egl* output_gl_context = nullptr;

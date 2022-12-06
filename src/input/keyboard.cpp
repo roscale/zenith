@@ -1,5 +1,9 @@
+#include <libinput.h>
 #include "keyboard.hpp"
 #include "server.hpp"
+#include "encodable_value.h"
+#include "json_message_codec.h"
+#include "basic_message_channel.h"
 
 extern "C" {
 #include <wayland-util.h>
@@ -57,39 +61,73 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 
 	wlr_seat_set_keyboard(seat, keyboard->device);
 
-	bool shortcut_handled = false;
+	// Translate libinput keycode to xkbcommon.
+	// This is actually a scan code because it's independent of the keyboard layout.
+	uint32_t scan_code = event->keycode + 8;
+
+	xkb_keysym_t keysym = xkb_state_key_get_one_sym(keyboard->device->keyboard->xkb_state, scan_code);
+
+	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+
 	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-		uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-
-		/* Translate libinput keycode -> xkbcommon */
-		uint32_t keycode = event->keycode + 8;
-		/* Get a list of keysyms based on the keymap for this keyboard */
-		const xkb_keysym_t* syms;
-		int nsyms = xkb_state_key_get_syms(keyboard->device->keyboard->xkb_state, keycode, &syms);
-
-		shortcut_handled = handle_shortcuts(keyboard, modifiers, syms, (size_t) nsyms);
+		bool shortcut_handled = handle_shortcuts(keyboard, modifiers, keysym);
+		if (shortcut_handled) {
+			return;
+		}
 	}
 
-	if (not shortcut_handled) {
-		// We pass it along to the client.
-		wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
+	rapidjson::Document json;
+	json.SetObject();
+	json.AddMember("keymap", "linux", json.GetAllocator());
+	// Even thought Flutter only understands GTK keycodes, these are essentially the same as
+	// xkbcommon keycodes.
+	json.AddMember("toolkit", "gtk", json.GetAllocator());
+	json.AddMember("scanCode", scan_code, json.GetAllocator());
+	json.AddMember("keyCode", keysym, json.GetAllocator());
+	// TODO: I'm not sure all modifiers are correctly mapped.
+	json.AddMember("modifiers", modifiers, json.GetAllocator());
+
+	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+		json.AddMember("type", "keydown", json.GetAllocator());
+
+		wlr_event_keyboard_key event_copy = *event;
+
+		auto& keyEventChannel = keyboard->server->embedder_state->keyEventChannel;
+		keyEventChannel.Send(json, [event_copy](const uint8_t* reply, size_t reply_size) {
+			auto message = flutter::JsonMessageCodec::GetInstance().DecodeMessage(reply, reply_size);
+			auto& handled_object = message->GetObject()["handled"];
+			bool handled = handled_object.GetBool();
+
+			if (!handled) {
+				std::cout << "not handled" << std::endl;
+				wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, event_copy.time_msec, event_copy.keycode,
+				                             event_copy.state);
+			}
+		});
+	} else if (event->state == WL_KEYBOARD_KEY_STATE_RELEASED) {
+		json.AddMember("type", "keyup", json.GetAllocator());
+//		json.AddMember("unicodeScalarValues", (int) 'a', json.GetAllocator());
+
+		wlr_event_keyboard_key event_copy = *event;
+
+		auto& keyEventChannel = keyboard->server->embedder_state->keyEventChannel;
+		keyEventChannel.Send(json, [event_copy](const uint8_t* reply, size_t reply_size) {
+			auto message = flutter::JsonMessageCodec::GetInstance().DecodeMessage(reply, reply_size);
+			auto& handled_object = message->GetObject()["handled"];
+			bool handled = handled_object.GetBool();
+
+			if (!handled) {
+				std::cout << "not handled" << std::endl;
+				wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, event_copy.time_msec, event_copy.keycode,
+				                             event_copy.state);
+			}
+		});
 	}
 }
 
-bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, const xkb_keysym_t* syms, size_t nsyms) {
-	if (modifiers == 0) {
-		// No need to check shortcuts if no modifier is pressed.
-		return false;
-	}
-
-	std::unordered_set<xkb_keysym_t> sym_set{};
-
-	for (size_t i = 0; i < nsyms; i++) {
-		sym_set.insert(syms[i]);
-	}
-
-	auto is_key_pressed = [&sym_set](uint64_t key) {
-		return sym_set.find(key) != sym_set.end();
+bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, xkb_keysym_t keysym) {
+	auto is_key_pressed = [&keysym](xkb_keysym_t key) {
+		return key == keysym;
 	};
 
 	auto is_modifier_pressed = [&modifiers](wlr_keyboard_modifier modifier) {

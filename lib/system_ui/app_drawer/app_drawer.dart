@@ -46,14 +46,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
       }
     });
 
-    // ref.listenManual(appDrawerStateProvider.select((value) => Tuple2(value.dragging, value.offset)),
-    //     (previous, Tuple2<bool, double> next) {
-    //   final appDrawerState = ref.read(appDrawerStateProvider);
-    //   if (!next.item1 && next.item2 == appDrawerState.slideDistance) {
-    //     appDrawerState.overlayEntry.remove();
-    //   }
-    // });
-
     ref.listenManual(appDrawerStateProvider.select((value) => value.closePanel), (_, __) {
       animateClosing(1);
     });

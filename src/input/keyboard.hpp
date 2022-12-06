@@ -33,4 +33,4 @@ void keyboard_handle_modifiers(wl_listener* listener, void* data);
  */
 void keyboard_handle_key(wl_listener* listener, void* data);
 
-bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, const xkb_keysym_t* syms, size_t nsyms);
+bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, xkb_keysym_t keysym);
