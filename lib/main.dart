@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/state/display_brightness_state.dart';
 import 'package:zenith/widgets/desktop.dart';
 
 void main() {
@@ -21,20 +22,33 @@ void main() {
     PlatformApi.startupComplete();
   });
 
-  HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
-    print(keyEvent);
+  final container = ProviderContainer();
+  bool on = true;
+  double brightnessBackup = 0;
 
-    // if (keyEvent.logicalKey == LogicalKeyboardKey.powerOff) {
-    //   print("POWER log");
-    //   return true;
-    // }
+  HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
+    if (keyEvent is KeyDownEvent && keyEvent.logicalKey == LogicalKeyboardKey.powerOff) {
+      if (on) {
+        brightnessBackup = container.read(displayBrightnessStateProvider).brightness;
+        container.read(displayBrightnessStateProvider.notifier).setBrightness(0);
+      } else {
+        container.read(displayBrightnessStateProvider.notifier).setBrightness(brightnessBackup);
+      }
+      on = !on;
+      return true;
+    }
     return false;
   });
 
-  runApp(const ProviderScope(child: Zenith()));
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const Zenith(),
+    ),
+  );
 }
 
-const _notchHeight = 40.0; // physical pixels
+const _notchHeight = 80.0; // physical pixels
 
 class Zenith extends StatelessWidget {
   const Zenith({Key? key}) : super(key: key);

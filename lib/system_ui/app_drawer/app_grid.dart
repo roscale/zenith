@@ -73,12 +73,12 @@ class AppEntry extends ConsumerWidget {
 
         try {
           if (terminal) {
-            await Process.start('konsole', ['-e', exec]);
+            await Process.start('kgx', ['-e', exec]);
           } else {
             await Process.start('/bin/sh', ['-c', exec]);
           }
-        } catch (e) {
-          debugPrint(e.toString());
+        } on ProcessException catch (e) {
+          stderr.write(e.toString());
         }
 
         ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(closePanel: Object()));
