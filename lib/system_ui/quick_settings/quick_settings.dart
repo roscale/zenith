@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:zenith/display_brightness.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/state/display_brightness_state.dart';
 
 class QuickSettings extends StatefulWidget {
   final VoidCallback? onChangeBrightnessStart;
@@ -16,9 +17,6 @@ class QuickSettings extends StatefulWidget {
 }
 
 class _QuickSettingsState extends State<QuickSettings> {
-  final Future<DisplayBrightnessController> displayBrightnessControllerFuture =
-      DisplayBrightnessController.getDefault();
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -75,15 +73,17 @@ class _QuickSettingsState extends State<QuickSettings> {
     );
   }
 
+  var _chain = Future.delayed(const Duration(seconds: 0));
+
   Widget _buildBrightnessSlider() {
-    return FutureBuilder(
-      future: displayBrightnessControllerFuture,
-      builder: (BuildContext context, AsyncSnapshot<DisplayBrightnessController> snapshot) {
-        if (snapshot.hasError || !snapshot.hasData) {
-          // Don't show the slider if the display doesn't support changing the brightness.
+    return Consumer(
+      builder: (BuildContext context, WidgetRef ref, Widget? child) {
+        bool available = ref.watch(displayBrightnessStateProvider.select((v) => v.available));
+        if (!available) {
           return const SizedBox();
         }
-        final controller = snapshot.data!;
+        double brightness = ref.watch(displayBrightnessStateProvider.select((v) => v.brightness));
+
         return Column(
           children: [
             const SizedBox(height: 20),
@@ -91,23 +91,18 @@ class _QuickSettingsState extends State<QuickSettings> {
               children: [
                 const Icon(Icons.brightness_6),
                 Expanded(
-                  child: ValueListenableBuilder(
-                    valueListenable: controller.brightness,
-                    builder: (BuildContext context, double brightness, __) {
-                      return Slider(
-                        value: brightness,
-                        onChanged: (double value) => controller.setBrightness(value),
-                        onChangeStart: (_) {
-                          if (widget.onChangeBrightnessStart != null) {
-                            widget.onChangeBrightnessStart!();
-                          }
-                        },
-                        onChangeEnd: (_) {
-                          if (widget.onChangeBrightnessEnd != null) {
-                            widget.onChangeBrightnessEnd!();
-                          }
-                        },
-                      );
+                  child: Slider(
+                    value: brightness,
+                    onChanged: (double value) => ref.read(displayBrightnessStateProvider.notifier).setBrightness(value),
+                    onChangeStart: (_) {
+                      if (widget.onChangeBrightnessStart != null) {
+                        widget.onChangeBrightnessStart!();
+                      }
+                    },
+                    onChangeEnd: (_) {
+                      if (widget.onChangeBrightnessEnd != null) {
+                        widget.onChangeBrightnessEnd!();
+                      }
                     },
                   ),
                 ),
@@ -118,5 +113,48 @@ class _QuickSettingsState extends State<QuickSettings> {
         );
       },
     );
+
+    // return FutureBuilder(
+    //   future: displayBrightnessControllerFuture,
+    //   builder: (BuildContext context, AsyncSnapshot<DisplayBrightnessController> snapshot) {
+    //     if (snapshot.hasError || !snapshot.hasData) {
+    //       // Don't show the slider if the display doesn't support changing the brightness.
+    //       return const SizedBox();
+    //     }
+    //     final controller = snapshot.data!;
+    //     return Column(
+    //       children: [
+    //         const SizedBox(height: 20),
+    //         Row(
+    //           children: [
+    //             const Icon(Icons.brightness_6),
+    //             Expanded(
+    //               child: ValueListenableBuilder(
+    //                 valueListenable: controller.brightness,
+    //                 builder: (BuildContext context, double brightness, __) {
+    //                   return Slider(
+    //                     value: brightness,
+    //                     onChanged: (double value) => controller.setBrightness(value),
+    //                     onChangeStart: (_) {
+    //                       if (widget.onChangeBrightnessStart != null) {
+    //                         widget.onChangeBrightnessStart!();
+    //                       }
+    //                     },
+    //                     onChangeEnd: (_) {
+    //                       if (widget.onChangeBrightnessEnd != null) {
+    //                         widget.onChangeBrightnessEnd!();
+    //                       }
+    //                     },
+    //                   );
+    //                 },
+    //               ),
+    //             ),
+    //             const Icon(Icons.brightness_7),
+    //           ],
+    //         ),
+    //       ],
+    //     );
+    //   },
+    // );
   }
 }
