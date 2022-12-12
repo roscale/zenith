@@ -3,7 +3,6 @@
 #include "server.hpp"
 #include "encodable_value.h"
 #include "json_message_codec.h"
-#include "basic_message_channel.h"
 
 extern "C" {
 #include <wayland-util.h>
@@ -63,7 +62,8 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 
 	// Translate libinput keycode to xkbcommon.
 	// This is actually a scan code because it's independent of the keyboard layout.
-	uint32_t scan_code = event->keycode + 8;
+	// https://code.woboq.org/gtk/include/xkbcommon/xkbcommon.h.html#160
+	xkb_keycode_t scan_code = event->keycode + 8;
 
 	xkb_keysym_t keysym = xkb_state_key_get_one_sym(keyboard->device->keyboard->xkb_state, scan_code);
 
@@ -81,11 +81,13 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 	json.AddMember("keymap", "linux", json.GetAllocator());
 	// Even thought Flutter only understands GTK keycodes, these are essentially the same as
 	// xkbcommon keycodes.
+	// https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/wayland/gdkkeys-wayland.c#L179
 	json.AddMember("toolkit", "gtk", json.GetAllocator());
 	json.AddMember("scanCode", scan_code, json.GetAllocator());
 	json.AddMember("keyCode", keysym, json.GetAllocator());
-	// TODO: I'm not sure all modifiers are correctly mapped.
 	json.AddMember("modifiers", modifiers, json.GetAllocator());
+	// Normally I would also set `unicodeScalarValues`, but I don't anticipate using this feature.
+	// https://github.com/flutter/flutter/blob/b8f7f1f986/packages/flutter/lib/src/services/raw_keyboard_linux.dart#L55
 
 	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
 		json.AddMember("type", "keydown", json.GetAllocator());
@@ -98,15 +100,14 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 			auto& handled_object = message->GetObject()["handled"];
 			bool handled = handled_object.GetBool();
 
+			// If the Flutter engine doesn't handle the key press, forward it to the Wayland client.
 			if (!handled) {
-				std::cout << "not handled" << std::endl;
 				wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, event_copy.time_msec, event_copy.keycode,
 				                             event_copy.state);
 			}
 		});
 	} else if (event->state == WL_KEYBOARD_KEY_STATE_RELEASED) {
 		json.AddMember("type", "keyup", json.GetAllocator());
-//		json.AddMember("unicodeScalarValues", (int) 'a', json.GetAllocator());
 
 		wlr_event_keyboard_key event_copy = *event;
 
@@ -117,7 +118,6 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 			bool handled = handled_object.GetBool();
 
 			if (!handled) {
-				std::cout << "not handled" << std::endl;
 				wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, event_copy.time_msec, event_copy.keycode,
 				                             event_copy.state);
 			}

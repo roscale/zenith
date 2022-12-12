@@ -111,6 +111,14 @@ void output_frame(wl_listener* listener, void* data) {
 	wlr_output_render_software_cursors(output->wlr_output, nullptr);
 
 	wlr_renderer_end(server->renderer);
+
+	// FIXME:
+	// Sometimes, committing a new frame to the screen just fails. I suspect it's because
+	// this function takes too long to render everything and we miss the vblank period.
+	// The rendering should be pretty fast because we're just copying some textures, but I think
+	// implicit synchronization between the compositor and Wayland clients is the issue here.
+	// Normally, this callback is automatically called every frame, but when this happens, it stops
+	// being called. To avoid having a frozen screen, we manually schedule the next frame.
 	if (!wlr_output_commit(output->wlr_output)) {
 		wlr_output_schedule_frame(output->wlr_output);
 	}

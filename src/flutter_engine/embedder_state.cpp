@@ -189,5 +189,5 @@ void EmbedderState::register_platform_api() {
 }
 
 void EmbedderState::send_window_metrics(FlutterWindowMetricsEvent& metrics) const {
-	FlutterEngineSendWindowMetricsEvent(server->embedder_state->engine, &metrics);
+	FlutterEngineSendWindowMetricsEvent(engine, &metrics);
 }

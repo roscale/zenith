@@ -24,8 +24,6 @@ class DisplayBrightnessState with _$DisplayBrightnessState {
 const _backlightsDirectory = "/sys/class/backlight";
 
 class DisplayBrightnessStateNotifier extends StateNotifier<DisplayBrightnessState> {
-  Future<void> _futureChain = Future.value(null);
-
   DisplayBrightnessStateNotifier()
       : super(
           DisplayBrightnessState(
@@ -41,13 +39,11 @@ class DisplayBrightnessStateNotifier extends StateNotifier<DisplayBrightnessStat
   Future<void> _init() async {
     try {
       DisplayBrightnessState state = await _getDefault();
-      state.brightnessFile.watch(events: FileSystemEvent.modify).forEach((_) {
-        _chainFuture(() async {
-          String brightnessString = await state.brightnessFile.readAsString();
-          double measuredBrightness = int.parse(brightnessString) / state.maxBrightness;
-          measuredBrightness = measuredBrightness.clamp(0.0, 1.0);
-          this.state = state.copyWith(brightness: _getPerceivedBrightness(measuredBrightness));
-        });
+      state.brightnessFile.watch(events: FileSystemEvent.modify).forEach((_) async {
+        String brightnessString = await state.brightnessFile.readAsString();
+        double measuredBrightness = int.parse(brightnessString) / state.maxBrightness;
+        measuredBrightness = measuredBrightness.clamp(0.0, 1.0);
+        this.state = state.copyWith(brightness: _getPerceivedBrightness(measuredBrightness));
       });
       this.state = state;
     } catch (e) {
@@ -60,29 +56,16 @@ class DisplayBrightnessStateNotifier extends StateNotifier<DisplayBrightnessStat
   double get brightness => state.brightness;
 
   Future<void> setBrightness(double value) async {
-    await _chainFuture(() async {
-      int measuredBrightness = (_getMeasuredBrightness(value) * state.maxBrightness).round();
-      await state.brightnessFile.writeAsString("$measuredBrightness", flush: true);
-    });
-  }
-
-  Future<void> _chainFuture(Future<void> Function() computation) {
-    _futureChain = _futureChain.then(
-      (_) => computation(),
-      onError: (e, StackTrace stackTrace) {
-        stderr.writeln(e.toString());
-        stderr.writeln(stackTrace.toString());
-      },
-    );
-    return _futureChain;
+    int measuredBrightness = (_getMeasuredBrightness(value) * state.maxBrightness).round();
+    await state.brightnessFile.writeAsString("$measuredBrightness", flush: true);
   }
 }
 
 Future<DisplayBrightnessState> _getDefault() async {
   FileSystemEntity backlight = await Directory(_backlightsDirectory).list().first;
 
-  File brightnessFile = File("${backlight.absolute.path}${Platform.pathSeparator}brightness");
-  File maxBrightnessFile = File("${backlight.absolute.path}${Platform.pathSeparator}max_brightness");
+  File brightnessFile = File("${backlight.absolute.path}/brightness");
+  File maxBrightnessFile = File("${backlight.absolute.path}/max_brightness");
 
   int maxBrightness = int.parse(await maxBrightnessFile.readAsString());
   double measuredBrightness = int.parse(await brightnessFile.readAsString()) / maxBrightness;
