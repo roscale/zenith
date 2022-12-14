@@ -123,7 +123,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
             if (appDrawerState.draggable) {
               ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(
                     dragging: true,
-                    offset: (state.offset + e.delta.dy).clamp(0, appDrawerState.slideDistance),
+                    offset: (state.offset + e.localDelta.dy).clamp(0, appDrawerState.slideDistance),
                   ));
               _velocityTracker.addPosition(e.timeStamp, e.localPosition);
             }

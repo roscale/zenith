@@ -57,7 +57,7 @@ class RawGestureRecognizer extends GestureRecognizer {
         state.pendingDelta = Offset.zero;
         invokeCallback<void>('onPointerMove', () => onPointerMove!(moveEvent));
       } else {
-        state.pendingDelta += event.delta;
+        state.pendingDelta += event.localDelta;
       }
     } else if (event is PointerUpEvent && onPointerUp != null) {
       invokeCallback<void>('onPointerUp', () {

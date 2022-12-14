@@ -64,7 +64,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
     }
     final notifier = ref.read(taskSwitcherStateProvider.notifier);
 
-    velocityTracker.addPosition(details.sourceTimeStamp!, details.globalPosition);
+    velocityTracker.addPosition(details.sourceTimeStamp!, details.localPosition);
     if (ref.read(taskListProvider).isNotEmpty) {
       double scale = ref.read(taskSwitcherStateProvider).scale;
       notifier.scale = (scale + details.delta.dy / ref.read(taskSwitcherStateProvider).constraints.maxHeight * 2).clamp(0.5, 1);

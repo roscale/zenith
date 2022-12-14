@@ -20,6 +20,7 @@ mixin _$DisplayBrightnessState {
   File get brightnessFile => throw _privateConstructorUsedError;
   int get maxBrightness => throw _privateConstructorUsedError;
   double get brightness => throw _privateConstructorUsedError;
+  double get savedBrightness => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $DisplayBrightnessStateCopyWith<DisplayBrightnessState> get copyWith =>
@@ -36,7 +37,8 @@ abstract class $DisplayBrightnessStateCopyWith<$Res> {
       {bool available,
       File brightnessFile,
       int maxBrightness,
-      double brightness});
+      double brightness,
+      double savedBrightness});
 }
 
 /// @nodoc
@@ -57,6 +59,7 @@ class _$DisplayBrightnessStateCopyWithImpl<$Res,
     Object? brightnessFile = null,
     Object? maxBrightness = null,
     Object? brightness = null,
+    Object? savedBrightness = null,
   }) {
     return _then(_value.copyWith(
       available: null == available
@@ -75,6 +78,10 @@ class _$DisplayBrightnessStateCopyWithImpl<$Res,
           ? _value.brightness
           : brightness // ignore: cast_nullable_to_non_nullable
               as double,
+      savedBrightness: null == savedBrightness
+          ? _value.savedBrightness
+          : savedBrightness // ignore: cast_nullable_to_non_nullable
+              as double,
     ) as $Val);
   }
 }
@@ -91,7 +98,8 @@ abstract class _$$_DisplayBrightnessStateCopyWith<$Res>
       {bool available,
       File brightnessFile,
       int maxBrightness,
-      double brightness});
+      double brightness,
+      double savedBrightness});
 }
 
 /// @nodoc
@@ -110,6 +118,7 @@ class __$$_DisplayBrightnessStateCopyWithImpl<$Res>
     Object? brightnessFile = null,
     Object? maxBrightness = null,
     Object? brightness = null,
+    Object? savedBrightness = null,
   }) {
     return _then(_$_DisplayBrightnessState(
       available: null == available
@@ -128,6 +137,10 @@ class __$$_DisplayBrightnessStateCopyWithImpl<$Res>
           ? _value.brightness
           : brightness // ignore: cast_nullable_to_non_nullable
               as double,
+      savedBrightness: null == savedBrightness
+          ? _value.savedBrightness
+          : savedBrightness // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -139,7 +152,8 @@ class _$_DisplayBrightnessState implements _DisplayBrightnessState {
       {required this.available,
       required this.brightnessFile,
       required this.maxBrightness,
-      required this.brightness});
+      required this.brightness,
+      required this.savedBrightness});
 
   @override
   final bool available;
@@ -149,10 +163,12 @@ class _$_DisplayBrightnessState implements _DisplayBrightnessState {
   final int maxBrightness;
   @override
   final double brightness;
+  @override
+  final double savedBrightness;
 
   @override
   String toString() {
-    return 'DisplayBrightnessState(available: $available, brightnessFile: $brightnessFile, maxBrightness: $maxBrightness, brightness: $brightness)';
+    return 'DisplayBrightnessState(available: $available, brightnessFile: $brightnessFile, maxBrightness: $maxBrightness, brightness: $brightness, savedBrightness: $savedBrightness)';
   }
 
   @override
@@ -167,12 +183,14 @@ class _$_DisplayBrightnessState implements _DisplayBrightnessState {
             (identical(other.maxBrightness, maxBrightness) ||
                 other.maxBrightness == maxBrightness) &&
             (identical(other.brightness, brightness) ||
-                other.brightness == brightness));
+                other.brightness == brightness) &&
+            (identical(other.savedBrightness, savedBrightness) ||
+                other.savedBrightness == savedBrightness));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, available, brightnessFile, maxBrightness, brightness);
+  int get hashCode => Object.hash(runtimeType, available, brightnessFile,
+      maxBrightness, brightness, savedBrightness);
 
   @JsonKey(ignore: true)
   @override
@@ -187,7 +205,8 @@ abstract class _DisplayBrightnessState implements DisplayBrightnessState {
       {required final bool available,
       required final File brightnessFile,
       required final int maxBrightness,
-      required final double brightness}) = _$_DisplayBrightnessState;
+      required final double brightness,
+      required final double savedBrightness}) = _$_DisplayBrightnessState;
 
   @override
   bool get available;
@@ -197,6 +216,8 @@ abstract class _DisplayBrightnessState implements DisplayBrightnessState {
   int get maxBrightness;
   @override
   double get brightness;
+  @override
+  double get savedBrightness;
   @override
   @JsonKey(ignore: true)
   _$$_DisplayBrightnessStateCopyWith<_$_DisplayBrightnessState> get copyWith =>

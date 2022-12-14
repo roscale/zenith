@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/display_brightness_state.dart';
 import 'package:zenith/widgets/desktop.dart';
+import 'package:zenith/widgets/lock_screen.dart';
 
 void main() {
   // FIXME: FlutterEngineMarkExternalTextureFrameAvailable does not trigger a VSync fast enough,
@@ -23,22 +24,8 @@ void main() {
   });
 
   final container = ProviderContainer();
-  bool on = true;
-  double brightnessBackup = 0;
 
-  HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
-    if (keyEvent is KeyDownEvent && keyEvent.logicalKey == LogicalKeyboardKey.powerOff) {
-      if (on) {
-        brightnessBackup = container.read(displayBrightnessStateProvider).brightness;
-        container.read(displayBrightnessStateProvider.notifier).setBrightness(0);
-      } else {
-        container.read(displayBrightnessStateProvider.notifier).setBrightness(brightnessBackup);
-      }
-      on = !on;
-      return true;
-    }
-    return false;
-  });
+  _registerPowerButtonHandler(container);
 
   runApp(
     UncontrolledProviderScope(
@@ -79,12 +66,38 @@ class Zenith extends StatelessWidget {
             data: MediaQuery.of(context).copyWith(
               padding: EdgeInsets.only(top: _notchHeight / MediaQuery.of(context).devicePixelRatio),
             ),
-            child: const Scaffold(
-              body: Desktop(),
+            child: Scaffold(
+              body: Overlay(
+                initialEntries: [
+                  OverlayEntry(builder: (_) => const Desktop()),
+                  OverlayEntry(builder: (_) => const LockScreen()),
+                ],
+              ),
             ),
           ),
         );
       },
     );
   }
+}
+
+void _registerPowerButtonHandler(ProviderContainer container) {
+  bool screenOn = true;
+  HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
+    if (keyEvent.logicalKey == LogicalKeyboardKey.powerOff) {
+      if (keyEvent is KeyDownEvent) {
+        final provider = container.read(displayBrightnessStateProvider.notifier);
+        if (screenOn) {
+          provider
+            ..saveBrightness()
+            ..setBrightness(0);
+        } else {
+          provider.restoreBrightness();
+        }
+        screenOn = !screenOn;
+      }
+      return true;
+    }
+    return false;
+  });
 }

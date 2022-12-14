@@ -18,6 +18,7 @@ class DisplayBrightnessState with _$DisplayBrightnessState {
     required File brightnessFile,
     required int maxBrightness,
     required double brightness,
+    required double savedBrightness,
   }) = _DisplayBrightnessState;
 }
 
@@ -31,6 +32,7 @@ class DisplayBrightnessStateNotifier extends StateNotifier<DisplayBrightnessStat
             brightnessFile: File(""),
             maxBrightness: 0,
             brightness: 0.0,
+            savedBrightness: 0.0,
           ),
         ) {
     _init();
@@ -59,6 +61,12 @@ class DisplayBrightnessStateNotifier extends StateNotifier<DisplayBrightnessStat
     int measuredBrightness = (_getMeasuredBrightness(value) * state.maxBrightness).round();
     await state.brightnessFile.writeAsString("$measuredBrightness", flush: true);
   }
+
+  void saveBrightness() {
+    state = state.copyWith(savedBrightness: state.brightness);
+  }
+
+  Future<void> restoreBrightness() => setBrightness(state.savedBrightness);
 }
 
 Future<DisplayBrightnessState> _getDefault() async {
@@ -75,6 +83,7 @@ Future<DisplayBrightnessState> _getDefault() async {
     brightnessFile: brightnessFile,
     maxBrightness: maxBrightness,
     brightness: _getPerceivedBrightness(measuredBrightness),
+    savedBrightness: 0.0,
   );
 }
 
