@@ -4,7 +4,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'lock_screen_state.freezed.dart';
 
 final lockScreenStateProvider =
-    StateNotifierProvider<LockScreenStateNotifier, LockScreenState>((ref) => LockScreenStateNotifier());
+    StateNotifierProvider<LockScreenStateNotifier, LockScreenState>(
+        (ref) => LockScreenStateNotifier());
 
 class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
   LockScreenStateNotifier()
@@ -12,7 +13,7 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
           dragging: false,
           dragVelocity: 0.0,
           offset: 0.0,
-          slideDistance: 100.0,
+          slideDistance: 300.0,
         ));
 
   void startDrag() {
@@ -24,6 +25,12 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
   void drag(double offset) {
     state = state.copyWith(
       offset: (state.offset + offset).clamp(0, state.slideDistance),
+    );
+  }
+
+  set offset(double offset) {
+    state = state.copyWith(
+      offset: offset,
     );
   }
 
