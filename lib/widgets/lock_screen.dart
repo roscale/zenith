@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:zenith/enums.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/lock_screen_state.dart';
 
 class LockScreen extends ConsumerStatefulWidget {
@@ -14,7 +15,8 @@ class LockScreen extends ConsumerStatefulWidget {
   ConsumerState<LockScreen> createState() => _LockScreenState();
 }
 
-class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProviderStateMixin {
+class _LockScreenState extends ConsumerState<LockScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _showAuthenticationAnimationController;
   Animation? _slideAnimation;
 
@@ -22,7 +24,8 @@ class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProvid
   void initState() {
     super.initState();
     _showAuthenticationAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 200), // Duration is irrelevant because of .fling().
+      duration: const Duration(milliseconds: 200),
+      // Duration is irrelevant because of .fling().
       vsync: this,
     );
   }
@@ -39,7 +42,8 @@ class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(lockScreenStateProvider.select((v) => v.dragging), (_, bool dragging) {
+    ref.listen(lockScreenStateProvider.select((v) => v.dragging),
+        (_, bool dragging) {
       LockScreenState state = ref.read(lockScreenStateProvider);
       double velocity = state.dragVelocity;
 
@@ -87,12 +91,16 @@ class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProvid
         Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
         Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            final offset = ref.watch(lockScreenStateProvider.select((v) => v.offset));
-            final slideDistance = ref.watch(lockScreenStateProvider.select((v) => v.slideDistance));
+            final offset =
+                ref.watch(lockScreenStateProvider.select((v) => v.offset));
+            final slideDistance = ref
+                .watch(lockScreenStateProvider.select((v) => v.slideDistance));
             double progression = offset / slideDistance;
 
             const double maxBlurAmount = 30;
-            double blurAmount = progression <= 0.5 ? 0 : maxBlurAmount * 2 * (progression - 0.5);
+            double blurAmount = progression <= 0.5
+                ? 0
+                : maxBlurAmount * 2 * (progression - 0.5);
 
             return BackdropFilter(
               filter: ImageFilter.blur(
@@ -110,9 +118,12 @@ class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProvid
             child: Stack(
               children: [
                 Consumer(
-                  builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                    double offset = ref.watch(lockScreenStateProvider.select((value) => value.offset));
-                    double slideDistance = ref.watch(lockScreenStateProvider.select((value) => value.slideDistance));
+                  builder:
+                      (BuildContext context, WidgetRef ref, Widget? child) {
+                    double offset = ref.watch(lockScreenStateProvider
+                        .select((value) => value.offset));
+                    double slideDistance = ref.watch(lockScreenStateProvider
+                        .select((value) => value.slideDistance));
                     double progression = offset / slideDistance;
 
                     return IgnorePointer(
@@ -120,7 +131,8 @@ class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProvid
                       child: Transform.translate(
                         offset: Offset(0, -offset),
                         child: Opacity(
-                          opacity: (1.0 - offset / (slideDistance / 2)).clamp(0.0, 1.0),
+                          opacity: (1.0 - offset / (slideDistance / 2))
+                              .clamp(0.0, 1.0),
                           child: const Clock(),
                         ),
                       ),
@@ -128,9 +140,12 @@ class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProvid
                   },
                 ),
                 Consumer(
-                  builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                    double offset = ref.watch(lockScreenStateProvider.select((value) => value.offset));
-                    double slideDistance = ref.watch(lockScreenStateProvider.select((value) => value.slideDistance));
+                  builder:
+                      (BuildContext context, WidgetRef ref, Widget? child) {
+                    double offset = ref.watch(lockScreenStateProvider
+                        .select((value) => value.offset));
+                    double slideDistance = ref.watch(lockScreenStateProvider
+                        .select((value) => value.slideDistance));
                     double progression = offset / slideDistance;
 
                     return IgnorePointer(
@@ -138,7 +153,8 @@ class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProvid
                       child: Transform.translate(
                         offset: Offset(0, slideDistance - offset),
                         child: Opacity(
-                          opacity: (offset / (slideDistance / 2) - 1.0).clamp(0.0, 1.0),
+                          opacity: (offset / (slideDistance / 2) - 1.0)
+                              .clamp(0.0, 1.0),
                           child: const PinAuthentication(),
                         ),
                       ),
@@ -157,7 +173,9 @@ class _LockScreenState extends ConsumerState<LockScreen> with SingleTickerProvid
             ref.read(lockScreenStateProvider.notifier).drag(-details.delta.dy);
           },
           onPanEnd: (DragEndDetails details) {
-            ref.read(lockScreenStateProvider.notifier).endDrag(details.velocity.pixelsPerSecond.dy);
+            ref
+                .read(lockScreenStateProvider.notifier)
+                .endDrag(details.velocity.pixelsPerSecond.dy);
           },
         )
       ],
@@ -276,7 +294,8 @@ class _PinAuthenticationState extends State<PinAuthentication> {
 
     void backspace() {
       if (_pinTextController.text.isNotEmpty) {
-        _pinTextController.text = _pinTextController.text.substring(0, _pinTextController.text.length - 1);
+        _pinTextController.text = _pinTextController.text
+            .substring(0, _pinTextController.text.length - 1);
       }
     }
 
@@ -293,7 +312,8 @@ class _PinAuthenticationState extends State<PinAuthentication> {
             top: 200,
             child: ValueListenableBuilder(
               valueListenable: _pinTextController,
-              builder: (BuildContext context, TextEditingValue value, Widget? child) {
+              builder: (BuildContext context, TextEditingValue value,
+                  Widget? child) {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List<Widget>.filled(
@@ -357,7 +377,15 @@ class _PinAuthenticationState extends State<PinAuthentication> {
                         Icons.check,
                         color: Colors.white,
                       ),
-                      () {},
+                      () async {
+                        bool unlocked = await PlatformApi.unlockSession(
+                            _pinTextController.text);
+
+                        if (!unlocked) {
+                          _pinTextController.clear();
+                        }
+                        print("Unlocked: $unlocked");
+                      },
                     ),
                   ],
                 ),
@@ -370,7 +398,8 @@ class _PinAuthenticationState extends State<PinAuthentication> {
   }
 }
 
-Widget pinButton(Widget child, VoidCallback onTap, [VoidCallback? onLongPress]) {
+Widget pinButton(Widget child, VoidCallback onTap,
+    [VoidCallback? onLongPress]) {
   return Padding(
     padding: const EdgeInsets.all(10.0),
     child: SizedBox.fromSize(

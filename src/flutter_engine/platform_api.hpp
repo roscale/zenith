@@ -64,6 +64,10 @@ void initial_window_size(ZenithServer* server,
                          const flutter::MethodCall<>& call,
                          std::unique_ptr<flutter::MethodResult<>>&& result);
 
-void startup_complete(ZenithServer* p_server,
+void startup_complete(ZenithServer* server,
                       const flutter::MethodCall<>& call,
-                      std::unique_ptr<flutter::MethodResult<>>&& unique_ptr);
+                      std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void unlock_session(ZenithServer* server,
+                    const flutter::MethodCall<>& call,
+                    std::unique_ptr<flutter::MethodResult<>>&& result);

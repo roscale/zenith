@@ -1,14 +1,22 @@
 import 'package:flutter/services.dart';
 
 class PlatformApi {
-  static final Stream windowMappedStream = const EventChannel('window_mapped').receiveBroadcastStream();
-  static final Stream windowUnmappedStream = const EventChannel('window_unmapped').receiveBroadcastStream();
-  static final Stream popupMappedStream = const EventChannel('popup_mapped').receiveBroadcastStream();
-  static final Stream popupUnmappedStream = const EventChannel('popup_unmapped').receiveBroadcastStream();
-  static final Stream requestMoveStream = const EventChannel('request_move').receiveBroadcastStream();
-  static final Stream requestResizeStream = const EventChannel('request_resize').receiveBroadcastStream();
-  static final Stream configureSurfaceStream = const EventChannel('configure_surface').receiveBroadcastStream();
-  static final Stream textInputEventsStream = const EventChannel('text_input_events').receiveBroadcastStream();
+  static final Stream windowMappedStream =
+      const EventChannel('window_mapped').receiveBroadcastStream();
+  static final Stream windowUnmappedStream =
+      const EventChannel('window_unmapped').receiveBroadcastStream();
+  static final Stream popupMappedStream =
+      const EventChannel('popup_mapped').receiveBroadcastStream();
+  static final Stream popupUnmappedStream =
+      const EventChannel('popup_unmapped').receiveBroadcastStream();
+  static final Stream requestMoveStream =
+      const EventChannel('request_move').receiveBroadcastStream();
+  static final Stream requestResizeStream =
+      const EventChannel('request_resize').receiveBroadcastStream();
+  static final Stream configureSurfaceStream =
+      const EventChannel('configure_surface').receiveBroadcastStream();
+  static final Stream textInputEventsStream =
+      const EventChannel('text_input_events').receiveBroadcastStream();
 
   static const MethodChannel _platform = MethodChannel('platform');
 
@@ -111,7 +119,9 @@ class PlatformApi {
   }
 
   static Stream<TextInputEvent> getTextInputEventsForViewId(int viewId) {
-    return PlatformApi.textInputEventsStream.where((event) => event["view_id"] == viewId).map((event) {
+    return PlatformApi.textInputEventsStream
+        .where((event) => event["view_id"] == viewId)
+        .map((event) {
       switch (event["type"]) {
         case "enable":
           return TextInputEnable();
@@ -120,7 +130,8 @@ class PlatformApi {
         case "commit":
           return TextInputCommit();
         default:
-          throw ArgumentError.value(event["type"], "Must be 'enable', 'disable', or 'commit'", "event['type']");
+          throw ArgumentError.value(event["type"],
+              "Must be 'enable', 'disable', or 'commit'", "event['type']");
       }
     });
   }
@@ -129,6 +140,13 @@ class PlatformApi {
     return _platform.invokeMethod("close_window", {
       "view_id": viewId,
     });
+  }
+
+  static Future<bool> unlockSession(String password) async {
+    bool? success = await _platform.invokeMethod("unlock_session", {
+      "password": password,
+    });
+    return success ?? false;
   }
 }
 

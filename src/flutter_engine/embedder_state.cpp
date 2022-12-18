@@ -181,6 +181,8 @@ void EmbedderState::register_platform_api() {
 				  emulate_keycode(server, call, std::move(result));
 			  } else if (method_name == "initial_window_size") {
 				  initial_window_size(server, call, std::move(result));
+			  } else if (method_name == "unlock_session") {
+				  unlock_session(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + method_name + " does not exist");
 			  }

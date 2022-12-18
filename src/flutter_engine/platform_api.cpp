@@ -7,6 +7,7 @@
 #include "string_to_keycode.hpp"
 #include "assert.hpp"
 #include "wlr_extensions.hpp"
+#include "auth.hpp"
 
 extern "C" {
 #define static
@@ -380,4 +381,15 @@ void initial_window_size(ZenithServer* server, const flutter::MethodCall<>& call
 	};
 
 	result->Success();
+}
+
+void unlock_session(ZenithServer* server, const flutter::MethodCall<>& call,
+                    std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	auto password = std::get<std::string>(args[flutter::EncodableValue("password")]);
+
+	bool success = authenticate_current_user(password);
+
+	result->Success(flutter::EncodableValue(success));
 }

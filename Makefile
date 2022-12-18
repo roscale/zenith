@@ -50,7 +50,7 @@ DEBUG_CPPFLAGS := $(COMMON_CPPFLAGS) -DDEBUG $(ASAN)
 PROFILE_CPPFLAGS := $(COMMON_CPPFLAGS) -DPROFILE
 RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) -O2
 
-COMMON_LDFLAGS := -lwayland-server -lxkbcommon -lpixman-1 -linput -lwlroots -lepoxy -lGLESv2 -lEGL -lGL -L. -L$(DEPS_DIR)
+COMMON_LDFLAGS := -lwayland-server -lxkbcommon -lpixman-1 -linput -lwlroots -lepoxy -lGLESv2 -lEGL -lGL -lpam -L. -L$(DEPS_DIR)
 DEBUG_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_debug $(ASAN)
 PROFILE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_profile
 RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release
