@@ -50,7 +50,6 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
             instance.onPointerMove = (PointerMoveEvent event) async {
               if (event.kind == PointerDeviceKind.mouse) {
                 // If a button is being pressed while another one is already down, it's considered a move event, not a down event.
-                print(event.localPosition);
                 await sendMouseEventsToPlatform(event);
                 await pointerMoved(event);
               } else if (event.kind == PointerDeviceKind.touch) {

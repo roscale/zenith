@@ -16,9 +16,22 @@ class LockScreen extends ConsumerStatefulWidget {
 }
 
 class _LockScreenState extends ConsumerState<LockScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _showAuthenticationAnimationController;
-  Animation? _slideAnimation;
+  Animation<double>? _slideAnimation;
+
+  final ValueNotifier<bool> _ignoreInput = ValueNotifier(false);
+
+  late final AnimationController _unlockFadeAnimationController =
+      AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
+  );
+
+  late final Animation<double> _unlockFadeAnimation = Tween(
+    begin: 1.0,
+    end: 0.0,
+  ).animate(_unlockFadeAnimationController);
 
   @override
   void initState() {
@@ -85,100 +98,118 @@ class _LockScreenState extends ConsumerState<LockScreen>
       }
     });
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
-        Consumer(
-          builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            final offset =
-                ref.watch(lockScreenStateProvider.select((v) => v.offset));
-            final slideDistance = ref
-                .watch(lockScreenStateProvider.select((v) => v.slideDistance));
-            double progression = offset / slideDistance;
+    ref.listen(lockScreenStateProvider.select((v) => v.locked),
+        (_, bool locked) {
+      if (!locked) {
+        _ignoreInput.value = true;
+        _unlockFadeAnimationController.forward().whenCompleteOrCancel(() {
+          ref.read(lockScreenStateProvider.notifier).removeOverlay();
+        });
+      }
+    });
 
-            const double maxBlurAmount = 30;
-            double blurAmount = progression <= 0.5
-                ? 0
-                : maxBlurAmount * 2 * (progression - 0.5);
+    return ValueListenableBuilder(
+      valueListenable: _ignoreInput,
+      builder: (_, bool ignore, Widget? child) {
+        return IgnorePointer(
+          ignoring: ignore,
+          child: child,
+        );
+      },
+      child: FadeTransition(
+        opacity: _unlockFadeAnimation,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
+            Consumer(
+              builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                final offset =
+                    ref.watch(lockScreenStateProvider.select((v) => v.offset));
+                final slideDistance = ref.watch(
+                    lockScreenStateProvider.select((v) => v.slideDistance));
+                double progression = offset / slideDistance;
 
-            return BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: blurAmount,
-                sigmaY: blurAmount,
+                const double maxBlurAmount = 30;
+                double blurAmount = progression <= 0.5
+                    ? 0
+                    : maxBlurAmount * 2 * (progression - 0.5);
+
+                return BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: blurAmount,
+                    sigmaY: blurAmount,
+                  ),
+                  child: child,
+                );
+              },
+              child: Stack(
+                children: [
+                  Consumer(
+                    builder:
+                        (BuildContext context, WidgetRef ref, Widget? child) {
+                      double offset = ref.watch(lockScreenStateProvider
+                          .select((value) => value.offset));
+                      double slideDistance = ref.watch(lockScreenStateProvider
+                          .select((value) => value.slideDistance));
+                      double progression = offset / slideDistance;
+
+                      return IgnorePointer(
+                        ignoring: progression >= 0.5,
+                        child: Transform.translate(
+                          offset: Offset(0, -offset),
+                          child: Opacity(
+                            opacity: (1.0 - offset / (slideDistance / 2))
+                                .clamp(0.0, 1.0),
+                            child: const Clock(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Consumer(
+                    builder:
+                        (BuildContext context, WidgetRef ref, Widget? child) {
+                      double offset = ref.watch(lockScreenStateProvider
+                          .select((value) => value.offset));
+                      double slideDistance = ref.watch(lockScreenStateProvider
+                          .select((value) => value.slideDistance));
+                      double progression = offset / slideDistance;
+
+                      return IgnorePointer(
+                        ignoring: progression < 0.5,
+                        child: Transform.translate(
+                          offset: Offset(0, slideDistance - offset),
+                          child: Opacity(
+                            opacity: (offset / (slideDistance / 2) - 1.0)
+                                .clamp(0.0, 1.0),
+                            child: const PinAuthentication(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-              child: child,
-            );
-          },
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: 0,
-              sigmaY: 0,
             ),
-            child: Stack(
-              children: [
-                Consumer(
-                  builder:
-                      (BuildContext context, WidgetRef ref, Widget? child) {
-                    double offset = ref.watch(lockScreenStateProvider
-                        .select((value) => value.offset));
-                    double slideDistance = ref.watch(lockScreenStateProvider
-                        .select((value) => value.slideDistance));
-                    double progression = offset / slideDistance;
-
-                    return IgnorePointer(
-                      ignoring: progression >= 0.5,
-                      child: Transform.translate(
-                        offset: Offset(0, -offset),
-                        child: Opacity(
-                          opacity: (1.0 - offset / (slideDistance / 2))
-                              .clamp(0.0, 1.0),
-                          child: const Clock(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                Consumer(
-                  builder:
-                      (BuildContext context, WidgetRef ref, Widget? child) {
-                    double offset = ref.watch(lockScreenStateProvider
-                        .select((value) => value.offset));
-                    double slideDistance = ref.watch(lockScreenStateProvider
-                        .select((value) => value.slideDistance));
-                    double progression = offset / slideDistance;
-
-                    return IgnorePointer(
-                      ignoring: progression < 0.5,
-                      child: Transform.translate(
-                        offset: Offset(0, slideDistance - offset),
-                        child: Opacity(
-                          opacity: (offset / (slideDistance / 2) - 1.0)
-                              .clamp(0.0, 1.0),
-                          child: const PinAuthentication(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+            GestureDetector(
+              onPanStart: (DragStartDetails details) {
+                ref.read(lockScreenStateProvider.notifier).startDrag();
+              },
+              onPanUpdate: (DragUpdateDetails details) {
+                ref
+                    .read(lockScreenStateProvider.notifier)
+                    .drag(-details.delta.dy);
+              },
+              onPanEnd: (DragEndDetails details) {
+                ref
+                    .read(lockScreenStateProvider.notifier)
+                    .endDrag(details.velocity.pixelsPerSecond.dy);
+              },
+            )
+          ],
         ),
-        GestureDetector(
-          onPanStart: (DragStartDetails details) {
-            ref.read(lockScreenStateProvider.notifier).startDrag();
-          },
-          onPanUpdate: (DragUpdateDetails details) {
-            ref.read(lockScreenStateProvider.notifier).drag(-details.delta.dy);
-          },
-          onPanEnd: (DragEndDetails details) {
-            ref
-                .read(lockScreenStateProvider.notifier)
-                .endDrag(details.velocity.pixelsPerSecond.dy);
-          },
-        )
-      ],
+      ),
     );
   }
 }
@@ -217,9 +248,8 @@ class _ClockState extends State<Clock> {
 
     return Stack(
       children: [
-        Positioned(
-          left: 50,
-          top: 50,
+        Align(
+          alignment: const Alignment(0, -0.8),
           child: Text(
             _format.format(now),
             style: const TextStyle(
@@ -234,7 +264,7 @@ class _ClockState extends State<Clock> {
           child: DefaultTextStyle(
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 200,
+              fontSize: 180,
               fontWeight: FontWeight.normal,
               height: 0.8,
               shadows: [_shadow],
@@ -248,10 +278,8 @@ class _ClockState extends State<Clock> {
             ),
           ),
         ),
-        const Positioned(
-          bottom: 200,
-          left: 0,
-          right: 0,
+        const Align(
+          alignment: Alignment(0, 0.7),
           child: Icon(
             Icons.lock,
             color: Colors.white,
@@ -264,14 +292,14 @@ class _ClockState extends State<Clock> {
   }
 }
 
-class PinAuthentication extends StatefulWidget {
+class PinAuthentication extends ConsumerStatefulWidget {
   const PinAuthentication({super.key});
 
   @override
-  State<PinAuthentication> createState() => _PinAuthenticationState();
+  ConsumerState<PinAuthentication> createState() => _PinAuthenticationState();
 }
 
-class _PinAuthenticationState extends State<PinAuthentication> {
+class _PinAuthenticationState extends ConsumerState<PinAuthentication> {
   late TextEditingController _pinTextController;
 
   @override
@@ -303,19 +331,23 @@ class _PinAuthenticationState extends State<PinAuthentication> {
       _pinTextController.clear();
     }
 
+    ref.listen(lockScreenStateProvider.select((v) => v.lock), (_, __) {
+      clear();
+    });
+
     return Material(
       type: MaterialType.transparency,
       child: Stack(
         alignment: Alignment.topCenter,
         children: [
-          Positioned(
-            top: 200,
+          Align(
+            alignment: const Alignment(0, -0.7),
             child: ValueListenableBuilder(
               valueListenable: _pinTextController,
               builder: (BuildContext context, TextEditingValue value,
                   Widget? child) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                return Wrap(
+                  alignment: WrapAlignment.center,
                   children: List<Widget>.filled(
                     value.text.length,
                     const Text(
@@ -323,6 +355,7 @@ class _PinAuthenticationState extends State<PinAuthentication> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 30,
+                        shadows: [_shadow],
                       ),
                     ),
                   ).interleave(const SizedBox(width: 20)).toList(),
@@ -330,11 +363,10 @@ class _PinAuthenticationState extends State<PinAuthentication> {
               },
             ),
           ),
-          Positioned(
-            bottom: 100,
-            left: 0,
-            right: 0,
+          Align(
+            alignment: const Alignment(0, 0.8),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -373,7 +405,7 @@ class _PinAuthenticationState extends State<PinAuthentication> {
                     ),
                     pinButton(Text("0"), () => enterDigit("0")),
                     pinButton(
-                      Icon(
+                      const Icon(
                         Icons.check,
                         color: Colors.white,
                       ),
@@ -382,9 +414,10 @@ class _PinAuthenticationState extends State<PinAuthentication> {
                             _pinTextController.text);
 
                         if (!unlocked) {
-                          _pinTextController.clear();
+                          clear();
+                        } else {
+                          ref.read(lockScreenStateProvider.notifier).unlock();
                         }
-                        print("Unlocked: $unlocked");
                       },
                     ),
                   ],
@@ -403,7 +436,7 @@ Widget pinButton(Widget child, VoidCallback onTap,
   return Padding(
     padding: const EdgeInsets.all(10.0),
     child: SizedBox.fromSize(
-      size: const Size(100, 100),
+      size: const Size(80, 80),
       child: ClipOval(
         child: Material(
           color: Colors.white12,

@@ -40,14 +40,14 @@ class DisplayBrightnessStateNotifier extends StateNotifier<DisplayBrightnessStat
 
   Future<void> _init() async {
     try {
-      DisplayBrightnessState state = await _getDefault();
-      state.brightnessFile.watch(events: FileSystemEvent.modify).forEach((_) async {
+      DisplayBrightnessState defaultState = await _getDefault();
+      defaultState.brightnessFile.watch(events: FileSystemEvent.modify).forEach((_) async {
         String brightnessString = await state.brightnessFile.readAsString();
         double measuredBrightness = int.parse(brightnessString) / state.maxBrightness;
         measuredBrightness = measuredBrightness.clamp(0.0, 1.0);
-        this.state = state.copyWith(brightness: _getPerceivedBrightness(measuredBrightness));
+        state = state.copyWith(brightness: _getPerceivedBrightness(measuredBrightness));
       });
-      this.state = state;
+      state = defaultState;
     } catch (e) {
       // Retry.
       await Future.delayed(const Duration(seconds: 1));

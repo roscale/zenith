@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/display_brightness_state.dart';
+import 'package:zenith/state/lock_screen_state.dart';
 import 'package:zenith/widgets/desktop.dart';
-import 'package:zenith/widgets/lock_screen.dart';
 
 void main() {
   // FIXME: FlutterEngineMarkExternalTextureFrameAvailable does not trigger a VSync fast enough,
@@ -25,23 +25,37 @@ void main() {
 
   final container = ProviderContainer();
 
+  _registerLockScreenKeyboardHandler(container);
   _registerPowerButtonHandler(container);
 
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: const Zenith(),
+      child: Zenith(),
     ),
   );
 }
 
 const _notchHeight = 80.0; // physical pixels
 
-class Zenith extends StatelessWidget {
-  const Zenith({Key? key}) : super(key: key);
+class Zenith extends ConsumerWidget {
+  final GlobalKey<OverlayState> overlayKey = GlobalKey();
+
+  Zenith({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(
+      lockScreenStateProvider.select((v) => v.overlayEntryInserted),
+      (_, bool insert) {
+        if (insert) {
+          overlayKey.currentState?.insert(ref.read(lockScreenStateProvider).overlayEntry);
+        } else {
+          ref.read(lockScreenStateProvider).overlayEntry.remove();
+        }
+      },
+    );
+
     // FIXME:
     // We cannot use MaterialApp because it somehow captures the arrow keys and tab automatically,
     // therefore these keys don't get forwarded to the Wayland client.
@@ -64,13 +78,15 @@ class Zenith extends StatelessWidget {
           ),
           child: MediaQuery(
             data: MediaQuery.of(context).copyWith(
-              padding: EdgeInsets.only(top: _notchHeight / MediaQuery.of(context).devicePixelRatio),
+              padding: EdgeInsets.only(
+                top: _notchHeight / MediaQuery.of(context).devicePixelRatio,
+              ),
             ),
             child: Scaffold(
               body: Overlay(
+                key: overlayKey,
                 initialEntries: [
                   OverlayEntry(builder: (_) => const Desktop()),
-                  OverlayEntry(builder: (_) => const LockScreen()),
                 ],
               ),
             ),
@@ -81,20 +97,47 @@ class Zenith extends StatelessWidget {
   }
 }
 
+void _registerLockScreenKeyboardHandler(ProviderContainer container) {
+  HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
+    if (container.read(lockScreenStateProvider).locked) {
+      // We don't want to send keyboard events to Wayland clients when the screen
+      // is locked. Capture all keyboard events.
+      return true;
+    }
+    return false;
+  });
+}
+
 void _registerPowerButtonHandler(ProviderContainer container) {
   bool screenOn = true;
   HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
     if (keyEvent.logicalKey == LogicalKeyboardKey.powerOff) {
       if (keyEvent is KeyDownEvent) {
-        final provider = container.read(displayBrightnessStateProvider.notifier);
+        final displayBrightnessStateProviderNotifier = container.read(displayBrightnessStateProvider.notifier);
+
         if (screenOn) {
-          provider
-            ..saveBrightness()
-            ..setBrightness(0);
+          Future<void> turnScreenOff() async {
+            displayBrightnessStateProviderNotifier.saveBrightness();
+            try {
+              await displayBrightnessStateProviderNotifier.setBrightness(0);
+              screenOn = false;
+            } catch (_) {
+            } finally {
+              container.read(lockScreenStateProvider.notifier).lock();
+            }
+          }
+
+          turnScreenOff();
         } else {
-          provider.restoreBrightness();
+          Future<void> turnScreenOn() async {
+            try {
+              await displayBrightnessStateProviderNotifier.restoreBrightness();
+              screenOn = true;
+            } catch (_) {}
+          }
+
+          turnScreenOn();
         }
-        screenOn = !screenOn;
       }
       return true;
     }
