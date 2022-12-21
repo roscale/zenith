@@ -12,4 +12,5 @@ sudo pacman -S --needed --noconfirm \
   wayland \
   libxkbcommon \
   pixman \
-  libinput
+  libinput \
+  pam

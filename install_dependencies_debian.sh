@@ -14,4 +14,5 @@ sudo apt install -y \
   libwayland-dev \
   libxkbcommon-dev \
   libpixman-1-dev \
-  libinput-dev
+  libinput-dev \
+  libpam0g-dev
