@@ -400,7 +400,6 @@ void enable_display(ZenithServer* server, const flutter::MethodCall<>& call,
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	auto enable = std::get<bool>(args[flutter::EncodableValue("enable")]);
 
-	std::cout << enable << std::endl;
 	wlr_output* wlr_output = server->output->wlr_output;
 	wlr_output_enable(wlr_output, enable);
 	wlr_output_schedule_frame(wlr_output);

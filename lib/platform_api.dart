@@ -149,7 +149,7 @@ class PlatformApi {
     return success ?? false;
   }
 
-  /// Turns the screen on and off.
+  /// The display will not generate frame events anymore if it's disabled, meaning that rendering is stopped.
   static Future<void> enableDisplay(bool enable) async {
     return _platform.invokeMethod("enable_display", {
       "enable": enable,

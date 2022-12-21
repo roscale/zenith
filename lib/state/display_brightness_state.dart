@@ -30,9 +30,9 @@ class DisplayBrightnessStateNotifier extends StateNotifier<DisplayBrightnessStat
           DisplayBrightnessState(
             available: false,
             brightnessFile: File(""),
-            maxBrightness: 0,
-            brightness: 0.0,
-            savedBrightness: 0.0,
+            maxBrightness: 1000,
+            brightness: 1.0,
+            savedBrightness: 1.0,
           ),
         ) {
     _init();

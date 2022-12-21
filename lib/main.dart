@@ -5,8 +5,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/state/display_brightness_state.dart';
 import 'package:zenith/state/lock_screen_state.dart';
+import 'package:zenith/state/screen_state.dart';
 import 'package:zenith/widgets/desktop.dart';
 
 void main() {
@@ -109,43 +109,18 @@ void _registerLockScreenKeyboardHandler(ProviderContainer container) {
 }
 
 void _registerPowerButtonHandler(ProviderContainer container) {
-  bool screenOn = true;
   HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
     if (keyEvent.logicalKey == LogicalKeyboardKey.powerOff) {
       if (keyEvent is KeyDownEvent) {
-        final displayBrightnessStateProviderNotifier = container.read(displayBrightnessStateProvider.notifier);
-        final displayBrightnessState = container.read(displayBrightnessStateProvider);
+        final screenState = container.read(screenStateProvider);
+        final screenStateNotifier = container.read(screenStateProvider.notifier);
+        final lockScreenStateNotifier = container.read(lockScreenStateProvider.notifier);
 
-        if (screenOn) {
-          Future<void> turnScreenOff() async {
-            container.read(lockScreenStateProvider.notifier).lock();
-
-            if (displayBrightnessState.available) {
-              try {
-                displayBrightnessStateProviderNotifier.saveBrightness();
-                await displayBrightnessStateProviderNotifier.setBrightness(0);
-                SchedulerBinding.instance.addPostFrameCallback((_) {
-                  // Wait for the lock screen to appear betfore we stop rendering.
-                  PlatformApi.enableDisplay(false);
-                });
-                screenOn = false;
-              } catch (_) {}
-            }
-          }
-
-          turnScreenOff();
+        if (screenState.on) {
+          lockScreenStateNotifier.lock();
+          screenStateNotifier.turnOff();
         } else {
-          Future<void> turnScreenOn() async {
-            if (displayBrightnessState.available) {
-              try {
-                await PlatformApi.enableDisplay(true);
-                await displayBrightnessStateProviderNotifier.restoreBrightness();
-                screenOn = true;
-              } catch (_) {}
-            }
-          }
-
-          turnScreenOn();
+          screenStateNotifier.turnOn();
         }
       }
       return true;
