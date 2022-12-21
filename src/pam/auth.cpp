@@ -10,6 +10,8 @@ static bool authenticate(const std::string& user, const std::string& password);
 
 static int converse(int n, const struct pam_message** msg, struct pam_response** resp, void* data);
 
+static void delay_fn(int retval, unsigned usec_delay, void* appdata_ptr);
+
 bool authenticate_current_user(const std::string& password) {
 	char user[LOGIN_NAME_MAX];
 	if (getlogin_r(user, sizeof(user)) != 0) {
@@ -27,6 +29,10 @@ static bool authenticate(const std::string& user, const std::string& password) {
 	pam_handle_t* pam_handle = nullptr;
 	int retval = pam_start("system-auth", user.c_str(), &conv, &pam_handle);
 
+	if (retval == PAM_SUCCESS) {
+		// Disable fail delay.
+		retval = pam_set_item(pam_handle, PAM_FAIL_DELAY, (void*) delay_fn);
+	}
 	if (retval == PAM_SUCCESS) {
 		// Is user really user?
 		retval = pam_authenticate(pam_handle, 0);
@@ -101,4 +107,9 @@ static int converse(int n, const struct pam_message** msg, struct pam_response**
 	free(responses);
 	*resp = nullptr;
 	return PAM_CONV_ERR;
+}
+
+static void delay_fn(int retval, unsigned usec_delay, void* appdata_ptr) {
+	// No delay because we don't want to block the main thread.
+	// https://man7.org/linux/man-pages/man3/pam_fail_delay.3.html
 }

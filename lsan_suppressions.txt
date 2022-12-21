@@ -1,0 +1,6 @@
+leak:libflutter_engine.so
+leak:libwlroots.so
+leak:libwayland-client.so
+leak:libwayland-server.so
+leak:libdrm.so
+leak:radeonsi_dri.so

@@ -40,8 +40,8 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-ASAN := -g -fno-omit-frame-pointer -fsanitize=address -lasan -lrt
-WARNINGS := -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Werror
+ASAN := -g -fno-omit-frame-pointer -fsanitize=address
+WARNINGS := -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-invalid-offsetof -Werror
 
 # The -MMD and -MP flags together generate Makefiles for us!
 # These files will have .d instead of .o as the output.
@@ -144,6 +144,7 @@ debug_bundle: flutter_debug $(DEBUG_BUNDLE_DIR)/$(TARGET_EXEC)
 	mkdir -p $(DEBUG_BUNDLE_DIR)/lib/
 	cp $(DEPS_DIR)/libflutter_engine_debug.so $(DEBUG_BUNDLE_DIR)/lib/libflutter_engine.so
 	cp -r build/linux/$(ARCH)/debug/bundle/data $(DEBUG_BUNDLE_DIR)
+	cp lsan_suppressions.txt $(DEBUG_BUNDLE_DIR)
 
 profile_bundle: flutter_profile $(PROFILE_BUNDLE_DIR)/$(TARGET_EXEC)
 	mkdir -p $(PROFILE_BUNDLE_DIR)/lib/
