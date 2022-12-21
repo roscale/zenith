@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/display_brightness_state.dart';
+import 'package:zenith/state/lock_screen_state.dart';
 
 part 'screen_state.freezed.dart';
 
@@ -57,6 +58,11 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
         state = state.copyWith(pending: false);
       });
     }
+  }
+
+  Future<void> lockAndTurnOff() {
+    _ref.read(lockScreenStateProvider.notifier).lock();
+    return turnOff();
   }
 
   Future<void> turnOn() async {

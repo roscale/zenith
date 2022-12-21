@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:zenith/enums.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/lock_screen_state.dart';
+import 'package:zenith/state/screen_state.dart';
 
 class LockScreen extends ConsumerStatefulWidget {
   const LockScreen({super.key});
@@ -15,15 +16,13 @@ class LockScreen extends ConsumerStatefulWidget {
   ConsumerState<LockScreen> createState() => _LockScreenState();
 }
 
-class _LockScreenState extends ConsumerState<LockScreen>
-    with TickerProviderStateMixin {
+class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStateMixin {
   late AnimationController _showAuthenticationAnimationController;
   Animation<double>? _slideAnimation;
 
   final ValueNotifier<bool> _ignoreInput = ValueNotifier(false);
 
-  late final AnimationController _unlockFadeAnimationController =
-      AnimationController(
+  late final AnimationController _unlockFadeAnimationController = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 300),
   );
@@ -55,8 +54,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(lockScreenStateProvider.select((v) => v.dragging),
-        (_, bool dragging) {
+    ref.listen(lockScreenStateProvider.select((v) => v.dragging), (_, bool dragging) {
       LockScreenState state = ref.read(lockScreenStateProvider);
       double velocity = state.dragVelocity;
 
@@ -98,8 +96,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
       }
     });
 
-    ref.listen(lockScreenStateProvider.select((v) => v.locked),
-        (_, bool locked) {
+    ref.listen(lockScreenStateProvider.select((v) => v.locked), (_, bool locked) {
       if (!locked) {
         _ignoreInput.value = true;
         _unlockFadeAnimationController.forward().whenCompleteOrCancel(() {
@@ -124,16 +121,12 @@ class _LockScreenState extends ConsumerState<LockScreen>
             Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
             Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                final offset =
-                    ref.watch(lockScreenStateProvider.select((v) => v.offset));
-                final slideDistance = ref.watch(
-                    lockScreenStateProvider.select((v) => v.slideDistance));
+                final offset = ref.watch(lockScreenStateProvider.select((v) => v.offset));
+                final slideDistance = ref.watch(lockScreenStateProvider.select((v) => v.slideDistance));
                 double progression = offset / slideDistance;
 
                 const double maxBlurAmount = 30;
-                double blurAmount = progression <= 0.5
-                    ? 0
-                    : maxBlurAmount * 2 * (progression - 0.5);
+                double blurAmount = progression <= 0.5 ? 0 : maxBlurAmount * 2 * (progression - 0.5);
 
                 return BackdropFilter(
                   filter: ImageFilter.blur(
@@ -146,34 +139,31 @@ class _LockScreenState extends ConsumerState<LockScreen>
               child: Stack(
                 children: [
                   Consumer(
-                    builder:
-                        (BuildContext context, WidgetRef ref, Widget? child) {
-                      double offset = ref.watch(lockScreenStateProvider
-                          .select((value) => value.offset));
-                      double slideDistance = ref.watch(lockScreenStateProvider
-                          .select((value) => value.slideDistance));
+                    builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                      double offset = ref.watch(lockScreenStateProvider.select((value) => value.offset));
+                      double slideDistance = ref.watch(lockScreenStateProvider.select((value) => value.slideDistance));
                       double progression = offset / slideDistance;
 
                       return IgnorePointer(
                         ignoring: progression >= 0.5,
                         child: Transform.translate(
                           offset: Offset(0, -offset),
-                          child: Opacity(
-                            opacity: (1.0 - offset / (slideDistance / 2))
-                                .clamp(0.0, 1.0),
-                            child: const Clock(),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onDoubleTap: () => ref.read(screenStateProvider.notifier).turnOff(),
+                            child: Opacity(
+                              opacity: (1.0 - offset / (slideDistance / 2)).clamp(0.0, 1.0),
+                              child: const Clock(),
+                            ),
                           ),
                         ),
                       );
                     },
                   ),
                   Consumer(
-                    builder:
-                        (BuildContext context, WidgetRef ref, Widget? child) {
-                      double offset = ref.watch(lockScreenStateProvider
-                          .select((value) => value.offset));
-                      double slideDistance = ref.watch(lockScreenStateProvider
-                          .select((value) => value.slideDistance));
+                    builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                      double offset = ref.watch(lockScreenStateProvider.select((value) => value.offset));
+                      double slideDistance = ref.watch(lockScreenStateProvider.select((value) => value.slideDistance));
                       double progression = offset / slideDistance;
 
                       return IgnorePointer(
@@ -181,8 +171,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
                         child: Transform.translate(
                           offset: Offset(0, slideDistance - offset),
                           child: Opacity(
-                            opacity: (offset / (slideDistance / 2) - 1.0)
-                                .clamp(0.0, 1.0),
+                            opacity: (offset / (slideDistance / 2) - 1.0).clamp(0.0, 1.0),
                             child: const PinAuthentication(),
                           ),
                         ),
@@ -197,14 +186,10 @@ class _LockScreenState extends ConsumerState<LockScreen>
                 ref.read(lockScreenStateProvider.notifier).startDrag();
               },
               onPanUpdate: (DragUpdateDetails details) {
-                ref
-                    .read(lockScreenStateProvider.notifier)
-                    .drag(-details.delta.dy);
+                ref.read(lockScreenStateProvider.notifier).drag(-details.delta.dy);
               },
               onPanEnd: (DragEndDetails details) {
-                ref
-                    .read(lockScreenStateProvider.notifier)
-                    .endDrag(details.velocity.pixelsPerSecond.dy);
+                ref.read(lockScreenStateProvider.notifier).endDrag(details.velocity.pixelsPerSecond.dy);
               },
             )
           ],
@@ -322,8 +307,7 @@ class _PinAuthenticationState extends ConsumerState<PinAuthentication> {
 
     void backspace() {
       if (_pinTextController.text.isNotEmpty) {
-        _pinTextController.text = _pinTextController.text
-            .substring(0, _pinTextController.text.length - 1);
+        _pinTextController.text = _pinTextController.text.substring(0, _pinTextController.text.length - 1);
       }
     }
 
@@ -344,8 +328,7 @@ class _PinAuthenticationState extends ConsumerState<PinAuthentication> {
             alignment: const Alignment(0, -0.7),
             child: ValueListenableBuilder(
               valueListenable: _pinTextController,
-              builder: (BuildContext context, TextEditingValue value,
-                  Widget? child) {
+              builder: (BuildContext context, TextEditingValue value, Widget? child) {
                 return Wrap(
                   alignment: WrapAlignment.center,
                   children: List<Widget>.filled(
@@ -410,8 +393,7 @@ class _PinAuthenticationState extends ConsumerState<PinAuthentication> {
                         color: Colors.white,
                       ),
                       () async {
-                        bool unlocked = await PlatformApi.unlockSession(
-                            _pinTextController.text);
+                        bool unlocked = await PlatformApi.unlockSession(_pinTextController.text);
 
                         if (!unlocked) {
                           clear();
@@ -431,8 +413,7 @@ class _PinAuthenticationState extends ConsumerState<PinAuthentication> {
   }
 }
 
-Widget pinButton(Widget child, VoidCallback onTap,
-    [VoidCallback? onLongPress]) {
+Widget pinButton(Widget child, VoidCallback onTap, [VoidCallback? onLongPress]) {
   return Padding(
     padding: const EdgeInsets.all(10.0),
     child: SizedBox.fromSize(

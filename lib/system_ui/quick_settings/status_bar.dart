@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/state/screen_state.dart';
 import 'package:zenith/widgets/digital_clock.dart';
 
 /// The status bar has the same height as the notch, and widgets inside it are scaled the same
 /// regardless of the ratio between the physical and logical pixel.
-class StatusBar extends StatefulWidget {
+class StatusBar extends ConsumerStatefulWidget {
   final GestureDragStartCallback onVerticalDragStart;
   final GestureDragUpdateCallback onVerticalDragUpdate;
   final GestureDragEndCallback onVerticalDragEnd;
@@ -16,10 +18,10 @@ class StatusBar extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<StatusBar> createState() => _StatusBarState();
+  ConsumerState<StatusBar> createState() => _StatusBarState();
 }
 
-class _StatusBarState extends State<StatusBar> {
+class _StatusBarState extends ConsumerState<StatusBar> {
   late double pixelRatio;
 
   @override
@@ -34,6 +36,7 @@ class _StatusBarState extends State<StatusBar> {
       onVerticalDragStart: widget.onVerticalDragStart,
       onVerticalDragUpdate: widget.onVerticalDragUpdate,
       onVerticalDragEnd: widget.onVerticalDragEnd,
+      onDoubleTap: () => ref.read(screenStateProvider.notifier).lockAndTurnOff(),
       child: Container(
         height: MediaQuery.of(context).padding.top,
         color: Colors.black38,

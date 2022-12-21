@@ -31,7 +31,25 @@ void main() {
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: Zenith(),
+      child: Builder(
+        builder: (context) {
+          return Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              bool screenOn = ref.watch(screenStateProvider.select((v) => v.on));
+              final screenStateNotifier = ref.read(screenStateProvider.notifier);
+
+              return GestureDetector(
+                onDoubleTap: !screenOn ? () => screenStateNotifier.turnOn() : null,
+                child: AbsorbPointer(
+                  absorbing: !screenOn,
+                  child: child,
+                ),
+              );
+            },
+            child: Zenith(),
+          );
+        },
+      ),
     ),
   );
 }
@@ -114,11 +132,9 @@ void _registerPowerButtonHandler(ProviderContainer container) {
       if (keyEvent is KeyDownEvent) {
         final screenState = container.read(screenStateProvider);
         final screenStateNotifier = container.read(screenStateProvider.notifier);
-        final lockScreenStateNotifier = container.read(lockScreenStateProvider.notifier);
 
         if (screenState.on) {
-          lockScreenStateNotifier.lock();
-          screenStateNotifier.turnOff();
+          screenStateNotifier.lockAndTurnOff();
         } else {
           screenStateNotifier.turnOn();
         }
