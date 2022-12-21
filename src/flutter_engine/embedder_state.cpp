@@ -183,6 +183,8 @@ void EmbedderState::register_platform_api() {
 				  initial_window_size(server, call, std::move(result));
 			  } else if (method_name == "unlock_session") {
 				  unlock_session(server, call, std::move(result));
+			  } else if (method_name == "enable_display") {
+				  enable_display(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + method_name + " does not exist");
 			  }

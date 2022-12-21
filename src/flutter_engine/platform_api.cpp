@@ -393,3 +393,17 @@ void unlock_session(ZenithServer* server, const flutter::MethodCall<>& call,
 
 	result->Success(flutter::EncodableValue(success));
 }
+
+void enable_display(ZenithServer* server, const flutter::MethodCall<>& call,
+                    std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	auto enable = std::get<bool>(args[flutter::EncodableValue("enable")]);
+
+	std::cout << enable << std::endl;
+	wlr_output* wlr_output = server->output->wlr_output;
+	wlr_output_enable(wlr_output, enable);
+	wlr_output_schedule_frame(wlr_output);
+
+	result->Success();
+}

@@ -114,26 +114,35 @@ void _registerPowerButtonHandler(ProviderContainer container) {
     if (keyEvent.logicalKey == LogicalKeyboardKey.powerOff) {
       if (keyEvent is KeyDownEvent) {
         final displayBrightnessStateProviderNotifier = container.read(displayBrightnessStateProvider.notifier);
+        final displayBrightnessState = container.read(displayBrightnessStateProvider);
 
         if (screenOn) {
           Future<void> turnScreenOff() async {
-            displayBrightnessStateProviderNotifier.saveBrightness();
-            try {
-              await displayBrightnessStateProviderNotifier.setBrightness(0);
-              screenOn = false;
-            } catch (_) {
-            } finally {
-              container.read(lockScreenStateProvider.notifier).lock();
+            container.read(lockScreenStateProvider.notifier).lock();
+
+            if (displayBrightnessState.available) {
+              try {
+                displayBrightnessStateProviderNotifier.saveBrightness();
+                await displayBrightnessStateProviderNotifier.setBrightness(0);
+                SchedulerBinding.instance.addPostFrameCallback((_) {
+                  // Wait for the lock screen to appear betfore we stop rendering.
+                  PlatformApi.enableDisplay(false);
+                });
+                screenOn = false;
+              } catch (_) {}
             }
           }
 
           turnScreenOff();
         } else {
           Future<void> turnScreenOn() async {
-            try {
-              await displayBrightnessStateProviderNotifier.restoreBrightness();
-              screenOn = true;
-            } catch (_) {}
+            if (displayBrightnessState.available) {
+              try {
+                await PlatformApi.enableDisplay(true);
+                await displayBrightnessStateProviderNotifier.restoreBrightness();
+                screenOn = true;
+              } catch (_) {}
+            }
           }
 
           turnScreenOn();

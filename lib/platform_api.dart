@@ -148,6 +148,13 @@ class PlatformApi {
     });
     return success ?? false;
   }
+
+  /// Turns the screen on and off.
+  static Future<void> enableDisplay(bool enable) async {
+    return _platform.invokeMethod("enable_display", {
+      "enable": enable,
+    });
+  }
 }
 
 abstract class TextInputEvent {}

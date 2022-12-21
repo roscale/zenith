@@ -112,6 +112,11 @@ void output_frame(wl_listener* listener, void* data) {
 
 	wlr_renderer_end(server->renderer);
 
+	// The output might be disabled. Cancel the operation if the output is not ready.
+	if (!wlr_output_test(output->wlr_output)) {
+		wlr_output_rollback(output->wlr_output);
+		return;
+	}
 	// FIXME:
 	// Sometimes, committing a new frame to the screen just fails. I suspect it's because
 	// this function takes too long to render everything and we miss the vblank period.
