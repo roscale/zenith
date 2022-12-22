@@ -9,6 +9,8 @@ import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/lock_screen_state.dart';
 import 'package:zenith/state/screen_state.dart';
 
+final _authErrorMessage = StateProvider((ref) => "");
+
 class LockScreen extends ConsumerStatefulWidget {
   const LockScreen({super.key});
 
@@ -19,8 +21,6 @@ class LockScreen extends ConsumerStatefulWidget {
 class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStateMixin {
   late AnimationController _showAuthenticationAnimationController;
   Animation<double>? _slideAnimation;
-
-  final ValueNotifier<bool> _ignoreInput = ValueNotifier(false);
 
   late final AnimationController _unlockFadeAnimationController = AnimationController(
     vsync: this,
@@ -54,6 +54,60 @@ class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    _registerListeners();
+
+    return Consumer(
+      builder: (_, WidgetRef ref, Widget? child) {
+        // Ignore tap events during unlock animation.
+        bool locked = ref.watch(lockScreenStateProvider.select((value) => value.locked));
+        return IgnorePointer(
+          ignoring: !locked,
+          child: child,
+        );
+      },
+      child: FadeTransition(
+        opacity: _unlockFadeAnimation,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
+            Consumer(
+              builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                final offset = ref.watch(lockScreenStateProvider.select((v) => v.offset));
+                final slideDistance = ref.watch(lockScreenStateProvider.select((v) => v.slideDistance));
+                double progression = offset / slideDistance;
+
+                const double maxBlurAmount = 30;
+                double blurAmount = progression <= 0.5 ? 0 : maxBlurAmount * 2 * (progression - 0.5);
+
+                return BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: blurAmount,
+                    sigmaY: blurAmount,
+                  ),
+                  child: child,
+                );
+              },
+              child: const ClockAndPinAuthenticationStack(),
+            ),
+            GestureDetector(
+              onPanStart: (DragStartDetails details) {
+                ref.read(lockScreenStateProvider.notifier).startDrag();
+              },
+              onPanUpdate: (DragUpdateDetails details) {
+                ref.read(lockScreenStateProvider.notifier).drag(-details.delta.dy);
+              },
+              onPanEnd: (DragEndDetails details) {
+                ref.read(lockScreenStateProvider.notifier).endDrag(details.velocity.pixelsPerSecond.dy);
+              },
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _registerListeners() {
     ref.listen(lockScreenStateProvider.select((v) => v.dragging), (_, bool dragging) {
       LockScreenState state = ref.read(lockScreenStateProvider);
       double velocity = state.dragVelocity;
@@ -98,103 +152,52 @@ class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStat
 
     ref.listen(lockScreenStateProvider.select((v) => v.locked), (_, bool locked) {
       if (!locked) {
-        _ignoreInput.value = true;
-        _unlockFadeAnimationController.forward().whenCompleteOrCancel(() {
+        _unlockFadeAnimationController.forward().whenComplete(() {
           ref.read(lockScreenStateProvider.notifier).removeOverlay();
         });
+      } else {
+        _unlockFadeAnimationController.reset();
       }
     });
+  }
+}
 
-    return ValueListenableBuilder(
-      valueListenable: _ignoreInput,
-      builder: (_, bool ignore, Widget? child) {
-        return IgnorePointer(
-          ignoring: ignore,
-          child: child,
-        );
-      },
-      child: FadeTransition(
-        opacity: _unlockFadeAnimation,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
-            Consumer(
-              builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                final offset = ref.watch(lockScreenStateProvider.select((v) => v.offset));
-                final slideDistance = ref.watch(lockScreenStateProvider.select((v) => v.slideDistance));
-                double progression = offset / slideDistance;
+class ClockAndPinAuthenticationStack extends ConsumerWidget {
+  const ClockAndPinAuthenticationStack({super.key});
 
-                const double maxBlurAmount = 30;
-                double blurAmount = progression <= 0.5 ? 0 : maxBlurAmount * 2 * (progression - 0.5);
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    double offset = ref.watch(lockScreenStateProvider.select((v) => v.offset));
+    double slideDistance = ref.watch(lockScreenStateProvider.select((v) => v.slideDistance));
+    double progression = offset / slideDistance;
 
-                return BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: blurAmount,
-                    sigmaY: blurAmount,
-                  ),
-                  child: child,
-                );
-              },
-              child: Stack(
-                children: [
-                  Consumer(
-                    builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                      double offset = ref.watch(lockScreenStateProvider.select((value) => value.offset));
-                      double slideDistance = ref.watch(lockScreenStateProvider.select((value) => value.slideDistance));
-                      double progression = offset / slideDistance;
-
-                      return IgnorePointer(
-                        ignoring: progression >= 0.5,
-                        child: Transform.translate(
-                          offset: Offset(0, -offset),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onDoubleTap: () => ref.read(screenStateProvider.notifier).turnOff(),
-                            child: Opacity(
-                              opacity: (1.0 - offset / (slideDistance / 2)).clamp(0.0, 1.0),
-                              child: const Clock(),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  Consumer(
-                    builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                      double offset = ref.watch(lockScreenStateProvider.select((value) => value.offset));
-                      double slideDistance = ref.watch(lockScreenStateProvider.select((value) => value.slideDistance));
-                      double progression = offset / slideDistance;
-
-                      return IgnorePointer(
-                        ignoring: progression < 0.5,
-                        child: Transform.translate(
-                          offset: Offset(0, slideDistance - offset),
-                          child: Opacity(
-                            opacity: (offset / (slideDistance / 2) - 1.0).clamp(0.0, 1.0),
-                            child: const PinAuthentication(),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+    return Stack(
+      children: [
+        IgnorePointer(
+          ignoring: progression >= 0.5,
+          child: Transform.translate(
+            offset: Offset(0, -offset),
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onDoubleTap: () => ref.read(screenStateProvider.notifier).turnOff(),
+              child: Opacity(
+                opacity: (1.0 - offset / (slideDistance / 2)).clamp(0.0, 1.0),
+                child: const Clock(),
               ),
             ),
-            GestureDetector(
-              onPanStart: (DragStartDetails details) {
-                ref.read(lockScreenStateProvider.notifier).startDrag();
-              },
-              onPanUpdate: (DragUpdateDetails details) {
-                ref.read(lockScreenStateProvider.notifier).drag(-details.delta.dy);
-              },
-              onPanEnd: (DragEndDetails details) {
-                ref.read(lockScreenStateProvider.notifier).endDrag(details.velocity.pixelsPerSecond.dy);
-              },
-            )
-          ],
+          ),
         ),
-      ),
+        IgnorePointer(
+          ignoring: progression < 0.5,
+          child: Transform.translate(
+            offset: Offset(0, slideDistance - offset),
+            child: Opacity(
+              opacity: (offset / (slideDistance / 2) - 1.0).clamp(0.0, 1.0),
+              child: const PinAuthentication(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -301,22 +304,8 @@ class _PinAuthenticationState extends ConsumerState<PinAuthentication> {
 
   @override
   Widget build(BuildContext context) {
-    void enterDigit(String digit) {
-      _pinTextController.text += digit;
-    }
-
-    void backspace() {
-      if (_pinTextController.text.isNotEmpty) {
-        _pinTextController.text = _pinTextController.text.substring(0, _pinTextController.text.length - 1);
-      }
-    }
-
-    void clear() {
-      _pinTextController.clear();
-    }
-
     ref.listen(lockScreenStateProvider.select((v) => v.lock), (_, __) {
-      clear();
+      _pinTextController.clear();
     });
 
     return Material(
@@ -324,88 +313,17 @@ class _PinAuthenticationState extends ConsumerState<PinAuthentication> {
       child: Stack(
         alignment: Alignment.topCenter,
         children: [
+          const Align(
+            alignment: Alignment(0, -0.85),
+            child: AuthErrorMessage(),
+          ),
           Align(
             alignment: const Alignment(0, -0.7),
-            child: ValueListenableBuilder(
-              valueListenable: _pinTextController,
-              builder: (BuildContext context, TextEditingValue value, Widget? child) {
-                return Wrap(
-                  alignment: WrapAlignment.center,
-                  children: List<Widget>.filled(
-                    value.text.length,
-                    const Text(
-                      "●",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        shadows: [_shadow],
-                      ),
-                    ),
-                  ).interleave(const SizedBox(width: 20)).toList(),
-                );
-              },
-            ),
+            child: PinText(controller: _pinTextController),
           ),
           Align(
             alignment: const Alignment(0, 0.8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    pinButton(Text("1"), () => enterDigit("1")),
-                    pinButton(Text("2"), () => enterDigit("2")),
-                    pinButton(Text("3"), () => enterDigit("3")),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    pinButton(Text("4"), () => enterDigit("4")),
-                    pinButton(Text("5"), () => enterDigit("5")),
-                    pinButton(Text("6"), () => enterDigit("6")),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    pinButton(Text("7"), () => enterDigit("7")),
-                    pinButton(Text("8"), () => enterDigit("8")),
-                    pinButton(Text("9"), () => enterDigit("9")),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    pinButton(
-                      Icon(
-                        Icons.backspace,
-                        color: Colors.white,
-                      ),
-                      backspace,
-                      clear,
-                    ),
-                    pinButton(Text("0"), () => enterDigit("0")),
-                    pinButton(
-                      const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                      ),
-                      () async {
-                        bool unlocked = await PlatformApi.unlockSession(_pinTextController.text);
-
-                        if (!unlocked) {
-                          clear();
-                        } else {
-                          ref.read(lockScreenStateProvider.notifier).unlock();
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            child: KeyPad(controller: _pinTextController),
           ),
         ],
       ),
@@ -413,30 +331,166 @@ class _PinAuthenticationState extends ConsumerState<PinAuthentication> {
   }
 }
 
-Widget pinButton(Widget child, VoidCallback onTap, [VoidCallback? onLongPress]) {
-  return Padding(
-    padding: const EdgeInsets.all(10.0),
-    child: SizedBox.fromSize(
-      size: const Size(80, 80),
-      child: ClipOval(
-        child: Material(
-          color: Colors.white12,
-          child: InkWell(
-            splashColor: Colors.white24,
-            onTap: onTap,
-            onLongPress: onLongPress,
-            child: Center(
-              child: DefaultTextStyle(
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 40,
+class AuthErrorMessage extends ConsumerWidget {
+  const AuthErrorMessage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Text(
+      ref.watch(_authErrorMessage),
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        shadows: [_shadow],
+      ),
+    );
+  }
+}
+
+class PinText extends StatelessWidget {
+  final TextEditingController controller;
+
+  const PinText({
+    super.key,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: controller,
+      builder: (BuildContext context, TextEditingValue value, Widget? child) {
+        return Wrap(
+          alignment: WrapAlignment.center,
+          children: List<Widget>.filled(
+            value.text.length,
+            const Text(
+              "●",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+                shadows: [Shadow(color: Colors.black45, blurRadius: 5)],
+              ),
+            ),
+          ).interleave(const SizedBox(width: 20)).toList(),
+        );
+      },
+    );
+  }
+}
+
+class KeyPad extends ConsumerWidget {
+  final TextEditingController controller;
+
+  const KeyPad({super.key, required this.controller});
+
+  void authenticate(WidgetRef ref) async {
+    AuthenticationResponse response = await PlatformApi.unlockSession(controller.text);
+
+    if (!response.success) {
+      controller.clear();
+      ref.read(_authErrorMessage.notifier).state = response.message.isNotEmpty ? response.message : "Wrong PIN";
+    } else {
+      ref.read(lockScreenStateProvider.notifier).unlock();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    void enterDigit(String digit) {
+      controller.text += digit;
+      ref.read(_authErrorMessage.notifier).state = "";
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PinButton(child: const Text("1"), onTap: () => enterDigit("1")),
+            PinButton(child: const Text("2"), onTap: () => enterDigit("2")),
+            PinButton(child: const Text("3"), onTap: () => enterDigit("3")),
+          ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PinButton(child: const Text("4"), onTap: () => enterDigit("4")),
+            PinButton(child: const Text("5"), onTap: () => enterDigit("5")),
+            PinButton(child: const Text("6"), onTap: () => enterDigit("6")),
+          ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PinButton(child: const Text("7"), onTap: () => enterDigit("7")),
+            PinButton(child: const Text("8"), onTap: () => enterDigit("8")),
+            PinButton(child: const Text("9"), onTap: () => enterDigit("9")),
+          ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PinButton(
+              onTap: () {
+                if (controller.text.isNotEmpty) {
+                  controller.text = controller.text.substring(0, controller.text.length - 1);
+                }
+              },
+              onLongPress: () => controller.clear(),
+              child: const Icon(Icons.backspace, color: Colors.white),
+            ),
+            PinButton(child: const Text("0"), onTap: () => enterDigit("0")),
+            PinButton(
+              onTap: () => authenticate(ref),
+              child: const Icon(Icons.check, color: Colors.white),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class PinButton extends StatelessWidget {
+  const PinButton({
+    super.key,
+    required this.child,
+    required this.onTap,
+    this.onLongPress,
+  });
+
+  final Widget child;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: SizedBox.fromSize(
+        size: const Size(80, 80),
+        child: ClipOval(
+          child: Material(
+            color: Colors.white12,
+            child: InkWell(
+              splashColor: Colors.white24,
+              onTap: onTap,
+              onLongPress: onLongPress,
+              child: Center(
+                child: DefaultTextStyle(
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                  ),
+                  child: child,
                 ),
-                child: child,
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

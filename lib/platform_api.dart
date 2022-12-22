@@ -142,11 +142,14 @@ class PlatformApi {
     });
   }
 
-  static Future<bool> unlockSession(String password) async {
-    bool? success = await _platform.invokeMethod("unlock_session", {
+  static Future<AuthenticationResponse> unlockSession(String password) async {
+    Map<String, dynamic>? response = await _platform.invokeMapMethod("unlock_session", {
       "password": password,
     });
-    return success ?? false;
+    if (response == null) {
+      return AuthenticationResponse(false, "");
+    }
+    return AuthenticationResponse(response["success"] as bool, response["message"] as String);
   }
 
   /// The display will not generate frame events anymore if it's disabled, meaning that rendering is stopped.
@@ -164,3 +167,10 @@ class TextInputEnable extends TextInputEvent {}
 class TextInputDisable extends TextInputEvent {}
 
 class TextInputCommit extends TextInputEvent {}
+
+class AuthenticationResponse {
+  AuthenticationResponse(this.success, this.message);
+
+  bool success;
+  String message;
+}

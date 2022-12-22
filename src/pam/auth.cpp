@@ -6,24 +6,31 @@
 #include <cstring>
 #include <climits>
 
-static bool authenticate(const std::string& user, const std::string& password);
+struct ConversationData {
+	const std::string& password;
+	std::string message;
+};
+
+static AuthenticationResponse authenticate(const std::string& user, const std::string& password);
 
 static int converse(int n, const struct pam_message** msg, struct pam_response** resp, void* data);
 
 static void delay_fn(int retval, unsigned usec_delay, void* appdata_ptr);
 
-bool authenticate_current_user(const std::string& password) {
+AuthenticationResponse authenticate_current_user(const std::string& password) {
 	char user[LOGIN_NAME_MAX];
 	if (getlogin_r(user, sizeof(user)) != 0) {
-		return false;
+		return AuthenticationResponse{false, {}};
 	}
 	return authenticate(user, password);
 }
 
-static bool authenticate(const std::string& user, const std::string& password) {
+static AuthenticationResponse authenticate(const std::string& user, const std::string& password) {
+	ConversationData conversation_data = {password, {}};
+
 	struct pam_conv conv = {
 		  converse,
-		  (void*) &password,
+		  (void*) &conversation_data,
 	};
 
 	pam_handle_t* pam_handle = nullptr;
@@ -44,12 +51,14 @@ static bool authenticate(const std::string& user, const std::string& password) {
 
 	pam_end(pam_handle, retval);
 
-	return retval == PAM_SUCCESS;
+	return AuthenticationResponse{retval == PAM_SUCCESS, conversation_data.message};
 }
 
 
 static int converse(int n, const struct pam_message** msg, struct pam_response** resp, void* data) {
-	const std::string& password = *static_cast<std::string*>(data);
+	ConversationData& conversation_data = *static_cast<ConversationData*>(data);
+	const std::string& password = conversation_data.password;
+	std::string& message_out = conversation_data.message;
 
 	if (n <= 0 || n > PAM_MAX_NUM_MSG) {
 		return PAM_CONV_ERR;
@@ -83,6 +92,8 @@ static int converse(int n, const struct pam_message** msg, struct pam_response**
 				break;
 			}
 			case PAM_TEXT_INFO: {
+				message_out = message->msg;
+
 				std::cout << message->msg;
 				size_t len = strlen(message->msg);
 				if (len > 0 && message->msg[len - 1] != '\n') {

@@ -389,9 +389,14 @@ void unlock_session(ZenithServer* server, const flutter::MethodCall<>& call,
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	auto password = std::get<std::string>(args[flutter::EncodableValue("password")]);
 
-	bool success = authenticate_current_user(password);
+	AuthenticationResponse response = authenticate_current_user(password);
 
-	result->Success(flutter::EncodableValue(success));
+	result->Success(flutter::EncodableValue{
+		  flutter::EncodableMap{
+				{flutter::EncodableValue("success"), flutter::EncodableValue(response.success)},
+				{flutter::EncodableValue("message"), flutter::EncodableValue(response.message)},
+		  }
+	});
 }
 
 void enable_display(ZenithServer* server, const flutter::MethodCall<>& call,
