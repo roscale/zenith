@@ -63,17 +63,6 @@ class Zenith extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(
-      lockScreenStateProvider.select((v) => v.overlayEntryInserted),
-      (_, bool insert) {
-        if (insert) {
-          overlayKey.currentState?.insert(ref.read(lockScreenStateProvider).overlayEntry);
-        } else {
-          ref.read(lockScreenStateProvider).overlayEntry.remove();
-        }
-      },
-    );
-
     // FIXME:
     // We cannot use MaterialApp because it somehow captures the arrow keys and tab automatically,
     // therefore these keys don't get forwarded to the Wayland client.
@@ -101,11 +90,16 @@ class Zenith extends ConsumerWidget {
               ),
             ),
             child: Scaffold(
-              body: Overlay(
-                key: overlayKey,
-                initialEntries: [
-                  OverlayEntry(builder: (_) => const Desktop()),
-                ],
+              body: Consumer(
+                builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                  return Overlay(
+                    key: ref.watch(lockScreenStateProvider.select((v) => v.overlayKey)),
+                    initialEntries: [
+                      OverlayEntry(builder: (_) => const Desktop()),
+                      ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
+                    ],
+                  );
+                },
               ),
             ),
           ),

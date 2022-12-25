@@ -13,15 +13,16 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
   LockScreenStateNotifier()
       : super(
           LockScreenState(
+            overlayKey: GlobalKey(),
             overlayEntry: OverlayEntry(builder: (_) => const LockScreen()),
-            overlayEntryInserted: false,
+            // The session starts locked. If you change this to false, also modify `initialEntries` of the Overlay widget.
+            locked: true,
+            lock: Object(),
+            unlock: Object(),
             dragging: false,
             dragVelocity: 0.0,
             offset: 0.0,
             slideDistance: 300.0,
-            lock: Object(),
-            unlock: Object(),
-            locked: false,
           ),
         );
 
@@ -51,16 +52,19 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
   }
 
   void lock() {
+    if (!state.locked) {
+      state.overlayKey.currentState?.insert(state.overlayEntry);
+    }
     state = state.copyWith(
       lock: Object(),
       locked: true,
-      overlayEntryInserted: true,
       dragging: false,
       dragVelocity: 0.0,
       offset: 0.0,
     );
   }
 
+  /// Starts the unlock animation. The Widget must listen to this event.
   void unlock() {
     state = state.copyWith(
       unlock: Object(),
@@ -68,24 +72,23 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
     );
   }
 
+  /// The Widget is responsible to call this method after the unlock animation is complete.
   void removeOverlay() {
-    state = state.copyWith(
-      overlayEntryInserted: false,
-    );
+    state.overlayEntry.remove();
   }
 }
 
 @freezed
 class LockScreenState with _$LockScreenState {
   const factory LockScreenState({
+    required GlobalKey<OverlayState> overlayKey,
     required OverlayEntry overlayEntry,
-    required bool overlayEntryInserted,
+    required bool locked,
+    required Object lock,
+    required Object unlock,
     required bool dragging,
     required double dragVelocity,
     required double offset,
     required double slideDistance,
-    required Object lock,
-    required Object unlock,
-    required bool locked,
   }) = _LockScreenState;
 }

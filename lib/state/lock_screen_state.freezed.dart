@@ -16,15 +16,15 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$LockScreenState {
+  GlobalKey<OverlayState> get overlayKey => throw _privateConstructorUsedError;
   OverlayEntry get overlayEntry => throw _privateConstructorUsedError;
-  bool get overlayEntryInserted => throw _privateConstructorUsedError;
+  bool get locked => throw _privateConstructorUsedError;
+  Object get lock => throw _privateConstructorUsedError;
+  Object get unlock => throw _privateConstructorUsedError;
   bool get dragging => throw _privateConstructorUsedError;
   double get dragVelocity => throw _privateConstructorUsedError;
   double get offset => throw _privateConstructorUsedError;
   double get slideDistance => throw _privateConstructorUsedError;
-  Object get lock => throw _privateConstructorUsedError;
-  Object get unlock => throw _privateConstructorUsedError;
-  bool get locked => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $LockScreenStateCopyWith<LockScreenState> get copyWith =>
@@ -38,15 +38,15 @@ abstract class $LockScreenStateCopyWith<$Res> {
       _$LockScreenStateCopyWithImpl<$Res, LockScreenState>;
   @useResult
   $Res call(
-      {OverlayEntry overlayEntry,
-      bool overlayEntryInserted,
+      {GlobalKey<OverlayState> overlayKey,
+      OverlayEntry overlayEntry,
+      bool locked,
+      Object lock,
+      Object unlock,
       bool dragging,
       double dragVelocity,
       double offset,
-      double slideDistance,
-      Object lock,
-      Object unlock,
-      bool locked});
+      double slideDistance});
 }
 
 /// @nodoc
@@ -62,25 +62,31 @@ class _$LockScreenStateCopyWithImpl<$Res, $Val extends LockScreenState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? overlayKey = null,
     Object? overlayEntry = null,
-    Object? overlayEntryInserted = null,
+    Object? locked = null,
+    Object? lock = null,
+    Object? unlock = null,
     Object? dragging = null,
     Object? dragVelocity = null,
     Object? offset = null,
     Object? slideDistance = null,
-    Object? lock = null,
-    Object? unlock = null,
-    Object? locked = null,
   }) {
     return _then(_value.copyWith(
+      overlayKey: null == overlayKey
+          ? _value.overlayKey
+          : overlayKey // ignore: cast_nullable_to_non_nullable
+              as GlobalKey<OverlayState>,
       overlayEntry: null == overlayEntry
           ? _value.overlayEntry
           : overlayEntry // ignore: cast_nullable_to_non_nullable
               as OverlayEntry,
-      overlayEntryInserted: null == overlayEntryInserted
-          ? _value.overlayEntryInserted
-          : overlayEntryInserted // ignore: cast_nullable_to_non_nullable
+      locked: null == locked
+          ? _value.locked
+          : locked // ignore: cast_nullable_to_non_nullable
               as bool,
+      lock: null == lock ? _value.lock : lock,
+      unlock: null == unlock ? _value.unlock : unlock,
       dragging: null == dragging
           ? _value.dragging
           : dragging // ignore: cast_nullable_to_non_nullable
@@ -97,12 +103,6 @@ class _$LockScreenStateCopyWithImpl<$Res, $Val extends LockScreenState>
           ? _value.slideDistance
           : slideDistance // ignore: cast_nullable_to_non_nullable
               as double,
-      lock: null == lock ? _value.lock : lock,
-      unlock: null == unlock ? _value.unlock : unlock,
-      locked: null == locked
-          ? _value.locked
-          : locked // ignore: cast_nullable_to_non_nullable
-              as bool,
     ) as $Val);
   }
 }
@@ -116,15 +116,15 @@ abstract class _$$_LockScreenStateCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {OverlayEntry overlayEntry,
-      bool overlayEntryInserted,
+      {GlobalKey<OverlayState> overlayKey,
+      OverlayEntry overlayEntry,
+      bool locked,
+      Object lock,
+      Object unlock,
       bool dragging,
       double dragVelocity,
       double offset,
-      double slideDistance,
-      Object lock,
-      Object unlock,
-      bool locked});
+      double slideDistance});
 }
 
 /// @nodoc
@@ -138,25 +138,31 @@ class __$$_LockScreenStateCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? overlayKey = null,
     Object? overlayEntry = null,
-    Object? overlayEntryInserted = null,
+    Object? locked = null,
+    Object? lock = null,
+    Object? unlock = null,
     Object? dragging = null,
     Object? dragVelocity = null,
     Object? offset = null,
     Object? slideDistance = null,
-    Object? lock = null,
-    Object? unlock = null,
-    Object? locked = null,
   }) {
     return _then(_$_LockScreenState(
+      overlayKey: null == overlayKey
+          ? _value.overlayKey
+          : overlayKey // ignore: cast_nullable_to_non_nullable
+              as GlobalKey<OverlayState>,
       overlayEntry: null == overlayEntry
           ? _value.overlayEntry
           : overlayEntry // ignore: cast_nullable_to_non_nullable
               as OverlayEntry,
-      overlayEntryInserted: null == overlayEntryInserted
-          ? _value.overlayEntryInserted
-          : overlayEntryInserted // ignore: cast_nullable_to_non_nullable
+      locked: null == locked
+          ? _value.locked
+          : locked // ignore: cast_nullable_to_non_nullable
               as bool,
+      lock: null == lock ? _value.lock : lock,
+      unlock: null == unlock ? _value.unlock : unlock,
       dragging: null == dragging
           ? _value.dragging
           : dragging // ignore: cast_nullable_to_non_nullable
@@ -173,12 +179,6 @@ class __$$_LockScreenStateCopyWithImpl<$Res>
           ? _value.slideDistance
           : slideDistance // ignore: cast_nullable_to_non_nullable
               as double,
-      lock: null == lock ? _value.lock : lock,
-      unlock: null == unlock ? _value.unlock : unlock,
-      locked: null == locked
-          ? _value.locked
-          : locked // ignore: cast_nullable_to_non_nullable
-              as bool,
     ));
   }
 }
@@ -187,20 +187,26 @@ class __$$_LockScreenStateCopyWithImpl<$Res>
 
 class _$_LockScreenState implements _LockScreenState {
   const _$_LockScreenState(
-      {required this.overlayEntry,
-      required this.overlayEntryInserted,
+      {required this.overlayKey,
+      required this.overlayEntry,
+      required this.locked,
+      required this.lock,
+      required this.unlock,
       required this.dragging,
       required this.dragVelocity,
       required this.offset,
-      required this.slideDistance,
-      required this.lock,
-      required this.unlock,
-      required this.locked});
+      required this.slideDistance});
 
+  @override
+  final GlobalKey<OverlayState> overlayKey;
   @override
   final OverlayEntry overlayEntry;
   @override
-  final bool overlayEntryInserted;
+  final bool locked;
+  @override
+  final Object lock;
+  @override
+  final Object unlock;
   @override
   final bool dragging;
   @override
@@ -209,16 +215,10 @@ class _$_LockScreenState implements _LockScreenState {
   final double offset;
   @override
   final double slideDistance;
-  @override
-  final Object lock;
-  @override
-  final Object unlock;
-  @override
-  final bool locked;
 
   @override
   String toString() {
-    return 'LockScreenState(overlayEntry: $overlayEntry, overlayEntryInserted: $overlayEntryInserted, dragging: $dragging, dragVelocity: $dragVelocity, offset: $offset, slideDistance: $slideDistance, lock: $lock, unlock: $unlock, locked: $locked)';
+    return 'LockScreenState(overlayKey: $overlayKey, overlayEntry: $overlayEntry, locked: $locked, lock: $lock, unlock: $unlock, dragging: $dragging, dragVelocity: $dragVelocity, offset: $offset, slideDistance: $slideDistance)';
   }
 
   @override
@@ -226,34 +226,34 @@ class _$_LockScreenState implements _LockScreenState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_LockScreenState &&
+            (identical(other.overlayKey, overlayKey) ||
+                other.overlayKey == overlayKey) &&
             (identical(other.overlayEntry, overlayEntry) ||
                 other.overlayEntry == overlayEntry) &&
-            (identical(other.overlayEntryInserted, overlayEntryInserted) ||
-                other.overlayEntryInserted == overlayEntryInserted) &&
+            (identical(other.locked, locked) || other.locked == locked) &&
+            const DeepCollectionEquality().equals(other.lock, lock) &&
+            const DeepCollectionEquality().equals(other.unlock, unlock) &&
             (identical(other.dragging, dragging) ||
                 other.dragging == dragging) &&
             (identical(other.dragVelocity, dragVelocity) ||
                 other.dragVelocity == dragVelocity) &&
             (identical(other.offset, offset) || other.offset == offset) &&
             (identical(other.slideDistance, slideDistance) ||
-                other.slideDistance == slideDistance) &&
-            const DeepCollectionEquality().equals(other.lock, lock) &&
-            const DeepCollectionEquality().equals(other.unlock, unlock) &&
-            (identical(other.locked, locked) || other.locked == locked));
+                other.slideDistance == slideDistance));
   }
 
   @override
   int get hashCode => Object.hash(
       runtimeType,
+      overlayKey,
       overlayEntry,
-      overlayEntryInserted,
+      locked,
+      const DeepCollectionEquality().hash(lock),
+      const DeepCollectionEquality().hash(unlock),
       dragging,
       dragVelocity,
       offset,
-      slideDistance,
-      const DeepCollectionEquality().hash(lock),
-      const DeepCollectionEquality().hash(unlock),
-      locked);
+      slideDistance);
 
   @JsonKey(ignore: true)
   @override
@@ -264,20 +264,26 @@ class _$_LockScreenState implements _LockScreenState {
 
 abstract class _LockScreenState implements LockScreenState {
   const factory _LockScreenState(
-      {required final OverlayEntry overlayEntry,
-      required final bool overlayEntryInserted,
+      {required final GlobalKey<OverlayState> overlayKey,
+      required final OverlayEntry overlayEntry,
+      required final bool locked,
+      required final Object lock,
+      required final Object unlock,
       required final bool dragging,
       required final double dragVelocity,
       required final double offset,
-      required final double slideDistance,
-      required final Object lock,
-      required final Object unlock,
-      required final bool locked}) = _$_LockScreenState;
+      required final double slideDistance}) = _$_LockScreenState;
 
+  @override
+  GlobalKey<OverlayState> get overlayKey;
   @override
   OverlayEntry get overlayEntry;
   @override
-  bool get overlayEntryInserted;
+  bool get locked;
+  @override
+  Object get lock;
+  @override
+  Object get unlock;
   @override
   bool get dragging;
   @override
@@ -286,12 +292,6 @@ abstract class _LockScreenState implements LockScreenState {
   double get offset;
   @override
   double get slideDistance;
-  @override
-  Object get lock;
-  @override
-  Object get unlock;
-  @override
-  bool get locked;
   @override
   @JsonKey(ignore: true)
   _$$_LockScreenStateCopyWith<_$_LockScreenState> get copyWith =>

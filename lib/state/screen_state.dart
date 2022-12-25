@@ -51,12 +51,17 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
         // We might not have permission to write to the brightness file even if the file exists.
         await displayBrightnessStateNotifier.setBrightness(0);
         state = state.copyWith(on: false);
-      } catch (_) {}
 
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        PlatformApi.enableDisplay(false);
+        SchedulerBinding.instance.addPostFrameCallback((_) async {
+          try {
+            await PlatformApi.enableDisplay(false);
+          } catch (_) {}
+
+          state = state.copyWith(pending: false);
+        });
+      } catch (_) {
         state = state.copyWith(pending: false);
-      });
+      }
     }
   }
 
@@ -76,15 +81,20 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
     final displayBrightnessStateNotifier = _ref.read(displayBrightnessStateProvider.notifier);
 
     if (displayBrightnessState.available) {
-      await PlatformApi.enableDisplay(true);
-      SchedulerBinding.instance.addPostFrameCallback((_) async {
-        try {
-          await displayBrightnessStateNotifier.restoreBrightness();
-          state = state.copyWith(on: true);
-        } catch (_) {}
+      try {
+        await PlatformApi.enableDisplay(true);
 
+        SchedulerBinding.instance.addPostFrameCallback((_) async {
+          try {
+            await displayBrightnessStateNotifier.restoreBrightness();
+            state = state.copyWith(on: true);
+          } catch (_) {}
+
+          state = state.copyWith(pending: false);
+        });
+      } catch (_) {
         state = state.copyWith(pending: false);
-      });
+      }
     }
   }
 }
