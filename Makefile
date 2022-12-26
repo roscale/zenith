@@ -167,7 +167,7 @@ deb_package: release_bundle
 	sed -i 's/$$ARCH/$(ARCH_DEB)/g' build/zenith/release/deb/debpkg/DEBIAN/control
 	cp -r build/zenith/release/bundle/* build/zenith/release/deb/debpkg/opt/zenith
 
-	dpkg-deb -Zxz --build build/zenith/release/deb/debpkg build/zenith/release/deb
+	dpkg-deb -Zxz --root-owner-group --build build/zenith/release/deb/debpkg build/zenith/release/deb
 
 attach_debugger:
 	flutter attach --debug-uri=http://127.0.0.1:12345/

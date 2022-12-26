@@ -34,7 +34,7 @@ static AuthenticationResponse authenticate(const std::string& user, const std::s
 	};
 
 	pam_handle_t* pam_handle = nullptr;
-	int retval = pam_start("system-auth", user.c_str(), &conv, &pam_handle);
+	int retval = pam_start("zenith", user.c_str(), &conv, &pam_handle);
 
 	if (retval == PAM_SUCCESS) {
 		// Disable fail delay.
