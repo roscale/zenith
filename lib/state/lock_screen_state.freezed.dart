@@ -18,6 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$LockScreenState {
   GlobalKey<OverlayState> get overlayKey => throw _privateConstructorUsedError;
   OverlayEntry get overlayEntry => throw _privateConstructorUsedError;
+  bool get overlayEntryInserted => throw _privateConstructorUsedError;
   bool get locked => throw _privateConstructorUsedError;
   Object get lock => throw _privateConstructorUsedError;
   Object get unlock => throw _privateConstructorUsedError;
@@ -40,6 +41,7 @@ abstract class $LockScreenStateCopyWith<$Res> {
   $Res call(
       {GlobalKey<OverlayState> overlayKey,
       OverlayEntry overlayEntry,
+      bool overlayEntryInserted,
       bool locked,
       Object lock,
       Object unlock,
@@ -64,6 +66,7 @@ class _$LockScreenStateCopyWithImpl<$Res, $Val extends LockScreenState>
   $Res call({
     Object? overlayKey = null,
     Object? overlayEntry = null,
+    Object? overlayEntryInserted = null,
     Object? locked = null,
     Object? lock = null,
     Object? unlock = null,
@@ -81,6 +84,10 @@ class _$LockScreenStateCopyWithImpl<$Res, $Val extends LockScreenState>
           ? _value.overlayEntry
           : overlayEntry // ignore: cast_nullable_to_non_nullable
               as OverlayEntry,
+      overlayEntryInserted: null == overlayEntryInserted
+          ? _value.overlayEntryInserted
+          : overlayEntryInserted // ignore: cast_nullable_to_non_nullable
+              as bool,
       locked: null == locked
           ? _value.locked
           : locked // ignore: cast_nullable_to_non_nullable
@@ -118,6 +125,7 @@ abstract class _$$_LockScreenStateCopyWith<$Res>
   $Res call(
       {GlobalKey<OverlayState> overlayKey,
       OverlayEntry overlayEntry,
+      bool overlayEntryInserted,
       bool locked,
       Object lock,
       Object unlock,
@@ -140,6 +148,7 @@ class __$$_LockScreenStateCopyWithImpl<$Res>
   $Res call({
     Object? overlayKey = null,
     Object? overlayEntry = null,
+    Object? overlayEntryInserted = null,
     Object? locked = null,
     Object? lock = null,
     Object? unlock = null,
@@ -157,6 +166,10 @@ class __$$_LockScreenStateCopyWithImpl<$Res>
           ? _value.overlayEntry
           : overlayEntry // ignore: cast_nullable_to_non_nullable
               as OverlayEntry,
+      overlayEntryInserted: null == overlayEntryInserted
+          ? _value.overlayEntryInserted
+          : overlayEntryInserted // ignore: cast_nullable_to_non_nullable
+              as bool,
       locked: null == locked
           ? _value.locked
           : locked // ignore: cast_nullable_to_non_nullable
@@ -189,6 +202,7 @@ class _$_LockScreenState implements _LockScreenState {
   const _$_LockScreenState(
       {required this.overlayKey,
       required this.overlayEntry,
+      required this.overlayEntryInserted,
       required this.locked,
       required this.lock,
       required this.unlock,
@@ -201,6 +215,8 @@ class _$_LockScreenState implements _LockScreenState {
   final GlobalKey<OverlayState> overlayKey;
   @override
   final OverlayEntry overlayEntry;
+  @override
+  final bool overlayEntryInserted;
   @override
   final bool locked;
   @override
@@ -218,7 +234,7 @@ class _$_LockScreenState implements _LockScreenState {
 
   @override
   String toString() {
-    return 'LockScreenState(overlayKey: $overlayKey, overlayEntry: $overlayEntry, locked: $locked, lock: $lock, unlock: $unlock, dragging: $dragging, dragVelocity: $dragVelocity, offset: $offset, slideDistance: $slideDistance)';
+    return 'LockScreenState(overlayKey: $overlayKey, overlayEntry: $overlayEntry, overlayEntryInserted: $overlayEntryInserted, locked: $locked, lock: $lock, unlock: $unlock, dragging: $dragging, dragVelocity: $dragVelocity, offset: $offset, slideDistance: $slideDistance)';
   }
 
   @override
@@ -230,6 +246,8 @@ class _$_LockScreenState implements _LockScreenState {
                 other.overlayKey == overlayKey) &&
             (identical(other.overlayEntry, overlayEntry) ||
                 other.overlayEntry == overlayEntry) &&
+            (identical(other.overlayEntryInserted, overlayEntryInserted) ||
+                other.overlayEntryInserted == overlayEntryInserted) &&
             (identical(other.locked, locked) || other.locked == locked) &&
             const DeepCollectionEquality().equals(other.lock, lock) &&
             const DeepCollectionEquality().equals(other.unlock, unlock) &&
@@ -247,6 +265,7 @@ class _$_LockScreenState implements _LockScreenState {
       runtimeType,
       overlayKey,
       overlayEntry,
+      overlayEntryInserted,
       locked,
       const DeepCollectionEquality().hash(lock),
       const DeepCollectionEquality().hash(unlock),
@@ -266,6 +285,7 @@ abstract class _LockScreenState implements LockScreenState {
   const factory _LockScreenState(
       {required final GlobalKey<OverlayState> overlayKey,
       required final OverlayEntry overlayEntry,
+      required final bool overlayEntryInserted,
       required final bool locked,
       required final Object lock,
       required final Object unlock,
@@ -278,6 +298,8 @@ abstract class _LockScreenState implements LockScreenState {
   GlobalKey<OverlayState> get overlayKey;
   @override
   OverlayEntry get overlayEntry;
+  @override
+  bool get overlayEntryInserted;
   @override
   bool get locked;
   @override

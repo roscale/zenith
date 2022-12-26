@@ -15,7 +15,8 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
           LockScreenState(
             overlayKey: GlobalKey(),
             overlayEntry: OverlayEntry(builder: (_) => const LockScreen()),
-            // The session starts locked. If you change this to false, also modify `initialEntries` of the Overlay widget.
+            // The session starts locked. If you change these to false, also modify `initialEntries` of the Overlay widget.
+            overlayEntryInserted: true,
             locked: true,
             lock: Object(),
             unlock: Object(),
@@ -52,10 +53,11 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
   }
 
   void lock() {
-    if (!state.locked) {
+    if (!state.overlayEntryInserted) {
       state.overlayKey.currentState?.insert(state.overlayEntry);
     }
     state = state.copyWith(
+      overlayEntryInserted: true,
       lock: Object(),
       locked: true,
       dragging: false,
@@ -75,6 +77,9 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
   /// The Widget is responsible to call this method after the unlock animation is complete.
   void removeOverlay() {
     state.overlayEntry.remove();
+    state = state.copyWith(
+      overlayEntryInserted: false,
+    );
   }
 }
 
@@ -83,6 +88,7 @@ class LockScreenState with _$LockScreenState {
   const factory LockScreenState({
     required GlobalKey<OverlayState> overlayKey,
     required OverlayEntry overlayEntry,
+    required bool overlayEntryInserted,
     required bool locked,
     required Object lock,
     required Object unlock,
