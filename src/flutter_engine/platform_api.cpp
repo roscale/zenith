@@ -17,13 +17,15 @@ extern "C" {
 #undef static
 }
 
-void startup_complete(ZenithServer* p_server, const flutter::MethodCall<>& call,
-                      std::unique_ptr<flutter::MethodResult<>>&& unique_ptr) {
+void startup_complete(ZenithServer* server, const flutter::MethodCall<>& call,
+                      std::unique_ptr<flutter::MethodResult<>>&& result) {
 
-	if (fork() == 0) {
-		execl("/bin/sh", "/bin/sh", "-c", p_server->startup_command.c_str(), nullptr);
+	if (!server->startup_command.empty()) {
+		if (fork() == 0) {
+			execl("/bin/sh", "/bin/sh", "-c", server->startup_command.c_str(), nullptr);
+		}
 	}
-	unique_ptr->Success();
+	result->Success();
 }
 
 void activate_window(ZenithServer* server,

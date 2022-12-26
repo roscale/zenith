@@ -13,11 +13,6 @@ int main(int argc, char* argv[]) {
 #endif
 
 	while ((getopt(argc, argv, "")) != -1);
-	if (optind == argc) {
-		std::cout << "Usage: " << argv[0] << " COMMAND\n";
-		exit(1);
-	}
-	char* startup_cmd = argv[optind];
-
+	const char* startup_cmd = optind == argc ? "" : argv[optind];
 	ZenithServer::instance()->run(startup_cmd);
 }

@@ -40,7 +40,7 @@ private:
 public:
 	static ZenithServer* instance();
 
-	void run(char* startup_command);
+	void run(const char* startup_command);
 
 	std::thread::id main_thread_id;
 	std::string startup_command{};

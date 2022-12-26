@@ -143,7 +143,7 @@ ZenithServer::ZenithServer() {
 	// TODO: Implement drag and drop.
 }
 
-void ZenithServer::run(char* startup_command) {
+void ZenithServer::run(const char* startup_command) {
 	this->startup_command = startup_command;
 
 	wlr_egl_make_current(wlr_gles2_renderer_get_egl(renderer));
