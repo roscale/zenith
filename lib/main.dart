@@ -89,17 +89,25 @@ class Zenith extends ConsumerWidget {
                 top: _notchHeight / MediaQuery.of(context).devicePixelRatio,
               ),
             ),
-            child: Scaffold(
-              body: Consumer(
-                builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                  return Overlay(
-                    key: ref.watch(lockScreenStateProvider.select((v) => v.overlayKey)),
-                    initialEntries: [
-                      OverlayEntry(builder: (_) => const Desktop()),
-                      ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
-                    ],
-                  );
-                },
+            // https://docs.flutter.dev/release/breaking-changes/text-field-material-localizations
+            child: Localizations(
+              locale: const Locale('en', 'US'),
+              delegates: const <LocalizationsDelegate<dynamic>>[
+                DefaultWidgetsLocalizations.delegate,
+                DefaultMaterialLocalizations.delegate,
+              ],
+              child: Scaffold(
+                body: Consumer(
+                  builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                    return Overlay(
+                      key: ref.watch(lockScreenStateProvider.select((v) => v.overlayKey)),
+                      initialEntries: [
+                        OverlayEntry(builder: (_) => const Desktop()),
+                        ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),

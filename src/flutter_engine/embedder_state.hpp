@@ -47,6 +47,7 @@ struct EmbedderState {
 
 	/// Allow Dart code to call C++ methods though this channel.
 	std::unique_ptr<flutter::MethodChannel<>> platform_method_channel;
+	std::unique_ptr<flutter::MethodChannel<>> mouse_cursor_method_channel;
 
 	intptr_t baton = 0;
 	bool new_baton = false;

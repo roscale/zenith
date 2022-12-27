@@ -28,9 +28,6 @@ ZenithPointer::ZenithPointer(ZenithServer* server)
 	cursor_mgr = wlr_xcursor_manager_create(nullptr, 20);
 	wlr_xcursor_manager_load(cursor_mgr, 1);
 
-	// Show the left cursor image at startup.
-	wlr_xcursor_manager_set_cursor_image(cursor_mgr, "left_ptr", cursor);
-
 	/*
 	 * wlr_cursor *only* displays an image on screen. It does not move around
 	 * when the pointer moves. However, we can attach input devices to it, and

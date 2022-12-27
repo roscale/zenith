@@ -8,6 +8,7 @@
 #include <thread>
 #include "server.hpp"
 #include "egl_helpers.hpp"
+#include "cursor_image_mapping.hpp"
 
 extern "C" {
 #define static
@@ -185,6 +186,34 @@ void EmbedderState::register_platform_api() {
 				  unlock_session(server, call, std::move(result));
 			  } else if (method_name == "enable_display") {
 				  enable_display(server, call, std::move(result));
+			  } else {
+				  result->Error("method_does_not_exist", "Method " + method_name + " does not exist");
+			  }
+		  }
+	);
+
+	// https://api.flutter.dev/flutter/services/SystemChannels/mouseCursor-constant.html
+	mouse_cursor_method_channel = std::make_unique<flutter::MethodChannel<>>(&messenger, "flutter/mousecursor", &codec);
+
+	server = this->server;
+	mouse_cursor_method_channel->SetMethodCallHandler(
+		  [server](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
+			  const std::string& method_name = call.method_name();
+			  if (method_name == "activateSystemCursor") {
+				  flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+				  [[maybe_unused]] auto device = std::get<int32_t>(args[flutter::EncodableValue("device")]);
+				  auto kind = std::get<std::string>(args[flutter::EncodableValue("kind")]);
+
+				  if (server->pointer != nullptr) {
+					  auto iter = g_cursor_image_mapping.find(kind);
+					  const char* cursor = "default";
+					  if (iter != g_cursor_image_mapping.end()) {
+						  cursor = iter->second;
+					  }
+					  wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, cursor,
+					                                       server->pointer->cursor);
+				  }
+				  result->Success();
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + method_name + " does not exist");
 			  }
