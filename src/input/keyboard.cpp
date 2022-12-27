@@ -85,6 +85,10 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 	json.AddMember("toolkit", "gtk", json.GetAllocator());
 	json.AddMember("scanCode", scan_code, json.GetAllocator());
 	json.AddMember("keyCode", keysym, json.GetAllocator());
+	// https://github.com/flutter/engine/blob/2a8ac1e0ca2535a6af17dde3530d277ecd601543/shell/platform/linux/fl_keyboard_manager.cc#L96
+	if (keysym < 128) {
+		json.AddMember("specifiedLogicalKey", keysym, json.GetAllocator());
+	}
 	json.AddMember("modifiers", modifiers, json.GetAllocator());
 	// Normally I would also set `unicodeScalarValues`, but I don't anticipate using this feature.
 	// https://github.com/flutter/flutter/blob/b8f7f1f986/packages/flutter/lib/src/services/raw_keyboard_linux.dart#L55
