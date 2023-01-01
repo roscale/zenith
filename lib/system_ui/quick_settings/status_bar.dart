@@ -57,29 +57,29 @@ class _StatusBarState extends ConsumerState<StatusBar> {
                     SizedBox(width: physicalToLogicalPixels(30)),
                     const DigitalClock(),
                     const Spacer(),
-                    Icon(
-                      Icons.wifi,
-                      color: Colors.white,
-                      size: constraints.maxHeight,
-                    ),
-                    Icon(
-                      Icons.signal_cellular_4_bar,
-                      color: Colors.white,
-                      size: constraints.maxHeight,
-                    ),
-                    SizedBox(width: physicalToLogicalPixels(30)),
-                    const Text(
-                      "98%",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Icon(
-                      Icons.battery_charging_full,
-                      color: Colors.white,
-                      size: constraints.maxHeight,
-                    ),
+                    // Icon(
+                    //   Icons.wifi,
+                    //   color: Colors.white,
+                    //   size: constraints.maxHeight,
+                    // ),
+                    // Icon(
+                    //   Icons.signal_cellular_4_bar,
+                    //   color: Colors.white,
+                    //   size: constraints.maxHeight,
+                    // ),
+                    // SizedBox(width: physicalToLogicalPixels(30)),
+                    // const Text(
+                    //   "98%",
+                    //   style: TextStyle(
+                    //     fontWeight: FontWeight.bold,
+                    //     color: Colors.white,
+                    //   ),
+                    // ),
+                    // Icon(
+                    //   Icons.battery_charging_full,
+                    //   color: Colors.white,
+                    //   size: constraints.maxHeight,
+                    // ),
                     SizedBox(width: physicalToLogicalPixels(30)),
                   ],
                 ),

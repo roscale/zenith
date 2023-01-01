@@ -1,0 +1,51 @@
+[Unit]
+Description=The Zenith Desktop Environment
+
+# replaces the getty
+Conflicts=getty@tty3.service
+After=getty@tty3.service
+
+# Needs all the dependencies of the services it's replacing
+# (currently getty@tty3.service):
+After=rc-local.service plymouth-quit-wait.service systemd-logind.service seatd.service systemd-user-sessions.service
+
+OnFailure=getty@tty3.service
+
+# D-Bus is necessary for contacting logind. Logind is required.
+Wants=dbus.socket seatd.service
+After=dbus.socket
+
+# Since we are part of the graphical session, make sure we are started before
+# it is complete.
+Before=graphical.target
+
+# Prevent starting on systems without virtual consoles
+ConditionPathExists=/dev/tty3
+
+[Service]
+Environment=LANG=C.UTF-8
+Environment=XDG_SESSION_TYPE=wayland
+Environment=ZENITH_SCALE=3
+ExecStart=/opt/zenith/zenith
+TimeoutStartSec=30
+User=1000
+PAMName=login
+Restart=always
+RestartSec=5s
+
+# A virtual terminal is needed.
+TTYPath=/dev/tty3
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+# Fail to start if not controlling the tty.
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target
+
+# On some distros (not Mobian), they alias the display-manager service instead of depending on the graphical target.
+Alias=display-manager.service

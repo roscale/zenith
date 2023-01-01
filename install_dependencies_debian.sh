@@ -15,4 +15,5 @@ sudo apt install -y \
   libxkbcommon-dev \
   libpixman-1-dev \
   libinput-dev \
-  libpam0g-dev
+  libpam0g-dev \
+  seatd

@@ -13,4 +13,5 @@ sudo pacman -S --needed --noconfirm \
   libxkbcommon \
   pixman \
   libinput \
-  pam
+  pam \
+  seatd

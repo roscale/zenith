@@ -12,11 +12,10 @@ Video demonstration: https://youtu.be/3Zh7Tk4oWo0
 ## Why?
 
 - There are very few compositors for mobile devices compared to desktop.
-- Most (all?) mobile compositors are still pretty young and unpolished.
-- Preinstalled apps are not made for touch input first, and it shows.
+- Most (all?) mobile compositors are still pretty young and generally unpolished.
 - Flutter is becoming more and more popular among app developers, and it will significantly lower the bar for
   contributing to this project.
-- Flutter significantly reduces development time and it lets you easily design beautiful user interfaces that compete
+- Flutter significantly reduces development time, and lets you easily design beautiful user interfaces that compete
   with other platforms.
 
 ## Code navigation
@@ -87,7 +86,7 @@ the project using `make`, it's in `build/zenith/[debug|profile|release]/bundle/`
 Start the compositor:
 
 ```
-./zenith COMMAND
+./zenith [COMMAND]
 ```
 
 Replace `COMMAND` with your program of choice to be launched with the compositor. The program must have Wayland
@@ -95,6 +94,9 @@ support (at the moment). Any QT or GTK app should work. You can launch a termina
 or `terminator`, and use it to start subsequent programs. `gnome-terminal` is very picky and it seems to always choose
 to connect to the Wayland socket of the host, so it may not work. If you want to launch Chromium or Chromium-based
 apps, you must use `--enable-features=UseOzonePlatform --ozone-platform=wayland`.
+
+Right now, only pin authentication is supported. Change your user password to a pin, otherwise you won't be able to
+unlock the compositor.
 
 If you want to start the compositor on your secondary screen, set the environment variable `ZENITH_OUTPUT=1`, `1` being
 the
