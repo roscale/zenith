@@ -77,9 +77,11 @@ void EmbedderState::start_engine() {
 	config.open_gl.make_current = flutter_make_current;
 	config.open_gl.clear_current = flutter_clear_current;
 	config.open_gl.present = flutter_present;
-	config.open_gl.fbo_with_frame_info_callback = with_frame_info_callback;
+	config.open_gl.fbo_with_frame_info_callback = flutter_fbo_with_frame_info_callback;
 	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
 	config.open_gl.make_resource_current = flutter_make_resource_current;
+	config.open_gl.fbo_reset_after_present = true;
+	config.open_gl.surface_transformation = flutter_surface_transformation;
 
 	FlutterTaskRunnerDescription platform_task_runner_description{};
 	platform_task_runner_description.struct_size = sizeof(FlutterTaskRunnerDescription);
@@ -198,6 +200,9 @@ void EmbedderState::register_platform_api() {
 	server = this->server;
 	mouse_cursor_method_channel->SetMethodCallHandler(
 		  [server](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
+			  result->Success();
+			  return;
+
 			  const std::string& method_name = call.method_name();
 			  if (method_name == "activateSystemCursor") {
 				  flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);

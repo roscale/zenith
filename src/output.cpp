@@ -24,7 +24,13 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	wlr_output_set_scale(wlr_output, server->display_scale);
 }
 
+static int i = 0;
+
 void output_frame(wl_listener* listener, void* data) {
+	if (i == 0) {
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 	ZenithServer* server = output->server;
 	auto& flutter_engine_state = server->embedder_state;
@@ -32,31 +38,73 @@ void output_frame(wl_listener* listener, void* data) {
 	uint64_t now = current_time_nanoseconds();
 
 	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
-	wlr_egl_make_current(egl);
+	if (!wlr_egl_is_current(egl)) {
+		wlr_egl_make_current(egl);
+	}
 
-	for (auto& [id, view]: server->views) {
-		if (!view->mapped || !view->visible || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
-			// An unmapped view should not be rendered.
-			continue;
+	if (output->wlr_output->back_buffer != nullptr) {
+		wlr_output_rollback(output->wlr_output);
+	}
+
+//	int width = server->output->wlr_output->width;
+//	int height = server->output->wlr_output->height;
+//	wlr_renderer_begin(server->renderer, width, height);
+//
+//	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
+//	std::cout << output_fbo << std::endl;
+//
+//	zenith_egl_restore_context(&saved_egl_context);
+
+//	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
+//	wlr_egl_make_current(egl);
+
+//	for (auto& [id, view]: server->views) {
+//		if (!view->mapped || !view->visible || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
+//			// An unmapped view should not be rendered.
+//			continue;
+//		}
+//
+//		std::shared_ptr<Framebuffer> view_framebuffer;
+//
+//		{
+//			std::scoped_lock lock(server->surface_framebuffers_mutex);
+//
+//			auto surface_framebuffer_it = server->surface_framebuffers.find(view->active_texture);
+//			assert(surface_framebuffer_it != server->surface_framebuffers.end());
+//
+//			view_framebuffer = surface_framebuffer_it->second;
+//		}
+//
+//		std::scoped_lock lock(view_framebuffer->mutex);
+//
+//		GLuint view_fbo = view_framebuffer->framebuffer;
+//		render_view_to_framebuffer(view, view_fbo);
+//
+//		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view->active_texture);
+//	}
+
+//	wlr_output_schedule_frame(server->output->wlr_output);
+
+//	std::cout << "vsync " << current_time_nanoseconds() << std::endl;
+
+	if (i == 0) {
+		if (!wlr_output_attach_render(server->output->wlr_output, nullptr)) {
+			return;
+		}
+		GLint fb;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
+
+		server->fb_channel.write(fb);
+	} else {
+		if (!wlr_output_attach_render(server->output->wlr_output, nullptr)) {
+			std::cerr << "attach failed";
+			return;
 		}
 
-		std::shared_ptr<Framebuffer> view_framebuffer;
+		GLint fb;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
 
-		{
-			std::scoped_lock lock(server->surface_framebuffers_mutex);
-
-			auto surface_framebuffer_it = server->surface_framebuffers.find(view->active_texture);
-			assert(surface_framebuffer_it != server->surface_framebuffers.end());
-
-			view_framebuffer = surface_framebuffer_it->second;
-		}
-
-		std::scoped_lock lock(view_framebuffer->mutex);
-
-		GLuint view_fbo = view_framebuffer->framebuffer;
-		render_view_to_framebuffer(view, view_fbo);
-
-		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view->active_texture);
+		server->fb_channel.write(fb);
 	}
 
 	{
@@ -78,29 +126,38 @@ void output_frame(wl_listener* listener, void* data) {
 		}
 	}
 
+	if (i == 0) {
+//		wlr_output_schedule_frame(output->wlr_output);
+		i++;
+	}
+
+	std::cout << "frame" << std::endl;
+
 	/*
 	 * Copy the frame to the screen.
 	 */
-	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
-		return;
-	}
+//	if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
+//		return;
+//	}
+//
+//	int width = output->wlr_output->width;
+//	int height = output->wlr_output->height;
+//	wlr_renderer_begin(server->renderer, width, height);
+//
+//	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
+//
+//	{
+//		Framebuffer& copy_framebuffer = *flutter_engine_state->output_framebuffer;
+//		std::scoped_lock lock(copy_framebuffer.mutex);
+//		GLScopedLock gl_lock(flutter_engine_state->output_gl_mutex);
+//
+//		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+//		glClear(GL_COLOR_BUFFER_BIT);
+//		RenderToTextureShader::instance()->render(copy_framebuffer.texture, 0, 0, copy_framebuffer.width,
+//		                                          copy_framebuffer.height, output_fbo, true);
+//	}
 
-	int width = output->wlr_output->width;
-	int height = output->wlr_output->height;
-	wlr_renderer_begin(server->renderer, width, height);
-
-	uint32_t output_fbo = wlr_gles2_renderer_get_current_fbo(server->renderer);
-
-	{
-		Framebuffer& copy_framebuffer = *flutter_engine_state->output_framebuffer;
-		std::scoped_lock lock(copy_framebuffer.mutex);
-		GLScopedLock gl_lock(flutter_engine_state->output_gl_mutex);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
-		glClear(GL_COLOR_BUFFER_BIT);
-		RenderToTextureShader::instance()->render(copy_framebuffer.texture, 0, 0, copy_framebuffer.width,
-		                                          copy_framebuffer.height, output_fbo, true);
-	}
+	wlr_output_rollback(output->wlr_output);
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
 	 * moved around without re-rendering what's beneath them - which is more
@@ -108,15 +165,17 @@ void output_frame(wl_listener* listener, void* data) {
 	 * reason, wlroots provides a software fallback, which we ask it to render
 	 * here. wlr_cursor handles configuring hardware vs software cursors for you,
 	 * and this function is a no-op when hardware cursors are in use. */
-	wlr_output_render_software_cursors(output->wlr_output, nullptr);
-
-	wlr_renderer_end(server->renderer);
+//	wlr_output_render_software_cursors(output->wlr_output, nullptr);
+//
+//	wlr_renderer_end(server->renderer);
 
 	// The output might be disabled. Cancel the operation if the output is not ready.
-	if (!wlr_output_test(output->wlr_output)) {
-		wlr_output_rollback(output->wlr_output);
-		return;
-	}
+
+//	if (!wlr_output_test(output->wlr_output)) {
+//		wlr_output_rollback(output->wlr_output);
+//		return;
+//	}
+
 	// FIXME:
 	// Sometimes, committing a new frame to the screen just fails. I suspect it's because
 	// this function takes too long to render everything and we miss the vblank period.
@@ -124,9 +183,9 @@ void output_frame(wl_listener* listener, void* data) {
 	// implicit synchronization between the compositor and Wayland clients is the issue here.
 	// Normally, this callback is automatically called every frame, but when this happens, it stops
 	// being called. To avoid having a frozen screen, we manually schedule the next frame.
-	if (!wlr_output_commit(output->wlr_output)) {
-		wlr_output_schedule_frame(output->wlr_output);
-	}
+//	if (!wlr_output_commit(output->wlr_output)) {
+//		wlr_output_schedule_frame(output->wlr_output);
+//	}
 }
 
 void mode_changed_event(wl_listener* listener, void* data) {

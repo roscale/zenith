@@ -25,3 +25,7 @@ struct ZenithOutput {
 void output_frame(wl_listener* listener, void* data);
 
 void mode_changed_event(wl_listener* listener, void* data);
+
+class OutputVBlankAddon {
+
+};

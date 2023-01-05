@@ -1,6 +1,7 @@
 #include "server.hpp"
 #include "debug.hpp"
 #include <unistd.h>
+#include <sys/eventfd.h>
 
 extern "C" {
 #define static
@@ -25,6 +26,27 @@ ZenithServer* ZenithServer::instance() {
 }
 
 static float read_display_scale();
+
+auto fn(int fd, uint32_t mask, void* data) -> int {
+//	std::cout << "present receive " << FlutterEngineGetCurrentTime() << std::endl;
+
+	auto* server = static_cast<ZenithServer*>(data);
+	eventfd_t tmp;
+	eventfd_read(server->flutter_commit_output_fd, &tmp);
+
+//	wlr_output_render_software_cursors(server->output->wlr_output, nullptr);
+
+//	wlr_renderer_end(server->renderer);
+
+	if (!wlr_output_commit(server->output->wlr_output)) {
+		wlr_output_schedule_frame(server->output->wlr_output);
+		std::cerr << "commit failed";
+	}
+
+
+//	std::cout << "get new fb " << FlutterEngineGetCurrentTime() << std::endl;
+	return 0;
+}
 
 ZenithServer::ZenithServer() {
 	main_thread_id = std::this_thread::get_id();
@@ -139,6 +161,12 @@ ZenithServer::ZenithServer() {
 
 	request_set_selection.notify = server_seat_request_set_selection;
 	wl_signal_add(&seat->events.request_set_selection, &request_set_selection);
+
+	wl_event_loop* event_loop = wl_display_get_event_loop(display);
+	flutter_commit_output_fd = eventfd(0, EFD_NONBLOCK);
+	std::cout << "fd " << flutter_commit_output_fd << std::endl;
+
+	wl_event_source* source = wl_event_loop_add_fd(event_loop, flutter_commit_output_fd, WL_EVENT_READABLE, fn, this);
 
 	// TODO: Implement drag and drop.
 }

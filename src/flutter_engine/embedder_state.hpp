@@ -56,4 +56,6 @@ struct EmbedderState {
 	std::unique_ptr<Framebuffer> flutter_framebuffer = nullptr;
 	std::unique_ptr<Framebuffer> output_framebuffer = nullptr;
 	GLMutex output_gl_mutex{}; // use output_framebuffer->mutex to lock this variable
+
+	GLint fb;
 };

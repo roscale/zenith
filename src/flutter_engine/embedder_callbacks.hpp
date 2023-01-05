@@ -8,7 +8,7 @@ bool flutter_clear_current(void* userdata);
 
 bool flutter_present(void* userdata);
 
-uint32_t with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info);
+uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info);
 
 void flutter_vsync_callback(void* userdata, intptr_t baton);
 
@@ -20,3 +20,5 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 bool flutter_make_resource_current(void* userdata);
 
 int flutter_execute_expired_tasks_timer(void* data);
+
+FlutterTransformation flutter_surface_transformation(void* data);

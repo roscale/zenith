@@ -14,6 +14,7 @@
 #include "input/text_input.hpp"
 #include "view.hpp"
 #include "offset.hpp"
+#include "channel.hpp"
 
 extern "C" {
 #define static
@@ -95,6 +96,8 @@ public:
 	std::unordered_map<int, Offset> leaf_surface_coords_per_device_id{};
 
 	std::unique_ptr<EmbedderState> embedder_state{};
+	int flutter_commit_output_fd;
+	channel fb_channel{};
 };
 
 /*
