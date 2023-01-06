@@ -1,9 +1,6 @@
 #include "embedder_callbacks.hpp"
 #include "embedder_state.hpp"
 #include "server.hpp"
-#include "gl_mutex.hpp"
-#include "egl_helpers.hpp"
-#include "time.hpp"
 
 extern "C" {
 #define static
@@ -16,7 +13,7 @@ extern "C" {
 #include <cassert>
 #include <iostream>
 #include <sys/eventfd.h>
-#include <xf86drm.h>
+#include <unistd.h>
 
 bool flutter_make_current(void* userdata) {
 	auto* state = static_cast<EmbedderState*>(userdata);
@@ -30,134 +27,29 @@ bool flutter_clear_current(void* userdata) {
 
 uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info) {
 	auto* state = static_cast<EmbedderState*>(userdata);
-	auto* server = state->server;
+	const auto& output = state->server->output;
 
-	// No need for synchronization because the framebuffer field never changes after the object construction.
-//	return state->flutter_framebuffer->framebuffer;
-//	return 3;
+	eventfd_write(output->attach_event_fd, 1);
+	GLint fb;
+	read(output->attach_event_return_pipes[0], &fb, sizeof fb);
 
-	eventfd_write(server->output_attach_fd, 1);
-	eventfd_t fb = 0;
-	eventfd_read(server->output_attach_return_fd, &fb);
-
-	if (fb == 9999) {
-		std::cout << "FAIL FBO" << std::endl;
-		// Failure.
-		fb = 0;
-	}
-
-//	if (!wlr_output_attach_render(server->output->wlr_output, nullptr)) {
-//		return 0;
-//	}
-//	GLint fb;
-//	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
-//
-//	if (fb == 5) {
-//		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-//		fb = 5;
-//	}
-
-
-//	std::cout << "use fbo before " << FlutterEngineGetCurrentTime() << std::endl;
-//
-//	GLint fb = server->fb_channel.read();
-//
-//	std::cout << "use fbo after " << fb << " " << FlutterEngineGetCurrentTime() << std::endl;
-//	std::cout << "attach " << fb << std::endl;
-
-	return (uint32_t) fb;
+	return fb;
 }
 
 bool flutter_present(void* userdata) {
 	// https://community.arm.com/cfs-file/__key/telligent-evolution-components-attachments/01-2066-00-00-00-00-42-84/Whitepaper_2D00_ThreadSync.pdf
 	auto* state = static_cast<EmbedderState*>(userdata);
-	auto* server = state->server;
-
-//	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
-//	if (!wlr_egl_is_current(egl)) {
-//		bool a = wlr_egl_make_current(egl);
-//		if (!a) {
-////			wlr_output_rollback(server->output->wlr_output);
-//			return false;
-//		}
-//
-//		std::cerr << "current success: " << a << "\n";
-//	}s
-
-//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	const auto& output = state->server->output;
 
 	GLint fb;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
 	glFinish(); // glFlush still causes flickering on my phone.
 
-//	std::cout << "presented " << fb << std::endl;
+	eventfd_write(output->commit_event_fd, 1);
+	bool success;
+	read(output->commit_event_return_pipes[0], &success, sizeof success);
 
-	eventfd_write(server->output_commit_fd, 1);
-	eventfd_t success;
-	eventfd_read(server->output_commit_return_fd, &success);
-
-	return success != 9999;
-
-//	if (!wlr_output_commit(server->output->wlr_output)) {
-////		wlr_output_schedule_frame(server->output->wlr_output);
-//		std::cerr << "commit failed";
-//		return false;
-//	}
-
-//	ZenithEglContext saved_egl_context{};
-//	zenith_egl_save_context(&saved_egl_context);
-//
-//	wlr_egl_make_current(state->output_gl_context);
-//
-//	std::scoped_lock lock(state->output_framebuffer->mutex);
-//	GLScopedLock gl_lock(state->output_gl_mutex);
-//
-//	Framebuffer& output_framebuffer = *state->flutter_framebuffer;
-//	Framebuffer& copy_framebuffer = *state->output_framebuffer;
-//
-//	copy_framebuffer.resize(output_framebuffer.width, output_framebuffer.height);
-//	RenderToTextureShader::instance()->render(output_framebuffer.texture, 0, 0, output_framebuffer.width,
-//	                                          output_framebuffer.height, copy_framebuffer.framebuffer);
-//
-//	zenith_egl_restore_context(&saved_egl_context);
-
-//	std::cout << "present " << FlutterEngineGetCurrentTime() << std::endl;
-
-//	ZenithEglContext saved_egl_context{};
-//	zenith_egl_save_context(&saved_egl_context);
-//	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
-//	if (!wlr_egl_is_current(egl)) {
-//		wlr_egl_make_current(egl);
-//	}
-
-//	if (!wlr_output_attach_render(server->output->wlr_output, nullptr)) {
-//		return true;
-//	}
-
-//	if (!server->renderer->rendering) {
-//		return true;
-//	}
-
-//	int width = server->output->wlr_output->width;
-//	int height = server->output->wlr_output->height;
-//	wlr_renderer_begin(server->renderer, width, height);
-
-//	wlr_output_render_software_cursors(server->output->wlr_output, nullptr);
-
-//	wlr_renderer_end(server->renderer);
-
-//	if (!wlr_output_commit(server->output->wlr_output)) {
-//		wlr_output_schedule_frame(server->output->wlr_output);
-//	}
-
-//	wlr_output_schedule_frame(server->output->wlr_output);
-
-
-//	std::cout << "a " << a << std::endl;
-
-//	zenith_egl_restore_context(&saved_egl_context);
-
-	return true;
+	return success;
 }
 
 void flutter_vsync_callback(void* userdata, intptr_t baton) {
@@ -215,19 +107,15 @@ bool flutter_make_resource_current(void* userdata) {
 	return wlr_egl_make_current(state->flutter_resource_gl_context);
 }
 
-int flutter_execute_expired_tasks_timer(void* data) {
-	auto* state = static_cast<EmbedderState*>(data);
-
-	state->platform_task_runner.execute_expired_tasks();
-	// I would have preferred to have the delay represented in nanoseconds because I could reschedule
-	// an update at exactly the right time for the earliest task to be executed, but we'll just reschedule
-	// as fast as possible, every millisecond. This shouldn't be heavy for a CPU anyway.
-	wl_event_source_timer_update(state->platform_task_runner_timer, 1);
-	return 0;
-}
-
+/*
+ * The default rendering is done upside down for some reason.
+ * This flips the rendering on the x-axis.
+ */
 FlutterTransformation flutter_surface_transformation(void* data) {
+	auto* state = static_cast<EmbedderState*>(data);
+	double height = state->server->output->wlr_output->height;
+
 	return FlutterTransformation{
-		  1.0, 0.0, 0.0, 0.0, -1.0, 2280.0, 0.0, 0.0, 1.0,
+		  1.0, 0.0, 0.0, 0.0, -1.0, height, 0.0, 0.0, 1.0,
 	};
 }

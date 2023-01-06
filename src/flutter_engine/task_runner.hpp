@@ -12,14 +12,23 @@ struct task_runner_compare {
 };
 
 class TaskRunner {
-	FlutterEngine engine;
+	FlutterEngine engine{};
 	std::mutex mutex{};
+	std::vector<Task> expired_tasks{};
 
 public:
+	int timer_fd;
+
+	TaskRunner();
+
 	std::priority_queue<Task, std::vector<Task>, task_runner_compare> tasks{};
+
 	void set_engine(FlutterEngine engine);
 
 	void add_task(uint64_t target_time, FlutterTask task);
 
 	void execute_expired_tasks();
+
+private:
+	void schedule_timer() const;
 };

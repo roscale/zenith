@@ -17,8 +17,11 @@ struct ZenithOutput {
 	struct wlr_output* wlr_output = nullptr;
 	wl_listener frame_listener{};
 	wl_listener mode_changed{};
-	int drm_epoll_fd;
-	int vsync_fd;
+
+	int attach_event_fd;
+	int attach_event_return_pipes[2];
+	int commit_event_fd;
+	int commit_event_return_pipes[2];
 };
 
 /*
@@ -26,15 +29,10 @@ struct ZenithOutput {
  */
 void output_frame(wl_listener* listener, void* data);
 
-int drm_event(int fd, uint32_t mask, void* data);
-
-int vblank_handler(int fd, uint32_t mask, void* data);
-
-void page_flip_handler2(int fd,
-                        unsigned int sequence,
-                        unsigned int tv_sec,
-                        unsigned int tv_usec,
-                        unsigned int crtc_id,
-                        void* user_data);
-
 void mode_changed_event(wl_listener* listener, void* data);
+
+int vsync_callback(void* data);
+
+int handle_output_attach(int fd, uint32_t mask, void* data);
+
+int handle_output_commit(int fd, uint32_t mask, void* data);

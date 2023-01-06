@@ -6,6 +6,7 @@
 #include "json_message_codec.h"
 #include <filesystem>
 #include <thread>
+#include <unistd.h>
 #include "server.hpp"
 #include "egl_helpers.hpp"
 #include "cursor_image_mapping.hpp"
@@ -30,21 +31,7 @@ EmbedderState::EmbedderState(ZenithServer* server, wlr_egl* main_egl)
 	wlr_egl_make_current(main_egl);
 	flutter_gl_context = create_shared_egl_context(main_egl);
 	flutter_resource_gl_context = create_shared_egl_context(main_egl);
-	output_gl_context = create_shared_egl_context(main_egl);
 	wlr_egl_unset_current(main_egl);
-
-	// Flutter doesn't know the output dimensions, so initialize all required textures with the smallest
-	// size possible. When an output (screen) becomes available, the Flutter engine will be notified and
-	// all textures will be resized.
-	size_t dummy_width = 1;
-	size_t dummy_height = 1;
-
-	// FBOs cannot be shared between GL contexts. Since these FBOs will be used by a Flutter thread, create these
-	// resources using Flutter's context.
-	wlr_egl_make_current(flutter_gl_context);
-	flutter_framebuffer = std::make_unique<Framebuffer>(dummy_width, dummy_height);
-	wlr_egl_make_current(output_gl_context);
-	output_framebuffer = std::make_unique<Framebuffer>(dummy_width, dummy_height);
 
 	zenith_egl_restore_context(&saved_egl_context);
 }
@@ -53,10 +40,18 @@ void EmbedderState::run_engine() {
 	start_engine();
 
 	platform_task_runner.set_engine(engine);
-	platform_task_runner_timer = wl_event_loop_add_timer(wl_display_get_event_loop(server->display),
-	                                                     flutter_execute_expired_tasks_timer, this);
-	// Arm the timer.
-	wl_event_source_timer_update(platform_task_runner_timer, 1);
+
+	wl_event_loop* event_loop = wl_display_get_event_loop(server->display);
+	wl_event_loop_add_fd(event_loop, platform_task_runner.timer_fd, WL_EVENT_READABLE,
+	                     [](int fd, uint32_t mask, void* data) -> int {
+		                     auto* state = static_cast<EmbedderState*>(data);
+
+		                     uint64_t expiration_count;
+		                     read(state->platform_task_runner.timer_fd, &expiration_count, sizeof(uint64_t));
+
+		                     state->platform_task_runner.execute_expired_tasks();
+		                     return 0;
+	                     }, this);
 
 	register_platform_api();
 }

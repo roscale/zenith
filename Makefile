@@ -43,7 +43,8 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 ASAN := -g -fno-omit-frame-pointer -fsanitize=address
-WARNINGS := -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-invalid-offsetof -Werror
+WARNINGS := -Wall -Wextra -Werror \
+			-Wno-unused-parameter -Wno-unused-variable -Wno-invalid-offsetof -Wno-unknown-pragmas
 
 # The -MMD and -MP flags together generate Makefiles for us!
 # These files will have .d instead of .o as the output.

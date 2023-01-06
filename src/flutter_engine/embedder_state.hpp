@@ -34,7 +34,6 @@ struct EmbedderState {
 	FlutterEngine engine = nullptr;
 
 	TaskRunner platform_task_runner{};
-	wl_event_source* platform_task_runner_timer{};
 
 	/// Send messages to Dart code.
 	BinaryMessenger messenger{};
@@ -43,7 +42,6 @@ struct EmbedderState {
 
 	wlr_egl* flutter_gl_context = nullptr;
 	wlr_egl* flutter_resource_gl_context = nullptr;
-	wlr_egl* output_gl_context = nullptr;
 
 	/// Allow Dart code to call C++ methods though this channel.
 	std::unique_ptr<flutter::MethodChannel<>> platform_method_channel;
@@ -52,10 +50,4 @@ struct EmbedderState {
 	intptr_t baton = 0;
 	bool new_baton = false;
 	std::mutex baton_mutex{};
-
-	std::unique_ptr<Framebuffer> flutter_framebuffer = nullptr;
-	std::unique_ptr<Framebuffer> output_framebuffer = nullptr;
-	GLMutex output_gl_mutex{}; // use output_framebuffer->mutex to lock this variable
-
-	GLint fb;
 };

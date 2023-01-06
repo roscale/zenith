@@ -96,14 +96,6 @@ public:
 	std::unordered_map<int, Offset> leaf_surface_coords_per_device_id{};
 
 	std::unique_ptr<EmbedderState> embedder_state{};
-	int flutter_commit_output_fd;
-	int output_attach_fd;
-	int output_attach_return_fd;
-	int output_commit_fd;
-	int output_commit_return_fd;
-
-	channel fb_channel{};
-	wl_event_source* vsync_timer;
 };
 
 /*
@@ -134,5 +126,3 @@ void server_new_text_input(wl_listener* listener, void* data);
 void server_new_toplevel_decoration(wl_listener* listener, void* data);
 
 void server_seat_request_set_selection(wl_listener* listener, void* data);
-
-int vsync_callback(void* data);

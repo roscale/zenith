@@ -19,6 +19,4 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 
 bool flutter_make_resource_current(void* userdata);
 
-int flutter_execute_expired_tasks_timer(void* data);
-
 FlutterTransformation flutter_surface_transformation(void* data);
