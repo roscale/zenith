@@ -1,5 +1,6 @@
 #include "server.hpp"
 #include "debug.hpp"
+#include "time.hpp"
 #include <unistd.h>
 #include <sys/eventfd.h>
 
@@ -27,26 +28,60 @@ ZenithServer* ZenithServer::instance() {
 
 static float read_display_scale();
 
-auto fn(int fd, uint32_t mask, void* data) -> int {
-//	std::cout << "present receive " << FlutterEngineGetCurrentTime() << std::endl;
-
+auto handle_output_attach(int fd, uint32_t mask, void* data) -> int {
 	auto* server = static_cast<ZenithServer*>(data);
-	eventfd_t tmp;
-	eventfd_read(server->flutter_commit_output_fd, &tmp);
-
-//	wlr_output_render_software_cursors(server->output->wlr_output, nullptr);
-
-//	wlr_renderer_end(server->renderer);
-
-	if (!wlr_output_commit(server->output->wlr_output)) {
-		wlr_output_schedule_frame(server->output->wlr_output);
-		std::cerr << "commit failed";
+	eventfd_t value;
+	if (eventfd_read(server->output_attach_fd, &value) != -1) {
+		if (!wlr_output_attach_render(server->output->wlr_output, nullptr)) {
+			std::cerr << "attach failed\n";
+			eventfd_write(server->output_attach_return_fd, 9999);
+			return 0;
+		}
 	}
+	GLint fb;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
 
-
-//	std::cout << "get new fb " << FlutterEngineGetCurrentTime() << std::endl;
+	eventfd_write(server->output_attach_return_fd, fb);
 	return 0;
 }
+
+auto handle_output_commit(int fd, uint32_t mask, void* data) -> int {
+//	std::cout << "committ   " << FlutterEngineGetCurrentTime() << std::endl;
+
+	auto* server = static_cast<ZenithServer*>(data);
+	eventfd_t value;
+	if (eventfd_read(server->output_commit_fd, &value) != -1) {
+		if (!wlr_output_commit(server->output->wlr_output)) {
+			std::cerr << "commit failed\n";
+//			wlr_output_rollback(server->output->wlr_output);
+			eventfd_write(server->output_commit_return_fd, 9999);
+			return 0;
+		}
+	}
+	eventfd_write(server->output_commit_return_fd, 1);
+	return 0;
+}
+
+//auto fn(int fd, uint32_t mask, void* data) -> int {
+////	std::cout << "present receive " << FlutterEngineGetCurrentTime() << std::endl;
+//
+//	auto* server = static_cast<ZenithServer*>(data);
+//	eventfd_t tmp;
+//	eventfd_read(server->flutter_commit_output_fd, &tmp);
+//
+////	wlr_output_render_software_cursors(server->output->wlr_output, nullptr);
+//
+////	wlr_renderer_end(server->renderer);
+//
+//	if (!wlr_output_commit(server->output->wlr_output)) {
+//		wlr_output_schedule_frame(server->output->wlr_output);
+//		std::cerr << "commit failed";
+//	}
+//
+//
+////	std::cout << "get new fb " << FlutterEngineGetCurrentTime() << std::endl;
+//	return 0;
+//}
 
 ZenithServer::ZenithServer() {
 	main_thread_id = std::this_thread::get_id();
@@ -163,10 +198,27 @@ ZenithServer::ZenithServer() {
 	wl_signal_add(&seat->events.request_set_selection, &request_set_selection);
 
 	wl_event_loop* event_loop = wl_display_get_event_loop(display);
-	flutter_commit_output_fd = eventfd(0, EFD_NONBLOCK);
-	std::cout << "fd " << flutter_commit_output_fd << std::endl;
+//	flutter_commit_output_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+	output_attach_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+	output_attach_return_fd = eventfd(0, EFD_CLOEXEC);
 
-	wl_event_source* source = wl_event_loop_add_fd(event_loop, flutter_commit_output_fd, WL_EVENT_READABLE, fn, this);
+	output_commit_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+	output_commit_return_fd = eventfd(0, EFD_CLOEXEC);
+
+	//	std::cout << "fd " << flutter_commit_output_fd << std::endl;
+
+//	wl_event_source* source = wl_event_loop_add_fd(event_loop, flutter_commit_output_fd, WL_EVENT_READABLE, fn, this);
+	wl_event_source* source = wl_event_loop_add_fd(event_loop, output_attach_fd, WL_EVENT_READABLE,
+	                                               handle_output_attach, this);
+	wl_event_source* source2 = wl_event_loop_add_fd(event_loop, output_commit_fd, WL_EVENT_READABLE,
+	                                                handle_output_commit, this);
+
+//	vsync_timer = wl_event_loop_add_timer(wl_display_get_event_loop(display),
+//	                                      vsync_callback, this);
+	// Arm the timer.
+//	wl_event_source_timer_update(vsync_timer, 6);
+
+
 
 	// TODO: Implement drag and drop.
 }
@@ -383,3 +435,35 @@ void server_seat_request_set_selection(wl_listener* listener, void* data) {
 	wlr_seat_set_selection(server->seat, event->source, event->serial);
 	// TODO: Add security. Don't let any client overwrite the clipboard randomly.
 }
+
+int vsync_callback(void* data) {
+	auto* server = static_cast<ZenithServer*>(data);
+	auto& output = server->output;
+	auto& flutter_engine_state = server->embedder_state;
+	uint64_t now = current_time_nanoseconds();
+
+
+	{
+		/*
+		 * Notify the compositor to prepare a new frame for the next time.
+		 */
+		std::scoped_lock lock(flutter_engine_state->baton_mutex);
+
+		if (flutter_engine_state->new_baton) {
+			intptr_t baton = flutter_engine_state->baton;
+			flutter_engine_state->new_baton = false;
+
+			double refresh_rate = output->wlr_output->refresh != 0
+			                      ? (double) output->wlr_output->refresh / 1000
+			                      : 60; // Suppose it's 60Hz if the refresh rate is not available.
+
+			uint64_t next_frame = now + (uint64_t) (1'000'000'000ull / refresh_rate);
+			FlutterEngineOnVsync(flutter_engine_state->engine, baton, now, next_frame);
+		}
+	}
+
+
+//	wl_event_source_timer_update(server->vsync_timer, 6);
+	return 0;
+}
+

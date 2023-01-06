@@ -16,6 +16,7 @@ extern "C" {
 #include <cassert>
 #include <iostream>
 #include <sys/eventfd.h>
+#include <xf86drm.h>
 
 bool flutter_make_current(void* userdata) {
 	auto* state = static_cast<EmbedderState*>(userdata);
@@ -35,18 +36,73 @@ uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrame
 //	return state->flutter_framebuffer->framebuffer;
 //	return 3;
 
-	std::cout << "use fbo before " << FlutterEngineGetCurrentTime() << std::endl;
+	eventfd_write(server->output_attach_fd, 1);
+	eventfd_t fb = 0;
+	eventfd_read(server->output_attach_return_fd, &fb);
 
-	GLint fb = server->fb_channel.read();
+	if (fb == 9999) {
+		std::cout << "FAIL FBO" << std::endl;
+		// Failure.
+		fb = 0;
+	}
 
-	std::cout << "use fbo after " << fb << " " << FlutterEngineGetCurrentTime() << std::endl;
-	return fb;
+//	if (!wlr_output_attach_render(server->output->wlr_output, nullptr)) {
+//		return 0;
+//	}
+//	GLint fb;
+//	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
+//
+//	if (fb == 5) {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+//		fb = 5;
+//	}
+
+
+//	std::cout << "use fbo before " << FlutterEngineGetCurrentTime() << std::endl;
+//
+//	GLint fb = server->fb_channel.read();
+//
+//	std::cout << "use fbo after " << fb << " " << FlutterEngineGetCurrentTime() << std::endl;
+//	std::cout << "attach " << fb << std::endl;
+
+	return (uint32_t) fb;
 }
 
 bool flutter_present(void* userdata) {
 	// https://community.arm.com/cfs-file/__key/telligent-evolution-components-attachments/01-2066-00-00-00-00-42-84/Whitepaper_2D00_ThreadSync.pdf
 	auto* state = static_cast<EmbedderState*>(userdata);
 	auto* server = state->server;
+
+//	wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
+//	if (!wlr_egl_is_current(egl)) {
+//		bool a = wlr_egl_make_current(egl);
+//		if (!a) {
+////			wlr_output_rollback(server->output->wlr_output);
+//			return false;
+//		}
+//
+//		std::cerr << "current success: " << a << "\n";
+//	}s
+
+//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+	GLint fb;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
+	glFinish(); // glFlush still causes flickering on my phone.
+
+//	std::cout << "presented " << fb << std::endl;
+
+	eventfd_write(server->output_commit_fd, 1);
+	eventfd_t success;
+	eventfd_read(server->output_commit_return_fd, &success);
+
+	return success != 9999;
+
+//	if (!wlr_output_commit(server->output->wlr_output)) {
+////		wlr_output_schedule_frame(server->output->wlr_output);
+//		std::cerr << "commit failed";
+//		return false;
+//	}
 
 //	ZenithEglContext saved_egl_context{};
 //	zenith_egl_save_context(&saved_egl_context);
@@ -66,7 +122,6 @@ bool flutter_present(void* userdata) {
 //	zenith_egl_restore_context(&saved_egl_context);
 
 //	std::cout << "present " << FlutterEngineGetCurrentTime() << std::endl;
-	eventfd_write(server->flutter_commit_output_fd, 1);
 
 //	ZenithEglContext saved_egl_context{};
 //	zenith_egl_save_context(&saved_egl_context);
@@ -173,6 +228,6 @@ int flutter_execute_expired_tasks_timer(void* data) {
 
 FlutterTransformation flutter_surface_transformation(void* data) {
 	return FlutterTransformation{
-		  1.0, 0.0, 0.0, 0.0, -1.0, 977.0, 0.0, 0.0, 1.0,
+		  1.0, 0.0, 0.0, 0.0, -1.0, 2280.0, 0.0, 0.0, 1.0,
 	};
 }

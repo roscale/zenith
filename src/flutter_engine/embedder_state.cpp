@@ -10,12 +10,6 @@
 #include "egl_helpers.hpp"
 #include "cursor_image_mapping.hpp"
 
-extern "C" {
-#define static
-#include <wlr/types/wlr_output.h>
-#undef static
-}
-
 struct ZenithServer;
 
 EmbedderState::EmbedderState(ZenithServer* server, wlr_egl* main_egl)
@@ -200,9 +194,6 @@ void EmbedderState::register_platform_api() {
 	server = this->server;
 	mouse_cursor_method_channel->SetMethodCallHandler(
 		  [server](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
-			  result->Success();
-			  return;
-
 			  const std::string& method_name = call.method_name();
 			  if (method_name == "activateSystemCursor") {
 				  flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);

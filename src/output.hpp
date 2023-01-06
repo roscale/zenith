@@ -17,6 +17,8 @@ struct ZenithOutput {
 	struct wlr_output* wlr_output = nullptr;
 	wl_listener frame_listener{};
 	wl_listener mode_changed{};
+	int drm_epoll_fd;
+	int vsync_fd;
 };
 
 /*
@@ -24,8 +26,15 @@ struct ZenithOutput {
  */
 void output_frame(wl_listener* listener, void* data);
 
+int drm_event(int fd, uint32_t mask, void* data);
+
+int vblank_handler(int fd, uint32_t mask, void* data);
+
+void page_flip_handler2(int fd,
+                        unsigned int sequence,
+                        unsigned int tv_sec,
+                        unsigned int tv_usec,
+                        unsigned int crtc_id,
+                        void* user_data);
+
 void mode_changed_event(wl_listener* listener, void* data);
-
-class OutputVBlankAddon {
-
-};

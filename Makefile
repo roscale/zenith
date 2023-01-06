@@ -1,3 +1,5 @@
+CXX := clang++ -std=c++17
+
 uname_m = $(shell uname -m)
 ifeq ($(uname_m),x86_64)
 ARCH += x64
@@ -45,12 +47,17 @@ WARNINGS := -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-invali
 
 # The -MMD and -MP flags together generate Makefiles for us!
 # These files will have .d instead of .o as the output.
-COMMON_CPPFLAGS := $(INC_FLAGS) $(shell pkg-config --cflags pixman-1) -MMD -MP -DWLR_USE_UNSTABLE $(WARNINGS)
+COMMON_CPPFLAGS := $(INC_FLAGS) \
+	 $(WARNINGS) \
+	`pkg-config --cflags pixman-1` \
+	`pkg-config --cflags libdrm` \
+	 -MMD -MP -DWLR_USE_UNSTABLE
+
 DEBUG_CPPFLAGS := $(COMMON_CPPFLAGS) -DDEBUG $(ASAN)
 PROFILE_CPPFLAGS := $(COMMON_CPPFLAGS) -DPROFILE
 RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) -O2
 
-COMMON_LDFLAGS := -lwayland-server -lxkbcommon -lpixman-1 -linput -lwlroots -lepoxy -lGLESv2 -lEGL -lGL -lpam -L. -L$(DEPS_DIR)
+COMMON_LDFLAGS := -lwayland-server -lxkbcommon -lpixman-1 -linput -lwlroots -lepoxy -lGLESv2 -lEGL -lGL -lpam -ldrm -L. -L$(DEPS_DIR)
 DEBUG_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_debug $(ASAN)
 PROFILE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_profile
 RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release

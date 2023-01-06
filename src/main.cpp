@@ -8,9 +8,9 @@ extern "C" {
 }
 
 int main(int argc, char* argv[]) {
-#ifdef DEBUG
+//#ifdef DEBUG
 	wlr_log_init(WLR_DEBUG, nullptr);
-#endif
+//#endif
 
 	while ((getopt(argc, argv, "")) != -1);
 	const char* startup_cmd = optind == argc ? "" : argv[optind];
