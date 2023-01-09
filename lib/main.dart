@@ -103,7 +103,7 @@ class Zenith extends ConsumerWidget {
                       key: ref.watch(lockScreenStateProvider.select((v) => v.overlayKey)),
                       initialEntries: [
                         OverlayEntry(builder: (_) => const Desktop()),
-                        ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
+                        // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
                       ],
                     );
                   },

@@ -14,7 +14,6 @@
 #include "input/text_input.hpp"
 #include "view.hpp"
 #include "offset.hpp"
-#include "channel.hpp"
 
 extern "C" {
 #define static
@@ -77,6 +76,8 @@ public:
 	};
 
 	wl_listener new_output{};
+	wl_listener new_surface{};
+	wl_listener new_xdg_surface2{};
 	wl_listener new_xdg_surface{};
 	wl_listener new_input{};
 	wl_listener request_cursor{};
@@ -84,7 +85,10 @@ public:
 	wl_listener new_toplevel_decoration{};
 	wl_listener request_set_selection{};
 
-	std::unordered_map<size_t, ZenithView*> views{};
+//	std::unordered_map<size_t, ZenithView*> views{};
+	std::unordered_map<size_t, ZenithSurface*> surfaces{};
+	std::unordered_map<size_t, ZenithXdgSurface*> xdg_surfaces{};
+	std::unordered_map<size_t, ZenithXdgToplevel*> toplevels{};
 	std::unordered_map<size_t, std::shared_ptr<Framebuffer>> surface_framebuffers{};
 	std::mutex surface_framebuffers_mutex{};
 
@@ -93,7 +97,6 @@ public:
 	std::list<std::unique_ptr<ZenithKeyboard>> keyboards{};
 	std::list<std::unique_ptr<ZenithTouchDevice>> touch_devices{};
 	std::unordered_set<ZenithTextInput*> text_inputs{};
-	std::unordered_map<int, Offset> leaf_surface_coords_per_device_id{};
 
 	std::unique_ptr<EmbedderState> embedder_state{};
 };
@@ -126,3 +129,7 @@ void server_new_text_input(wl_listener* listener, void* data);
 void server_new_toplevel_decoration(wl_listener* listener, void* data);
 
 void server_seat_request_set_selection(wl_listener* listener, void* data);
+
+void server_new_surface(wl_listener* listener, void* data);
+
+void server_new_xdg_surface2(wl_listener* listener, void* data);

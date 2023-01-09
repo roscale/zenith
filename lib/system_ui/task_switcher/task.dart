@@ -7,6 +7,7 @@ import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/task_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
 import 'package:zenith/state/window_state.dart';
+import 'package:zenith/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/system_ui/task_switcher/fitted_window.dart';
 import 'package:zenith/system_ui/task_switcher/task_switcher.dart';
 import 'package:zenith/system_ui/virtual_keyboard/with_virtual_keyboard.dart';
@@ -102,7 +103,8 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
             child: Consumer(
               builder: (_, WidgetRef ref, Widget? child) {
                 final virtualKeyboardKey =
-                    ref.watch(windowStateProvider(widget.viewId).select((v) => v.virtualKeyboardKey));
+                ref.watch(zenithXdgToplevelStateProvider(widget.viewId).select((
+                    v) => v.virtualKeyboardKey));
                 return WithVirtualKeyboard(
                   key: virtualKeyboardKey,
                   viewId: widget.viewId,

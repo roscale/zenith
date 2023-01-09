@@ -64,28 +64,9 @@ void flutter_vsync_callback(void* userdata, intptr_t baton) {
 
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
-	auto* state = static_cast<EmbedderState*>(userdata);
-	ZenithServer* server = state->server;
-
-	std::shared_ptr<Framebuffer> surface_framebuffer;
-	{
-		std::scoped_lock lock(server->surface_framebuffers_mutex);
-
-		auto it = server->surface_framebuffers.find(texture_id);
-		if (it == server->surface_framebuffers.end()) {
-			// This function could be called any time so we better check if the framebuffer still exists.
-			// Asynchronicity can be a pain sometimes.
-			return false;
-		}
-		surface_framebuffer = it->second;
-	}
-
-	std::scoped_lock lock(surface_framebuffer->mutex);
-
 	texture_out->target = GL_TEXTURE_2D;
 	texture_out->format = GL_RGBA8;
-	texture_out->name = surface_framebuffer->texture;
-
+	texture_out->name = texture_id;
 	return true;
 }
 

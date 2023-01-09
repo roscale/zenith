@@ -17,6 +17,7 @@ struct ZenithOutput {
 	struct wlr_output* wlr_output = nullptr;
 	wl_listener frame_listener{};
 	wl_listener mode_changed{};
+	wl_event_source* vsync_temp_loop;
 
 	int attach_event_fd;
 	int attach_event_return_pipes[2];

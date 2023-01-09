@@ -5,10 +5,10 @@ import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/state/task_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
-import 'package:zenith/state/window_state.dart';
+import 'package:zenith/state/zenith_surface_state.dart';
+import 'package:zenith/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/surface_manager.dart';
 import 'package:zenith/system_ui/app_drawer/handle.dart';
 import 'package:zenith/system_ui/task_switcher/invisible_bottom_bar.dart';
@@ -18,7 +18,8 @@ import 'package:zenith/system_ui/task_switcher/task_switcher_viewport.dart';
 import 'package:zenith/util/state_notifier_list.dart';
 import 'package:zenith/widgets/window.dart';
 
-final taskListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
+final taskListProvider =
+    StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
   return StateNotifierList<int>();
 });
 
@@ -211,7 +212,8 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
 
     // Dispose the controller instead of just stopping it because we want to clear the listeners.
     _taskPositionAnimationController?.dispose();
-    _taskPositionAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _taskPositionAnimationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
     final controller = _taskPositionAnimationController!;
 
     int taskIndexUnder = taskPositionToIndex(position);
@@ -312,14 +314,15 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   void _destroyTask(int viewId) {
-    final textureId = ref.read(baseViewStateProvider(viewId)).textureId;
+    final textureId = ref.read(zenithSurfaceStateProvider(viewId)).textureId;
     PlatformApi.unregisterViewTexture(textureId);
 
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).remove(viewId);
 
-    ref.invalidate(baseViewStateProvider(viewId));
-    ref.invalidate(windowStateProvider(viewId));
+    // ref.invalidate(baseViewStateProvider(viewId));
+    // ref.invalidate(windowStateProvider(viewId));
+    ref.invalidate(zenithXdgToplevelStateProvider(viewId));
     ref.invalidate(windowWidget(viewId));
     ref.invalidate(taskPositionProvider(viewId));
     ref.invalidate(taskVerticalPositionProvider(viewId));

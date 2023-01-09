@@ -8,9 +8,9 @@ import 'package:zenith/state/popup_state.dart';
 
 part 'base_view_state.freezed.dart';
 
-final baseViewStateProvider = StateNotifierProvider.family<BaseViewStateNotifier, BaseViewState, int>((ref, int viewId) {
-  return BaseViewStateNotifier(ref, viewId);
-});
+// final baseViewStateProvider = StateNotifierProvider.family<BaseViewStateNotifier, BaseViewState, int>((ref, int viewId) {
+//   return BaseViewStateNotifier(ref, viewId);
+// });
 
 /// Common state for both windows and popups.
 @freezed

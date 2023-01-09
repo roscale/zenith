@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:zenith/state/base_view_state.dart';
+import 'package:zenith/state/zenith_xdg_toplevel_state.dart';
 
 part 'task_switcher_state.freezed.dart';
 
@@ -55,13 +56,13 @@ class TaskSwitcherStateNotifier extends StateNotifier<TaskSwitcherState> {
   }
 
   void makeTaskVisible(int viewId) {
-    ref.read(baseViewStateProvider(viewId).notifier).visible = true;
+    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).visible = true;
     state = state.copyWith(visibleTasks: {...state.visibleTasks, viewId});
   }
 
   void clearVisibleTasks() {
     for (int viewId in state.visibleTasks) {
-      ref.read(baseViewStateProvider(viewId).notifier).visible = false;
+      ref.read(zenithXdgToplevelStateProvider(viewId).notifier).visible = false;
     }
     state = state.copyWith(visibleTasks: {});
   }

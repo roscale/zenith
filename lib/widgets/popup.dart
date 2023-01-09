@@ -1,8 +1,9 @@
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/state/popup_state.dart';
+import 'package:zenith/state/zenith_surface_state.dart';
+import 'package:zenith/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/widgets/view_input_listener.dart';
 
 final popupWidget = StateProvider.family<Popup, int>((ref, int viewId) {
@@ -50,15 +51,21 @@ class _Positioner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     int viewId = ref.watch(_viewId);
-
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        Offset position = ref.watch(popupStateProvider(viewId).select((v) => v.position));
-        Rect visibleBounds = ref.watch(baseViewStateProvider(viewId).select((v) => v.visibleBounds));
+        Offset position =
+            ref.watch(popupStateProvider(viewId).select((v) => v.position));
+        int parentId =
+            ref.watch(popupStateProvider(viewId).select((v) => v.parentViewId));
+        Rect parentVisibleBounds = ref.watch(
+            zenithXdgSurfaceStateProvider(parentId)
+                .select((v) => v.visibleBounds));
+        Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId)
+            .select((v) => v.visibleBounds));
 
         return Positioned(
-          left: position.dx - visibleBounds.left,
-          top: position.dy - visibleBounds.top,
+          left: position.dx - visibleBounds.left + parentVisibleBounds.left,
+          top: position.dy - visibleBounds.top + parentVisibleBounds.top,
           child: child!,
         );
       },
@@ -107,7 +114,10 @@ class AnimationsState extends ConsumerState<_Animations> with SingleTickerProvid
   )..forward();
 
   late final Animation<Offset> _offsetAnimation = Tween<Offset>(
-    begin: Offset(0.0, -10 / ref.read(baseViewStateProvider(viewId)).surfaceSize.height),
+    begin: Offset(
+      0.0,
+      -10.0 / ref.read(zenithSurfaceStateProvider(viewId)).surfaceSize.height,
+    ),
     end: Offset.zero,
   ).animate(CurvedAnimation(
     parent: controller,
@@ -136,7 +146,8 @@ class _Surface extends ConsumerWidget {
 
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        final size = ref.watch(baseViewStateProvider(viewId).select((v) => v.surfaceSize));
+        final size = ref.watch(
+            zenithSurfaceStateProvider(viewId).select((v) => v.surfaceSize));
         return SizedBox(
           width: size.width,
           height: size.height,
@@ -152,8 +163,10 @@ class _Surface extends ConsumerWidget {
                 viewId: viewId,
                 child: Consumer(
                   builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                    Key key = ref.watch(baseViewStateProvider(viewId).select((v) => v.textureKey));
-                    int textureId = ref.watch(baseViewStateProvider(viewId).select((v) => v.textureId));
+                    Key key = ref.watch(zenithSurfaceStateProvider(viewId)
+                        .select((v) => v.textureKey));
+                    int textureId = ref.watch(zenithSurfaceStateProvider(viewId)
+                        .select((v) => v.textureId));
                     return Texture(
                       key: key,
                       filterQuality: FilterQuality.medium,
@@ -164,8 +177,11 @@ class _Surface extends ConsumerWidget {
               ),
               Consumer(
                 builder: (_, WidgetRef ref, __) {
-                  List<int> popups = ref.watch(baseViewStateProvider(viewId).select((v) => v.popups));
-                  List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
+                  List<int> popups = ref.watch(
+                      zenithXdgSurfaceStateProvider(viewId)
+                          .select((v) => v.popups));
+                  List<Widget> popupWidgets =
+                      popups.map((e) => ref.watch(popupWidget(e))).toList();
 
                   return Stack(
                     clipBehavior: Clip.none,

@@ -5,9 +5,9 @@ import 'package:zenith/state/base_view_state.dart';
 
 part 'window_state.freezed.dart';
 
-final windowStateProvider = StateNotifierProvider.family<WindowStateNotifier, WindowState, int>((ref, int viewId) {
-  return WindowStateNotifier(ref, viewId);
-});
+// final windowStateProvider = StateNotifierProvider.family<WindowStateNotifier, WindowState, int>((ref, int viewId) {
+//   return WindowStateNotifier(ref, viewId);
+// });
 
 @freezed
 class WindowState with _$WindowState {
@@ -30,10 +30,10 @@ class WindowStateNotifier extends StateNotifier<WindowState> {
     required Size surfaceSize,
     required Rect visibleBounds,
   }) {
-    _ref.read(baseViewStateProvider(_viewId).notifier).initialize(
-          textureId: textureId,
-          surfaceSize: surfaceSize,
-          visibleBounds: visibleBounds,
-        );
+    // _ref.read(baseViewStateProvider(_viewId).notifier).initialize(
+    //       textureId: textureId,
+    //       surfaceSize: surfaceSize,
+    //       visibleBounds: visibleBounds,
+    //     );
   }
 }

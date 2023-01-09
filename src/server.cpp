@@ -121,8 +121,14 @@ ZenithServer::ZenithServer() {
 	new_output.notify = server_new_output;
 	wl_signal_add(&backend->events.new_output, &new_output);
 
-	new_xdg_surface.notify = server_new_xdg_surface;
-	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
+	new_surface.notify = server_new_surface;
+	wl_signal_add(&compositor->events.new_surface, &new_surface);
+
+	new_xdg_surface2.notify = server_new_xdg_surface2;
+	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface2);
+
+//	new_xdg_surface.notify = server_new_xdg_surface;
+//	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
 
 	// Called at the start for each available input device, but also when the user plugs in a new input
 	// device, like a mouse, keyboard, drawing tablet, etc.
@@ -256,16 +262,16 @@ void server_new_output(wl_listener* listener, void* data) {
 	server->output = std::move(output);
 }
 
-void server_new_xdg_surface(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface);
-	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
-
-	/* Allocate a ZenithView for this surface */
-	auto* view = new ZenithView(server, xdg_surface);
-
-	/* Add it to the list of views. */
-	server->views.insert(std::make_pair(view->id, view));
-}
+//void server_new_xdg_surface(wl_listener* listener, void* data) {
+//	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface);
+//	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
+//
+//	/* Allocate a ZenithView for this surface */
+//	auto* view = new ZenithView(server, xdg_surface);
+//
+//	/* Add it to the list of views. */
+//	server->views.insert(std::make_pair(view->id, view));
+//}
 
 void server_new_input(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_input);
@@ -356,4 +362,20 @@ void server_seat_request_set_selection(wl_listener* listener, void* data) {
 	auto* event = static_cast<wlr_seat_request_set_selection_event*>(data);
 	wlr_seat_set_selection(server->seat, event->source, event->serial);
 	// TODO: Add security. Don't let any client overwrite the clipboard randomly.
+}
+
+void server_new_surface(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, new_surface);
+	auto* surface = static_cast<wlr_surface*>(data);
+	auto* zenith_surface = new ZenithSurface(surface);
+	surface->data = zenith_surface;
+	server->surfaces.insert(std::make_pair(zenith_surface->id, zenith_surface));
+}
+
+void server_new_xdg_surface2(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface2);
+	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
+	auto* zenith_xdg_surface = new ZenithXdgSurface(xdg_surface);
+	xdg_surface->data = zenith_xdg_surface;
+	server->xdg_surfaces.insert(std::make_pair(zenith_xdg_surface->zenith_surface()->id, zenith_xdg_surface));
 }

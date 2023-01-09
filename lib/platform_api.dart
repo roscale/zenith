@@ -17,7 +17,12 @@ class PlatformApi {
       const EventChannel('configure_surface').receiveBroadcastStream();
   static final Stream textInputEventsStream =
       const EventChannel('text_input_events').receiveBroadcastStream();
-
+  static final Stream surfaceCommitStream =
+      const EventChannel('surface_commit').receiveBroadcastStream();
+  static final Stream xdgSurfaceMapStream =
+      const EventChannel('xdg_surface_map').receiveBroadcastStream();
+  static final Stream xdgSurfaceUnmapStream =
+      const EventChannel('xdg_surface_unmap').receiveBroadcastStream();
   static const MethodChannel _platform = MethodChannel('platform');
 
   static Future<void> startupComplete() {

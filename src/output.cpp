@@ -14,6 +14,13 @@ extern "C" {
 #undef static
 }
 
+int vsync_temp_l(void* data) {
+	vsync_callback(ZenithServer::instance());
+	auto* output = static_cast<ZenithOutput*>(data);
+	wl_event_source_timer_update(output->vsync_temp_loop, 1000);
+	return 0;
+}
+
 ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	  : server(server), wlr_output(wlr_output) {
 
@@ -35,6 +42,10 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	                     handle_output_attach, this);
 	wl_event_loop_add_fd(event_loop, commit_event_fd, WL_EVENT_READABLE,
 	                     handle_output_commit, this);
+
+	// TEMPORARY
+	vsync_temp_loop = wl_event_loop_add_timer(event_loop, vsync_temp_l, this);
+	wl_event_source_timer_update(vsync_temp_loop, 1000);
 }
 
 void output_frame(wl_listener* listener, void* data) {
@@ -43,30 +54,30 @@ void output_frame(wl_listener* listener, void* data) {
 
 	auto& flutter_engine_state = server->embedder_state;
 
-	for (auto& [id, view]: server->views) {
-		if (!view->mapped || !view->visible || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
-			// An unmapped view should not be rendered.
-			continue;
-		}
-
-		std::shared_ptr<Framebuffer> view_framebuffer;
-
-		{
-			std::scoped_lock lock(server->surface_framebuffers_mutex);
-
-			auto surface_framebuffer_it = server->surface_framebuffers.find(view->active_texture);
-			assert(surface_framebuffer_it != server->surface_framebuffers.end());
-
-			view_framebuffer = surface_framebuffer_it->second;
-		}
-
-		std::scoped_lock lock(view_framebuffer->mutex);
-
-		GLuint view_fbo = view_framebuffer->framebuffer;
-		render_view_to_framebuffer(view, view_fbo);
-
-		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view->active_texture);
-	}
+//	for (auto& [id, view]: server->views) {
+//		if (!view->mapped || !view->visible || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
+//			// An unmapped view should not be rendered.
+//			continue;
+//		}
+//
+//		std::shared_ptr<Framebuffer> view_framebuffer;
+//
+//		{
+//			std::scoped_lock lock(server->surface_framebuffers_mutex);
+//
+//			auto surface_framebuffer_it = server->surface_framebuffers.find(view->active_texture);
+//			assert(surface_framebuffer_it != server->surface_framebuffers.end());
+//
+//			view_framebuffer = surface_framebuffer_it->second;
+//		}
+//
+//		std::scoped_lock lock(view_framebuffer->mutex);
+//
+//		GLuint view_fbo = view_framebuffer->framebuffer;
+//		render_view_to_framebuffer(view, view_fbo);
+//
+//		FlutterEngineMarkExternalTextureFrameAvailable(flutter_engine_state->engine, (int64_t) view->active_texture);
+//	}
 
 	vsync_callback(server);
 }
@@ -123,7 +134,7 @@ int handle_output_attach(int fd, uint32_t mask, void* data) {
 	auto* output = static_cast<ZenithOutput*>(data);
 	eventfd_t value;
 	if (eventfd_read(output->attach_event_fd, &value) != -1) {
-		if (!wlr_output_attach_render(output->wlr_output, nullptr)) {
+		if (output->wlr_output->back_buffer != nullptr || !wlr_output_attach_render(output->wlr_output, nullptr)) {
 			std::cerr << "attach failed\n";
 			GLint error = 0;
 			write(output->attach_event_return_pipes[1], &error, sizeof error);
@@ -148,6 +159,23 @@ int handle_output_commit(int fd, uint32_t mask, void* data) {
 			return 0;
 		}
 	}
+
+	auto server = ZenithServer::instance();
+	for (auto& [id, view]: server->toplevels) {
+		wlr_xdg_surface* xdg_surface = view->xdg_toplevel->base;
+		if (!xdg_surface->mapped || !view->visible) {
+			// An unmapped view should not be rendered.
+			continue;
+		}
+
+		// Notify all mapped surfaces belonging to this toplevel.
+		wlr_xdg_surface_for_each_surface(xdg_surface, [](struct wlr_surface* surface, int sx, int sy, void* data) {
+			timespec now{};
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			wlr_surface_send_frame_done(surface, &now);
+		}, nullptr);
+	}
+
 	bool success = true;
 	write(output->commit_event_return_pipes[1], &success, sizeof success);
 	return 0;

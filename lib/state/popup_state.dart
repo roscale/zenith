@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/widgets/popup.dart';
 
 part 'popup_state.freezed.dart';
@@ -35,18 +34,20 @@ class PopupStateNotifier extends StateNotifier<PopupState> {
           isClosing: false,
         ));
 
-  void initialize({
+  void commit({
+    required int parentViewId,
     required Offset position,
-    required int textureId,
-    required Size surfaceSize,
-    required Rect visibleBounds,
   }) {
-    state = state.copyWith(position: position);
-    _ref.read(baseViewStateProvider(_viewId).notifier).initialize(
-          textureId: textureId,
-          surfaceSize: surfaceSize,
-          visibleBounds: visibleBounds,
-        );
+    state = state.copyWith(
+      parentViewId: parentViewId,
+      position: position,
+    );
+    // TODO
+    // _ref.read(baseViewStateProvider(_viewId).notifier).initialize(
+    //       textureId: textureId,
+    //       surfaceSize: surfaceSize,
+    //       visibleBounds: visibleBounds,
+    //     );
   }
 
   set parentViewId(int value) {

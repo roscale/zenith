@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/state/base_view_state.dart';
+import 'package:zenith/state/zenith_surface_state.dart';
+import 'package:zenith/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/util/rect_overflow_box.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/view_input_listener.dart';
@@ -67,7 +68,10 @@ class _Size extends ConsumerWidget {
 
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        Rect visibleBounds = ref.watch(baseViewStateProvider(viewId).select((v) => v.visibleBounds));
+        Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId)
+            .select((v) => v.visibleBounds));
+        print("VIS BOUNDS $viewId: $visibleBounds");
+
         return RectOverflowBox(
           rect: visibleBounds,
           child: child!,
@@ -75,7 +79,10 @@ class _Size extends ConsumerWidget {
       },
       child: Consumer(
         builder: (_, WidgetRef ref, Widget? child) {
-          Size surfaceSize = ref.watch(baseViewStateProvider(viewId).select((v) => v.surfaceSize));
+          Size surfaceSize = ref.watch(
+              zenithSurfaceStateProvider(viewId).select((v) => v.surfaceSize));
+          print("SUR SIZE $viewId: $surfaceSize");
+
           return SizedBox(
             width: surfaceSize.width,
             height: surfaceSize.height,
@@ -102,8 +109,10 @@ class _Surface extends ConsumerWidget {
           viewId: viewId,
           child: Consumer(
             builder: (BuildContext context, WidgetRef ref, Widget? child) {
-              Key textureKey = ref.watch(baseViewStateProvider(viewId).select((v) => v.textureKey));
-              int textureId = ref.watch(baseViewStateProvider(viewId).select((v) => v.textureId));
+              Key textureKey = ref.watch(zenithSurfaceStateProvider(viewId)
+                  .select((v) => v.textureKey));
+              int textureId = ref.watch(zenithSurfaceStateProvider(viewId)
+                  .select((v) => v.textureId));
               return Texture(
                 key: textureKey,
                 filterQuality: FilterQuality.medium,
@@ -114,8 +123,10 @@ class _Surface extends ConsumerWidget {
         ),
         Consumer(
           builder: (_, WidgetRef ref, __) {
-            List<int> popups = ref.watch(baseViewStateProvider(viewId).select((v) => v.popups));
-            List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
+            List<int> popups = ref.watch(
+                zenithXdgSurfaceStateProvider(viewId).select((v) => v.popups));
+            List<Widget> popupWidgets =
+                popups.map((e) => ref.watch(popupWidget(e))).toList();
 
             return Stack(
               clipBehavior: Clip.none,

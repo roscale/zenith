@@ -16,8 +16,8 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
             overlayKey: GlobalKey(),
             overlayEntry: OverlayEntry(builder: (_) => const LockScreen()),
             // The session starts locked. If you change these to false, also modify `initialEntries` of the Overlay widget.
-            overlayEntryInserted: true,
-            locked: true,
+            overlayEntryInserted: false,
+            locked: false,
             lock: Object(),
             unlock: Object(),
             dragging: false,

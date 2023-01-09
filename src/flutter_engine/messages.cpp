@@ -132,3 +132,62 @@ void change_view_texture(BinaryMessenger& messenger, size_t view_id, size_t text
 	messenger.Send("change_view_texture", message->data(), message->size());
 }
 
+void send_surface_commit(BinaryMessenger& messenger, const SurfaceCommitMessage& message) {
+	auto map = EncodableMap{
+		  {EncodableValue("view_id"), EncodableValue((int64_t) message.view_id)},
+		  {EncodableValue("surface"), EncodableValue(EncodableMap{
+				{EncodableValue("role"),      EncodableValue((int64_t) message.surface.role)},
+				{EncodableValue("textureId"), EncodableValue(message.surface.texture_id)},
+				{EncodableValue("x"),         EncodableValue(message.surface.x)},
+				{EncodableValue("y"),         EncodableValue(message.surface.y)},
+				{EncodableValue("width"),     EncodableValue(message.surface.width)},
+				{EncodableValue("height"),    EncodableValue(message.surface.height)},
+				{EncodableValue("scale"),     EncodableValue(message.surface.scale)},
+		  })},
+	};
+	if (message.xdg_surface.has_value()) {
+		map.insert({EncodableValue("has_xdg_surface"), EncodableValue(true)});
+		map.insert({EncodableValue("xdg_surface"), EncodableValue(EncodableMap{
+			  {EncodableValue("role"),   EncodableValue((int64_t) message.xdg_surface->role)},
+			  {EncodableValue("x"),      EncodableValue(message.xdg_surface->x)},
+			  {EncodableValue("y"),      EncodableValue(message.xdg_surface->y)},
+			  {EncodableValue("width"),  EncodableValue(message.xdg_surface->width)},
+			  {EncodableValue("height"), EncodableValue(message.xdg_surface->height)},
+		})});
+	} else {
+		map.insert({EncodableValue("has_xdg_surface"), EncodableValue(false)});
+	}
+
+	if (message.xdg_popup.has_value()) {
+		map.insert({EncodableValue("has_xdg_popup"), EncodableValue(true)});
+		map.insert({EncodableValue("xdg_popup"), EncodableValue(EncodableMap{
+			  {EncodableValue("parent_id"), EncodableValue(message.xdg_popup->parent_id)},
+			  {EncodableValue("x"),         EncodableValue(message.xdg_popup->x)},
+			  {EncodableValue("y"),         EncodableValue(message.xdg_popup->y)},
+			  {EncodableValue("width"),     EncodableValue(message.xdg_popup->width)},
+			  {EncodableValue("height"),    EncodableValue(message.xdg_popup->height)},
+		})});
+	} else {
+		map.insert({EncodableValue("has_xdg_popup"), EncodableValue(false)});
+	}
+
+	auto value = EncodableValue(map);
+	auto envelope = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+	messenger.Send("surface_commit", envelope->data(), envelope->size());
+}
+
+void send_xdg_surface_map(BinaryMessenger& messenger, size_t view_id) {
+	auto value = EncodableValue(EncodableMap{
+		  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+	});
+	auto message = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+	messenger.Send("xdg_surface_map", message->data(), message->size());
+}
+
+void send_xdg_surface_unmap(BinaryMessenger& messenger, size_t view_id) {
+	auto value = EncodableValue(EncodableMap{
+		  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+	});
+	auto message = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+	messenger.Send("xdg_surface_unmap", message->data(), message->size());
+}

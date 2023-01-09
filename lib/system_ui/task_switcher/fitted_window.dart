@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/state/base_view_state.dart';
+import 'package:zenith/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/widgets/window.dart';
 
 /// Scales down a window if it doesn't want to resize to the screen size. We don't want windows to be drawn on top of
@@ -25,7 +26,9 @@ class FittedWindow extends ConsumerWidget {
             alignment: alignment,
             child: Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                Rect visibleBounds = ref.watch(baseViewStateProvider(window.viewId).select((v) => v.visibleBounds));
+                Rect visibleBounds = ref.watch(
+                    zenithXdgSurfaceStateProvider(window.viewId)
+                        .select((v) => v.visibleBounds));
 
                 Size biggest = constraints.biggest;
                 Size size = visibleBounds.size;
@@ -35,7 +38,8 @@ class FittedWindow extends ConsumerWidget {
                 // If this is the case, just shift the view by half a pixel in the appropriate directions.
                 // This is only a problem when the window fits in the available space. Otherwise, it's going
                 // to be scaled down so it will be a bit blurry anyway.
-                bool fits = size.width <= biggest.width && size.height <= biggest.height;
+                bool fits = size.width <= biggest.width &&
+                    size.height <= biggest.height;
 
                 bool shiftHorizontally = fits && (size.width % 2 != biggest.width % 2);
 
