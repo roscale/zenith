@@ -84,9 +84,11 @@ public:
 	wl_listener new_toplevel_decoration{};
 	wl_listener request_set_selection{};
 
-	std::unordered_map<size_t, ZenithSurface*> surfaces{};
-	std::unordered_map<size_t, ZenithXdgSurface*> xdg_surfaces{};
-	std::unordered_map<size_t, ZenithXdgToplevel*> toplevels{};
+	std::unordered_map<size_t, std::shared_ptr<ZenithSurface>> surfaces{};
+	std::unordered_map<size_t, std::shared_ptr<ZenithSubsurface>> subsurfaces{};
+	std::unordered_map<size_t, std::shared_ptr<ZenithXdgSurface>> xdg_surfaces{};
+	std::unordered_map<size_t, std::shared_ptr<ZenithXdgToplevel>> xdg_toplevels{};
+	std::unordered_map<size_t, std::shared_ptr<ZenithXdgPopup>> xdg_popups{};
 
 	wlr_seat* seat;
 	std::unique_ptr<ZenithPointer> pointer;

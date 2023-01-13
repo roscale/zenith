@@ -1,6 +1,7 @@
 #include "server.hpp"
 #include "debug.hpp"
 #include "time.hpp"
+#include "assert.hpp"
 #include <unistd.h>
 #include <sys/eventfd.h>
 
@@ -361,7 +362,26 @@ void server_new_surface(wl_listener* listener, void* data) {
 void server_new_xdg_surface2(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface2);
 	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
-	auto* zenith_xdg_surface = new ZenithXdgSurface(xdg_surface);
+	auto* zenith_surface = static_cast<ZenithSurface*>(xdg_surface->surface->data);
+	const std::shared_ptr<ZenithSurface>& zenith_surface_ref = server->surfaces.at(zenith_surface->id);
+
+	auto* zenith_xdg_surface = new ZenithXdgSurface(xdg_surface, zenith_surface_ref);
 	xdg_surface->data = zenith_xdg_surface;
-	server->xdg_surfaces.insert(std::make_pair(zenith_xdg_surface->zenith_surface()->id, zenith_xdg_surface));
+	auto zenith_xdg_surface_ref = std::shared_ptr<ZenithXdgSurface>(zenith_xdg_surface);
+	server->xdg_surfaces.insert(std::make_pair(zenith_surface->id, zenith_xdg_surface_ref));
+
+	switch (xdg_surface->role) {
+		case WLR_XDG_SURFACE_ROLE_NONE:
+			ASSERT(false, "unreachable");
+			break;
+		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
+			auto toplevel = new ZenithXdgToplevel(xdg_surface->toplevel, zenith_xdg_surface_ref);
+			server->xdg_toplevels.insert(std::make_pair(zenith_surface->id, toplevel));
+			break;
+		}
+		case WLR_XDG_SURFACE_ROLE_POPUP:
+			auto popup = new ZenithXdgPopup(xdg_surface->popup, zenith_xdg_surface_ref);
+			server->xdg_popups.insert(std::make_pair(zenith_surface->id, popup));
+			break;
+	}
 }

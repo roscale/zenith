@@ -17,7 +17,6 @@ extern "C" {
 using namespace flutter;
 
 static size_t next_view_id = 1;
-
 ZenithSurface::ZenithSurface(wlr_surface* surface) : surface{surface}, id{next_view_id++} {
 	commit.notify = surface_commit;
 	wl_signal_add(&surface->events.commit, &commit);
@@ -28,41 +27,6 @@ ZenithSurface::ZenithSurface(wlr_surface* surface) : surface{surface}, id{next_v
 	destroy.notify = surface_destroy;
 	wl_signal_add(&surface->events.destroy, &destroy);
 }
-
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "cppcoreguidelines-pro-type-member-init"
-
-ZenithXdgSurface::ZenithXdgSurface(wlr_xdg_surface* xdg_surface) : xdg_surface{xdg_surface} {
-	destroy.notify = xdg_surface_destroy2;
-	wl_signal_add(&xdg_surface->events.destroy, &destroy);
-
-	map.notify = xdg_surface_map2;
-	wl_signal_add(&xdg_surface->events.map, &map);
-
-	unmap.notify = xdg_surface_unmap2;
-	wl_signal_add(&xdg_surface->events.unmap, &unmap);
-
-	switch (xdg_surface->role) {
-		case WLR_XDG_SURFACE_ROLE_NONE:
-			assert(false && "unreachable");
-			break;
-		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
-			toplevel = new ZenithXdgToplevel(xdg_surface->toplevel);
-			auto* server = ZenithServer::instance();
-			server->toplevels.insert(std::make_pair(zenith_surface()->id, toplevel));
-			break;
-		}
-		case WLR_XDG_SURFACE_ROLE_POPUP:
-			popup = new ZenithXdgPopup(xdg_surface->popup);
-			break;
-	}
-}
-
-ZenithSurface* ZenithXdgSurface::zenith_surface() const {
-	return static_cast<ZenithSurface*>(xdg_surface->surface->data);
-}
-
-#pragma clang diagnostic pop
 
 void surface_commit(wl_listener* listener, void* data) {
 	ZenithSurface* zenith_surface = wl_container_of(listener, zenith_surface, commit);
@@ -170,26 +134,31 @@ void surface_commit(wl_listener* listener, void* data) {
 	send_surface_commit(messenger, commit_message);
 }
 
-void surface_new_subsurface(wl_listener* listener, void* data) {
-	ZenithSurface* surface = wl_container_of(listener, surface, new_subsurface);
-	auto* subsurface = static_cast<wlr_subsurface*>(data);
-	subsurface->data = new ZenithSubsurface(subsurface);
-}
-
 void surface_destroy(wl_listener* listener, void* data) {
 	ZenithSurface* zenith_surface = wl_container_of(listener, zenith_surface, destroy);
 	bool erased = ZenithServer::instance()->surfaces.erase(zenith_surface->id);
 	assert(erased);
 	// TODO: Send destroy to Flutter.
-	delete zenith_surface;
+}
+
+ZenithXdgSurface::ZenithXdgSurface(wlr_xdg_surface* xdg_surface, std::shared_ptr<ZenithSurface> zenith_surface)
+	  : xdg_surface{xdg_surface}, zenith_surface(std::move(zenith_surface)) {
+	destroy.notify = xdg_surface_destroy2;
+	wl_signal_add(&xdg_surface->events.destroy, &destroy);
+
+	map.notify = xdg_surface_map2;
+	wl_signal_add(&xdg_surface->events.map, &map);
+
+	unmap.notify = xdg_surface_unmap2;
+	wl_signal_add(&xdg_surface->events.unmap, &unmap);
 }
 
 void xdg_surface_map2(wl_listener* listener, void* data) {
 	ZenithXdgSurface* zenith_xdg_surface = wl_container_of(listener, zenith_xdg_surface, map);
 	BinaryMessenger& messenger = ZenithServer::instance()->embedder_state->messenger;
-	auto* surface = static_cast<ZenithSurface*>(zenith_xdg_surface->xdg_surface->surface->data);
+	size_t id = zenith_xdg_surface->zenith_surface->id;
 
-	send_xdg_surface_map(messenger, surface->id);
+	send_xdg_surface_map(messenger, id);
 }
 
 void xdg_surface_unmap2(wl_listener* listener, void* data) {
@@ -205,28 +174,28 @@ void xdg_surface_unmap2(wl_listener* listener, void* data) {
 }
 
 void xdg_surface_destroy2(wl_listener* listener, void* data) {
-	ZenithXdgSurface* zenith_xdg_surface = wl_container_of(listener, zenith_xdg_surface, destroy);
-	ZenithSurface* zenith_surface = zenith_xdg_surface->zenith_surface();
+	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
+	auto zenith_xdg_surface = static_cast<ZenithXdgSurface*>(xdg_surface->data);
+	size_t id = zenith_xdg_surface->zenith_surface->id;
+
+//	ZenithXdgSurface* zenith_xdg_surface = wl_container_of(listener, zenith_xdg_surface, destroy);
 	auto* server = ZenithServer::instance();
 
 	if (zenith_xdg_surface->xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		bool erased = server->toplevels.erase(zenith_surface->id);
+		bool erased = server->xdg_toplevels.erase(id);
+		assert(erased);
+	} else if (zenith_xdg_surface->xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
+		bool erased = server->xdg_popups.erase(id);
 		assert(erased);
 	}
-	bool erased = server->xdg_surfaces.erase(zenith_surface->id);
+	bool erased = server->xdg_surfaces.erase(id);
 	assert(erased);
-
-	if (zenith_xdg_surface->xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-		delete zenith_xdg_surface->toplevel;
-	} else if (zenith_xdg_surface->xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
-		delete zenith_xdg_surface->popup;
-	}
-
-	zenith_xdg_surface->xdg_surface->data = nullptr;
-	delete zenith_xdg_surface;
 }
 
-ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel) : xdg_toplevel{xdg_toplevel} {
+
+ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel,
+                                     std::shared_ptr<ZenithXdgSurface> zenith_xdg_surface)
+	  : xdg_toplevel{xdg_toplevel}, zenith_xdg_surface(std::move(zenith_xdg_surface)) {
 	maximize();
 	// TODO: Set up callbacks.
 }
@@ -293,19 +262,13 @@ void ZenithXdgToplevel::maximize() const {
 	wlr_xdg_toplevel_set_maximized(xdg_toplevel->base, true);
 }
 
-ZenithXdgSurface* ZenithXdgToplevel::zenith_xdg_surface() const {
-	return static_cast<ZenithXdgSurface*>(xdg_toplevel->base->data);
-}
-
-ZenithXdgPopup::ZenithXdgPopup(wlr_xdg_popup* xdg_popup) : xdg_popup{xdg_popup} {
+ZenithXdgPopup::ZenithXdgPopup(wlr_xdg_popup* xdg_popup, std::shared_ptr<ZenithXdgSurface> zenith_xdg_surface)
+	  : xdg_popup{xdg_popup}, zenith_xdg_surface(std::move(zenith_xdg_surface)) {
 
 }
 
-ZenithXdgSurface* ZenithXdgPopup::zenith_xdg_surface() const {
-	return static_cast<ZenithXdgSurface*>(xdg_popup->base->data);
-}
-
-ZenithSubsurface::ZenithSubsurface(wlr_subsurface* subsurface) : subsurface{subsurface} {
+ZenithSubsurface::ZenithSubsurface(wlr_subsurface* subsurface, std::shared_ptr<ZenithSurface> zenith_surface)
+	  : subsurface{subsurface}, zenith_surface{std::move(zenith_surface)} {
 	map.notify = subsurface_map;
 	wl_signal_add(&subsurface->events.map, &map);
 
@@ -316,24 +279,32 @@ ZenithSubsurface::ZenithSubsurface(wlr_subsurface* subsurface) : subsurface{subs
 	wl_signal_add(&subsurface->events.destroy, &destroy);
 }
 
-ZenithSurface* ZenithSubsurface::zenith_surface() const {
-	return static_cast<ZenithSurface*>(subsurface->surface->data);
+void surface_new_subsurface(wl_listener* listener, void* data) {
+	auto* server = ZenithServer::instance();
+	auto* subsurface = static_cast<wlr_subsurface*>(data);
+	auto* zenith_surface = static_cast<ZenithSurface*>(subsurface->surface->data);
+	const std::shared_ptr<ZenithSurface>& zenith_surface_ref = server->surfaces.at(zenith_surface->id);
+
+	auto* zenith_subsurface = new ZenithSubsurface(subsurface, zenith_surface_ref);
+	subsurface->data = zenith_subsurface;
+	server->subsurfaces.insert(std::make_pair(zenith_surface->id, zenith_subsurface));
 }
 
 void subsurface_map(wl_listener* listener, void* data) {
 	ZenithSubsurface* zenith_subsurface = wl_container_of(listener, zenith_subsurface, map);
 	BinaryMessenger& messenger = ZenithServer::instance()->embedder_state->messenger;
-	send_subsurface_map(messenger, zenith_subsurface->zenith_surface()->id);
+	send_subsurface_map(messenger, zenith_subsurface->zenith_surface->id);
 }
 
 void subsurface_unmap(wl_listener* listener, void* data) {
 	ZenithSubsurface* zenith_subsurface = wl_container_of(listener, zenith_subsurface, unmap);
 	BinaryMessenger& messenger = ZenithServer::instance()->embedder_state->messenger;
-	send_subsurface_unmap(messenger, zenith_subsurface->zenith_surface()->id);
+	send_subsurface_unmap(messenger, zenith_subsurface->zenith_surface->id);
 }
 
 void subsurface_destroy(wl_listener* listener, void* data) {
-	ZenithSubsurface* zenith_subsurface = wl_container_of(listener, zenith_subsurface, destroy);
-	zenith_subsurface->subsurface->data = nullptr;
-	delete zenith_subsurface;
+	auto* subsurface = static_cast<wlr_subsurface*>(data);
+	ZenithSubsurface* zenith_subsurface = static_cast<ZenithSubsurface*>(subsurface->data);
+	bool erased = ZenithServer::instance()->subsurfaces.erase(zenith_subsurface->zenith_surface->id);
+	assert(erased);
 }

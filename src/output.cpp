@@ -156,7 +156,7 @@ int handle_output_commit(int fd, uint32_t mask, void* data) {
 	int read = eventfd_read(output->commit_event_fd, &value);
 
 	auto server = ZenithServer::instance();
-	for (auto& [id, view]: server->toplevels) {
+	for (auto& [id, view]: server->xdg_toplevels) {
 		wlr_xdg_surface* xdg_surface = view->xdg_toplevel->base;
 		if (!xdg_surface->mapped || !view->visible) {
 			// An unmapped view should not be rendered.

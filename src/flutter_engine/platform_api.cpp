@@ -33,12 +33,12 @@ void activate_window(ZenithServer* server,
                      std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
-	auto view_it = server->toplevels.find(view_id);
-	if (view_it == server->toplevels.end()) {
+	auto view_it = server->xdg_toplevels.find(view_id);
+	if (view_it == server->xdg_toplevels.end()) {
 		result->Success();
 		return;
 	}
-	auto* view = view_it->second;
+	auto* view = view_it->second.get();
 
 	view->focus();
 
@@ -60,7 +60,7 @@ void pointer_hover(ZenithServer* server,
 		result->Success();
 		return;
 	}
-	ZenithSurface* view = view_it->second;
+	ZenithSurface* view = view_it->second.get();
 
 	wlr_seat_pointer_notify_enter(server->seat, view->surface, x, y);
 	wlr_seat_pointer_notify_motion(server->seat, current_time_milliseconds(), x, y);
@@ -84,12 +84,12 @@ void close_window(ZenithServer* server,
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 
-	auto view_it = server->toplevels.find(view_id);
-	if (view_it == server->toplevels.end()) {
+	auto view_it = server->xdg_toplevels.find(view_id);
+	if (view_it == server->xdg_toplevels.end()) {
 		result->Success();
 		return;
 	}
-	ZenithXdgToplevel* view = view_it->second;
+	ZenithXdgToplevel* view = view_it->second.get();
 
 	wlr_xdg_toplevel_send_close(view->xdg_toplevel->base);
 
@@ -105,12 +105,12 @@ void resize_window(ZenithServer* server,
 	auto width = std::get<int>(args[flutter::EncodableValue("width")]);
 	auto height = std::get<int>(args[flutter::EncodableValue("height")]);
 
-	auto view_it = server->toplevels.find(view_id);
-	if (view_it == server->toplevels.end()) {
+	auto view_it = server->xdg_toplevels.find(view_id);
+	if (view_it == server->xdg_toplevels.end()) {
 		result->Success();
 		return;
 	}
-	ZenithXdgToplevel* view = view_it->second;
+	ZenithXdgToplevel* view = view_it->second.get();
 
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel->base, (uint32_t) width, (uint32_t) height);
 
@@ -178,12 +178,12 @@ void change_window_visibility(ZenithServer* server, const flutter::MethodCall<>&
 	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 	auto visible = std::get<bool>(args[flutter::EncodableValue("visible")]);
 
-	auto view_it = server->toplevels.find(view_id);
-	if (view_it == server->toplevels.end()) {
+	auto view_it = server->xdg_toplevels.find(view_id);
+	if (view_it == server->xdg_toplevels.end()) {
 		result->Success();
 		return;
 	}
-	ZenithXdgToplevel* view = view_it->second;
+	ZenithXdgToplevel* view = view_it->second.get();
 	view->visible = visible;
 
 	result->Success();
@@ -203,7 +203,7 @@ void touch_down(ZenithServer* server, const flutter::MethodCall<>& call,
 		result->Success();
 		return;
 	}
-	ZenithSurface* view = view_it->second;
+	ZenithSurface* view = view_it->second.get();
 
 	wlr_seat_touch_notify_down(server->seat, view->surface, current_time_milliseconds(), touch_id, x, y);
 	wlr_seat_touch_notify_frame(server->seat);
@@ -269,7 +269,7 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 		result->Success();
 		return;
 	}
-	ZenithSurface* view = view_it->second;
+	ZenithSurface* view = view_it->second.get();
 	if (view->active_text_input != nullptr) {
 		wlr_text_input_v3_send_commit_string(view->active_text_input->wlr_text_input, text.c_str());
 		wlr_text_input_v3_send_done(view->active_text_input->wlr_text_input);
