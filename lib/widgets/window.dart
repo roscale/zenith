@@ -5,7 +5,7 @@ import 'package:zenith/state/zenith_surface_state.dart';
 import 'package:zenith/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/util/rect_overflow_box.dart';
 import 'package:zenith/widgets/popup.dart';
-import 'package:zenith/widgets/view_input_listener.dart';
+import 'package:zenith/widgets/surface.dart';
 
 final windowWidget = StateProvider.family<Window, int>((ref, int viewId) {
   return const Window(key: Key(""), viewId: -1);
@@ -14,7 +14,7 @@ final windowWidget = StateProvider.family<Window, int>((ref, int viewId) {
 // Overridden by the Window widget.
 final _viewId = Provider<int>((ref) => throw UnimplementedError());
 
-class Window extends StatelessWidget {
+class Window extends ConsumerWidget {
   final int viewId;
 
   const Window({
@@ -23,14 +23,33 @@ class Window extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ProviderScope(
       overrides: [
         _viewId.overrideWithValue(viewId),
       ],
-      child: const _PointerListener(
+      child: _PointerListener(
         child: _Size(
-          child: _Surface(),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Surface(viewId: viewId),
+              // Consumer(builder: (_, WidgetRef ref, __) {
+              //   return ref.watch(surfaceWidget(ref.watch(_viewId)));
+              // }),
+              Consumer(
+                builder: (_, WidgetRef ref, __) {
+                  List<int> popups = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.popups));
+                  List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: popupWidgets,
+                  );
+                },
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -70,7 +89,6 @@ class _Size extends ConsumerWidget {
       builder: (_, WidgetRef ref, Widget? child) {
         Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId)
             .select((v) => v.visibleBounds));
-        print("VIS BOUNDS $viewId: $visibleBounds");
 
         return RectOverflowBox(
           rect: visibleBounds,
@@ -81,7 +99,6 @@ class _Size extends ConsumerWidget {
         builder: (_, WidgetRef ref, Widget? child) {
           Size surfaceSize = ref.watch(
               zenithSurfaceStateProvider(viewId).select((v) => v.surfaceSize));
-          print("SUR SIZE $viewId: $surfaceSize");
 
           return SizedBox(
             width: surfaceSize.width,
@@ -91,50 +108,6 @@ class _Size extends ConsumerWidget {
         },
         child: child,
       ),
-    );
-  }
-}
-
-class _Surface extends ConsumerWidget {
-  const _Surface({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final viewId = ref.watch(_viewId);
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ViewInputListener(
-          viewId: viewId,
-          child: Consumer(
-            builder: (BuildContext context, WidgetRef ref, Widget? child) {
-              Key textureKey = ref.watch(zenithSurfaceStateProvider(viewId)
-                  .select((v) => v.textureKey));
-              int textureId = ref.watch(zenithSurfaceStateProvider(viewId)
-                  .select((v) => v.textureId));
-              return Texture(
-                key: textureKey,
-                filterQuality: FilterQuality.medium,
-                textureId: textureId,
-              );
-            },
-          ),
-        ),
-        Consumer(
-          builder: (_, WidgetRef ref, __) {
-            List<int> popups = ref.watch(
-                zenithXdgSurfaceStateProvider(viewId).select((v) => v.popups));
-            List<Widget> popupWidgets =
-                popups.map((e) => ref.watch(popupWidget(e))).toList();
-
-            return Stack(
-              clipBehavior: Clip.none,
-              children: popupWidgets,
-            );
-          },
-        ),
-      ],
     );
   }
 }

@@ -6,10 +6,7 @@
 #include "platform_channels/binary_messenger.hpp"
 #include "platform_channels/incoming_message_dispatcher.hpp"
 #include "platform_channels/method_channel.h"
-#include "util/render_to_texture_shader.hpp"
-#include "util/framebuffer.hpp"
 #include "task_runner.hpp"
-#include "gl_mutex.hpp"
 #include "basic_message_channel.h"
 #include "document.h"
 

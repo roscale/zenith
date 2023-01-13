@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/popup_state.dart';
+import 'package:zenith/state/zenith_subsurface_state.dart';
 import 'package:zenith/state/zenith_surface_state.dart';
 import 'package:zenith/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/widgets/popup.dart';
+import 'package:zenith/widgets/subsurface.dart';
+import 'package:zenith/widgets/surface.dart';
 import 'package:zenith/widgets/window.dart';
 
 final _surfaceManagerProvider = Provider((ref) {
@@ -37,170 +40,13 @@ class SurfaceManager {
 
   SurfaceManager(this._ref) {
     _streamSubscriptions.addAll([
-      // PlatformApi.windowMappedStream.listen(_windowMapped),
-      // PlatformApi.windowUnmappedStream.listen(_windowUnmapped),
-      // PlatformApi.popupMappedStream.listen(_popupMapped),
-      // PlatformApi.popupUnmappedStream.listen(_popupUnmapped),
-      // PlatformApi.configureSurfaceStream.listen(_configureSurface),
       PlatformApi.surfaceCommitStream.listen(_surfaceCommit),
       PlatformApi.xdgSurfaceMapStream.listen(_xdgSurfaceMap),
       PlatformApi.xdgSurfaceUnmapStream.listen(_xdgSurfaceUnmap),
+      PlatformApi.subsurfaceMapStream.listen(_subsurfaceMap),
+      PlatformApi.subsurfaceUnmapStream.listen(_subsurfaceUnmap),
     ]);
   }
-
-  // void _windowMapped(dynamic event) {
-  //   // int viewId = event["view_id"];
-  //   // int textureId = event["texture_id"];
-  //   // int surfaceWidth = event["surface_width"];
-  //   // int surfaceHeight = event["surface_height"];
-  //   //
-  //   // // Visible bounds relative to (0, 0) being the top left corner of the surface.
-  //   // var visibleBoundsMap = Map<String, int>.from(event["visible_bounds"]);
-  //   // var visibleBounds = Rect.fromLTWH(
-  //   //   visibleBoundsMap["x"]!.toDouble(),
-  //   //   visibleBoundsMap["y"]!.toDouble(),
-  //   //   visibleBoundsMap["width"]!.toDouble(),
-  //   //   visibleBoundsMap["height"]!.toDouble(),
-  //   // );
-  //   //
-  //   // _ref.read(windowStateProvider(viewId).notifier).initialize(
-  //   //       textureId: textureId,
-  //   //       surfaceSize: Size(surfaceWidth.toDouble(), surfaceHeight.toDouble()),
-  //   //       visibleBounds: visibleBounds,
-  //   //     );
-  //   //
-  //   // _ref.read(windowWidget(viewId).notifier).state = Window(
-  //   //   key: _ref.read(baseViewStateProvider(viewId)).widgetKey,
-  //   //   viewId: viewId,
-  //   // );
-  //   //
-  //   // _windowMappedController.add(viewId);
-  // }
-
-  // void _windowUnmapped(dynamic event) async {
-  //   int viewId = event["view_id"];
-  //   _windowUnmappedController.add(viewId);
-  // }
-
-  // TODO
-
-  // void _popupMapped(dynamic event) {
-  //   int viewId = event["view_id"];
-  //   int textureId = event["texture_id"];
-  //   int parentViewId = event["parent_view_id"];
-  //   int x = event["x"];
-  //   int y = event["y"];
-  //   int width = event["surface_width"];
-  //   int height = event["surface_height"];
-  //   var visibleBoundsMap = event["visible_bounds"];
-  //   var visibleBounds = Rect.fromLTWH(
-  //     visibleBoundsMap["x"]!.toDouble(),
-  //     visibleBoundsMap["y"]!.toDouble(),
-  //     visibleBoundsMap["width"]!.toDouble(),
-  //     visibleBoundsMap["height"]!.toDouble(),
-  //   );
-  //
-  //   var parentVisibleBounds = _ref.read(baseViewStateProvider(parentViewId)).visibleBounds;
-  //
-  //   _ref.read(popupStateProvider(viewId).notifier).initialize(
-  //         position: Offset(x.toDouble() + parentVisibleBounds.left, y.toDouble() + parentVisibleBounds.top),
-  //         textureId: textureId,
-  //         surfaceSize: Size(width.toDouble(), height.toDouble()),
-  //         visibleBounds: visibleBounds,
-  //       );
-  //
-  //   _ref.read(popupWidget(viewId).notifier).state = Popup(
-  //     key: _ref.read(baseViewStateProvider(viewId)).widgetKey,
-  //     viewId: viewId,
-  //   );
-  //
-  //   _ref.read(baseViewStateProvider(parentViewId).notifier).addPopup(viewId);
-  // }
-
-  // TODO
-
-  // void _popupUnmapped(dynamic event) async {
-  //   int viewId = event["view_id"];
-  //
-  //   await _ref.read(popupStateProvider(viewId).notifier).animateClosing();
-  //
-  //   final state = _ref.read(popupStateProvider(viewId));
-  //   _ref.read(baseViewStateProvider(state.parentViewId).notifier).removePopup(viewId);
-  //
-  //   _ref.invalidate(baseViewStateProvider(viewId));
-  //   _ref.invalidate(popupStateProvider(viewId));
-  //   _ref.invalidate(popupWidget(viewId));
-  //
-  //   PlatformApi.unregisterViewTexture(_ref.read(baseViewStateProvider(viewId)).textureId);
-  // }
-
-  // void _configureSurface(dynamic event) {
-  //   int viewId = event["view_id"];
-  //   XdgSurfaceRole role = XdgSurfaceRole.values[event["surface_role"]];
-  //
-  //   Size? newSurfaceSize;
-  //   int? newTextureId;
-  //   if (event["surface_size_changed"]) {
-  //     newTextureId = event["texture_id"];
-  //     int surfaceWidth = event["surface_width"];
-  //     int surfaceHeight = event["surface_height"];
-  //     newSurfaceSize = Size(surfaceWidth.toDouble(), surfaceHeight.toDouble());
-  //   }
-  //
-  //   Rect? newVisibleBounds;
-  //   if (event["visible_bounds_changed"]) {
-  //     var visibleBoundsMap = event["visible_bounds"];
-  //     newVisibleBounds = Rect.fromLTWH(
-  //       visibleBoundsMap["x"]!.toDouble(),
-  //       visibleBoundsMap["y"]!.toDouble(),
-  //       visibleBoundsMap["width"]!.toDouble(),
-  //       visibleBoundsMap["height"]!.toDouble(),
-  //     );
-  //   }
-  //
-  //   switch (role) {
-  //     case XdgSurfaceRole.toplevel:
-  //       final state = _ref.read(baseViewStateProvider(viewId));
-  //       final notifier = _ref.read(baseViewStateProvider(viewId).notifier);
-  //
-  //       if (newTextureId != null) {
-  //         final oldTextureId = state.textureId;
-  //         SchedulerBinding.instance.addPostFrameCallback((_) {
-  //           PlatformApi.unregisterViewTexture(oldTextureId);
-  //         });
-  //         notifier.textureId = newTextureId;
-  //       }
-  //       notifier.surfaceSize = newSurfaceSize ?? state.surfaceSize;
-  //       notifier.visibleBounds = newVisibleBounds ?? state.visibleBounds;
-  //       break;
-  //
-  //     case XdgSurfaceRole.popup:
-  //       final state = _ref.read(baseViewStateProvider(viewId));
-  //       final notifier = _ref.read(baseViewStateProvider(viewId).notifier);
-  //
-  //       if (newTextureId != null) {
-  //         final oldTextureId = state.textureId;
-  //         SchedulerBinding.instance.addPostFrameCallback((_) {
-  //           PlatformApi.unregisterViewTexture(oldTextureId);
-  //         });
-  //         notifier.textureId = newTextureId;
-  //       }
-  //       notifier.surfaceSize = newSurfaceSize ?? state.surfaceSize;
-  //       notifier.visibleBounds = newVisibleBounds ?? state.visibleBounds;
-  //       if (event["popup_position_changed"]) {
-  //         // Position relative to the parent.
-  //         int x = event["x"];
-  //         int y = event["y"];
-  //         _ref.read(popupStateProvider(viewId).notifier).position =
-  //             Offset(x.toDouble(), y.toDouble());
-  //       }
-  //       break;
-  //
-  //     case XdgSurfaceRole.none:
-  //       assert(false, "xdg_surface has no role, this should never happen.");
-  //       break;
-  //   }
-  // }
 
   void _surfaceCommit(dynamic event) {
     int viewId = event["view_id"];
@@ -213,12 +59,55 @@ class SurfaceManager {
     int height = surface["height"];
     int scale = surface["scale"];
 
+    dynamic inputRegion = surface["input_region"];
+    int left = inputRegion["x1"];
+    int top = inputRegion["y1"];
+    int right = inputRegion["x2"];
+    int bottom = inputRegion["y2"];
+    var inputRegionRect = Rect.fromLTRB(
+      left.toDouble(),
+      top.toDouble(),
+      right.toDouble(),
+      bottom.toDouble(),
+    );
+
+    List<dynamic> subsurfacesBelow = surface["subsurfaces_below"];
+    List<dynamic> subsurfacesAbove = surface["subsurfaces_above"];
+
+    List<int> subsurfaceIdsBelow = [];
+    List<int> subsurfaceIdsAbove = [];
+
+    for (dynamic subsurface in subsurfacesBelow) {
+      int id = subsurface["id"];
+      int x = subsurface["x"];
+      int y = subsurface["y"];
+
+      subsurfaceIdsBelow.add(id);
+
+      var position = Offset(x.toDouble(), y.toDouble());
+      _ref.read(zenithSubsurfaceStateProvider(id).notifier).commit(position: position);
+    }
+
+    for (dynamic subsurface in subsurfacesAbove) {
+      int id = subsurface["id"];
+      int x = subsurface["x"];
+      int y = subsurface["y"];
+
+      subsurfaceIdsAbove.add(id);
+
+      var position = Offset(x.toDouble(), y.toDouble());
+      _ref.read(zenithSubsurfaceStateProvider(id).notifier).commit(position: position);
+    }
+
     _ref.read(zenithSurfaceStateProvider(viewId).notifier).commit(
           role: SurfaceRole.values[role],
           textureId: textureId,
           surfacePosition: Offset(x.toDouble(), y.toDouble()),
           surfaceSize: Size(width.toDouble(), height.toDouble()),
           scale: scale.toDouble(),
+          subsurfacesBelow: subsurfaceIdsBelow,
+          subsurfacesAbove: subsurfaceIdsAbove,
+          inputRegion: inputRegionRect,
         );
 
     bool hasXdgSurface = event["has_xdg_surface"];
@@ -255,6 +144,11 @@ class SurfaceManager {
             );
       }
     }
+
+    _ref.read(surfaceWidget(viewId).notifier).state = Surface(
+      key: _ref.read(zenithSurfaceStateProvider(viewId)).widgetKey,
+      viewId: viewId,
+    );
   }
 
   void _xdgSurfaceMap(dynamic event) {
@@ -311,11 +205,26 @@ class SurfaceManager {
         await _ref.read(popupStateProvider(viewId).notifier).animateClosing();
 
         final state = _ref.read(popupStateProvider(viewId));
-        _ref
-            .read(zenithXdgSurfaceStateProvider(state.parentViewId).notifier)
-            .removePopup(viewId);
+        _ref.read(zenithXdgSurfaceStateProvider(state.parentViewId).notifier).removePopup(viewId);
         break;
     }
+  }
+
+  void _subsurfaceMap(dynamic event) {
+    int viewId = event["view_id"];
+
+    _ref.read(zenithSubsurfaceStateProvider(viewId).notifier).map(true);
+    _ref.read(subsurfaceWidget(viewId).notifier).state = Subsurface(
+      key: _ref.read(zenithSubsurfaceStateProvider(viewId)).widgetKey,
+      viewId: viewId,
+    );
+  }
+
+  void _subsurfaceUnmap(dynamic event) {
+    int viewId = event["view_id"];
+
+    _ref.read(zenithSubsurfaceStateProvider(viewId).notifier).map(false);
+    _ref.invalidate(subsurfaceWidget(viewId));
   }
 
   void dispose() {

@@ -3,6 +3,7 @@
 #include <wlr/util/box.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <optional>
+#include <pixman-1/pixman.h>
 #include "encodable_value.h"
 #include "standard_method_codec.h"
 #include "binary_messenger.hpp"
@@ -29,6 +30,11 @@ enum SurfaceRole {
 	SUBSURFACE = 2,
 };
 
+struct SubsurfaceParentState {
+	int64_t id;
+	int32_t x, y;
+};
+
 struct SurfaceCommitMessage {
 	size_t view_id;
 	struct {
@@ -37,7 +43,10 @@ struct SurfaceCommitMessage {
 		int x, y;
 		int width, height;
 		int32_t scale;
+		pixman_box32_t input_region;
 	} surface;
+	std::vector<SubsurfaceParentState> subsurfaces_below;
+	std::vector<SubsurfaceParentState> subsurfaces_above;
 	std::optional<XdgSurfaceCommitMessage> xdg_surface;
 	std::optional<XdgPopupCommitMessage> xdg_popup;
 };
@@ -74,3 +83,7 @@ void send_surface_commit(BinaryMessenger& messenger, const SurfaceCommitMessage&
 void send_xdg_surface_map(BinaryMessenger& messenger, size_t view_id);
 
 void send_xdg_surface_unmap(BinaryMessenger& messenger, size_t view_id);
+
+void send_subsurface_map(BinaryMessenger& messenger, size_t view_id);
+
+void send_subsurface_unmap(BinaryMessenger& messenger, size_t view_id);

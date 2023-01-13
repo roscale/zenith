@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/state/zenith_surface_state.dart';
 import 'package:zenith/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/widgets/view_input_listener.dart';
+import 'package:zenith/widgets/surface.dart';
+import 'package:zenith/widgets/surface_size.dart';
 
 final popupWidget = StateProvider.family<Popup, int>((ref, int viewId) {
   return const Popup(key: Key(""), viewId: -1);
@@ -36,7 +37,33 @@ class Popup extends StatelessWidget {
               child: child!,
             );
           },
-          child: _Surface(),
+          child: DeferPointer(
+            // Allow hit testing for nested popups
+            child: DeferredPointerHandler(
+              child: SurfaceSize(
+                // Need to specify the surface size, because the IgnorePointer parent
+                // needs a size and this stack doesn't have a size otherwise.
+                viewId: viewId,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Surface(viewId: viewId),
+                    Consumer(
+                      builder: (_, WidgetRef ref, __) {
+                        List<int> popups = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.popups));
+                        List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
+
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: popupWidgets,
+                        );
+                      },
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -136,63 +163,5 @@ class AnimationsState extends ConsumerState<_Animations> with SingleTickerProvid
   void dispose() {
     controller.dispose();
     super.dispose();
-  }
-}
-
-class _Surface extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    int viewId = ref.watch(_viewId);
-
-    return Consumer(
-      builder: (_, WidgetRef ref, Widget? child) {
-        final size = ref.watch(
-            zenithSurfaceStateProvider(viewId).select((v) => v.surfaceSize));
-        return SizedBox(
-          width: size.width,
-          height: size.height,
-          child: child,
-        );
-      },
-      child: DeferPointer(
-        child: DeferredPointerHandler(
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ViewInputListener(
-                viewId: viewId,
-                child: Consumer(
-                  builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                    Key key = ref.watch(zenithSurfaceStateProvider(viewId)
-                        .select((v) => v.textureKey));
-                    int textureId = ref.watch(zenithSurfaceStateProvider(viewId)
-                        .select((v) => v.textureId));
-                    return Texture(
-                      key: key,
-                      filterQuality: FilterQuality.medium,
-                      textureId: textureId,
-                    );
-                  },
-                ),
-              ),
-              Consumer(
-                builder: (_, WidgetRef ref, __) {
-                  List<int> popups = ref.watch(
-                      zenithXdgSurfaceStateProvider(viewId)
-                          .select((v) => v.popups));
-                  List<Widget> popupWidgets =
-                      popups.map((e) => ref.watch(popupWidget(e))).toList();
-
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: popupWidgets,
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

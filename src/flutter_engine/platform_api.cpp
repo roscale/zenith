@@ -129,9 +129,6 @@ void unregister_view_texture(ZenithServer* server,
 		wlr_egl_make_current(egl);
 	}
 
-	std::scoped_lock lock(server->surface_framebuffers_mutex);
-	server->surface_framebuffers.erase(texture_id);
-
 	FlutterEngineUnregisterExternalTexture(server->embedder_state->engine, (int64_t) texture_id);
 
 	result->Success();

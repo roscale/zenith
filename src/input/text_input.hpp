@@ -20,7 +20,7 @@ struct ZenithTextInput {
 	wl_listener text_input_commit{};
 	wl_listener text_input_destroy{};
 
-	void enter(wlr_xdg_surface* xdg_surface) const;
+	void enter(wlr_surface* surface) const;
 
 	void leave() const;
 

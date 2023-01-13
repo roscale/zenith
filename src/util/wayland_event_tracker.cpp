@@ -21,8 +21,6 @@ struct WaylandEvent {
 };
 
 void WaylandEventTracker::trackEvent(uint64_t timestamp, uint32_t serial, WaylandEventType type) {
-	std::cout << serial << std::endl;
-
 	cleanUpOldEvents();
 	set.insert({timestamp, serial, type});
 }

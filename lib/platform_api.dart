@@ -1,39 +1,31 @@
 import 'package:flutter/services.dart';
 
 class PlatformApi {
-  static final Stream windowMappedStream =
-      const EventChannel('window_mapped').receiveBroadcastStream();
-  static final Stream windowUnmappedStream =
-      const EventChannel('window_unmapped').receiveBroadcastStream();
-  static final Stream popupMappedStream =
-      const EventChannel('popup_mapped').receiveBroadcastStream();
-  static final Stream popupUnmappedStream =
-      const EventChannel('popup_unmapped').receiveBroadcastStream();
-  static final Stream requestMoveStream =
-      const EventChannel('request_move').receiveBroadcastStream();
-  static final Stream requestResizeStream =
-      const EventChannel('request_resize').receiveBroadcastStream();
-  static final Stream configureSurfaceStream =
-      const EventChannel('configure_surface').receiveBroadcastStream();
-  static final Stream textInputEventsStream =
-      const EventChannel('text_input_events').receiveBroadcastStream();
-  static final Stream surfaceCommitStream =
-      const EventChannel('surface_commit').receiveBroadcastStream();
-  static final Stream xdgSurfaceMapStream =
-      const EventChannel('xdg_surface_map').receiveBroadcastStream();
-  static final Stream xdgSurfaceUnmapStream =
-      const EventChannel('xdg_surface_unmap').receiveBroadcastStream();
+  static final Stream windowMappedStream = const EventChannel('window_mapped').receiveBroadcastStream();
+  static final Stream windowUnmappedStream = const EventChannel('window_unmapped').receiveBroadcastStream();
+  static final Stream popupMappedStream = const EventChannel('popup_mapped').receiveBroadcastStream();
+  static final Stream popupUnmappedStream = const EventChannel('popup_unmapped').receiveBroadcastStream();
+  static final Stream requestMoveStream = const EventChannel('request_move').receiveBroadcastStream();
+  static final Stream requestResizeStream = const EventChannel('request_resize').receiveBroadcastStream();
+  static final Stream configureSurfaceStream = const EventChannel('configure_surface').receiveBroadcastStream();
+  static final Stream textInputEventsStream = const EventChannel('text_input_events').receiveBroadcastStream();
+  static final Stream surfaceCommitStream = const EventChannel('surface_commit').receiveBroadcastStream();
+  static final Stream xdgSurfaceMapStream = const EventChannel('xdg_surface_map').receiveBroadcastStream();
+  static final Stream xdgSurfaceUnmapStream = const EventChannel('xdg_surface_unmap').receiveBroadcastStream();
+  static final Stream subsurfaceMapStream = const EventChannel('subsurface_map').receiveBroadcastStream();
+  static final Stream subsurfaceUnmapStream = const EventChannel('subsurface_unmap').receiveBroadcastStream();
+
   static const MethodChannel _platform = MethodChannel('platform');
 
   static Future<void> startupComplete() {
     return _platform.invokeMethod("startup_complete");
   }
 
-  static Future<void> pointerHoversView(int viewId, double x, double y) {
+  static Future<void> pointerHoversView(int viewId, Offset position) {
     return _platform.invokeMethod("pointer_hover", {
       "view_id": viewId,
-      "x": x,
-      "y": y,
+      "x": position.dx,
+      "y": position.dy,
     });
   }
 
@@ -65,20 +57,20 @@ class PlatformApi {
     return _platform.invokeMethod('unregister_view_texture', textureId);
   }
 
-  static Future<void> touchDown(int viewId, int touchId, double x, double y) {
+  static Future<void> touchDown(int viewId, int touchId, Offset position) {
     return _platform.invokeMethod('touch_down', {
       "view_id": viewId,
       "touch_id": touchId,
-      "x": x,
-      "y": y,
+      "x": position.dx,
+      "y": position.dy,
     });
   }
 
-  static Future<void> touchMotion(int touchId, double x, double y) {
+  static Future<void> touchMotion(int touchId, Offset position) {
     return _platform.invokeMethod('touch_motion', {
       "touch_id": touchId,
-      "x": x,
-      "y": y,
+      "x": position.dx,
+      "y": position.dy,
     });
   }
 

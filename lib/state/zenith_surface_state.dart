@@ -24,7 +24,11 @@ class ZenithSurfaceState with _$ZenithSurfaceState {
     required Offset surfacePosition,
     required Size surfaceSize,
     required double scale,
+    required Key widgetKey,
     required Key textureKey,
+    required List<int> subsurfacesBelow,
+    required List<int> subsurfacesAbove,
+    required Rect inputRegion,
   }) = _ZenithSurfaceState;
 }
 
@@ -33,13 +37,17 @@ class ZenithSurfaceStateNotifier extends StateNotifier<ZenithSurfaceState> {
 
   ZenithSurfaceStateNotifier(this.ref, int viewId)
       : super(ZenithSurfaceState(
-          role: SurfaceRole.none,
+    role: SurfaceRole.none,
           viewId: viewId,
           textureId: -1,
           surfacePosition: Offset.zero,
           surfaceSize: Size.zero,
           scale: 1,
+          widgetKey: GlobalKey(),
           textureKey: GlobalKey(),
+          subsurfacesBelow: [],
+          subsurfacesAbove: [],
+          inputRegion: Rect.zero,
         ));
 
   void commit({
@@ -48,6 +56,9 @@ class ZenithSurfaceStateNotifier extends StateNotifier<ZenithSurfaceState> {
     required Offset surfacePosition,
     required Size surfaceSize,
     required double scale,
+    required List<int> subsurfacesBelow,
+    required List<int> subsurfacesAbove,
+    required Rect inputRegion,
   }) {
     state = state.copyWith(
       role: role,
@@ -55,6 +66,9 @@ class ZenithSurfaceStateNotifier extends StateNotifier<ZenithSurfaceState> {
       surfacePosition: surfacePosition,
       surfaceSize: surfaceSize,
       scale: scale,
+      subsurfacesBelow: subsurfacesBelow,
+      subsurfacesAbove: subsurfacesAbove,
+      inputRegion: inputRegion,
     );
   }
 }

@@ -78,19 +78,15 @@ public:
 	wl_listener new_output{};
 	wl_listener new_surface{};
 	wl_listener new_xdg_surface2{};
-	wl_listener new_xdg_surface{};
 	wl_listener new_input{};
 	wl_listener request_cursor{};
 	wl_listener new_text_input{};
 	wl_listener new_toplevel_decoration{};
 	wl_listener request_set_selection{};
 
-//	std::unordered_map<size_t, ZenithView*> views{};
 	std::unordered_map<size_t, ZenithSurface*> surfaces{};
 	std::unordered_map<size_t, ZenithXdgSurface*> xdg_surfaces{};
 	std::unordered_map<size_t, ZenithXdgToplevel*> toplevels{};
-	std::unordered_map<size_t, std::shared_ptr<Framebuffer>> surface_framebuffers{};
-	std::mutex surface_framebuffers_mutex{};
 
 	wlr_seat* seat;
 	std::unique_ptr<ZenithPointer> pointer;
@@ -99,20 +95,13 @@ public:
 	std::unordered_set<ZenithTextInput*> text_inputs{};
 
 	std::unique_ptr<EmbedderState> embedder_state{};
+	std::vector<wlr_buffer*> locked_buffers{};
 };
 
 /*
  * This event is raised when a new output is detected, like a monitor or a projector.
  */
 void server_new_output(wl_listener* listener, void* data);
-
-/*
- * This event is raised when wlr_xdg_shell receives a new xdg surface from a
- * client, either a toplevel (application window) or popup.
- */
-void server_new_xdg_surface(wl_listener* listener, void* data);
-
-void xdg_surface_commit(wl_listener* listener, void* data);
 
 /*
  * This event is raised by the backend when a new input device becomes available.
@@ -132,4 +121,8 @@ void server_seat_request_set_selection(wl_listener* listener, void* data);
 
 void server_new_surface(wl_listener* listener, void* data);
 
+/*
+ * This event is raised when wlr_xdg_shell receives a new xdg surface from a
+ * client, either a toplevel (application window) or popup.
+ */
 void server_new_xdg_surface2(wl_listener* listener, void* data);

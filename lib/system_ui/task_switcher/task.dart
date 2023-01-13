@@ -6,10 +6,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/task_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
-import 'package:zenith/state/window_state.dart';
 import 'package:zenith/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/system_ui/task_switcher/fitted_window.dart';
-import 'package:zenith/system_ui/task_switcher/task_switcher.dart';
 import 'package:zenith/system_ui/virtual_keyboard/with_virtual_keyboard.dart';
 import 'package:zenith/widgets/window.dart';
 
@@ -95,7 +93,10 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
                   onVerticalDragCancel: inOverview ? _onVerticalDragCancel : null,
                   child: IgnorePointer(
                     ignoring: inOverview,
-                    child: child,
+                    child: DeferredPointerHandler(
+                      // Don't let the nested DeferPointer bypass the IgnorePointer.
+                      child: child!,
+                    ),
                   ),
                 ),
               );

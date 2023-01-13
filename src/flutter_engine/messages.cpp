@@ -133,16 +133,41 @@ void change_view_texture(BinaryMessenger& messenger, size_t view_id, size_t text
 }
 
 void send_surface_commit(BinaryMessenger& messenger, const SurfaceCommitMessage& message) {
+	EncodableList subsurfaces_below{};
+	for (const SubsurfaceParentState& state: message.subsurfaces_below) {
+		subsurfaces_below.emplace_back(EncodableMap{
+			  {EncodableValue("id"), EncodableValue(state.id)},
+			  {EncodableValue("x"),  EncodableValue(state.x)},
+			  {EncodableValue("y"),  EncodableValue(state.y)},
+		});
+	}
+	EncodableList subsurfaces_above{};
+	for (const SubsurfaceParentState& state: message.subsurfaces_above) {
+		subsurfaces_above.emplace_back(EncodableMap{
+			  {EncodableValue("id"), EncodableValue(state.id)},
+			  {EncodableValue("x"),  EncodableValue(state.x)},
+			  {EncodableValue("y"),  EncodableValue(state.y)},
+		});
+	}
+
 	auto map = EncodableMap{
 		  {EncodableValue("view_id"), EncodableValue((int64_t) message.view_id)},
 		  {EncodableValue("surface"), EncodableValue(EncodableMap{
-				{EncodableValue("role"),      EncodableValue((int64_t) message.surface.role)},
-				{EncodableValue("textureId"), EncodableValue(message.surface.texture_id)},
-				{EncodableValue("x"),         EncodableValue(message.surface.x)},
-				{EncodableValue("y"),         EncodableValue(message.surface.y)},
-				{EncodableValue("width"),     EncodableValue(message.surface.width)},
-				{EncodableValue("height"),    EncodableValue(message.surface.height)},
-				{EncodableValue("scale"),     EncodableValue(message.surface.scale)},
+				{EncodableValue("role"),              EncodableValue((int64_t) message.surface.role)},
+				{EncodableValue("textureId"),         EncodableValue(message.surface.texture_id)},
+				{EncodableValue("x"),                 EncodableValue(message.surface.x)},
+				{EncodableValue("y"),                 EncodableValue(message.surface.y)},
+				{EncodableValue("width"),             EncodableValue(message.surface.width)},
+				{EncodableValue("height"),            EncodableValue(message.surface.height)},
+				{EncodableValue("scale"),             EncodableValue(message.surface.scale)},
+				{EncodableValue("subsurfaces_below"), EncodableValue(std::move(subsurfaces_below))},
+				{EncodableValue("subsurfaces_above"), EncodableValue(std::move(subsurfaces_above))},
+				{EncodableValue("input_region"),      EncodableValue(EncodableMap{
+					  {EncodableValue("x1"), EncodableValue((int64_t) message.surface.input_region.x1)},
+					  {EncodableValue("y1"), EncodableValue((int64_t) message.surface.input_region.y1)},
+					  {EncodableValue("x2"), EncodableValue((int64_t) message.surface.input_region.x2)},
+					  {EncodableValue("y2"), EncodableValue((int64_t) message.surface.input_region.y2)},
+				})},
 		  })},
 	};
 	if (message.xdg_surface.has_value()) {
@@ -190,4 +215,20 @@ void send_xdg_surface_unmap(BinaryMessenger& messenger, size_t view_id) {
 	});
 	auto message = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
 	messenger.Send("xdg_surface_unmap", message->data(), message->size());
+}
+
+void send_subsurface_map(BinaryMessenger& messenger, size_t view_id) {
+	auto value = EncodableValue(EncodableMap{
+		  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+	});
+	auto message = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+	messenger.Send("subsurface_map", message->data(), message->size());
+}
+
+void send_subsurface_unmap(BinaryMessenger& messenger, size_t view_id) {
+	auto value = EncodableValue(EncodableMap{
+		  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+	});
+	auto message = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
+	messenger.Send("subsurface_unmap", message->data(), message->size());
 }

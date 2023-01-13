@@ -127,9 +127,6 @@ ZenithServer::ZenithServer() {
 	new_xdg_surface2.notify = server_new_xdg_surface2;
 	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface2);
 
-//	new_xdg_surface.notify = server_new_xdg_surface;
-//	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
-
 	// Called at the start for each available input device, but also when the user plugs in a new input
 	// device, like a mouse, keyboard, drawing tablet, etc.
 	new_input.notify = server_new_input;
@@ -261,17 +258,6 @@ void server_new_output(wl_listener* listener, void* data) {
 
 	server->output = std::move(output);
 }
-
-//void server_new_xdg_surface(wl_listener* listener, void* data) {
-//	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface);
-//	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
-//
-//	/* Allocate a ZenithView for this surface */
-//	auto* view = new ZenithView(server, xdg_surface);
-//
-//	/* Add it to the list of views. */
-//	server->views.insert(std::make_pair(view->id, view));
-//}
 
 void server_new_input(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_input);

@@ -14,10 +14,11 @@ struct ZenithSurface {
 
 	wlr_surface* surface;
 	size_t id;
-	ZenithTextInput* active_text_input;
+	ZenithTextInput* active_text_input{};
 
 	/* callbacks */
 	wl_listener commit{};
+	wl_listener new_subsurface{};
 	wl_listener destroy{};
 };
 
@@ -53,11 +54,23 @@ struct ZenithXdgSurface {
 	wlr_xdg_surface* xdg_surface;
 
 	union {
-		ZenithXdgToplevel toplevel;
-		ZenithXdgPopup popup;
+		ZenithXdgToplevel* toplevel;
+		ZenithXdgPopup* popup;
 	};
 
 	/* callbacks */
+	wl_listener map{};
+	wl_listener unmap{};
+	wl_listener destroy{};
+
+	[[nodiscard]] ZenithSurface* zenith_surface() const;
+};
+
+struct ZenithSubsurface {
+	explicit ZenithSubsurface(wlr_subsurface* subsurface);
+
+	wlr_subsurface* subsurface;
+
 	wl_listener map{};
 	wl_listener unmap{};
 	wl_listener destroy{};
@@ -109,6 +122,8 @@ struct ZenithXdgSurface {
 
 void surface_commit(wl_listener* listener, void* data);
 
+void surface_new_subsurface(wl_listener* listener, void* data);
+
 void surface_destroy(wl_listener* listener, void* data);
 
 void xdg_surface_map2(wl_listener* listener, void* data);
@@ -116,3 +131,9 @@ void xdg_surface_map2(wl_listener* listener, void* data);
 void xdg_surface_unmap2(wl_listener* listener, void* data);
 
 void xdg_surface_destroy2(wl_listener* listener, void* data);
+
+void subsurface_map(wl_listener* listener, void* data);
+
+void subsurface_unmap(wl_listener* listener, void* data);
+
+void subsurface_destroy(wl_listener* listener, void* data);

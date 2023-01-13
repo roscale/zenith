@@ -1,9 +1,7 @@
-#include <cassert>
 #include <sys/eventfd.h>
 #include "output.hpp"
 #include "server.hpp"
 #include "embedder_callbacks.hpp"
-#include "render_view.hpp"
 #include <unistd.h>
 
 extern "C" {
@@ -54,6 +52,7 @@ void output_frame(wl_listener* listener, void* data) {
 
 	auto& flutter_engine_state = server->embedder_state;
 
+
 //	for (auto& [id, view]: server->views) {
 //		if (!view->mapped || !view->visible || wlr_surface_get_texture(view->xdg_surface->surface) == nullptr) {
 //			// An unmapped view should not be rendered.
@@ -98,7 +97,10 @@ void mode_changed_event(wl_listener* listener, void* data) {
 	window_metrics.height = output->wlr_output->height;
 	window_metrics.pixel_ratio = output->server->display_scale;
 
-	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+//	wlr_egl_make_current(wlr_gles2_renderer_get_egl(output->server->renderer));
+
+	std::cout << "change mode" << std::endl;
+
 	output->server->embedder_state->send_window_metrics(window_metrics);
 }
 
@@ -149,16 +151,9 @@ int handle_output_attach(int fd, uint32_t mask, void* data) {
 }
 
 int handle_output_commit(int fd, uint32_t mask, void* data) {
-	auto* output = static_cast<ZenithOutput*>(data);
 	eventfd_t value;
-	if (eventfd_read(output->commit_event_fd, &value) != -1) {
-		if (!wlr_output_commit(output->wlr_output)) {
-			std::cerr << "commit failed\n";
-			bool error = true;
-			write(output->commit_event_return_pipes[1], &error, sizeof error);
-			return 0;
-		}
-	}
+	auto* output = static_cast<ZenithOutput*>(data);
+	int read = eventfd_read(output->commit_event_fd, &value);
 
 	auto server = ZenithServer::instance();
 	for (auto& [id, view]: server->toplevels) {
@@ -168,13 +163,30 @@ int handle_output_commit(int fd, uint32_t mask, void* data) {
 			continue;
 		}
 
+		timespec now{};
+		clock_gettime(CLOCK_MONOTONIC, &now);
 		// Notify all mapped surfaces belonging to this toplevel.
 		wlr_xdg_surface_for_each_surface(xdg_surface, [](struct wlr_surface* surface, int sx, int sy, void* data) {
-			timespec now{};
-			clock_gettime(CLOCK_MONOTONIC, &now);
-			wlr_surface_send_frame_done(surface, &now);
-		}, nullptr);
+			auto* now = static_cast<timespec*>(data);
+			wlr_surface_send_frame_done(surface, now);
+		}, &now);
 	}
+
+	if (read != -1) {
+		if (!wlr_output_commit(output->wlr_output)) {
+			std::cerr << "commit failed\n";
+			bool error = true;
+			write(output->commit_event_return_pipes[1], &error, sizeof error);
+			return 0;
+		}
+	}
+
+//
+//	for (auto* buf: server->locked_buffers) {
+//		wlr_buffer_unlock(buf);
+//	}
+//	server->locked_buffers.clear();
+
 
 	bool success = true;
 	write(output->commit_event_return_pipes[1], &success, sizeof success);

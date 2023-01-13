@@ -9,7 +9,6 @@ extern "C" {
 #undef static
 }
 
-#include <epoxy/gl.h>
 #include <cassert>
 #include <iostream>
 #include <sys/eventfd.h>
@@ -65,8 +64,12 @@ void flutter_vsync_callback(void* userdata, intptr_t baton) {
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) {
 	texture_out->target = GL_TEXTURE_2D;
+	// From epoxy/gl.h
+	// If I include this header I have redefinition errors.
+	const uint32_t GL_RGBA8 = 0x8058;
 	texture_out->format = GL_RGBA8;
 	texture_out->name = texture_id;
+
 	return true;
 }
 

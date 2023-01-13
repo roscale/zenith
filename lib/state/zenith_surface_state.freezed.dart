@@ -22,7 +22,11 @@ mixin _$ZenithSurfaceState {
   Offset get surfacePosition => throw _privateConstructorUsedError;
   Size get surfaceSize => throw _privateConstructorUsedError;
   double get scale => throw _privateConstructorUsedError;
+  Key get widgetKey => throw _privateConstructorUsedError;
   Key get textureKey => throw _privateConstructorUsedError;
+  List<int> get subsurfacesBelow => throw _privateConstructorUsedError;
+  List<int> get subsurfacesAbove => throw _privateConstructorUsedError;
+  Rect get inputRegion => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ZenithSurfaceStateCopyWith<ZenithSurfaceState> get copyWith =>
@@ -42,7 +46,11 @@ abstract class $ZenithSurfaceStateCopyWith<$Res> {
       Offset surfacePosition,
       Size surfaceSize,
       double scale,
-      Key textureKey});
+      Key widgetKey,
+      Key textureKey,
+      List<int> subsurfacesBelow,
+      List<int> subsurfacesAbove,
+      Rect inputRegion});
 }
 
 /// @nodoc
@@ -64,7 +72,11 @@ class _$ZenithSurfaceStateCopyWithImpl<$Res, $Val extends ZenithSurfaceState>
     Object? surfacePosition = null,
     Object? surfaceSize = null,
     Object? scale = null,
+    Object? widgetKey = null,
     Object? textureKey = null,
+    Object? subsurfacesBelow = null,
+    Object? subsurfacesAbove = null,
+    Object? inputRegion = null,
   }) {
     return _then(_value.copyWith(
       role: null == role
@@ -91,10 +103,26 @@ class _$ZenithSurfaceStateCopyWithImpl<$Res, $Val extends ZenithSurfaceState>
           ? _value.scale
           : scale // ignore: cast_nullable_to_non_nullable
               as double,
+      widgetKey: null == widgetKey
+          ? _value.widgetKey
+          : widgetKey // ignore: cast_nullable_to_non_nullable
+              as Key,
       textureKey: null == textureKey
           ? _value.textureKey
           : textureKey // ignore: cast_nullable_to_non_nullable
               as Key,
+      subsurfacesBelow: null == subsurfacesBelow
+          ? _value.subsurfacesBelow
+          : subsurfacesBelow // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      subsurfacesAbove: null == subsurfacesAbove
+          ? _value.subsurfacesAbove
+          : subsurfacesAbove // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      inputRegion: null == inputRegion
+          ? _value.inputRegion
+          : inputRegion // ignore: cast_nullable_to_non_nullable
+              as Rect,
     ) as $Val);
   }
 }
@@ -114,7 +142,11 @@ abstract class _$$_ZenithSurfaceStateCopyWith<$Res>
       Offset surfacePosition,
       Size surfaceSize,
       double scale,
-      Key textureKey});
+      Key widgetKey,
+      Key textureKey,
+      List<int> subsurfacesBelow,
+      List<int> subsurfacesAbove,
+      Rect inputRegion});
 }
 
 /// @nodoc
@@ -134,7 +166,11 @@ class __$$_ZenithSurfaceStateCopyWithImpl<$Res>
     Object? surfacePosition = null,
     Object? surfaceSize = null,
     Object? scale = null,
+    Object? widgetKey = null,
     Object? textureKey = null,
+    Object? subsurfacesBelow = null,
+    Object? subsurfacesAbove = null,
+    Object? inputRegion = null,
   }) {
     return _then(_$_ZenithSurfaceState(
       role: null == role
@@ -161,10 +197,26 @@ class __$$_ZenithSurfaceStateCopyWithImpl<$Res>
           ? _value.scale
           : scale // ignore: cast_nullable_to_non_nullable
               as double,
+      widgetKey: null == widgetKey
+          ? _value.widgetKey
+          : widgetKey // ignore: cast_nullable_to_non_nullable
+              as Key,
       textureKey: null == textureKey
           ? _value.textureKey
           : textureKey // ignore: cast_nullable_to_non_nullable
               as Key,
+      subsurfacesBelow: null == subsurfacesBelow
+          ? _value._subsurfacesBelow
+          : subsurfacesBelow // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      subsurfacesAbove: null == subsurfacesAbove
+          ? _value._subsurfacesAbove
+          : subsurfacesAbove // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      inputRegion: null == inputRegion
+          ? _value.inputRegion
+          : inputRegion // ignore: cast_nullable_to_non_nullable
+              as Rect,
     ));
   }
 }
@@ -179,7 +231,13 @@ class _$_ZenithSurfaceState implements _ZenithSurfaceState {
       required this.surfacePosition,
       required this.surfaceSize,
       required this.scale,
-      required this.textureKey});
+      required this.widgetKey,
+      required this.textureKey,
+      required final List<int> subsurfacesBelow,
+      required final List<int> subsurfacesAbove,
+      required this.inputRegion})
+      : _subsurfacesBelow = subsurfacesBelow,
+        _subsurfacesAbove = subsurfacesAbove;
 
   @override
   final SurfaceRole role;
@@ -194,11 +252,29 @@ class _$_ZenithSurfaceState implements _ZenithSurfaceState {
   @override
   final double scale;
   @override
+  final Key widgetKey;
+  @override
   final Key textureKey;
+  final List<int> _subsurfacesBelow;
+  @override
+  List<int> get subsurfacesBelow {
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_subsurfacesBelow);
+  }
+
+  final List<int> _subsurfacesAbove;
+  @override
+  List<int> get subsurfacesAbove {
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_subsurfacesAbove);
+  }
+
+  @override
+  final Rect inputRegion;
 
   @override
   String toString() {
-    return 'ZenithSurfaceState(role: $role, viewId: $viewId, textureId: $textureId, surfacePosition: $surfacePosition, surfaceSize: $surfaceSize, scale: $scale, textureKey: $textureKey)';
+    return 'ZenithSurfaceState(role: $role, viewId: $viewId, textureId: $textureId, surfacePosition: $surfacePosition, surfaceSize: $surfaceSize, scale: $scale, widgetKey: $widgetKey, textureKey: $textureKey, subsurfacesBelow: $subsurfacesBelow, subsurfacesAbove: $subsurfacesAbove, inputRegion: $inputRegion)';
   }
 
   @override
@@ -215,13 +291,32 @@ class _$_ZenithSurfaceState implements _ZenithSurfaceState {
             (identical(other.surfaceSize, surfaceSize) ||
                 other.surfaceSize == surfaceSize) &&
             (identical(other.scale, scale) || other.scale == scale) &&
+            (identical(other.widgetKey, widgetKey) ||
+                other.widgetKey == widgetKey) &&
             (identical(other.textureKey, textureKey) ||
-                other.textureKey == textureKey));
+                other.textureKey == textureKey) &&
+            const DeepCollectionEquality()
+                .equals(other._subsurfacesBelow, _subsurfacesBelow) &&
+            const DeepCollectionEquality()
+                .equals(other._subsurfacesAbove, _subsurfacesAbove) &&
+            (identical(other.inputRegion, inputRegion) ||
+                other.inputRegion == inputRegion));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, role, viewId, textureId,
-      surfacePosition, surfaceSize, scale, textureKey);
+  int get hashCode => Object.hash(
+      runtimeType,
+      role,
+      viewId,
+      textureId,
+      surfacePosition,
+      surfaceSize,
+      scale,
+      widgetKey,
+      textureKey,
+      const DeepCollectionEquality().hash(_subsurfacesBelow),
+      const DeepCollectionEquality().hash(_subsurfacesAbove),
+      inputRegion);
 
   @JsonKey(ignore: true)
   @override
@@ -239,7 +334,11 @@ abstract class _ZenithSurfaceState implements ZenithSurfaceState {
       required final Offset surfacePosition,
       required final Size surfaceSize,
       required final double scale,
-      required final Key textureKey}) = _$_ZenithSurfaceState;
+      required final Key widgetKey,
+      required final Key textureKey,
+      required final List<int> subsurfacesBelow,
+      required final List<int> subsurfacesAbove,
+      required final Rect inputRegion}) = _$_ZenithSurfaceState;
 
   @override
   SurfaceRole get role;
@@ -254,7 +353,15 @@ abstract class _ZenithSurfaceState implements ZenithSurfaceState {
   @override
   double get scale;
   @override
+  Key get widgetKey;
+  @override
   Key get textureKey;
+  @override
+  List<int> get subsurfacesBelow;
+  @override
+  List<int> get subsurfacesAbove;
+  @override
+  Rect get inputRegion;
   @override
   @JsonKey(ignore: true)
   _$$_ZenithSurfaceStateCopyWith<_$_ZenithSurfaceState> get copyWith =>
