@@ -46,6 +46,58 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output)
 	wl_event_source_timer_update(vsync_temp_loop, 1000);
 }
 
+static size_t i = 1;
+
+void output_create_handle(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, new_output);
+	auto* wlr_output = static_cast<struct wlr_output*>(data);
+
+	/* Configures the output created by the backend to use our allocator and our renderer */
+	wlr_output_init_render(wlr_output, server->allocator, server->renderer);
+
+	static const char* selected_output_str = getenv("ZENITH_OUTPUT");
+	static size_t selected_output = selected_output_str != nullptr
+	                                ? selected_output_str[0] - '0'
+	                                : 0;
+
+	if (server->output != nullptr || i <= selected_output) {
+		i += 1;
+		// Allow only one output for the time being.
+		return;
+	}
+
+	if (!wl_list_empty(&wlr_output->modes)) {
+		// Set the preferred resolution and refresh rate of the monitor which will probably be the highest one.
+		wlr_output_enable(wlr_output, true);
+		wlr_output_mode* mode = wlr_output_preferred_mode(wlr_output);
+		wlr_output_set_mode(wlr_output, mode);
+
+		if (!wlr_output_commit(wlr_output)) {
+			return;
+		}
+	}
+
+	// Create the output.
+	auto output = std::make_unique<ZenithOutput>(server, wlr_output);
+	wlr_output_layout_add_auto(server->output_layout, wlr_output);
+
+	// Cache the layout box.
+	wlr_box* box = wlr_output_layout_get_box(server->output_layout, nullptr);
+	server->output_layout_box = *box;
+
+	// Tell Flutter how big the screen is, so it can start rendering.
+	FlutterWindowMetricsEvent window_metrics = {};
+	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
+	window_metrics.width = output->wlr_output->width;
+	window_metrics.height = output->wlr_output->height;
+	window_metrics.pixel_ratio = server->display_scale;
+
+	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
+	server->embedder_state->send_window_metrics(window_metrics);
+
+	server->output = std::move(output);
+}
+
 void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
 	ZenithServer* server = output->server;

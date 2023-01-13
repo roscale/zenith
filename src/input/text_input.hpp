@@ -27,6 +27,8 @@ struct ZenithTextInput {
 	void disable() const;
 };
 
+void text_input_create_handle(wl_listener* listener, void* data);
+
 void text_input_enable_handle(wl_listener* listener, void* data);
 
 void text_input_disable_handle(wl_listener* listener, void* data);

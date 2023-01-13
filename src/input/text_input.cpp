@@ -2,6 +2,7 @@
 #include "server.hpp"
 #include "text_input.hpp"
 #include "messages.hpp"
+#include "surfaces/zenith_surface.hpp"
 
 using namespace flutter;
 
@@ -43,6 +44,14 @@ void ZenithTextInput::disable() const {
 	auto* view = static_cast<ZenithSurface*>(wlr_text_input->focused_surface->data);
 	view->active_text_input = nullptr;
 	send_text_input_disabled(ZenithServer::instance()->embedder_state->messenger, view->id);
+}
+
+void text_input_create_handle(wl_listener* listener, void* data) {
+	ZenithServer* server = wl_container_of(listener, server, new_text_input);
+
+	auto* wlr_text_input = static_cast<wlr_text_input_v3*>(data);
+	auto text_input = new ZenithTextInput(server, wlr_text_input);
+	server->text_inputs.insert(text_input);
 }
 
 void text_input_enable_handle(wl_listener* listener, void* data) {

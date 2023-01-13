@@ -119,13 +119,13 @@ ZenithServer::ZenithServer() {
 	}
 
 	// Called at the start for each available output, but also when the user plugs in a monitor.
-	new_output.notify = server_new_output;
+	new_output.notify = output_create_handle;
 	wl_signal_add(&backend->events.new_output, &new_output);
 
-	new_surface.notify = server_new_surface;
+	new_surface.notify = zenith_surface_create;
 	wl_signal_add(&compositor->events.new_surface, &new_surface);
 
-	new_xdg_surface2.notify = server_new_xdg_surface2;
+	new_xdg_surface2.notify = zenith_xdg_surface_create;
 	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface2);
 
 	// Called at the start for each available input device, but also when the user plugs in a new input
@@ -137,7 +137,7 @@ ZenithServer::ZenithServer() {
 	request_cursor.notify = server_seat_request_cursor;
 	wl_signal_add(&seat->events.request_set_cursor, &request_cursor);
 
-	new_text_input.notify = server_new_text_input;
+	new_text_input.notify = text_input_create_handle;
 	wl_signal_add(&text_input_manager->events.text_input, &new_text_input);
 
 	new_toplevel_decoration.notify = server_new_toplevel_decoration;
@@ -206,58 +206,6 @@ static float read_display_scale() {
 	} catch (std::out_of_range&) {
 		return 1.0f;
 	}
-}
-
-size_t i = 1;
-
-void server_new_output(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, new_output);
-	auto* wlr_output = static_cast<struct wlr_output*>(data);
-
-	/* Configures the output created by the backend to use our allocator and our renderer */
-	wlr_output_init_render(wlr_output, server->allocator, server->renderer);
-
-	static const char* selected_output_str = getenv("ZENITH_OUTPUT");
-	static size_t selected_output = selected_output_str != nullptr
-	                                ? selected_output_str[0] - '0'
-	                                : 0;
-
-	if (server->output != nullptr || i <= selected_output) {
-		i += 1;
-		// Allow only one output for the time being.
-		return;
-	}
-
-	if (!wl_list_empty(&wlr_output->modes)) {
-		// Set the preferred resolution and refresh rate of the monitor which will probably be the highest one.
-		wlr_output_enable(wlr_output, true);
-		wlr_output_mode* mode = wlr_output_preferred_mode(wlr_output);
-		wlr_output_set_mode(wlr_output, mode);
-
-		if (!wlr_output_commit(wlr_output)) {
-			return;
-		}
-	}
-
-	// Create the output.
-	auto output = std::make_unique<ZenithOutput>(server, wlr_output);
-	wlr_output_layout_add_auto(server->output_layout, wlr_output);
-
-	// Cache the layout box.
-	wlr_box* box = wlr_output_layout_get_box(server->output_layout, nullptr);
-	server->output_layout_box = *box;
-
-	// Tell Flutter how big the screen is, so it can start rendering.
-	FlutterWindowMetricsEvent window_metrics = {};
-	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
-	window_metrics.width = output->wlr_output->width;
-	window_metrics.height = output->wlr_output->height;
-	window_metrics.pixel_ratio = server->display_scale;
-
-	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
-	server->embedder_state->send_window_metrics(window_metrics);
-
-	server->output = std::move(output);
 }
 
 void server_new_input(wl_listener* listener, void* data) {
@@ -331,14 +279,6 @@ void server_seat_request_cursor(wl_listener* listener, void* data) {
 	}
 }
 
-void server_new_text_input(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, new_text_input);
-
-	auto* wlr_text_input = static_cast<wlr_text_input_v3*>(data);
-	auto text_input = new ZenithTextInput(server, wlr_text_input);
-	server->text_inputs.insert(text_input);
-}
-
 void server_new_toplevel_decoration(wl_listener* listener, void* data) {
 	auto* wlr_toplevel_decoration = static_cast<wlr_xdg_toplevel_decoration_v1*>(data);
 	wlr_xdg_toplevel_decoration_v1_set_mode(wlr_toplevel_decoration, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
@@ -349,39 +289,4 @@ void server_seat_request_set_selection(wl_listener* listener, void* data) {
 	auto* event = static_cast<wlr_seat_request_set_selection_event*>(data);
 	wlr_seat_set_selection(server->seat, event->source, event->serial);
 	// TODO: Add security. Don't let any client overwrite the clipboard randomly.
-}
-
-void server_new_surface(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, new_surface);
-	auto* surface = static_cast<wlr_surface*>(data);
-	auto* zenith_surface = new ZenithSurface(surface);
-	surface->data = zenith_surface;
-	server->surfaces.insert(std::make_pair(zenith_surface->id, zenith_surface));
-}
-
-void server_new_xdg_surface2(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface2);
-	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
-	auto* zenith_surface = static_cast<ZenithSurface*>(xdg_surface->surface->data);
-	const std::shared_ptr<ZenithSurface>& zenith_surface_ref = server->surfaces.at(zenith_surface->id);
-
-	auto* zenith_xdg_surface = new ZenithXdgSurface(xdg_surface, zenith_surface_ref);
-	xdg_surface->data = zenith_xdg_surface;
-	auto zenith_xdg_surface_ref = std::shared_ptr<ZenithXdgSurface>(zenith_xdg_surface);
-	server->xdg_surfaces.insert(std::make_pair(zenith_surface->id, zenith_xdg_surface_ref));
-
-	switch (xdg_surface->role) {
-		case WLR_XDG_SURFACE_ROLE_NONE:
-			ASSERT(false, "unreachable");
-			break;
-		case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
-			auto toplevel = new ZenithXdgToplevel(xdg_surface->toplevel, zenith_xdg_surface_ref);
-			server->xdg_toplevels.insert(std::make_pair(zenith_surface->id, toplevel));
-			break;
-		}
-		case WLR_XDG_SURFACE_ROLE_POPUP:
-			auto popup = new ZenithXdgPopup(xdg_surface->popup, zenith_xdg_surface_ref);
-			server->xdg_popups.insert(std::make_pair(zenith_surface->id, popup));
-			break;
-	}
 }

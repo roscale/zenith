@@ -198,7 +198,7 @@ void send_surface_commit(BinaryMessenger& messenger, const SurfaceCommitMessage&
 
 	auto value = EncodableValue(map);
 	auto envelope = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-	messenger.Send("surface_commit", envelope->data(), envelope->size());
+	messenger.Send("zenith_surface_commit", envelope->data(), envelope->size());
 }
 
 void send_xdg_surface_map(BinaryMessenger& messenger, size_t view_id) {
@@ -222,7 +222,7 @@ void send_subsurface_map(BinaryMessenger& messenger, size_t view_id) {
 		  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 	});
 	auto message = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-	messenger.Send("subsurface_map", message->data(), message->size());
+	messenger.Send("zenith_subsurface_map", message->data(), message->size());
 }
 
 void send_subsurface_unmap(BinaryMessenger& messenger, size_t view_id) {
@@ -230,5 +230,5 @@ void send_subsurface_unmap(BinaryMessenger& messenger, size_t view_id) {
 		  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 	});
 	auto message = StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&value);
-	messenger.Send("subsurface_unmap", message->data(), message->size());
+	messenger.Send("zenith_subsurface_unmap", message->data(), message->size());
 }

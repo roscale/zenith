@@ -9,11 +9,11 @@ class PlatformApi {
   static final Stream requestResizeStream = const EventChannel('request_resize').receiveBroadcastStream();
   static final Stream configureSurfaceStream = const EventChannel('configure_surface').receiveBroadcastStream();
   static final Stream textInputEventsStream = const EventChannel('text_input_events').receiveBroadcastStream();
-  static final Stream surfaceCommitStream = const EventChannel('surface_commit').receiveBroadcastStream();
+  static final Stream surfaceCommitStream = const EventChannel('zenith_surface_commit').receiveBroadcastStream();
   static final Stream xdgSurfaceMapStream = const EventChannel('xdg_surface_map').receiveBroadcastStream();
   static final Stream xdgSurfaceUnmapStream = const EventChannel('xdg_surface_unmap').receiveBroadcastStream();
-  static final Stream subsurfaceMapStream = const EventChannel('subsurface_map').receiveBroadcastStream();
-  static final Stream subsurfaceUnmapStream = const EventChannel('subsurface_unmap').receiveBroadcastStream();
+  static final Stream subsurfaceMapStream = const EventChannel('zenith_subsurface_map').receiveBroadcastStream();
+  static final Stream subsurfaceUnmapStream = const EventChannel('zenith_subsurface_unmap').receiveBroadcastStream();
 
   static const MethodChannel _platform = MethodChannel('platform');
 

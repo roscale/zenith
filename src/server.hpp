@@ -12,8 +12,11 @@
 #include "input/pointer.hpp"
 #include "input/touch.hpp"
 #include "input/text_input.hpp"
-#include "view.hpp"
 #include "offset.hpp"
+#include "surfaces/zenith_xdg_surface.hpp"
+#include "surfaces/zenith_subsurface.hpp"
+#include "zenith_xdg_toplevel.hpp"
+#include "zenith_xdg_popup.hpp"
 
 extern "C" {
 #define static
@@ -101,11 +104,6 @@ public:
 };
 
 /*
- * This event is raised when a new output is detected, like a monitor or a projector.
- */
-void server_new_output(wl_listener* listener, void* data);
-
-/*
  * This event is raised by the backend when a new input device becomes available.
  */
 void server_new_input(wl_listener* listener, void* data);
@@ -115,16 +113,6 @@ void server_new_input(wl_listener* listener, void* data);
  */
 void server_seat_request_cursor(wl_listener* listener, void* data);
 
-void server_new_text_input(wl_listener* listener, void* data);
-
 void server_new_toplevel_decoration(wl_listener* listener, void* data);
 
 void server_seat_request_set_selection(wl_listener* listener, void* data);
-
-void server_new_surface(wl_listener* listener, void* data);
-
-/*
- * This event is raised when wlr_xdg_shell receives a new xdg surface from a
- * client, either a toplevel (application window) or popup.
- */
-void server_new_xdg_surface2(wl_listener* listener, void* data);
