@@ -123,13 +123,9 @@ void unregister_view_texture(ZenithServer* server,
 
 	size_t texture_id = std::get<int>(call.arguments()[0]);
 
-	if (eglGetCurrentContext() == nullptr) {
-		// wlroots is screwing with me and deactivates the gl context for some reason.
-		wlr_egl* egl = wlr_gles2_renderer_get_egl(server->renderer);
-		wlr_egl_make_current(egl);
-	}
-
 	FlutterEngineUnregisterExternalTexture(server->embedder_state->engine, (int64_t) texture_id);
+
+	server->embedder_state->buffer_chains_in_use.erase(texture_id);
 
 	result->Success();
 }

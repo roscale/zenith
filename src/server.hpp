@@ -12,11 +12,13 @@
 #include "input/pointer.hpp"
 #include "input/touch.hpp"
 #include "input/text_input.hpp"
-#include "offset.hpp"
 #include "surfaces/zenith_xdg_surface.hpp"
 #include "surfaces/zenith_subsurface.hpp"
-#include "zenith_xdg_toplevel.hpp"
-#include "zenith_xdg_popup.hpp"
+#include "surfaces/zenith_xdg_toplevel.hpp"
+#include "surfaces/zenith_xdg_popup.hpp"
+#include "util/rethreading/callable_queue.hpp"
+#include "util/offset.hpp"
+#include "flutter_engine/embedder_state.hpp"
 
 extern "C" {
 #define static
@@ -87,6 +89,7 @@ public:
 	wl_listener new_toplevel_decoration{};
 	wl_listener request_set_selection{};
 
+	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain>> surface_buffer_chains{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithSurface>> surfaces{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithSubsurface>> subsurfaces{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithXdgSurface>> xdg_surfaces{};
@@ -101,6 +104,8 @@ public:
 
 	std::unique_ptr<EmbedderState> embedder_state{};
 	std::vector<wlr_buffer*> locked_buffers{};
+
+	CallableQueue callable_queue{};
 };
 
 /*

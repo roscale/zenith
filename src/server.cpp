@@ -146,6 +146,14 @@ ZenithServer::ZenithServer() {
 	request_set_selection.notify = server_seat_request_set_selection;
 	wl_signal_add(&seat->events.request_set_selection, &request_set_selection);
 
+	auto callable_queue_function = [](int fd, uint32_t mask, void* data) {
+		auto* server = ZenithServer::instance();
+		return (int) server->callable_queue.execute();
+	};
+
+	auto* event_loop = wl_display_get_event_loop(display);
+	wl_event_loop_add_fd(event_loop, callable_queue.get_fd(), WL_EVENT_READABLE, callable_queue_function, nullptr);
+
 	// TODO: Implement drag and drop.
 }
 

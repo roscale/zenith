@@ -25,7 +25,9 @@ class Desktop extends ConsumerWidget {
             ],
           ),
         ),
-        const StatusBarWithQuickSettings(),
+        const RepaintBoundary(
+          child: StatusBarWithQuickSettings(),
+        ),
       ],
     );
   }

@@ -2,6 +2,7 @@
 #include "server.hpp"
 #include "messages.hpp"
 #include "xdg_surface_get_visible_bounds.hpp"
+#include "time.hpp"
 
 extern "C" {
 #define static
@@ -39,19 +40,28 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 	commit_message.view_id = zenith_surface->id;
 
 	wlr_texture* texture = wlr_surface_get_texture(zenith_surface->surface);
-	int texture_id;
 	if (texture != nullptr && wlr_texture_is_gles2(texture)) {
 		// Wait for the texture to fully render, otherwise we'll see visual artifacts.
 		glFinish();
 
+		assert(surface->buffer != nullptr);
+		auto* server = ZenithServer::instance();
+
+		std::shared_ptr<SurfaceBufferChain> buffer_chain;
+		auto it = server->surface_buffer_chains.find(zenith_surface->id);
+		if (it == server->surface_buffer_chains.end()) {
+			buffer_chain = std::make_shared<SurfaceBufferChain>();
+			server->surface_buffer_chains.insert(std::pair(zenith_surface->id, buffer_chain));
+			FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) zenith_surface->id);
+		} else {
+			buffer_chain = it->second;
+			FlutterEngineMarkExternalTextureFrameAvailable(server->embedder_state->engine,
+			                                               (int64_t) zenith_surface->id);
+		}
+		buffer_chain->commit_new_buffer(&surface->buffer->base);
+
 		wlr_gles2_texture_attribs attribs{};
 		wlr_gles2_texture_get_attribs(texture, &attribs);
-		texture_id = (int) attribs.tex;
-
-		FlutterEngineRegisterExternalTexture(ZenithServer::instance()->embedder_state->engine, texture_id);
-		FlutterEngineMarkExternalTextureFrameAvailable(ZenithServer::instance()->embedder_state->engine, texture_id);
-	} else {
-		texture_id = -1;
 	}
 
 	SurfaceRole role;
@@ -65,7 +75,7 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 
 	commit_message.surface = {
 		  .role = role,
-		  .texture_id = texture_id,
+		  .texture_id = (int) zenith_surface->id,
 		  .x = surface->sx,
 		  .y = surface->sy,
 		  .width = surface->current.width,
@@ -139,7 +149,9 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 
 void zenith_surface_destroy(wl_listener* listener, void* data) {
 	ZenithSurface* zenith_surface = wl_container_of(listener, zenith_surface, destroy);
-	bool erased = ZenithServer::instance()->surfaces.erase(zenith_surface->id);
+	auto* server = ZenithServer::instance();
+	server->surface_buffer_chains.erase(zenith_surface->id);
+	bool erased = server->surfaces.erase(zenith_surface->id);
 	assert(erased);
 	// TODO: Send destroy to Flutter.
 }

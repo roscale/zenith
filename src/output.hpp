@@ -6,6 +6,13 @@
 #include <memory>
 #include <mutex>
 #include "embedder_state.hpp"
+#include <GLES2/gl2.h>
+
+extern "C" {
+#define static
+#include <wlr/util/addon.h>
+#undef static
+}
 
 struct ZenithServer;
 
@@ -18,11 +25,6 @@ struct ZenithOutput {
 	wl_listener frame_listener{};
 	wl_listener mode_changed{};
 	wl_event_source* vsync_temp_loop;
-
-	int attach_event_fd;
-	int attach_event_return_pipes[2];
-	int commit_event_fd;
-	int commit_event_return_pipes[2];
 };
 
 /*
@@ -38,7 +40,3 @@ void output_frame(wl_listener* listener, void* data);
 void mode_changed_event(wl_listener* listener, void* data);
 
 int vsync_callback(void* data);
-
-int handle_output_attach(int fd, uint32_t mask, void* data);
-
-int handle_output_commit(int fd, uint32_t mask, void* data);

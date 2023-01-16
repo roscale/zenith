@@ -1,4 +1,5 @@
 #pragma once
+/// Backported functionality from newer versions of wlroots.
 
 /**
  * Notify the seat that this is a global gesture and the client should cancel

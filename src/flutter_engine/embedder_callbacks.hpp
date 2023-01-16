@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GLES2/gl2.h>
 #include "embedder.h"
 
 bool flutter_make_current(void* userdata);
@@ -8,7 +9,11 @@ bool flutter_clear_current(void* userdata);
 
 bool flutter_present(void* userdata);
 
+bool commit_framebuffer();
+
 uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info);
+
+GLint attach_framebuffer();
 
 void flutter_vsync_callback(void* userdata, intptr_t baton);
 

@@ -73,8 +73,6 @@ class _QuickSettingsState extends State<QuickSettings> {
     );
   }
 
-  var _chain = Future.delayed(const Duration(seconds: 0));
-
   Widget _buildBrightnessSlider() {
     return Consumer(
       builder: (BuildContext context, WidgetRef ref, Widget? child) {
@@ -113,48 +111,5 @@ class _QuickSettingsState extends State<QuickSettings> {
         );
       },
     );
-
-    // return FutureBuilder(
-    //   future: displayBrightnessControllerFuture,
-    //   builder: (BuildContext context, AsyncSnapshot<DisplayBrightnessController> snapshot) {
-    //     if (snapshot.hasError || !snapshot.hasData) {
-    //       // Don't show the slider if the display doesn't support changing the brightness.
-    //       return const SizedBox();
-    //     }
-    //     final controller = snapshot.data!;
-    //     return Column(
-    //       children: [
-    //         const SizedBox(height: 20),
-    //         Row(
-    //           children: [
-    //             const Icon(Icons.brightness_6),
-    //             Expanded(
-    //               child: ValueListenableBuilder(
-    //                 valueListenable: controller.brightness,
-    //                 builder: (BuildContext context, double brightness, __) {
-    //                   return Slider(
-    //                     value: brightness,
-    //                     onChanged: (double value) => controller.setBrightness(value),
-    //                     onChangeStart: (_) {
-    //                       if (widget.onChangeBrightnessStart != null) {
-    //                         widget.onChangeBrightnessStart!();
-    //                       }
-    //                     },
-    //                     onChangeEnd: (_) {
-    //                       if (widget.onChangeBrightnessEnd != null) {
-    //                         widget.onChangeBrightnessEnd!();
-    //                       }
-    //                     },
-    //                   );
-    //                 },
-    //               ),
-    //             ),
-    //             const Icon(Icons.brightness_7),
-    //           ],
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
   }
 }

@@ -11,7 +11,7 @@ struct ZenithSurface {
 
 	wlr_surface* surface;
 	size_t id;
-	ZenithTextInput* active_text_input{};
+	ZenithTextInput* active_text_input = {};
 
 	/* callbacks */
 	wl_listener commit{};

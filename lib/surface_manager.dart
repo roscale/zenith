@@ -205,6 +205,7 @@ class SurfaceManager {
         await _ref.read(popupStateProvider(viewId).notifier).animateClosing();
 
         final state = _ref.read(popupStateProvider(viewId));
+        PlatformApi.unregisterViewTexture(_ref.read(zenithSurfaceStateProvider(viewId)).textureId);
         _ref.read(zenithXdgSurfaceStateProvider(state.parentViewId).notifier).removePopup(viewId);
         break;
     }
