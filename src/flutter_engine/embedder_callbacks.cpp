@@ -29,28 +29,17 @@ uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrame
 	return attach_framebuffer();
 }
 
-GLint attach_framebuffer() {
+GLuint attach_framebuffer() {
 	ZenithServer* server = ZenithServer::instance();
-	channel<GLint> fb_chan{};
+	channel<GLuint> fb_chan{};
 	server->callable_queue.enqueue([&]() {
-		wlr_output* wlr_output = server->output->wlr_output;
-		if (wlr_output->back_buffer != nullptr || !wlr_output_attach_render(wlr_output, nullptr)) {
-			std::cerr << "attach failed\n";
-			fb_chan.write(0);
-			return;
-		}
-		GLint fb;
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
-		fb_chan.write(fb);
+		wlr_gles2_buffer* gles2_buffer = server->output->swap_chain.start_write();
+		fb_chan.write(gles2_buffer->fbo);
 	});
 	return fb_chan.read();
 }
 
 bool flutter_present(void* userdata) {
-	// https://community.arm.com/cfs-file/__key/telligent-evolution-components-attachments/01-2066-00-00-00-00-42-84/Whitepaper_2D00_ThreadSync.pdf
-	auto* state = static_cast<EmbedderState*>(userdata);
-	const auto& output = state->server->output;
-
 	// Wait for the buffer to finish rendering before we commit it to the screen.
 	glFinish(); // glFlush still causes flickering on my phone.
 
@@ -61,29 +50,11 @@ bool flutter_present(void* userdata) {
 bool commit_framebuffer() {
 	ZenithServer* server = ZenithServer::instance();
 	channel<bool> success{};
-	server->callable_queue.enqueue([&]() {
-		for (auto& [id, view]: server->xdg_toplevels) {
-			wlr_xdg_surface* xdg_surface = view->xdg_toplevel->base;
-			if (!xdg_surface->mapped || !view->visible) {
-				// An unmapped view should not be rendered.
-				continue;
-			}
 
-			timespec now{};
-			clock_gettime(CLOCK_MONOTONIC, &now);
-			// Notify all mapped surfaces belonging to this toplevel.
-			wlr_xdg_surface_for_each_surface(xdg_surface, [](struct wlr_surface* surface, int sx, int sy, void* data) {
-				auto* now = static_cast<timespec*>(data);
-				wlr_surface_send_frame_done(surface, now);
-			}, &now);
-		}
-
-		if (!wlr_output_commit(server->output->wlr_output)) {
-			std::cerr << "commit failed\n";
-			success.write(false);
-		} else {
-			success.write(true);
-		}
+	server->callable_queue.enqueue([&success]() {
+		ZenithServer* server = ZenithServer::instance();
+		server->output->swap_chain.end_write();
+		success.write(true);
 	});
 	return success.read();
 }

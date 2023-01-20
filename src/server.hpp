@@ -89,7 +89,7 @@ public:
 	wl_listener new_toplevel_decoration{};
 	wl_listener request_set_selection{};
 
-	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain>> surface_buffer_chains{};
+	std::unordered_map<size_t, std::shared_ptr<DoubleBuffering<wlr_buffer>>> surface_buffer_chains{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithSurface>> surfaces{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithSubsurface>> subsurfaces{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithXdgSurface>> xdg_surfaces{};

@@ -364,7 +364,9 @@ void enable_display(ZenithServer* server, const flutter::MethodCall<>& call,
 
 	wlr_output* wlr_output = server->output->wlr_output;
 	wlr_output_enable(wlr_output, enable);
-	wlr_output_schedule_frame(wlr_output);
+	if (enable) {
+		wlr_output_schedule_frame(wlr_output);
+	}
 
 	result->Success();
 }

@@ -6,6 +6,8 @@
 #include <memory>
 #include <mutex>
 #include "embedder_state.hpp"
+#include "swap_chain.hpp"
+#include "wlr_helpers.hpp"
 #include <GLES2/gl2.h>
 
 extern "C" {
@@ -17,14 +19,16 @@ extern "C" {
 struct ZenithServer;
 
 struct ZenithOutput {
-	ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output);
+	ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output, SwapChain<wlr_gles2_buffer> swap_chain);
 
 	ZenithServer* server = nullptr;
 
 	struct wlr_output* wlr_output = nullptr;
 	wl_listener frame_listener{};
 	wl_listener mode_changed{};
-	wl_event_source* vsync_temp_loop;
+	wl_event_source* schedule_frame_timer;
+
+	SwapChain<wlr_gles2_buffer> swap_chain;
 };
 
 /*

@@ -3,6 +3,7 @@
 #include "messages.hpp"
 #include "xdg_surface_get_visible_bounds.hpp"
 #include "time.hpp"
+#include "scoped_wlr_buffer.hpp"
 
 extern "C" {
 #define static
@@ -47,10 +48,10 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 		assert(surface->buffer != nullptr);
 		auto* server = ZenithServer::instance();
 
-		std::shared_ptr<SurfaceBufferChain> buffer_chain;
+		std::shared_ptr<DoubleBuffering<wlr_buffer>> buffer_chain;
 		auto it = server->surface_buffer_chains.find(zenith_surface->id);
 		if (it == server->surface_buffer_chains.end()) {
-			buffer_chain = std::make_shared<SurfaceBufferChain>();
+			buffer_chain = std::make_shared<DoubleBuffering<wlr_buffer>>();
 			server->surface_buffer_chains.insert(std::pair(zenith_surface->id, buffer_chain));
 			FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) zenith_surface->id);
 		} else {
@@ -58,7 +59,7 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 			FlutterEngineMarkExternalTextureFrameAvailable(server->embedder_state->engine,
 			                                               (int64_t) zenith_surface->id);
 		}
-		buffer_chain->commit_new_buffer(&surface->buffer->base);
+		buffer_chain->commit_new_buffer(scoped_wlr_buffer(&surface->buffer->base));
 
 		wlr_gles2_texture_attribs attribs{};
 		wlr_gles2_texture_get_attribs(texture, &attribs);

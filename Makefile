@@ -1,3 +1,4 @@
+CC := clang
 CXX := clang++ -std=c++17
 
 uname_m = $(shell uname -m)

@@ -9,7 +9,7 @@
 #include "task_runner.hpp"
 #include "basic_message_channel.h"
 #include "document.h"
-#include "surface_buffer_chain.hpp"
+#include "double_buffering.hpp"
 
 extern "C" {
 #include <wlr/render/egl.h>
@@ -61,5 +61,5 @@ struct EmbedderState {
 
 	// Keeps alive surface buffers, even after the surfaces are destroyed.
 	// This allows Flutter to play closing animations on surfaces that don't exist anymore.
-	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain>> buffer_chains_in_use = {};
+	std::unordered_map<size_t, std::shared_ptr<DoubleBuffering<wlr_buffer>>> buffer_chains_in_use = {};
 };

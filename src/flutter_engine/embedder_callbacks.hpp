@@ -13,7 +13,7 @@ bool commit_framebuffer();
 
 uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info);
 
-GLint attach_framebuffer();
+GLuint attach_framebuffer();
 
 void flutter_vsync_callback(void* userdata, intptr_t baton);
 
