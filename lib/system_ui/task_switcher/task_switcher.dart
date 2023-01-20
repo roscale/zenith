@@ -414,7 +414,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     final scaleAnimation = _scaleAnimationController!.drive(scaleAnimatable);
     scaleAnimation.addListener(() => notifier.scale = scaleAnimation.value);
 
-    final scaleAnimationFuture = _scaleAnimationController!.forward();
+    final scaleAnimationFuture = _scaleAnimationController!.forward().orCancel.catchError((ignore) => null);
 
     notifier.areAnimationsPlaying = true;
     await Future.wait([positionAnimationFuture, scaleAnimationFuture]);
