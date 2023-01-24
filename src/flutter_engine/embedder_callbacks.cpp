@@ -31,12 +31,8 @@ uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrame
 
 GLuint attach_framebuffer() {
 	ZenithServer* server = ZenithServer::instance();
-	channel<GLuint> fb_chan{};
-	server->callable_queue.enqueue([&]() {
-		wlr_gles2_buffer* gles2_buffer = server->output->swap_chain.start_write();
-		fb_chan.write(gles2_buffer->fbo);
-	});
-	return fb_chan.read();
+	wlr_gles2_buffer* gles2_buffer = server->output->swap_chain->start_write();
+	return gles2_buffer->fbo;
 }
 
 bool flutter_present(void* userdata) {
@@ -49,14 +45,8 @@ bool flutter_present(void* userdata) {
 
 bool commit_framebuffer() {
 	ZenithServer* server = ZenithServer::instance();
-	channel<bool> success{};
-
-	server->callable_queue.enqueue([&success]() {
-		ZenithServer* server = ZenithServer::instance();
-		server->output->swap_chain.end_write();
-		success.write(true);
-	});
-	return success.read();
+	server->output->swap_chain->end_write();
+	return true;
 }
 
 void flutter_vsync_callback(void* userdata, intptr_t baton) {
@@ -77,26 +67,32 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 	channel<wlr_gles2_texture_attribs> texture_attribs{};
 
 	server->callable_queue.enqueue([&]() {
-		auto it = server->surface_buffer_chains.find(view_id);
-		if (it == server->surface_buffer_chains.end()) {
+		std::scoped_lock lock(state->buffer_chains_mutex);
+		auto find_client_chain = [&]() -> std::shared_ptr<DoubleBuffering<wlr_buffer>> {
+			auto it = state->buffer_chains_in_use.find(view_id);
+			if (it != state->buffer_chains_in_use.end()) {
+				return it->second;
+			}
+			it = server->surface_buffer_chains.find(view_id);
+			if (it != server->surface_buffer_chains.end()) {
+				state->buffer_chains_in_use[view_id] = it->second;
+				return it->second;
+			}
+			return nullptr;
+		};
+
+		const auto& client_chain = find_client_chain();
+
+		if (client_chain == nullptr) {
 			texture_attribs.write({});
 			return;
 		}
-		const auto& client_chain = it->second;
-
-		state->buffer_chains_in_use[view_id] = client_chain;
 
 		wlr_buffer* buffer = client_chain->start_rendering();
-		if (buffer == nullptr) {
-			texture_attribs.write({});
-			return;
-		}
+		assert(buffer != nullptr);
 
 		wlr_texture* texture = wlr_client_buffer_get(buffer)->texture;
-		if (texture == nullptr) {
-			texture_attribs.write({});
-			return;
-		}
+		assert(texture != nullptr);
 
 		wlr_gles2_texture_attribs attribs{};
 		wlr_gles2_texture_get_attribs(texture, &attribs);
@@ -109,16 +105,17 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 		return false;
 	}
 
-//	std::cout << "target " << attribs.target << std::endl;
-
 	texture_out->target = attribs.target;
 	texture_out->format = GL_RGBA8;
 	texture_out->name = attribs.tex;
 	texture_out->user_data = (void*) view_id;
+
 	texture_out->destruction_callback = [](void* user_data) {
 		auto* server = ZenithServer::instance();
 		auto view_id = reinterpret_cast<int64_t>(user_data);
 		server->callable_queue.enqueue([=]() {
+			std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
+
 			auto& buffer_chains_in_use = server->embedder_state->buffer_chains_in_use;
 
 			auto it = buffer_chains_in_use.find(view_id);

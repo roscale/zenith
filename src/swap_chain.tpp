@@ -21,17 +21,20 @@ SwapChain<T>::SwapChain(const std::array<std::shared_ptr<T>, 4>& buffers) {
 
 template<class T>
 T* SwapChain<T>::start_write() {
+	std::scoped_lock lock(mutex);
 	return write_buffer.get();
 }
 
 template<class T>
 void SwapChain<T>::end_write() {
+	std::scoped_lock lock(mutex);
 	std::swap(write_buffer, latest_buffer);
 	new_buffer_available = true;
 }
 
 template<class T>
 T* SwapChain<T>::start_read() {
+	std::scoped_lock lock(mutex);
 	if (new_buffer_available) {
 		// read1 read2 latest write -> latest read1 read2 write
 		std::swap(latest_buffer, read_buffer_1);
@@ -43,6 +46,7 @@ T* SwapChain<T>::start_read() {
 
 template<class T>
 SwapChain<T>::~SwapChain() {
+	std::scoped_lock lock(mutex);
 	read_buffer_1 = nullptr;
 	read_buffer_2 = nullptr;
 	write_buffer = nullptr;

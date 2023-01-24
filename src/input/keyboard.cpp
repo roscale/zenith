@@ -13,7 +13,6 @@ extern "C" {
 #define static
 #include <wlr/interfaces/wlr_input_device.h>
 #include <wlr/types/wlr_xdg_shell.h>
-#include <wlr/render/gles2.h>
 #undef static
 }
 

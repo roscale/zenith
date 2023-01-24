@@ -11,7 +11,7 @@ import 'package:zenith/state/screen_state.dart';
 import 'package:zenith/widgets/desktop.dart';
 
 void main() {
-  // debugRepaintRainbowEnabled = true;
+  debugRepaintRainbowEnabled = true;
 
   // FIXME: FlutterEngineMarkExternalTextureFrameAvailable does not trigger a VSync fast enough,
   // so Flutter will only VSync every second frame. Marking a texture after FlutterEngineOnVsync

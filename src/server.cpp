@@ -1,7 +1,7 @@
 #include "server.hpp"
 #include "debug.hpp"
-#include "time.hpp"
 #include "assert.hpp"
+#include "egl_extensions.hpp"
 #include <unistd.h>
 #include <sys/eventfd.h>
 
@@ -154,6 +154,7 @@ ZenithServer::ZenithServer() {
 	auto* event_loop = wl_display_get_event_loop(display);
 	wl_event_loop_add_fd(event_loop, callable_queue.get_fd(), WL_EVENT_READABLE, callable_queue_function, nullptr);
 
+	load_egl_extensions();
 	// TODO: Implement drag and drop.
 }
 
@@ -297,4 +298,8 @@ void server_seat_request_set_selection(wl_listener* listener, void* data) {
 	auto* event = static_cast<wlr_seat_request_set_selection_event*>(data);
 	wlr_seat_set_selection(server->seat, event->source, event->serial);
 	// TODO: Add security. Don't let any client overwrite the clipboard randomly.
+}
+
+bool is_main_thread() {
+	return std::this_thread::get_id() == ZenithServer::instance()->main_thread_id;
 }

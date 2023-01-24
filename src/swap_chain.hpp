@@ -10,6 +10,8 @@ template<class T>
 struct SwapChain {
 	explicit SwapChain(const std::array<std::shared_ptr<T>, 4>& buffers);
 
+	std::mutex mutex = {};
+
 	/*
 	 * We need 2 read buffers because when start_read is called, the monitor might not have finished
 	 * scanning out the previous frame. We don't want the frame to be picked up right away for writing.

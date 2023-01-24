@@ -48,24 +48,26 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
 
   late final keyboardWidget = Align(
     alignment: Alignment.bottomCenter,
-    child: ValueListenableBuilder(
-      valueListenable: slideAnimation,
-      builder: (_, Animation<Offset> animation, Widget? child) {
-        return SlideTransition(
-          position: animation,
-          child: child!,
-        );
-      },
-      child: ProviderScope(
-        overrides: [
-          keyboardIdProvider.overrideWithValue(widget.viewId),
-        ],
-        child: RepaintBoundary(
-          child: VirtualKeyboard(
-            key: key,
-            onDismiss: () => ref.read(virtualKeyboardStateProvider(widget.viewId).notifier).activated = false,
-            onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
-            onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
+    child: RepaintBoundary(
+      child: ValueListenableBuilder(
+        valueListenable: slideAnimation,
+        builder: (_, Animation<Offset> animation, Widget? child) {
+          return SlideTransition(
+            position: animation,
+            child: child!,
+          );
+        },
+        child: ProviderScope(
+          overrides: [
+            keyboardIdProvider.overrideWithValue(widget.viewId),
+          ],
+          child: RepaintBoundary(
+            child: VirtualKeyboard(
+              key: key,
+              onDismiss: () => ref.read(virtualKeyboardStateProvider(widget.viewId).notifier).activated = false,
+              onCharacter: (String char) => PlatformApi.insertText(widget.viewId, char),
+              onKeyCode: (KeyCode keyCode) => PlatformApi.emulateKeyCode(widget.viewId, keyCode.code),
+            ),
           ),
         ),
       ),

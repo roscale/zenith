@@ -19,7 +19,8 @@ extern "C" {
 struct ZenithServer;
 
 struct ZenithOutput {
-	ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output, SwapChain<wlr_gles2_buffer> swap_chain);
+	ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output,
+	             std::unique_ptr<SwapChain<wlr_gles2_buffer>> swap_chain);
 
 	ZenithServer* server = nullptr;
 
@@ -28,7 +29,7 @@ struct ZenithOutput {
 	wl_listener mode_changed{};
 	wl_event_source* schedule_frame_timer;
 
-	SwapChain<wlr_gles2_buffer> swap_chain;
+	std::unique_ptr<SwapChain<wlr_gles2_buffer>> swap_chain;
 };
 
 /*

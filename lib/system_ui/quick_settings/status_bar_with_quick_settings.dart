@@ -46,29 +46,31 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
 
     return Stack(
       children: [
-        StatusBar(
-          onVerticalDragStart: (details) {
-            verticalExpansionThreshold = 0;
-            if (quickSettingsController.value <= 0.0) {
-              setState(() {
-                startDragHorizontalPosition = details.globalPosition.dx;
-              });
-            }
-          },
-          onVerticalDragUpdate: (details) {
-            if (details.delta.dy < 0 &&
-                details.globalPosition.dy > verticalExpansionThreshold &&
-                verticalExpansionThreshold != 0) {
-              return;
-            }
-            quickSettingsController.value += details.delta.dy / height;
-            if (quickSettingsController.value >= 1.0 && verticalExpansionThreshold == 0) {
-              verticalExpansionThreshold = details.globalPosition.dy;
-            }
-          },
-          onVerticalDragEnd: (details) {
-            startSlideAnimation(details.velocity.pixelsPerSecond.dy);
-          },
+        RepaintBoundary(
+          child: StatusBar(
+            onVerticalDragStart: (details) {
+              verticalExpansionThreshold = 0;
+              if (quickSettingsController.value <= 0.0) {
+                setState(() {
+                  startDragHorizontalPosition = details.globalPosition.dx;
+                });
+              }
+            },
+            onVerticalDragUpdate: (details) {
+              if (details.delta.dy < 0 &&
+                  details.globalPosition.dy > verticalExpansionThreshold &&
+                  verticalExpansionThreshold != 0) {
+                return;
+              }
+              quickSettingsController.value += details.delta.dy / height;
+              if (quickSettingsController.value >= 1.0 && verticalExpansionThreshold == 0) {
+                verticalExpansionThreshold = details.globalPosition.dy;
+              }
+            },
+            onVerticalDragEnd: (details) {
+              startSlideAnimation(details.velocity.pixelsPerSecond.dy);
+            },
+          ),
         ),
         ValueListenableBuilder(
           valueListenable: quickSettingsController,
@@ -102,22 +104,24 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
         ),
         Positioned(
           left: (startDragHorizontalPosition - width / 2).clamp(0, MediaQuery.of(context).size.width - width),
-          child: SlideTransition(
-            position: quickSettingsAnimation,
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: GestureDetector(
-                child: QuickSettings(
-                  onChangeBrightnessStart: () => disableFading.value = true,
-                  onChangeBrightnessEnd: () => disableFading.value = false,
+          child: RepaintBoundary(
+            child: SlideTransition(
+              position: quickSettingsAnimation,
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: GestureDetector(
+                  child: QuickSettings(
+                    onChangeBrightnessStart: () => disableFading.value = true,
+                    onChangeBrightnessEnd: () => disableFading.value = false,
+                  ),
+                  onVerticalDragUpdate: (details) {
+                    quickSettingsController.value += details.delta.dy / height;
+                  },
+                  onVerticalDragEnd: (details) {
+                    startSlideAnimation(details.velocity.pixelsPerSecond.dy);
+                  },
                 ),
-                onVerticalDragUpdate: (details) {
-                  quickSettingsController.value += details.delta.dy / height;
-                },
-                onVerticalDragEnd: (details) {
-                  startSlideAnimation(details.velocity.pixelsPerSecond.dy);
-                },
               ),
             ),
           ),

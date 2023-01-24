@@ -19,8 +19,9 @@ extern "C" {
 #undef static
 }
 
-ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output, SwapChain<wlr_gles2_buffer> swap_chain)
-	  : server(server), wlr_output(wlr_output), swap_chain(swap_chain) {
+ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output,
+                           std::unique_ptr<SwapChain<wlr_gles2_buffer>> swap_chain)
+	  : server(server), wlr_output(wlr_output), swap_chain(std::move(swap_chain)) {
 
 	frame_listener.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &frame_listener);
@@ -82,10 +83,10 @@ void output_create_handle(wl_listener* listener, void* data) {
 		buffer = scoped_wlr_gles2_buffer(gles2_buffer);
 	}
 
-	SwapChain swap_chain(buffers);
+	auto swap_chain = std::make_unique<SwapChain<wlr_gles2_buffer>>(buffers);
 
 	// Create the output.
-	auto output = std::make_unique<ZenithOutput>(server, wlr_output, swap_chain);
+	auto output = std::make_unique<ZenithOutput>(server, wlr_output, std::move(swap_chain));
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
 	// Cache the layout box.
@@ -119,6 +120,8 @@ void output_frame(wl_listener* listener, void* data) {
 
 	vsync_callback(server);
 
+	timespec now{};
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	for (auto& [id, view]: server->xdg_toplevels) {
 		wlr_xdg_surface* xdg_surface = view->xdg_toplevel->base;
 		if (!xdg_surface->mapped || !view->visible) {
@@ -126,8 +129,6 @@ void output_frame(wl_listener* listener, void* data) {
 			continue;
 		}
 
-		timespec now{};
-		clock_gettime(CLOCK_MONOTONIC, &now);
 		// Notify all mapped surfaces belonging to this toplevel.
 		wlr_xdg_surface_for_each_surface(xdg_surface, [](struct wlr_surface* surface, int sx, int sy, void* data) {
 			auto* now = static_cast<timespec*>(data);
@@ -135,12 +136,13 @@ void output_frame(wl_listener* listener, void* data) {
 		}, &now);
 	}
 
-	wlr_gles2_buffer* buffer = output->swap_chain.start_read();
+	wlr_gles2_buffer* buffer = output->swap_chain->start_read();
 	wlr_output_attach_buffer(wlr_output, buffer->buffer);
 	if (!wlr_output_commit(wlr_output)) {
 		// If committing fails for some reason, manually schedule a new frame, otherwise rendering stops completely.
 		// After 1 ms because if we do it right away, it will saturate the event loop and no other
 		// tasks will execute.
+		std::cerr << "commit failed" << std::endl;
 		wl_event_source_timer_update(output->schedule_frame_timer, 1);
 		return;
 	}

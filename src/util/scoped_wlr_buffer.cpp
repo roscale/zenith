@@ -1,7 +1,9 @@
+#include <functional>
 #include "scoped_wlr_buffer.hpp"
 
-std::shared_ptr<wlr_buffer> scoped_wlr_buffer(wlr_buffer* buffer) {
-	return {wlr_buffer_lock(buffer), [](wlr_buffer* buffer) {
+std::shared_ptr<wlr_buffer> scoped_wlr_buffer(wlr_buffer* buffer, const Deleter& deleter) {
+	return {wlr_buffer_lock(buffer), [deleter](wlr_buffer* buffer) {
+		deleter(buffer);
 		wlr_buffer_unlock(buffer);
 	}};
 }

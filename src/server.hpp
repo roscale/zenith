@@ -89,7 +89,6 @@ public:
 	wl_listener new_toplevel_decoration{};
 	wl_listener request_set_selection{};
 
-	std::unordered_map<size_t, std::shared_ptr<DoubleBuffering<wlr_buffer>>> surface_buffer_chains{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithSurface>> surfaces{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithSubsurface>> subsurfaces{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithXdgSurface>> xdg_surfaces{};
@@ -103,10 +102,13 @@ public:
 	std::unordered_set<ZenithTextInput*> text_inputs{};
 
 	std::unique_ptr<EmbedderState> embedder_state{};
-	std::vector<wlr_buffer*> locked_buffers{};
+
+	std::unordered_map<size_t, std::shared_ptr<DoubleBuffering<wlr_buffer>>> surface_buffer_chains{};
 
 	CallableQueue callable_queue{};
 };
+
+bool is_main_thread();
 
 /*
  * This event is raised by the backend when a new input device becomes available.

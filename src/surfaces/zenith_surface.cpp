@@ -1,11 +1,17 @@
+#include <sys/ioctl.h>
+#include <xf86drm.h>
+#include <unistd.h>
 #include "zenith_surface.hpp"
 #include "server.hpp"
 #include "messages.hpp"
 #include "xdg_surface_get_visible_bounds.hpp"
-#include "time.hpp"
 #include "scoped_wlr_buffer.hpp"
+#include "egl_extensions.hpp"
+#include <EGL/eglext.h>
 
 extern "C" {
+#include "dma-buf.h"
+
 #define static
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/render/gles2.h>
@@ -33,36 +39,47 @@ void zenith_surface_create(wl_listener* listener, void* data) {
 	server->surfaces.insert(std::make_pair(zenith_surface->id, zenith_surface));
 }
 
+int extract_sync_fd_from_dma_buf(wlr_buffer* buffer, const wlr_dmabuf_attributes& dmabuf_attributes);
+
+int extract_fd_from_native_fence(EGLSyncKHR* sync_out);
+
+void schedule_buffer_commit_on_fd(int fd, size_t view_id, std::shared_ptr<wlr_buffer> buffer);
+
 void zenith_surface_commit(wl_listener* listener, void* data) {
 	ZenithSurface* zenith_surface = wl_container_of(listener, zenith_surface, commit);
 	wlr_surface* surface = zenith_surface->surface;
+	wlr_buffer* buffer = &surface->buffer->base;
 
 	SurfaceCommitMessage commit_message{};
 	commit_message.view_id = zenith_surface->id;
 
-	wlr_texture* texture = wlr_surface_get_texture(zenith_surface->surface);
+	wlr_texture* texture = wlr_surface_get_texture(surface);
 	if (texture != nullptr && wlr_texture_is_gles2(texture)) {
-		// Wait for the texture to fully render, otherwise we'll see visual artifacts.
-		glFinish();
+		wlr_dmabuf_attributes dmabuf_attributes = {};
+		bool is_dma = wlr_buffer_get_dmabuf(&surface->buffer->base, &dmabuf_attributes);
 
-		assert(surface->buffer != nullptr);
-		auto* server = ZenithServer::instance();
-
-		std::shared_ptr<DoubleBuffering<wlr_buffer>> buffer_chain;
-		auto it = server->surface_buffer_chains.find(zenith_surface->id);
-		if (it == server->surface_buffer_chains.end()) {
-			buffer_chain = std::make_shared<DoubleBuffering<wlr_buffer>>();
-			server->surface_buffer_chains.insert(std::pair(zenith_surface->id, buffer_chain));
-			FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) zenith_surface->id);
+		if (is_dma) {
+			int sync_fd = extract_sync_fd_from_dma_buf(buffer, dmabuf_attributes);
+			if (sync_fd != -1) {
+				auto scoped_buffer = scoped_wlr_buffer(buffer, [sync_fd](wlr_buffer* buffer) {
+					close(sync_fd);
+				});
+				schedule_buffer_commit_on_fd(sync_fd, zenith_surface->id, scoped_buffer);
+			}
 		} else {
-			buffer_chain = it->second;
-			FlutterEngineMarkExternalTextureFrameAvailable(server->embedder_state->engine,
-			                                               (int64_t) zenith_surface->id);
-		}
-		buffer_chain->commit_new_buffer(scoped_wlr_buffer(&surface->buffer->base));
+			EGLSyncKHR sync = nullptr;
+			int fence_fd = extract_fd_from_native_fence(&sync);
+			if (fence_fd != -1 && sync != nullptr) {
+				wlr_egl* egl = wlr_gles2_renderer_get_egl(ZenithServer::instance()->renderer);
+				EGLDisplay egl_display = egl->display;
 
-		wlr_gles2_texture_attribs attribs{};
-		wlr_gles2_texture_get_attribs(texture, &attribs);
+				auto scoped_buffer = scoped_wlr_buffer(buffer, [fence_fd, egl_display, sync](wlr_buffer* buffer) {
+					eglDestroySyncKHR(egl_display, sync);
+					close(fence_fd);
+				});
+				schedule_buffer_commit_on_fd(fence_fd, zenith_surface->id, scoped_buffer);
+			}
+		}
 	}
 
 	SurfaceRole role;
@@ -155,4 +172,105 @@ void zenith_surface_destroy(wl_listener* listener, void* data) {
 	bool erased = server->surfaces.erase(zenith_surface->id);
 	assert(erased);
 	// TODO: Send destroy to Flutter.
+}
+
+int extract_sync_fd_from_dma_buf(wlr_buffer* buffer, const wlr_dmabuf_attributes& dmabuf_attributes) {
+	if (dmabuf_attributes.n_planes <= 0) {
+		return -1;
+	}
+	// All planes should have the same fd.
+	int dma_fd = dmabuf_attributes.fd[0];
+
+	// https://gitlab.freedesktop.org/mesa/mesa/-/blob/2e9ce1152e7205116050c5d7da58a2a66d0ed909/src/vulkan/wsi/wsi_common_drm.c#L50
+	dma_buf_export_sync_file sync_file = {
+		  .flags = DMA_BUF_SYNC_READ,
+		  .fd = -1,
+	};
+	int ret = drmIoctl(dma_fd, DMA_BUF_IOCTL_EXPORT_SYNC_FILE, &sync_file);
+	if (ret != 0) {
+		return -1;
+	}
+	int sync_fd = sync_file.fd;
+	return sync_fd;
+}
+
+// https://registry.khronos.org/EGL/extensions/ANDROID/EGL_ANDROID_native_fence_sync.txt
+// Calls `glFence()` and extracts the file descriptor from it, so we can receive a notification
+// through the event loop when all GPU commands finish.
+int extract_fd_from_native_fence(EGLSyncKHR* sync_out) {
+	assert(sync_out != nullptr);
+
+	EGLint attrib_list[] = {
+		  EGL_SYNC_NATIVE_FENCE_FD_ANDROID, EGL_NO_NATIVE_FENCE_FD_ANDROID,
+		  EGL_NONE,
+	};
+
+	wlr_egl* egl = wlr_gles2_renderer_get_egl(ZenithServer::instance()->renderer);
+	wlr_egl_make_current(egl);
+
+	EGLSyncKHR sync = eglCreateSyncKHR(egl->display, EGL_SYNC_NATIVE_FENCE_ANDROID, attrib_list);
+
+	auto error = [&] {
+		if (sync != EGL_NO_SYNC_KHR) {
+			eglDestroySyncKHR(egl->display, sync);
+		}
+		*sync_out = EGL_NO_SYNC_KHR;
+		return -1;
+	};
+
+	if (sync == EGL_NO_SYNC_KHR) {
+		return error();
+	}
+	glFlush();
+
+	int fence_fd = eglDupNativeFenceFDANDROID(egl->display, sync);
+	if (fence_fd == EGL_NO_NATIVE_FENCE_FD_ANDROID) {
+		return error();
+	}
+
+	*sync_out = sync;
+	return fence_fd;
+}
+
+// Commits the buffer when the file descriptor becomes readable.
+void schedule_buffer_commit_on_fd(int fd, size_t view_id, std::shared_ptr<wlr_buffer> buffer) {
+	struct SourceData {
+		size_t id;
+		std::shared_ptr<wlr_buffer> buffer;
+		wl_event_source* source; // I want the source to remove itself.
+	};
+
+	auto* source_data = new SourceData{
+		  .id = view_id,
+		  .buffer = std::move(buffer),
+		  .source = nullptr,
+	};
+
+	wl_event_loop_fd_func_t func = [](int fd, uint32_t mask, void* data) {
+		auto source_data = static_cast<SourceData*>(data);
+		auto* server = ZenithServer::instance();
+		size_t id = source_data->id;
+
+		std::shared_ptr<DoubleBuffering<wlr_buffer>> buffer_chain;
+		auto it = server->surface_buffer_chains.find(id);
+		if (it == server->surface_buffer_chains.end()) {
+			buffer_chain = std::make_shared<DoubleBuffering<wlr_buffer>>();
+			server->surface_buffer_chains.insert(std::pair(id, buffer_chain));
+			FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) id);
+		} else {
+			buffer_chain = it->second;
+		}
+
+		buffer_chain->commit_new_buffer(std::move(source_data->buffer));
+
+		FlutterEngineMarkExternalTextureFrameAvailable(server->embedder_state->engine,
+		                                               (int64_t) id);
+
+		wl_event_source_remove(source_data->source);
+		delete source_data;
+		return 0;
+	};
+
+	wl_event_loop* event_loop = wl_display_get_event_loop(ZenithServer::instance()->display);
+	source_data->source = wl_event_loop_add_fd(event_loop, fd, WL_EVENT_READABLE, func, source_data);
 }

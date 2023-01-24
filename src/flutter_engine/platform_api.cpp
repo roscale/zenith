@@ -13,7 +13,6 @@ extern "C" {
 #define static
 #include "wlr/types/wlr_seat.h"
 #include "wlr/types/wlr_xdg_shell.h"
-#include <wlr/render/gles2.h>
 #undef static
 }
 
@@ -125,6 +124,7 @@ void unregister_view_texture(ZenithServer* server,
 
 	FlutterEngineUnregisterExternalTexture(server->embedder_state->engine, (int64_t) texture_id);
 
+	std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
 	server->embedder_state->buffer_chains_in_use.erase(texture_id);
 
 	result->Success();
