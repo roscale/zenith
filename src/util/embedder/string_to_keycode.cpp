@@ -27,7 +27,7 @@ std::optional<KeyCombination> string_to_keycode(const char* string, xkb_state* s
 						  continue;
 					  }
 
-					  std::string sym_str = buffer; // n - 1 to exclude the terminating byte
+					  std::string sym_str = buffer;
 					  if (sym_str == string) {
 						  xkb_mod_mask_t mask;
 						  size_t n = xkb_keymap_key_get_mods_for_level(keymap, key, layout, level, &mask, 1);

@@ -23,7 +23,7 @@ class CallableQueue {
 
 	int fd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
 	std::queue<Callable> callables = {};
-	std::mutex mutex;
+	std::mutex mutex = {};
 
 public:
 	[[nodiscard]] int get_fd() const;

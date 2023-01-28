@@ -1,7 +1,6 @@
 #include <cassert>
 #include "server.hpp"
 #include "text_input.hpp"
-#include "messages.hpp"
 #include "surfaces/zenith_surface.hpp"
 
 using namespace flutter;
@@ -43,7 +42,7 @@ void ZenithTextInput::disable() const {
 	assert(wlr_text_input->focused_surface != nullptr);
 	auto* view = static_cast<ZenithSurface*>(wlr_text_input->focused_surface->data);
 	view->active_text_input = nullptr;
-	send_text_input_disabled(ZenithServer::instance()->embedder_state->messenger, view->id);
+	ZenithServer::instance()->embedder_state->send_text_input_event(view->id, TextInputEventType::disable);
 }
 
 void text_input_create_handle(wl_listener* listener, void* data) {
@@ -67,7 +66,7 @@ void text_input_enable_handle(wl_listener* listener, void* data) {
 	auto* view = static_cast<ZenithSurface*>(surface->data);
 	view->active_text_input = text_input;
 
-	send_text_input_enabled(ZenithServer::instance()->embedder_state->messenger, view->id);
+	ZenithServer::instance()->embedder_state->send_text_input_event(view->id, TextInputEventType::enable);
 }
 
 void text_input_disable_handle(wl_listener* listener, void* data) {
@@ -90,7 +89,7 @@ void text_input_commit_handle(wl_listener* listener, void* data) {
 	wlr_surface* surface = wlr_text_input->focused_surface;
 
 	auto* view = static_cast<ZenithSurface*>(surface->data);
-	send_text_input_committed(ZenithServer::instance()->embedder_state->messenger, view->id);
+	ZenithServer::instance()->embedder_state->send_text_input_event(view->id, TextInputEventType::commit);
 }
 
 void text_input_destroy_handle(wl_listener* listener, void* data) {

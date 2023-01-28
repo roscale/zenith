@@ -37,7 +37,7 @@ GLuint attach_framebuffer() {
 
 bool flutter_present(void* userdata) {
 	// Wait for the buffer to finish rendering before we commit it to the screen.
-	glFinish(); // glFlush still causes flickering on my phone.
+	glFinish();
 
 	bool success = commit_framebuffer();
 	return success;
@@ -51,12 +51,7 @@ bool commit_framebuffer() {
 
 void flutter_vsync_callback(void* userdata, intptr_t baton) {
 	auto* state = static_cast<EmbedderState*>(userdata);
-
-	std::scoped_lock lock(state->baton_mutex);
-
-	assert(state->new_baton == false);
-	state->new_baton = true;
-	state->baton = baton;
+	state->set_baton(baton);
 }
 
 bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
@@ -68,7 +63,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 
 	server->callable_queue.enqueue([&]() {
 		std::scoped_lock lock(state->buffer_chains_mutex);
-		auto find_client_chain = [&]() -> std::shared_ptr<DoubleBuffering<wlr_buffer>> {
+		auto find_client_chain = [&]() -> std::shared_ptr<SurfaceBufferChain<wlr_buffer>> {
 			auto it = state->buffer_chains_in_use.find(view_id);
 			if (it != state->buffer_chains_in_use.end()) {
 				return it->second;
@@ -88,7 +83,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 			return;
 		}
 
-		wlr_buffer* buffer = client_chain->start_rendering();
+		wlr_buffer* buffer = client_chain->start_read();
 		assert(buffer != nullptr);
 
 		wlr_texture* texture = wlr_client_buffer_get(buffer)->texture;
@@ -120,7 +115,7 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 
 			auto it = buffer_chains_in_use.find(view_id);
 			if (it != buffer_chains_in_use.end()) {
-				it->second->finish_rendering();
+				it->second->end_read();
 			}
 		});
 	};
@@ -151,8 +146,12 @@ bool flutter_make_resource_current(void* userdata) {
  * This flips the rendering on the x-axis.
  */
 FlutterTransformation flutter_surface_transformation(void* data) {
-	auto* state = static_cast<EmbedderState*>(data);
-	double height = state->server->output->wlr_output->height;
+	channel<double> height_chan = {};
+	auto* server = ZenithServer::instance();
+	server->callable_queue.enqueue([server, &height_chan] {
+		height_chan.write(server->output->wlr_output->height);
+	});
+	double height = height_chan.read();
 
 	return FlutterTransformation{
 		  1.0, 0.0, 0.0, 0.0, -1.0, height, 0.0, 0.0, 1.0,

@@ -7,7 +7,7 @@
 #include <mutex>
 #include "embedder_state.hpp"
 #include "swap_chain.hpp"
-#include "wlr_helpers.hpp"
+#include "util/wlr/wlr_helpers.hpp"
 #include <GLES2/gl2.h>
 
 extern "C" {

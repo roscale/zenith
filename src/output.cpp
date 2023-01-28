@@ -1,9 +1,9 @@
 #include "output.hpp"
 #include "server.hpp"
 #include "embedder_callbacks.hpp"
-#include "wlr_helpers.hpp"
+#include "util/wlr/wlr_helpers.hpp"
 #include "swap_chain.hpp"
-#include "scoped_wlr_buffer.hpp"
+#include "util/wlr/scoped_wlr_buffer.hpp"
 #include "debug.hpp"
 #include <unistd.h>
 
@@ -170,24 +170,20 @@ void mode_changed_event(wl_listener* listener, void* data) {
 int vsync_callback(void* data) {
 	auto* server = static_cast<ZenithServer*>(data);
 	auto& output = server->output;
-	auto& flutter_engine_state = server->embedder_state;
+	auto& embedder_state = server->embedder_state;
 
 	/*
 	 * Notify the compositor to prepare a new frame for the next time.
 	 */
-	std::scoped_lock lock(flutter_engine_state->baton_mutex);
-
-	if (flutter_engine_state->new_baton) {
-		intptr_t baton = flutter_engine_state->baton;
-		flutter_engine_state->new_baton = false;
-
+	std::optional<intptr_t> baton = embedder_state->get_baton();
+	if (baton.has_value()) {
 		double refresh_rate = output->wlr_output->refresh != 0
 		                      ? (double) output->wlr_output->refresh / 1000
 		                      : 60; // Suppose it's 60Hz if the refresh rate is not available.
 
 		uint64_t now = FlutterEngineGetCurrentTime();
 		uint64_t next_frame = now + (uint64_t) (1'000'000'000ull / refresh_rate);
-		FlutterEngineOnVsync(flutter_engine_state->engine, baton, now, next_frame);
+		embedder_state->on_vsync(*baton, now, next_frame);
 	}
 	return 0;
 }

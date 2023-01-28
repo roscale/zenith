@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:zenith/state/popup_state.dart';
+import 'package:zenith/state/zenith_xdg_popup_state.dart';
 
 part 'zenith_xdg_surface_state.freezed.dart';
 
@@ -53,7 +53,7 @@ class ZenithXdgSurfaceStateNotifier
 
   void addPopup(int viewId) {
     state = state.copyWith(popups: [...state.popups, viewId]);
-    ref.read(popupStateProvider(viewId).notifier).parentViewId = _viewId;
+    ref.read(zenithXdgPopupStateProvider(viewId).notifier).parentViewId = _viewId;
   }
 
   void removePopup(int viewId) {

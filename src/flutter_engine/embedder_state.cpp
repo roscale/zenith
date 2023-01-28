@@ -1,5 +1,4 @@
 #include "embedder_state.hpp"
-#include "util/create_shared_egl_context.hpp"
 #include "embedder_callbacks.hpp"
 #include "platform_api.hpp"
 #include "standard_method_codec.h"
@@ -8,55 +7,55 @@
 #include <thread>
 #include <unistd.h>
 #include "server.hpp"
-#include "egl_helpers.hpp"
 #include "cursor_image_mapping.hpp"
 
-struct ZenithServer;
+using namespace flutter;
 
-EmbedderState::EmbedderState(ZenithServer* server, wlr_egl* main_egl)
-	  : server(server),
-	    message_dispatcher(&messenger),
-	    keyEventChannel(flutter::BasicMessageChannel<rapidjson::Document>(
-			  &messenger,
-			  "flutter/keyevent",
-			  &flutter::JsonMessageCodec::GetInstance()
-	    )) {
+EmbedderState::EmbedderState(wlr_egl* flutter_gl_context, wlr_egl* flutter_resource_gl_context)
+	  : message_dispatcher(&messenger),
+	    flutter_gl_context(flutter_gl_context),
+	    flutter_resource_gl_context(flutter_resource_gl_context),
+	    event_loop(wl_event_loop_create()) {
 
 	messenger.SetMessageDispatcher(&message_dispatcher);
-
-	ZenithEglContext saved_egl_context{};
-	zenith_egl_save_context(&saved_egl_context);
-
-	// Create 2 OpenGL shared contexts for rendering operations.
-	wlr_egl_make_current(main_egl);
-	flutter_gl_context = create_shared_egl_context(main_egl);
-	flutter_resource_gl_context = create_shared_egl_context(main_egl);
-	wlr_egl_unset_current(main_egl);
-
-	zenith_egl_restore_context(&saved_egl_context);
 }
 
 void EmbedderState::run_engine() {
-	start_engine();
+	embedder_thread = std::thread([this]() {
+		auto callable_queue_fn = [](int fd, uint32_t mask, void* data) {
+			auto* queue = static_cast<CallableQueue*>(data);
+			return (int) queue->execute();
+		};
 
-	platform_task_runner.set_engine(engine);
+		wl_event_loop_add_fd(event_loop, callable_queue.get_fd(), WL_EVENT_READABLE, callable_queue_fn,
+		                     &callable_queue);
 
-	wl_event_loop* event_loop = wl_display_get_event_loop(server->display);
-	wl_event_loop_add_fd(event_loop, platform_task_runner.timer_fd, WL_EVENT_READABLE,
-	                     [](int fd, uint32_t mask, void* data) -> int {
-		                     auto* state = static_cast<EmbedderState*>(data);
+		while (true) {
+			wl_event_loop_dispatch(event_loop, -1);
+		}
+	});
 
-		                     uint64_t expiration_count;
-		                     read(state->platform_task_runner.timer_fd, &expiration_count, sizeof(uint64_t));
+	callable_queue.enqueue([this] {
+		configure_and_run_engine();
 
-		                     state->platform_task_runner.execute_expired_tasks();
-		                     return 0;
-	                     }, this);
+		platform_task_runner.set_engine(engine);
 
-	register_platform_api();
+		wl_event_loop_add_fd(event_loop, platform_task_runner.timer_fd, WL_EVENT_READABLE,
+		                     [](int fd, uint32_t mask, void* data) -> int {
+			                     auto* state = static_cast<EmbedderState*>(data);
+
+			                     uint64_t expiration_count;
+			                     read(state->platform_task_runner.timer_fd, &expiration_count, sizeof(uint64_t));
+
+			                     state->platform_task_runner.execute_expired_tasks();
+			                     return 0;
+		                     }, this);
+
+		register_platform_api();
+	});
 }
 
-void EmbedderState::start_engine() {
+void EmbedderState::configure_and_run_engine() {
 	/*
 	 * Configure renderer, task runners, and project args.
 	 */
@@ -78,7 +77,7 @@ void EmbedderState::start_engine() {
 	platform_task_runner_description.identifier = 1;
 	platform_task_runner_description.runs_task_on_current_thread_callback = [](void* userdata) {
 		auto* flutter_engine_state = static_cast<EmbedderState*>(userdata);
-		return std::this_thread::get_id() == flutter_engine_state->server->main_thread_id;
+		return std::this_thread::get_id() == flutter_engine_state->embedder_thread.get_id();
 	};
 	platform_task_runner_description.post_task_callback = [](FlutterTask task, uint64_t target_time, void* userdata) {
 		auto* flutter_engine_state = static_cast<EmbedderState*>(userdata);
@@ -132,12 +131,22 @@ void EmbedderState::start_engine() {
 }
 
 void EmbedderState::register_platform_api() {
-	auto& codec = flutter::StandardMethodCodec::GetInstance();
-
 	messenger.SetEngine(engine);
-	platform_method_channel = std::make_unique<flutter::MethodChannel<>>(&messenger, "platform", &codec);
 
-	ZenithServer* server = this->server;
+	key_event_channel = std::make_unique<flutter::BasicMessageChannel<rapidjson::Document>>(
+		  &messenger,
+		  "flutter/keyevent",
+		  &flutter::JsonMessageCodec::GetInstance()
+	);
+
+	auto& standard_codec = flutter::StandardMethodCodec::GetInstance();
+	platform_method_channel = std::make_unique<flutter::MethodChannel<>>(
+		  &messenger,
+		  "platform",
+		  &standard_codec
+	);
+
+	ZenithServer* server = ZenithServer::instance();
 	platform_method_channel->SetMethodCallHandler(
 		  [server](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
 			  const std::string& method_name = call.method_name();
@@ -184,9 +193,13 @@ void EmbedderState::register_platform_api() {
 	);
 
 	// https://api.flutter.dev/flutter/services/SystemChannels/mouseCursor-constant.html
-	mouse_cursor_method_channel = std::make_unique<flutter::MethodChannel<>>(&messenger, "flutter/mousecursor", &codec);
+	mouse_cursor_method_channel = std::make_unique<flutter::MethodChannel<>>(
+		  &messenger,
+		  "flutter/mousecursor",
+		  &standard_codec
+	);
 
-	server = this->server;
+	server = ZenithServer::instance();
 	mouse_cursor_method_channel->SetMethodCallHandler(
 		  [server](const flutter::MethodCall<>& call, std::unique_ptr<flutter::MethodResult<>> result) {
 			  const std::string& method_name = call.method_name();
@@ -195,15 +208,17 @@ void EmbedderState::register_platform_api() {
 				  [[maybe_unused]] auto device = std::get<int32_t>(args[flutter::EncodableValue("device")]);
 				  auto kind = std::get<std::string>(args[flutter::EncodableValue("kind")]);
 
-				  if (server->pointer != nullptr) {
-					  auto iter = g_cursor_image_mapping.find(kind);
-					  const char* cursor = "default";
-					  if (iter != g_cursor_image_mapping.end()) {
-						  cursor = iter->second;
+				  server->callable_queue.enqueue([server, kind] {
+					  if (server->pointer != nullptr) {
+						  auto iter = g_cursor_image_mapping.find(kind);
+						  const char* cursor = "default";
+						  if (iter != g_cursor_image_mapping.end()) {
+							  cursor = iter->second;
+						  }
+						  wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, cursor,
+						                                       server->pointer->cursor);
 					  }
-					  wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, cursor,
-					                                       server->pointer->cursor);
-				  }
+				  });
 				  result->Success();
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + method_name + " does not exist");
@@ -212,6 +227,229 @@ void EmbedderState::register_platform_api() {
 	);
 }
 
-void EmbedderState::send_window_metrics(FlutterWindowMetricsEvent& metrics) const {
-	FlutterEngineSendWindowMetricsEvent(engine, &metrics);
+void EmbedderState::send_window_metrics(FlutterWindowMetricsEvent metrics) {
+	callable_queue.enqueue([this, metrics] {
+		FlutterEngineSendWindowMetricsEvent(engine, &metrics);
+	});
+}
+
+void
+EmbedderState::on_vsync(intptr_t baton, uint64_t frame_start_time_nanos, uint64_t frame_target_time_nanos) {
+	callable_queue.enqueue([=] {
+		FlutterEngineOnVsync(engine, baton, frame_start_time_nanos, frame_target_time_nanos);
+	});
+}
+
+void EmbedderState::send_pointer_event(FlutterPointerEvent pointer_event) {
+	callable_queue.enqueue([=] {
+		FlutterEngineSendPointerEvent(engine, &pointer_event, 1);
+	});
+}
+
+void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
+	callable_queue.enqueue([=] {
+		rapidjson::Document json;
+		json.SetObject();
+		json.AddMember("keymap", "linux", json.GetAllocator());
+		// Even thought Flutter only understands GTK keycodes, these are essentially the same as
+		// xkbcommon keycodes.
+		// https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/wayland/gdkkeys-wayland.c#L179
+		json.AddMember("toolkit", "gtk", json.GetAllocator());
+		json.AddMember("scanCode", message.scan_code, json.GetAllocator());
+		json.AddMember("keyCode", message.keysym, json.GetAllocator());
+		// https://github.com/flutter/engine/blob/2a8ac1e0ca2535a6af17dde3530d277ecd601543/shell/platform/linux/fl_keyboard_manager.cc#L96
+		if (message.keysym < 128) {
+			json.AddMember("specifiedLogicalKey", message.keysym, json.GetAllocator());
+		}
+		json.AddMember("modifiers", message.modifiers, json.GetAllocator());
+		// Normally I would also set `unicodeScalarValues`, but I don't anticipate using this feature.
+		// https://github.com/flutter/flutter/blob/b8f7f1f986/packages/flutter/lib/src/services/raw_keyboard_linux.dart#L55
+
+		switch (message.event.state) {
+			case WL_KEYBOARD_KEY_STATE_PRESSED: {
+				json.AddMember("type", "keydown", json.GetAllocator());
+				break;
+			}
+			case WL_KEYBOARD_KEY_STATE_RELEASED: {
+				json.AddMember("type", "keyup", json.GetAllocator());
+				break;
+			}
+		}
+
+		wlr_event_keyboard_key event_copy = message.event;
+		key_event_channel->Send(json, [event_copy](const uint8_t* reply, size_t reply_size) {
+			auto message = flutter::JsonMessageCodec::GetInstance().DecodeMessage(reply, reply_size);
+			auto& handled_object = message->GetObject()["handled"];
+			bool handled = handled_object.GetBool();
+
+			// If the Flutter engine doesn't handle the key press, forward it to the Wayland client.
+			if (!handled) {
+				ZenithServer::instance()->callable_queue.enqueue([event_copy] {
+					wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, event_copy.time_msec,
+					                             event_copy.keycode,
+					                             event_copy.state);
+				});
+			}
+		});
+	});
+}
+
+void EmbedderState::register_external_texture(int64_t id) {
+	callable_queue.enqueue([=] {
+		FlutterEngineRegisterExternalTexture(engine, id);
+	});
+}
+
+void EmbedderState::mark_external_texture_frame_available(int64_t id) {
+	callable_queue.enqueue([=] {
+		FlutterEngineMarkExternalTextureFrameAvailable(engine, id);
+	});
+}
+
+std::optional<intptr_t> EmbedderState::get_baton() {
+	std::scoped_lock lock(baton_mutex);
+	if (new_baton) {
+		new_baton = false;
+		return baton;
+	}
+	return std::nullopt;
+}
+
+void EmbedderState::set_baton(intptr_t p_baton) {
+	std::scoped_lock lock(baton_mutex);
+	assert(new_baton == false);
+	baton = p_baton;
+	new_baton = true;
+}
+
+FlutterEngine EmbedderState::get_engine() const {
+	return engine;
+}
+
+void EmbedderState::commit_surface(const SurfaceCommitMessage& message) {
+	callable_queue.enqueue([=] {
+		EncodableList subsurfaces_below{};
+		for (const SubsurfaceParentState& state: message.subsurfaces_below) {
+			subsurfaces_below.emplace_back(EncodableMap{
+				  {EncodableValue("id"), EncodableValue(state.id)},
+				  {EncodableValue("x"),  EncodableValue(state.x)},
+				  {EncodableValue("y"),  EncodableValue(state.y)},
+			});
+		}
+		EncodableList subsurfaces_above{};
+		for (const SubsurfaceParentState& state: message.subsurfaces_above) {
+			subsurfaces_above.emplace_back(EncodableMap{
+				  {EncodableValue("id"), EncodableValue(state.id)},
+				  {EncodableValue("x"),  EncodableValue(state.x)},
+				  {EncodableValue("y"),  EncodableValue(state.y)},
+			});
+		}
+
+		auto map = EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) message.view_id)},
+			  {EncodableValue("surface"), EncodableValue(EncodableMap{
+					{EncodableValue("role"),              EncodableValue((int64_t) message.surface.role)},
+					{EncodableValue("textureId"),         EncodableValue(message.surface.texture_id)},
+					{EncodableValue("x"),                 EncodableValue(message.surface.x)},
+					{EncodableValue("y"),                 EncodableValue(message.surface.y)},
+					{EncodableValue("width"),             EncodableValue(message.surface.width)},
+					{EncodableValue("height"),            EncodableValue(message.surface.height)},
+					{EncodableValue("scale"),             EncodableValue(message.surface.scale)},
+					{EncodableValue("subsurfaces_below"), EncodableValue(std::move(subsurfaces_below))},
+					{EncodableValue("subsurfaces_above"), EncodableValue(std::move(subsurfaces_above))},
+					{EncodableValue("input_region"),      EncodableValue(EncodableMap{
+						  {EncodableValue("x1"), EncodableValue((int64_t) message.surface.input_region.x1)},
+						  {EncodableValue("y1"), EncodableValue((int64_t) message.surface.input_region.y1)},
+						  {EncodableValue("x2"), EncodableValue((int64_t) message.surface.input_region.x2)},
+						  {EncodableValue("y2"), EncodableValue((int64_t) message.surface.input_region.y2)},
+					})},
+			  })},
+		};
+		if (message.xdg_surface.has_value()) {
+			map.insert({EncodableValue("has_xdg_surface"), EncodableValue(true)});
+			map.insert({EncodableValue("xdg_surface"), EncodableValue(EncodableMap{
+				  {EncodableValue("role"),   EncodableValue((int64_t) message.xdg_surface->role)},
+				  {EncodableValue("x"),      EncodableValue(message.xdg_surface->x)},
+				  {EncodableValue("y"),      EncodableValue(message.xdg_surface->y)},
+				  {EncodableValue("width"),  EncodableValue(message.xdg_surface->width)},
+				  {EncodableValue("height"), EncodableValue(message.xdg_surface->height)},
+			})});
+		} else {
+			map.insert({EncodableValue("has_xdg_surface"), EncodableValue(false)});
+		}
+
+		if (message.xdg_popup.has_value()) {
+			map.insert({EncodableValue("has_xdg_popup"), EncodableValue(true)});
+			map.insert({EncodableValue("xdg_popup"), EncodableValue(EncodableMap{
+				  {EncodableValue("parent_id"), EncodableValue(message.xdg_popup->parent_id)},
+				  {EncodableValue("x"),         EncodableValue(message.xdg_popup->x)},
+				  {EncodableValue("y"),         EncodableValue(message.xdg_popup->y)},
+				  {EncodableValue("width"),     EncodableValue(message.xdg_popup->width)},
+				  {EncodableValue("height"),    EncodableValue(message.xdg_popup->height)},
+			})});
+		} else {
+			map.insert({EncodableValue("has_xdg_popup"), EncodableValue(false)});
+		}
+
+		auto value = std::make_unique<EncodableValue>(map);
+		platform_method_channel->InvokeMethod("commit_surface", std::move(value));
+	});
+}
+
+void EmbedderState::map_xdg_surface(size_t view_id) {
+	callable_queue.enqueue([=] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+		});
+		platform_method_channel->InvokeMethod("map_xdg_surface", std::move(value));
+	});
+}
+
+void EmbedderState::unmap_xdg_surface(size_t view_id) {
+	callable_queue.enqueue([=] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+		});
+		platform_method_channel->InvokeMethod("unmap_xdg_surface", std::move(value));
+	});
+}
+
+void EmbedderState::map_subsurface(size_t view_id) {
+	callable_queue.enqueue([=] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+		});
+		platform_method_channel->InvokeMethod("map_subsurface", std::move(value));
+	});
+}
+
+void EmbedderState::unmap_subsurface(size_t view_id) {
+	callable_queue.enqueue([=] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+		});
+		platform_method_channel->InvokeMethod("unmap_subsurface", std::move(value));
+	});
+}
+
+void EmbedderState::send_text_input_event(size_t view_id, TextInputEventType event) {
+	callable_queue.enqueue([=] {
+		const char* type;
+		switch (event) {
+			case TextInputEventType::enable:
+				type = "enable";
+				break;
+			case TextInputEventType::disable:
+				type = "disable";
+				break;
+			case TextInputEventType::commit:
+				type = "commit";
+				break;
+		}
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+			  {EncodableValue("type"),    EncodableValue(type)},
+		});
+		platform_method_channel->InvokeMethod("send_text_input_event", std::move(value));
+	});
 }

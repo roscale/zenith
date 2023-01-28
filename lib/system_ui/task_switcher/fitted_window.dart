@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/widgets/window.dart';
 

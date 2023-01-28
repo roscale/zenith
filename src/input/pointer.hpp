@@ -1,7 +1,7 @@
 #pragma once
 
 #include <queue>
-#include "mouse_button_tracker.hpp"
+#include "util/embedder/mouse_button_tracker.hpp"
 
 extern "C" {
 #include "wlr/types/wlr_cursor.h"

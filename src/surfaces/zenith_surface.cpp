@@ -3,10 +3,9 @@
 #include <unistd.h>
 #include "zenith_surface.hpp"
 #include "server.hpp"
-#include "messages.hpp"
-#include "xdg_surface_get_visible_bounds.hpp"
-#include "scoped_wlr_buffer.hpp"
-#include "egl_extensions.hpp"
+#include "util/wlr/xdg_surface_get_visible_bounds.hpp"
+#include "util/wlr/scoped_wlr_buffer.hpp"
+#include "util/egl/egl_extensions.hpp"
 #include <EGL/eglext.h>
 
 extern "C" {
@@ -161,8 +160,7 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 		}
 	}
 
-	BinaryMessenger& messenger = ZenithServer::instance()->embedder_state->messenger;
-	send_surface_commit(messenger, commit_message);
+	ZenithServer::instance()->embedder_state->commit_surface(commit_message);
 }
 
 void zenith_surface_destroy(wl_listener* listener, void* data) {
@@ -251,20 +249,19 @@ void schedule_buffer_commit_on_fd(int fd, size_t view_id, std::shared_ptr<wlr_bu
 		auto* server = ZenithServer::instance();
 		size_t id = source_data->id;
 
-		std::shared_ptr<DoubleBuffering<wlr_buffer>> buffer_chain;
+		std::shared_ptr<SurfaceBufferChain<wlr_buffer>> buffer_chain;
 		auto it = server->surface_buffer_chains.find(id);
 		if (it == server->surface_buffer_chains.end()) {
-			buffer_chain = std::make_shared<DoubleBuffering<wlr_buffer>>();
+			buffer_chain = std::make_shared<SurfaceBufferChain<wlr_buffer>>();
 			server->surface_buffer_chains.insert(std::pair(id, buffer_chain));
-			FlutterEngineRegisterExternalTexture(server->embedder_state->engine, (int64_t) id);
+			server->embedder_state->register_external_texture((int64_t) id);
 		} else {
 			buffer_chain = it->second;
 		}
 
-		buffer_chain->commit_new_buffer(std::move(source_data->buffer));
+		buffer_chain->commit_buffer(std::move(source_data->buffer));
 
-		FlutterEngineMarkExternalTextureFrameAvailable(server->embedder_state->engine,
-		                                               (int64_t) id);
+		server->embedder_state->mark_external_texture_frame_available((int64_t) id);
 
 		wl_event_source_remove(source_data->source);
 		delete source_data;

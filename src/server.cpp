@@ -1,7 +1,8 @@
 #include "server.hpp"
 #include "debug.hpp"
 #include "assert.hpp"
-#include "egl_extensions.hpp"
+#include "util/egl/egl_extensions.hpp"
+#include "egl/create_shared_egl_context.hpp"
 #include <unistd.h>
 #include <sys/eventfd.h>
 
@@ -183,7 +184,12 @@ void ZenithServer::run(const char* startup_command) {
 	setenv("QT_QPA_PLATFORM", "wayland", true); // Force QT apps to run on Wayland.
 
 	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
-	embedder_state = std::make_unique<EmbedderState>(this, main_egl);
+	
+	// Create 2 OpenGL shared contexts for rendering operations.
+	wlr_egl* flutter_gl_context = create_shared_egl_context(main_egl);
+	wlr_egl* flutter_resource_gl_context = create_shared_egl_context(main_egl);
+
+	embedder_state = std::make_unique<EmbedderState>(flutter_gl_context, flutter_resource_gl_context);
 
 	// Run the engine.
 	embedder_state->run_engine();

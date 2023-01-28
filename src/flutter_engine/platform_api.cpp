@@ -4,9 +4,9 @@
 #include "server.hpp"
 #include "encodable_value.h"
 #include "time.hpp"
-#include "string_to_keycode.hpp"
+#include "util/embedder/string_to_keycode.hpp"
 #include "assert.hpp"
-#include "wlr_extensions.hpp"
+#include "util/wlr/wlr_extensions.hpp"
 #include "auth.hpp"
 
 extern "C" {
@@ -19,11 +19,13 @@ extern "C" {
 void startup_complete(ZenithServer* server, const flutter::MethodCall<>& call,
                       std::unique_ptr<flutter::MethodResult<>>&& result) {
 
-	if (!server->startup_command.empty()) {
-		if (fork() == 0) {
-			execl("/bin/sh", "/bin/sh", "-c", server->startup_command.c_str(), nullptr);
+	server->callable_queue.enqueue([server] {
+		if (!server->startup_command.empty()) {
+			if (fork() == 0) {
+				execl("/bin/sh", "/bin/sh", "-c", server->startup_command.c_str(), nullptr);
+			}
 		}
-	}
+	});
 	result->Success();
 }
 
@@ -32,14 +34,15 @@ void activate_window(ZenithServer* server,
                      std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t view_id = std::get<int>(call.arguments()[0]);
-	auto view_it = server->xdg_toplevels.find(view_id);
-	if (view_it == server->xdg_toplevels.end()) {
-		result->Success();
-		return;
-	}
-	auto* view = view_it->second.get();
 
-	view->focus();
+	server->callable_queue.enqueue([server, view_id] {
+		auto view_it = server->xdg_toplevels.find(view_id);
+		if (view_it == server->xdg_toplevels.end()) {
+			return;
+		}
+		auto* view = view_it->second.get();
+		view->focus();
+	});
 
 	result->Success();
 }
@@ -54,25 +57,29 @@ void pointer_hover(ZenithServer* server,
 	double y = std::get<double>(args[flutter::EncodableValue("y")]);
 	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 
-	auto view_it = server->surfaces.find(view_id);
-	if (view_it == server->surfaces.end()) {
-		result->Success();
-		return;
-	}
-	ZenithSurface* view = view_it->second.get();
+	server->callable_queue.enqueue([server, x, y, view_id] {
+		auto view_it = server->surfaces.find(view_id);
+		if (view_it == server->surfaces.end()) {
+			return;
+		}
+		ZenithSurface* view = view_it->second.get();
 
-	wlr_seat_pointer_notify_enter(server->seat, view->surface, x, y);
-	wlr_seat_pointer_notify_motion(server->seat, current_time_milliseconds(), x, y);
+		wlr_seat_pointer_notify_enter(server->seat, view->surface, x, y);
+		wlr_seat_pointer_notify_motion(server->seat, current_time_milliseconds(), x, y);
+	});
 	result->Success();
 }
 
 void pointer_exit(ZenithServer* server,
                   const flutter::MethodCall<>& call,
                   std::unique_ptr<flutter::MethodResult<>>&& result) {
-	wlr_seat_pointer_notify_clear_focus(server->seat);
-	if (server->pointer != nullptr && server->pointer->is_visible()) {
-		wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
-	}
+
+	server->callable_queue.enqueue([server] {
+		wlr_seat_pointer_notify_clear_focus(server->seat);
+		if (server->pointer != nullptr && server->pointer->is_visible()) {
+			wlr_xcursor_manager_set_cursor_image(server->pointer->cursor_mgr, "left_ptr", server->pointer->cursor);
+		}
+	});
 	result->Success();
 }
 
@@ -83,15 +90,14 @@ void close_window(ZenithServer* server,
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 
-	auto view_it = server->xdg_toplevels.find(view_id);
-	if (view_it == server->xdg_toplevels.end()) {
-		result->Success();
-		return;
-	}
-	ZenithXdgToplevel* view = view_it->second.get();
-
-	wlr_xdg_toplevel_send_close(view->xdg_toplevel->base);
-
+	server->callable_queue.enqueue([server, view_id] {
+		auto view_it = server->xdg_toplevels.find(view_id);
+		if (view_it == server->xdg_toplevels.end()) {
+			return;
+		}
+		ZenithXdgToplevel* view = view_it->second.get();
+		wlr_xdg_toplevel_send_close(view->xdg_toplevel->base);
+	});
 	result->Success();
 }
 
@@ -104,14 +110,14 @@ void resize_window(ZenithServer* server,
 	auto width = std::get<int>(args[flutter::EncodableValue("width")]);
 	auto height = std::get<int>(args[flutter::EncodableValue("height")]);
 
-	auto view_it = server->xdg_toplevels.find(view_id);
-	if (view_it == server->xdg_toplevels.end()) {
-		result->Success();
-		return;
-	}
-	ZenithXdgToplevel* view = view_it->second.get();
-
-	wlr_xdg_toplevel_set_size(view->xdg_toplevel->base, (uint32_t) width, (uint32_t) height);
+	server->callable_queue.enqueue([server, view_id, width, height] {
+		auto view_it = server->xdg_toplevels.find(view_id);
+		if (view_it == server->xdg_toplevels.end()) {
+			return;
+		}
+		ZenithXdgToplevel* view = view_it->second.get();
+		wlr_xdg_toplevel_set_size(view->xdg_toplevel->base, (uint32_t) width, (uint32_t) height);
+	});
 
 	result->Success();
 }
@@ -122,10 +128,12 @@ void unregister_view_texture(ZenithServer* server,
 
 	size_t texture_id = std::get<int>(call.arguments()[0]);
 
-	FlutterEngineUnregisterExternalTexture(server->embedder_state->engine, (int64_t) texture_id);
+	FlutterEngineUnregisterExternalTexture(server->embedder_state->get_engine(), (int64_t) texture_id);
 
-	std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
-	server->embedder_state->buffer_chains_in_use.erase(texture_id);
+	server->callable_queue.enqueue([server, texture_id] {
+		std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
+		server->embedder_state->buffer_chains_in_use.erase(texture_id);
+	});
 
 	result->Success();
 }
@@ -152,18 +160,20 @@ void mouse_button_event(ZenithServer* server, const flutter::MethodCall<>& call,
 			break;
 	}
 
-	wlr_seat_pointer_notify_button(server->seat, current_time_milliseconds(), linux_button,
-	                               is_pressed ? WLR_BUTTON_PRESSED : WLR_BUTTON_RELEASED);
-	// FIXME:
-	// We should not manually trigger a frame event because one is received automatically by ZenithPointer at the right
-	// time. However, by the time this frame event is received, the button event has not finished routing through
-	// Flutter and back to the platform, therefore, it will be sent too early and their execution order is swapped.
-	// The frame event has to come after the button event, so call it manually here.
-	// There are now 2 frame events generated per button event, one before, and one after. It doesn't seem to cause any
-	// problems in the applications that I tested though.
-	// In any case, pointer support is considered a second-class citizen as this desktop environment is targeted towards
-	// mobile devices first and foremost, but the pointer is still useful during development.
-	wlr_seat_pointer_notify_frame(server->seat);
+	server->callable_queue.enqueue([server, linux_button, is_pressed] {
+		wlr_seat_pointer_notify_button(server->seat, current_time_milliseconds(), linux_button,
+		                               is_pressed ? WLR_BUTTON_PRESSED : WLR_BUTTON_RELEASED);
+		// FIXME:
+		// We should not manually trigger a frame event because one is received automatically by ZenithPointer at the right
+		// time. However, by the time this frame event is received, the button event has not finished routing through
+		// Flutter and back to the platform, therefore, it will be sent too early and their execution order is swapped.
+		// The frame event has to come after the button event, so call it manually here.
+		// There are now 2 frame events generated per button event, one before, and one after. It doesn't seem to cause any
+		// problems in the applications that I tested though.
+		// In any case, pointer support is considered a second-class citizen as this desktop environment is targeted towards
+		// mobile devices first and foremost, but the pointer is still useful during development.
+		wlr_seat_pointer_notify_frame(server->seat);
+	});
 	result->Success();
 }
 
@@ -174,14 +184,14 @@ void change_window_visibility(ZenithServer* server, const flutter::MethodCall<>&
 	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 	auto visible = std::get<bool>(args[flutter::EncodableValue("visible")]);
 
-	auto view_it = server->xdg_toplevels.find(view_id);
-	if (view_it == server->xdg_toplevels.end()) {
-		result->Success();
-		return;
-	}
-	ZenithXdgToplevel* view = view_it->second.get();
-	view->visible = visible;
-
+	server->callable_queue.enqueue([server, view_id, visible] {
+		auto view_it = server->xdg_toplevels.find(view_id);
+		if (view_it == server->xdg_toplevels.end()) {
+			return;
+		}
+		ZenithXdgToplevel* view = view_it->second.get();
+		view->visible = visible;
+	});
 	result->Success();
 }
 
@@ -194,15 +204,17 @@ void touch_down(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto x = std::get<double>(args[flutter::EncodableValue("x")]);
 	auto y = std::get<double>(args[flutter::EncodableValue("y")]);
 
-	auto view_it = server->surfaces.find(view_id);
-	if (view_it == server->surfaces.end()) {
-		result->Success();
-		return;
-	}
-	ZenithSurface* view = view_it->second.get();
+	server->callable_queue.enqueue([server, view_id, touch_id, x, y] {
+		auto view_it = server->surfaces.find(view_id);
+		if (view_it == server->surfaces.end()) {
+			return;
+		}
+		ZenithSurface* view = view_it->second.get();
 
-	wlr_seat_touch_notify_down(server->seat, view->surface, current_time_milliseconds(), touch_id, x, y);
-	wlr_seat_touch_notify_frame(server->seat);
+		wlr_seat_touch_notify_down(server->seat, view->surface, current_time_milliseconds(), touch_id, x, y);
+		wlr_seat_touch_notify_frame(server->seat);
+	});
+
 	result->Success();
 }
 
@@ -214,8 +226,10 @@ void touch_motion(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto x = std::get<double>(args[flutter::EncodableValue("x")]);
 	auto y = std::get<double>(args[flutter::EncodableValue("y")]);
 
-	wlr_seat_touch_notify_motion(server->seat, current_time_milliseconds(), touch_id, x, y);
-	wlr_seat_touch_notify_frame(server->seat);
+	server->callable_queue.enqueue([server, touch_id, x, y] {
+		wlr_seat_touch_notify_motion(server->seat, current_time_milliseconds(), touch_id, x, y);
+		wlr_seat_touch_notify_frame(server->seat);
+	});
 
 	result->Success();
 }
@@ -226,8 +240,11 @@ void touch_up(ZenithServer* server, const flutter::MethodCall<>& call,
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	auto touch_id = std::get<int>(args[flutter::EncodableValue("touch_id")]);
 
-	wlr_seat_touch_notify_up(server->seat, current_time_milliseconds(), touch_id);
-	wlr_seat_touch_notify_frame(server->seat);
+	server->callable_queue.enqueue([server, touch_id] {
+		wlr_seat_touch_notify_up(server->seat, current_time_milliseconds(), touch_id);
+		wlr_seat_touch_notify_frame(server->seat);
+	});
+
 	result->Success();
 }
 
@@ -237,19 +254,20 @@ void touch_cancel(ZenithServer* server, const flutter::MethodCall<>& call,
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	auto touch_id = std::get<int>(args[flutter::EncodableValue("touch_id")]);
 
-	wlr_touch_point* point = wlr_seat_touch_get_point(server->seat, touch_id);
-	if (point == nullptr) {
-		result->Success();
-		return;
-	}
-	struct wlr_surface* surface = point->surface;
-	if (surface == nullptr) {
-		result->Success();
-		return;
-	}
+	server->callable_queue.enqueue([server, touch_id] {
+		wlr_touch_point* point = wlr_seat_touch_get_point(server->seat, touch_id);
+		if (point == nullptr) {
+			return;
+		}
+		struct wlr_surface* surface = point->surface;
+		if (surface == nullptr) {
+			return;
+		}
 
-	wlr_seat_touch_notify_cancel(server->seat, surface);
-	wlr_seat_touch_notify_frame(server->seat);
+		wlr_seat_touch_notify_cancel(server->seat, surface);
+		wlr_seat_touch_notify_frame(server->seat);
+	});
+
 	result->Success();
 }
 
@@ -260,44 +278,44 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
 	auto text = std::get<std::string>(args[flutter::EncodableValue("text")]);
 
-	auto view_it = server->surfaces.find(view_id);
-	if (view_it == server->surfaces.end()) {
-		result->Success();
-		return;
-	}
-	ZenithSurface* view = view_it->second.get();
-	if (view->active_text_input != nullptr) {
-		wlr_text_input_v3_send_commit_string(view->active_text_input->wlr_text_input, text.c_str());
-		wlr_text_input_v3_send_done(view->active_text_input->wlr_text_input);
-	} else {
-		wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->seat);
-		if (keyboard == nullptr) {
-			result->Success();
+	server->callable_queue.enqueue([server, view_id, text] {
+		auto view_it = server->surfaces.find(view_id);
+		if (view_it == server->surfaces.end()) {
 			return;
 		}
+		ZenithSurface* view = view_it->second.get();
+		if (view->active_text_input != nullptr) {
+			wlr_text_input_v3_send_commit_string(view->active_text_input->wlr_text_input, text.c_str());
+			wlr_text_input_v3_send_done(view->active_text_input->wlr_text_input);
+		} else {
+			wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->seat);
+			if (keyboard == nullptr) {
+				return;
+			}
 
-		std::optional<KeyCombination> combination = string_to_keycode(text.c_str(), keyboard->xkb_state);
+			std::optional<KeyCombination> combination = string_to_keycode(text.c_str(), keyboard->xkb_state);
 
-		ASSERT(combination.has_value(),
-		       "Character " << text << " cannot be emulated with the current keyboard layout.");
+			ASSERT(combination.has_value(),
+			       "Character " << text << " cannot be emulated with the current keyboard layout.");
 
-		if (combination) {
-			auto mods = wlr_keyboard_modifiers{
-				  .depressed = combination->modifiers,
-				  .latched = 0,
-				  .locked = 0,
-				  .group = 0,
-			};
-			auto previous_mods = keyboard->modifiers;
+			if (combination) {
+				auto mods = wlr_keyboard_modifiers{
+					  .depressed = combination->modifiers,
+					  .latched = 0,
+					  .locked = 0,
+					  .group = 0,
+				};
+				auto previous_mods = keyboard->modifiers;
 
-			wlr_seat_keyboard_notify_modifiers(server->seat, &mods);
-			wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), combination->keycode - 8,
-			                             WL_KEYBOARD_KEY_STATE_PRESSED);
-			wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), combination->keycode - 8,
-			                             WL_KEYBOARD_KEY_STATE_RELEASED);
-			wlr_seat_keyboard_notify_modifiers(server->seat, &previous_mods);
+				wlr_seat_keyboard_notify_modifiers(server->seat, &mods);
+				wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), combination->keycode - 8,
+				                             WL_KEYBOARD_KEY_STATE_PRESSED);
+				wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), combination->keycode - 8,
+				                             WL_KEYBOARD_KEY_STATE_RELEASED);
+				wlr_seat_keyboard_notify_modifiers(server->seat, &previous_mods);
+			}
 		}
-	}
+	});
 
 	result->Success();
 }
@@ -308,16 +326,17 @@ void emulate_keycode(ZenithServer* server, const flutter::MethodCall<>& call,
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	auto keycode = std::get<int>(args[flutter::EncodableValue("keycode")]);
 
-	wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->seat);
-	if (keyboard == nullptr) {
-		result->Success();
-		return;
-	}
+	server->callable_queue.enqueue([server, keycode] {
+		wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->seat);
+		if (keyboard == nullptr) {
+			return;
+		}
 
-	wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), keycode,
-	                             WL_KEYBOARD_KEY_STATE_PRESSED);
-	wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), keycode,
-	                             WL_KEYBOARD_KEY_STATE_RELEASED);
+		wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), keycode,
+		                             WL_KEYBOARD_KEY_STATE_PRESSED);
+		wlr_seat_keyboard_notify_key(server->seat, current_time_milliseconds(), keycode,
+		                             WL_KEYBOARD_KEY_STATE_RELEASED);
+	});
 
 	result->Success();
 }
@@ -332,10 +351,12 @@ void initial_window_size(ZenithServer* server, const flutter::MethodCall<>& call
 	ASSERT(width >= 0, "width must be >= 0");
 	ASSERT(height >= 0, "height must be >= 0");
 
-	server->max_window_size = Size{
-		  .width = static_cast<uint32_t>(width),
-		  .height = static_cast<uint32_t>(height),
-	};
+	server->callable_queue.enqueue([server, width, height] {
+		server->max_window_size = Size{
+			  .width = static_cast<uint32_t>(width),
+			  .height = static_cast<uint32_t>(height),
+		};
+	});
 
 	result->Success();
 }
@@ -362,11 +383,13 @@ void enable_display(ZenithServer* server, const flutter::MethodCall<>& call,
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
 	auto enable = std::get<bool>(args[flutter::EncodableValue("enable")]);
 
-	wlr_output* wlr_output = server->output->wlr_output;
-	wlr_output_enable(wlr_output, enable);
-	if (enable) {
-		wlr_output_schedule_frame(wlr_output);
-	}
+	server->callable_queue.enqueue([server, enable] {
+		wlr_output* wlr_output = server->output->wlr_output;
+		wlr_output_enable(wlr_output, enable);
+		if (enable) {
+			wlr_output_schedule_frame(wlr_output);
+		}
+	});
 
 	result->Success();
 }

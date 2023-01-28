@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:zenith/state/base_view_state.dart';
 import 'package:zenith/state/zenith_xdg_toplevel_state.dart';
 
 part 'task_switcher_state.freezed.dart';

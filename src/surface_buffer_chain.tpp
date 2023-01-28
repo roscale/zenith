@@ -6,26 +6,26 @@
 bool is_main_thread();
 
 template<class T>
-T* DoubleBuffering<T>::start_rendering() {
+T* SurfaceBufferChain<T>::start_read() {
 	assert(is_main_thread());
 	render_buffer = newest_buffer;
 	return render_buffer.get();
 }
 
 template<class T>
-void DoubleBuffering<T>::finish_rendering() {
+void SurfaceBufferChain<T>::end_read() {
 	assert(is_main_thread());
 	render_buffer = nullptr;
 }
 
 template<class T>
-void DoubleBuffering<T>::commit_new_buffer(std::shared_ptr<T> buffer) {
+void SurfaceBufferChain<T>::commit_buffer(std::shared_ptr<T> buffer) {
 	assert(is_main_thread());
 	newest_buffer = std::move(buffer);
 }
 
 template<class T>
-DoubleBuffering<T>::~DoubleBuffering() {
+SurfaceBufferChain<T>::~SurfaceBufferChain() {
 	assert(is_main_thread());
 	render_buffer = nullptr;
 	newest_buffer = nullptr;

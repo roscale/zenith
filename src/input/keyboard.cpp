@@ -75,57 +75,13 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 		}
 	}
 
-	rapidjson::Document json;
-	json.SetObject();
-	json.AddMember("keymap", "linux", json.GetAllocator());
-	// Even thought Flutter only understands GTK keycodes, these are essentially the same as
-	// xkbcommon keycodes.
-	// https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/wayland/gdkkeys-wayland.c#L179
-	json.AddMember("toolkit", "gtk", json.GetAllocator());
-	json.AddMember("scanCode", scan_code, json.GetAllocator());
-	json.AddMember("keyCode", keysym, json.GetAllocator());
-	// https://github.com/flutter/engine/blob/2a8ac1e0ca2535a6af17dde3530d277ecd601543/shell/platform/linux/fl_keyboard_manager.cc#L96
-	if (keysym < 128) {
-		json.AddMember("specifiedLogicalKey", keysym, json.GetAllocator());
-	}
-	json.AddMember("modifiers", modifiers, json.GetAllocator());
-	// Normally I would also set `unicodeScalarValues`, but I don't anticipate using this feature.
-	// https://github.com/flutter/flutter/blob/b8f7f1f986/packages/flutter/lib/src/services/raw_keyboard_linux.dart#L55
-
-	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-		json.AddMember("type", "keydown", json.GetAllocator());
-
-		wlr_event_keyboard_key event_copy = *event;
-
-		auto& keyEventChannel = keyboard->server->embedder_state->keyEventChannel;
-		keyEventChannel.Send(json, [event_copy](const uint8_t* reply, size_t reply_size) {
-			auto message = flutter::JsonMessageCodec::GetInstance().DecodeMessage(reply, reply_size);
-			auto& handled_object = message->GetObject()["handled"];
-			bool handled = handled_object.GetBool();
-
-			// If the Flutter engine doesn't handle the key press, forward it to the Wayland client.
-			if (!handled) {
-				wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, event_copy.time_msec, event_copy.keycode,
-				                             event_copy.state);
-			}
-		});
-	} else if (event->state == WL_KEYBOARD_KEY_STATE_RELEASED) {
-		json.AddMember("type", "keyup", json.GetAllocator());
-
-		wlr_event_keyboard_key event_copy = *event;
-
-		auto& keyEventChannel = keyboard->server->embedder_state->keyEventChannel;
-		keyEventChannel.Send(json, [event_copy](const uint8_t* reply, size_t reply_size) {
-			auto message = flutter::JsonMessageCodec::GetInstance().DecodeMessage(reply, reply_size);
-			auto& handled_object = message->GetObject()["handled"];
-			bool handled = handled_object.GetBool();
-
-			if (!handled) {
-				wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, event_copy.time_msec, event_copy.keycode,
-				                             event_copy.state);
-			}
-		});
-	}
+	auto message = KeyboardKeyEventMessage{
+		  .event = *event,
+		  .scan_code = scan_code,
+		  .keysym = keysym,
+		  .modifiers = modifiers,
+	};
+	ZenithServer::instance()->embedder_state->send_key_event(message);
 }
 
 bool handle_shortcuts(struct ZenithKeyboard* keyboard, uint32_t modifiers, xkb_keysym_t keysym) {

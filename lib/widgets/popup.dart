@@ -1,8 +1,8 @@
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/state/popup_state.dart';
 import 'package:zenith/state/zenith_surface_state.dart';
+import 'package:zenith/state/zenith_xdg_popup_state.dart';
 import 'package:zenith/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/widgets/surface.dart';
 import 'package:zenith/widgets/surface_size.dart';
@@ -31,7 +31,7 @@ class Popup extends StatelessWidget {
         child: Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
             int viewId = ref.watch(_viewId);
-            Key key = ref.watch(popupStateProvider(viewId).select((v) => v.animationsKey));
+            Key key = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.animationsKey));
             return _Animations(
               key: key,
               child: child!,
@@ -80,15 +80,10 @@ class _Positioner extends ConsumerWidget {
     int viewId = ref.watch(_viewId);
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        Offset position =
-            ref.watch(popupStateProvider(viewId).select((v) => v.position));
-        int parentId =
-            ref.watch(popupStateProvider(viewId).select((v) => v.parentViewId));
-        Rect parentVisibleBounds = ref.watch(
-            zenithXdgSurfaceStateProvider(parentId)
-                .select((v) => v.visibleBounds));
-        Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId)
-            .select((v) => v.visibleBounds));
+        Offset position = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.position));
+        int parentId = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.parentViewId));
+        Rect parentVisibleBounds = ref.watch(zenithXdgSurfaceStateProvider(parentId).select((v) => v.visibleBounds));
+        Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.visibleBounds));
 
         return Positioned(
           left: position.dx - visibleBounds.left + parentVisibleBounds.left,
@@ -98,7 +93,7 @@ class _Positioner extends ConsumerWidget {
       },
       child: Consumer(
         builder: (_, WidgetRef ref, Widget? child) {
-          bool isClosing = ref.watch(popupStateProvider(viewId).select((v) => v.isClosing));
+          bool isClosing = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.isClosing));
           return IgnorePointer(
             ignoring: isClosing,
             child: child,

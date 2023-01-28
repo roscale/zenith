@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "wlr_helpers.hpp"
+#include "util/wlr/wlr_helpers.hpp"
 
 extern "C" {
 #include <wlr/types/wlr_buffer.h>

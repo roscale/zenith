@@ -7,9 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/task_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
+import 'package:zenith/state/zenith_subsurface_state.dart';
 import 'package:zenith/state/zenith_surface_state.dart';
+import 'package:zenith/state/zenith_xdg_popup_state.dart';
+import 'package:zenith/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/state/zenith_xdg_toplevel_state.dart';
-import 'package:zenith/surface_manager.dart';
 import 'package:zenith/system_ui/app_drawer/handle.dart';
 import 'package:zenith/system_ui/task_switcher/invisible_bottom_bar.dart';
 import 'package:zenith/system_ui/task_switcher/task.dart';
@@ -18,8 +20,7 @@ import 'package:zenith/system_ui/task_switcher/task_switcher_viewport.dart';
 import 'package:zenith/util/state_notifier_list.dart';
 import 'package:zenith/widgets/window.dart';
 
-final taskListProvider =
-    StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
+final taskListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
   return StateNotifierList<int>();
 });
 
@@ -158,7 +159,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   void _constraintsChanged(BoxConstraints constraints) {
-    PlatformApi.initial_window_size(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
+    PlatformApi.initialWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
 
     // addPostFrameCallback needed because riverpod triggers setState which cannot be called during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -320,14 +321,16 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).remove(viewId);
 
-    // ref.invalidate(baseViewStateProvider(viewId));
-    // ref.invalidate(windowStateProvider(viewId));
-    ref.invalidate(zenithXdgToplevelStateProvider(viewId));
     ref.invalidate(windowWidget(viewId));
     ref.invalidate(taskPositionProvider(viewId));
     ref.invalidate(taskVerticalPositionProvider(viewId));
     ref.invalidate(taskWidgetProvider(viewId));
     ref.invalidate(taskStateProvider(viewId));
+    ref.invalidate(zenithSurfaceStateProvider(viewId));
+    ref.invalidate(zenithXdgSurfaceStateProvider(viewId));
+    ref.invalidate(zenithXdgToplevelStateProvider(viewId));
+    ref.invalidate(zenithXdgPopupStateProvider(viewId));
+    ref.invalidate(zenithSubsurfaceStateProvider(viewId));
   }
 
   int? taskToFocusAfterClosing(int closingTaskIndex) {

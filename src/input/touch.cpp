@@ -49,7 +49,7 @@ void touch_down_handle(wl_listener* listener, void* data) {
 	e.signal_kind = kFlutterPointerSignalKindNone;
 	e.device = device_id(event->touch_id);
 
-	FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
+	server->embedder_state->send_pointer_event(e);
 }
 
 void touch_motion_handle(wl_listener* listener, void* data) {
@@ -71,7 +71,7 @@ void touch_motion_handle(wl_listener* listener, void* data) {
 	e.signal_kind = kFlutterPointerSignalKindNone;
 	e.device = device_id(event->touch_id);
 
-	FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
+	server->embedder_state->send_pointer_event(e);
 }
 
 void touch_up_handle(wl_listener* listener, void* data) {
@@ -92,7 +92,7 @@ void touch_up_handle(wl_listener* listener, void* data) {
 	e.signal_kind = kFlutterPointerSignalKindNone;
 	e.device = device_id(event->touch_id);
 
-	FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
+	server->embedder_state->send_pointer_event(e);
 }
 
 void touch_cancel_handle(wl_listener* listener, void* data) {
@@ -113,5 +113,5 @@ void touch_cancel_handle(wl_listener* listener, void* data) {
 	e.signal_kind = kFlutterPointerSignalKindNone;
 	e.device = device_id(event->touch_id);
 
-	FlutterEngineSendPointerEvent(server->embedder_state->engine, &e, 1);
+	server->embedder_state->send_pointer_event(e);
 }

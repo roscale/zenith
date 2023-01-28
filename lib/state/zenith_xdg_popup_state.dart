@@ -6,28 +6,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:zenith/widgets/popup.dart';
 
-part 'popup_state.freezed.dart';
+part 'zenith_xdg_popup_state.freezed.dart';
 
-final popupStateProvider = StateNotifierProvider.family<PopupStateNotifier, PopupState, int>((ref, int viewId) {
-  return PopupStateNotifier(ref, viewId);
+final zenithXdgPopupStateProvider =
+    StateNotifierProvider.family<ZenithXdgPopupStateNotifier, ZenithXdgPopupState, int>((ref, int viewId) {
+  return ZenithXdgPopupStateNotifier(ref, viewId);
 });
 
 @freezed
-class PopupState with _$PopupState {
-  const factory PopupState({
+class ZenithXdgPopupState with _$ZenithXdgPopupState {
+  const factory ZenithXdgPopupState({
     required int parentViewId,
     required Offset position,
     required GlobalKey<AnimationsState> animationsKey,
     required bool isClosing,
-  }) = _PopupState;
+  }) = _ZenithXdgPopupState;
 }
 
-class PopupStateNotifier extends StateNotifier<PopupState> {
+class ZenithXdgPopupStateNotifier extends StateNotifier<ZenithXdgPopupState> {
   final Ref _ref;
   final int _viewId;
 
-  PopupStateNotifier(this._ref, this._viewId)
-      : super(PopupState(
+  ZenithXdgPopupStateNotifier(this._ref, this._viewId)
+      : super(ZenithXdgPopupState(
           parentViewId: -1,
           position: Offset.zero,
           animationsKey: GlobalKey<AnimationsState>(),
@@ -42,12 +43,6 @@ class PopupStateNotifier extends StateNotifier<PopupState> {
       parentViewId: parentViewId,
       position: position,
     );
-    // TODO
-    // _ref.read(baseViewStateProvider(_viewId).notifier).initialize(
-    //       textureId: textureId,
-    //       surfaceSize: surfaceSize,
-    //       visibleBounds: visibleBounds,
-    //     );
   }
 
   set parentViewId(int value) {

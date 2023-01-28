@@ -1,7 +1,6 @@
 #include "zenith_xdg_surface.hpp"
 #include "binary_messenger.hpp"
 #include "server.hpp"
-#include "messages.hpp"
 #include "assert.hpp"
 
 ZenithXdgSurface::ZenithXdgSurface(wlr_xdg_surface* xdg_surface, std::shared_ptr<ZenithSurface> zenith_surface)
@@ -45,22 +44,14 @@ void zenith_xdg_surface_create(wl_listener* listener, void* data) {
 
 void zenith_xdg_surface_map(wl_listener* listener, void* data) {
 	ZenithXdgSurface* zenith_xdg_surface = wl_container_of(listener, zenith_xdg_surface, map);
-	BinaryMessenger& messenger = ZenithServer::instance()->embedder_state->messenger;
 	size_t id = zenith_xdg_surface->zenith_surface->id;
-
-	send_xdg_surface_map(messenger, id);
+	ZenithServer::instance()->embedder_state->map_xdg_surface(id);
 }
 
 void zenith_xdg_surface_unmap(wl_listener* listener, void* data) {
 	ZenithXdgSurface* zenith_xdg_surface = wl_container_of(listener, zenith_xdg_surface, unmap);
-	BinaryMessenger& messenger = ZenithServer::instance()->embedder_state->messenger;
-	auto* surface = static_cast<ZenithSurface*>(zenith_xdg_surface->xdg_surface->surface->data);
-
-	// TODO: unlock after the animations are done.
-//	wlr_buffer_lock(surface->surface->buffer->source);
-//	wlr_buffer_lock(&surface->surface->buffer->base);
-
-	send_xdg_surface_unmap(messenger, surface->id);
+	size_t id = zenith_xdg_surface->zenith_surface->id;
+	ZenithServer::instance()->embedder_state->unmap_xdg_surface(id);
 }
 
 void zenith_xdg_surface_destroy(wl_listener* listener, void* data) {

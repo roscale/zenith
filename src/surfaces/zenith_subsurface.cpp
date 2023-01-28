@@ -1,7 +1,6 @@
 #include "zenith_subsurface.hpp"
 #include "binary_messenger.hpp"
 #include "server.hpp"
-#include "messages.hpp"
 
 ZenithSubsurface::ZenithSubsurface(wlr_subsurface* subsurface, std::shared_ptr<ZenithSurface> zenith_surface)
 	  : subsurface{subsurface}, zenith_surface{std::move(zenith_surface)} {
@@ -28,14 +27,14 @@ void zenith_subsurface_create(wl_listener* listener, void* data) {
 
 void zenith_subsurface_map(wl_listener* listener, void* data) {
 	ZenithSubsurface* zenith_subsurface = wl_container_of(listener, zenith_subsurface, map);
-	BinaryMessenger& messenger = ZenithServer::instance()->embedder_state->messenger;
-	send_subsurface_map(messenger, zenith_subsurface->zenith_surface->id);
+	size_t id = zenith_subsurface->zenith_surface->id;
+	ZenithServer::instance()->embedder_state->map_subsurface(id);
 }
 
 void zenith_subsurface_unmap(wl_listener* listener, void* data) {
 	ZenithSubsurface* zenith_subsurface = wl_container_of(listener, zenith_subsurface, unmap);
-	BinaryMessenger& messenger = ZenithServer::instance()->embedder_state->messenger;
-	send_subsurface_unmap(messenger, zenith_subsurface->zenith_surface->id);
+	size_t id = zenith_subsurface->zenith_surface->id;
+	ZenithServer::instance()->embedder_state->unmap_subsurface(id);
 }
 
 void zenith_subsurface_destroy(wl_listener* listener, void* data) {

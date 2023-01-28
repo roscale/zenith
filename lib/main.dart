@@ -19,11 +19,16 @@ void main() {
   // This forces Flutter to always schedule a new frame.
   WidgetsFlutterBinding.ensureInitialized();
 
+  // SchedulerBinding.instance.addPersistentFrameCallback((timeStamp) {
+  //   SchedulerBinding.instance.scheduleFrame();
+  // });
+
   SchedulerBinding.instance.addPostFrameCallback((_) {
     PlatformApi.startupComplete();
   });
 
   final container = ProviderContainer();
+  PlatformApi.init(container);
 
   _registerLockScreenKeyboardHandler(container);
   _registerPowerButtonHandler(container);
