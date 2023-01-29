@@ -61,15 +61,16 @@ void EmbedderState::configure_and_run_engine() {
 	 */
 	FlutterRendererConfig config = {};
 	config.type = kOpenGL;
-	config.open_gl.struct_size = sizeof(config.open_gl);
+	config.open_gl.struct_size = sizeof(FlutterOpenGLRendererConfig);
 	config.open_gl.make_current = flutter_make_current;
 	config.open_gl.clear_current = flutter_clear_current;
-	config.open_gl.present = flutter_present;
-	config.open_gl.fbo_with_frame_info_callback = flutter_fbo_with_frame_info_callback;
+	config.open_gl.present_with_info = flutter_present;
+	config.open_gl.fbo_callback = flutter_fbo_callback;
 	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
 	config.open_gl.make_resource_current = flutter_make_resource_current;
 	config.open_gl.fbo_reset_after_present = true;
 	config.open_gl.surface_transformation = flutter_surface_transformation;
+	config.open_gl.populate_existing_damage = flutter_populate_existing_damage;
 
 	FlutterTaskRunnerDescription platform_task_runner_description{};
 	platform_task_runner_description.struct_size = sizeof(FlutterTaskRunnerDescription);

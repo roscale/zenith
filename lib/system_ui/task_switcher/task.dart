@@ -8,6 +8,7 @@ import 'package:zenith/state/task_state.dart';
 import 'package:zenith/state/task_switcher_state.dart';
 import 'package:zenith/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/system_ui/task_switcher/fitted_window.dart';
+import 'package:zenith/system_ui/task_switcher/task_switcher.dart';
 import 'package:zenith/system_ui/virtual_keyboard/with_virtual_keyboard.dart';
 import 'package:zenith/widgets/window.dart';
 
@@ -56,71 +57,74 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
         final position = ref.watch(taskPositionProvider(widget.viewId));
         final constraints = ref.watch(taskSwitcherStateProvider.select((v) => v.constraints));
 
+        double taskSwitcherPosition = ref.watch(taskSwitcherPositionProvider);
+        double scale = ref.watch(taskSwitcherStateProvider.select((v) => v.scale));
+
         return Positioned(
-          left: position,
+          left: scale * (-taskSwitcherPosition + position),
           width: constraints.maxWidth,
           height: constraints.maxHeight,
-          child: child!,
+          child: Transform.scale(
+            scale: scale,
+            child: child!,
+          ),
         );
       },
-      child: DeferPointer(
-        child: Consumer(
-          builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            double position = ref.watch(taskVerticalPositionProvider(widget.viewId));
+      child: Consumer(
+        builder: (BuildContext context, WidgetRef ref, Widget? child) {
+          double position = ref.watch(taskVerticalPositionProvider(widget.viewId));
 
-            return Transform.translate(
-              offset: Offset(0, position),
-              child: Opacity(
-                opacity: (1 - position.abs() / 1000).clamp(0, 1),
-                child: child!,
+          return Transform.translate(
+            offset: Offset(0, position),
+            child: Opacity(
+              opacity: (1 - position.abs() / 1000).clamp(0, 1),
+              child: child!,
+            ),
+          );
+        },
+        child: Consumer(
+          builder: (_, WidgetRef ref, Widget? child) {
+            final inOverview = ref.watch(taskSwitcherStateProvider.select((v) => v.inOverview));
+            final dismissState = ref.watch(taskStateProvider(widget.viewId).select((v) => v.dismissState));
+
+            // Doing my best to not change the depth of the tree to avoid rebuilding the whole subtree.
+            return IgnorePointer(
+              ignoring: dismissState != TaskDismissState.notDismissed,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: inOverview ? _onTap : null,
+                onVerticalDragDown: inOverview ? _onVerticalDragDown : null,
+                onVerticalDragUpdate: inOverview ? _onVerticalDragUpdate : null,
+                onVerticalDragEnd: inOverview ? _onVerticalDragEnd : null,
+                onVerticalDragCancel: inOverview ? _onVerticalDragCancel : null,
+                child: IgnorePointer(
+                  ignoring: inOverview,
+                  child: DeferredPointerHandler(
+                    // Don't let the nested DeferPointer bypass the IgnorePointer.
+                    child: child!,
+                  ),
+                ),
               ),
             );
           },
           child: Consumer(
             builder: (_, WidgetRef ref, Widget? child) {
-              final inOverview = ref.watch(taskSwitcherStateProvider.select((v) => v.inOverview));
-              final dismissState = ref.watch(taskStateProvider(widget.viewId).select((v) => v.dismissState));
-
-              // Doing my best to not change the depth of the tree to avoid rebuilding the whole subtree.
-              return IgnorePointer(
-                ignoring: dismissState != TaskDismissState.notDismissed,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: inOverview ? _onTap : null,
-                  onVerticalDragDown: inOverview ? _onVerticalDragDown : null,
-                  onVerticalDragUpdate: inOverview ? _onVerticalDragUpdate : null,
-                  onVerticalDragEnd: inOverview ? _onVerticalDragEnd : null,
-                  onVerticalDragCancel: inOverview ? _onVerticalDragCancel : null,
-                  child: IgnorePointer(
-                    ignoring: inOverview,
-                    child: DeferredPointerHandler(
-                      // Don't let the nested DeferPointer bypass the IgnorePointer.
-                      child: child!,
-                    ),
-                  ),
-                ),
+              final virtualKeyboardKey =
+                  ref.watch(zenithXdgToplevelStateProvider(widget.viewId).select((v) => v.virtualKeyboardKey));
+              return WithVirtualKeyboard(
+                key: virtualKeyboardKey,
+                viewId: widget.viewId,
+                child: child!,
               );
             },
             child: Consumer(
-              builder: (_, WidgetRef ref, Widget? child) {
-                final virtualKeyboardKey =
-                ref.watch(zenithXdgToplevelStateProvider(widget.viewId).select((
-                    v) => v.virtualKeyboardKey));
-                return WithVirtualKeyboard(
-                  key: virtualKeyboardKey,
-                  viewId: widget.viewId,
-                  child: child!,
+              builder: (_, WidgetRef ref, __) {
+                final window = ref.watch(windowWidget(widget.viewId));
+                return FittedWindow(
+                  alignment: Alignment.topCenter,
+                  window: window,
                 );
               },
-              child: Consumer(
-                builder: (_, WidgetRef ref, __) {
-                  final window = ref.watch(windowWidget(widget.viewId));
-                  return FittedWindow(
-                    alignment: Alignment.topCenter,
-                    window: window,
-                  );
-                },
-              ),
             ),
           ),
         ),

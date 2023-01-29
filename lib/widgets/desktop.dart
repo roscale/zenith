@@ -10,6 +10,7 @@ class Desktop extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
+      clipBehavior: Clip.none,
       fit: StackFit.expand,
       children: [
         Image.asset("assets/images/background.jpg", fit: BoxFit.cover),

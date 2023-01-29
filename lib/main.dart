@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,17 +10,13 @@ import 'package:zenith/state/screen_state.dart';
 import 'package:zenith/widgets/desktop.dart';
 
 void main() {
-  debugRepaintRainbowEnabled = true;
+  // debugRepaintRainbowEnabled = true;
 
   // FIXME: FlutterEngineMarkExternalTextureFrameAvailable does not trigger a VSync fast enough,
   // so Flutter will only VSync every second frame. Marking a texture after FlutterEngineOnVsync
   // only fixes the problem partially because Flutter will still skip frames every once in a while.
   // This forces Flutter to always schedule a new frame.
   WidgetsFlutterBinding.ensureInitialized();
-
-  // SchedulerBinding.instance.addPersistentFrameCallback((timeStamp) {
-  //   SchedulerBinding.instance.scheduleFrame();
-  // });
 
   SchedulerBinding.instance.addPostFrameCallback((_) {
     PlatformApi.startupComplete();

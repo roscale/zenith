@@ -1,6 +1,7 @@
 #include "embedder_callbacks.hpp"
 #include "embedder_state.hpp"
 #include "server.hpp"
+#include "rect.hpp"
 
 extern "C" {
 #include <GLES3/gl3.h>
@@ -25,7 +26,7 @@ bool flutter_clear_current(void* userdata) {
 	return wlr_egl_unset_current(state->flutter_gl_context);
 }
 
-uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info) {
+uint32_t flutter_fbo_callback(void* userdata) {
 	return attach_framebuffer();
 }
 
@@ -35,17 +36,19 @@ GLuint attach_framebuffer() {
 	return gles2_buffer->fbo;
 }
 
-bool flutter_present(void* userdata) {
+bool flutter_present(void* userdata, const FlutterPresentInfo* present_info) {
 	// Wait for the buffer to finish rendering before we commit it to the screen.
 	glFinish();
 
-	bool success = commit_framebuffer();
+	array_view<FlutterRect> frame_damage(present_info->frame_damage.damage, present_info->frame_damage.num_rects);
+
+	bool success = commit_framebuffer(frame_damage);
 	return success;
 }
 
-bool commit_framebuffer() {
+bool commit_framebuffer(array_view<FlutterRect> damage) {
 	ZenithServer* server = ZenithServer::instance();
-	server->output->swap_chain->end_write();
+	server->output->swap_chain->end_write(damage);
 	return true;
 }
 
@@ -156,4 +159,25 @@ FlutterTransformation flutter_surface_transformation(void* data) {
 	return FlutterTransformation{
 		  1.0, 0.0, 0.0, 0.0, -1.0, height, 0.0, 0.0, 1.0,
 	};
+}
+
+void flutter_populate_existing_damage(void* user_data, intptr_t fbo_id, FlutterDamage* existing_damage) {
+	ZenithServer* server = ZenithServer::instance();
+	array_view<FlutterRect> damage_regions = server->output->swap_chain->get_damage_regions();
+
+	// TODO: Who should free this object? Me or Flutter?
+	// Also, I think Flutter's partial repaint mechanism is not completely implemented.
+	// It only works with one rectangle. If I give it more than one, it just ignores them.
+	// For this reason we just combine all damage regions into one rectangle.
+	auto* union_region = new FlutterRect{};
+	if (damage_regions.size() > 0) {
+		*union_region = damage_regions[0];
+		for (size_t i = 1; i < damage_regions.size(); i++) {
+			*union_region = rect_union(*union_region, damage_regions[i]);
+		}
+	}
+
+	existing_damage->struct_size = sizeof(FlutterDamage);
+	existing_damage->num_rects = 1;
+	existing_damage->damage = union_region;
 }

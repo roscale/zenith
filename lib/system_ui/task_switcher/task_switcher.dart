@@ -16,7 +16,6 @@ import 'package:zenith/system_ui/app_drawer/handle.dart';
 import 'package:zenith/system_ui/task_switcher/invisible_bottom_bar.dart';
 import 'package:zenith/system_ui/task_switcher/task.dart';
 import 'package:zenith/system_ui/task_switcher/task_switcher_scroller.dart';
-import 'package:zenith/system_ui/task_switcher/task_switcher_viewport.dart';
 import 'package:zenith/util/state_notifier_list.dart';
 import 'package:zenith/widgets/window.dart';
 
@@ -29,6 +28,8 @@ final closingTaskListProvider = StateNotifierProvider<StateNotifierList<int>, Li
 });
 
 final taskSwitcherWidgetStateProvider = StateProvider((ref) => _TaskSwitcherState());
+
+final taskSwitcherPositionProvider = StateProvider((ref) => 0.0);
 
 class TaskSwitcher extends ConsumerStatefulWidget {
   final double spacing;
@@ -63,6 +64,10 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
       debugLabel: "TaskSwitcher.scrollPosition",
     );
 
+    scrollPosition.addListener(() {
+      ref.read(taskSwitcherPositionProvider.notifier).state = scrollPosition.pixels;
+    });
+
     // Avoid executing _spawnTask and _stopTask concurrently because it causes visual glitches.
     // Make sure the async tasks are executed one after the other.
     Future<void> chain = Future.value(null);
@@ -87,11 +92,13 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
         _constraintsChanged(constraints);
 
         return Stack(
+          clipBehavior: Clip.none,
           children: [
             Positioned.fill(
               child: TaskSwitcherScroller(
                 scrollPosition: scrollPosition,
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     const Positioned(
                       bottom: 0,
@@ -99,23 +106,18 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
                       right: 0,
                       child: AppDrawerHandle(),
                     ),
-                    TaskSwitcherViewport(
-                      scrollPosition: scrollPosition,
-                      child: DeferredPointerHandler(
-                        child: Consumer(
-                          builder: (_, WidgetRef ref, __) {
-                            final tasks = ref.watch(taskListProvider);
-                            final closingTasks = ref.watch(closingTaskListProvider);
-                            return Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                for (int viewId in closingTasks) ref.watch(taskWidgetProvider(viewId)),
-                                for (int viewId in tasks) ref.watch(taskWidgetProvider(viewId)),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
+                    Consumer(
+                      builder: (_, WidgetRef ref, __) {
+                        final tasks = ref.watch(taskListProvider);
+                        final closingTasks = ref.watch(closingTaskListProvider);
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            for (int viewId in closingTasks) ref.watch(taskWidgetProvider(viewId)),
+                            for (int viewId in tasks) ref.watch(taskWidgetProvider(viewId)),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

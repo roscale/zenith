@@ -1,10 +1,22 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+#include <mutex>
+#include "util/array_view.hpp"
+#include "third_party/embedder.h"
 
 extern "C" {
 #include <wlr/types/wlr_buffer.h>
 }
+
+template<class T>
+struct Slot {
+	explicit Slot(std::shared_ptr<T> buffer);
+
+	std::shared_ptr<T> buffer;
+	std::vector<FlutterRect> damage_regions = {};
+};
 
 template<class T>
 struct SwapChain {
@@ -20,16 +32,18 @@ struct SwapChain {
 	 * read2 = read1
 	 * latest = read2
 	 */
-	std::shared_ptr<T> read_buffer_1 = {};
-	std::shared_ptr<T> read_buffer_2 = {};
-	std::shared_ptr<T> write_buffer = {};
-	std::shared_ptr<T> latest_buffer = {};
+	std::shared_ptr<Slot<T>> read_buffer_1 = {};
+	std::shared_ptr<Slot<T>> read_buffer_2 = {};
+	std::shared_ptr<Slot<T>> write_buffer = {};
+	std::shared_ptr<Slot<T>> latest_buffer = {};
 
 	bool new_buffer_available = false;
 
 	[[nodiscard]] T* start_write();
 
-	void end_write();
+	[[nodiscard]] array_view<FlutterRect> get_damage_regions();
+
+	void end_write(array_view<FlutterRect> damage);
 
 	[[nodiscard]] T* start_read();
 

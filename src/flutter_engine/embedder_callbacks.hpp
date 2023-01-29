@@ -1,17 +1,18 @@
 #pragma once
 
 #include <GLES2/gl2.h>
+#include "util/array_view.hpp"
 #include "embedder.h"
 
 bool flutter_make_current(void* userdata);
 
 bool flutter_clear_current(void* userdata);
 
-bool flutter_present(void* userdata);
+bool flutter_present(void* userdata, const FlutterPresentInfo* present_info);
 
-bool commit_framebuffer();
+bool commit_framebuffer(array_view<FlutterRect> view);
 
-uint32_t flutter_fbo_with_frame_info_callback(void* userdata, const FlutterFrameInfo* frame_info);
+uint32_t flutter_fbo_callback(void* userdata);
 
 GLuint attach_framebuffer();
 
@@ -25,3 +26,5 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 bool flutter_make_resource_current(void* userdata);
 
 FlutterTransformation flutter_surface_transformation(void* data);
+
+void flutter_populate_existing_damage(void* user_data, intptr_t fbo_id, FlutterDamage* existing_damage);
