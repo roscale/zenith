@@ -1,19 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:zenith/state/root_overlay.dart';
 import 'package:zenith/widgets/lock_screen.dart';
 
 part 'lock_screen_state.freezed.dart';
 
 final lockScreenStateProvider =
-    StateNotifierProvider<LockScreenStateNotifier, LockScreenState>(
-        (ref) => LockScreenStateNotifier());
+    StateNotifierProvider<LockScreenStateNotifier, LockScreenState>((ref) => LockScreenStateNotifier(ref));
 
 class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
-  LockScreenStateNotifier()
+  final Ref ref;
+
+  LockScreenStateNotifier(this.ref)
       : super(
           LockScreenState(
-            overlayKey: GlobalKey(),
             overlayEntry: OverlayEntry(builder: (_) => const LockScreen()),
             // The session starts locked. If you change these to false, also modify `initialEntries` of the Overlay widget.
             overlayEntryInserted: false,
@@ -54,7 +55,7 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
 
   void lock() {
     if (!state.overlayEntryInserted) {
-      state.overlayKey.currentState?.insert(state.overlayEntry);
+      ref.read(rootOverlayKeyProvider).currentState?.insert(state.overlayEntry);
     }
     state = state.copyWith(
       overlayEntryInserted: true,
@@ -86,7 +87,6 @@ class LockScreenStateNotifier extends StateNotifier<LockScreenState> {
 @freezed
 class LockScreenState with _$LockScreenState {
   const factory LockScreenState({
-    required GlobalKey<OverlayState> overlayKey,
     required OverlayEntry overlayEntry,
     required bool overlayEntryInserted,
     required bool locked,

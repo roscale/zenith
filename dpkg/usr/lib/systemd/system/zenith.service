@@ -31,7 +31,7 @@ TimeoutStartSec=30
 User=1000
 PAMName=login
 Restart=always
-RestartSec=5s
+RestartSec=3s
 
 # A virtual terminal is needed.
 TTYPath=/dev/tty3

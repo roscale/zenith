@@ -48,6 +48,11 @@ class DisplayBrightnessStateNotifier extends StateNotifier<DisplayBrightnessStat
         state = state.copyWith(brightness: _getPerceivedBrightness(measuredBrightness));
       });
       state = defaultState;
+
+      // If there's a bug and the screen is off when the compositor starts, turn it on.
+      if (brightness == 0.0) {
+        setBrightness(1.0);
+      }
     } catch (e) {
       // Retry.
       await Future.delayed(const Duration(seconds: 1));

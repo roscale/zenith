@@ -29,7 +29,7 @@ class _SystemHash {
   }
 }
 
-String $fileToScalableImageHash() =>
+String _$fileToScalableImageHash() =>
     r'cdee05cbedc6229524232afe652f39fafdb7da6f';
 
 /// See also [fileToScalableImage].
@@ -46,7 +46,7 @@ class FileToScalableImageProvider extends FutureProvider<ScalableImage> {
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : $fileToScalableImageHash,
+                  : _$fileToScalableImageHash,
         );
 
   final String path;
@@ -100,7 +100,7 @@ class FileToScalableImageFamily extends Family<AsyncValue<ScalableImage>> {
   String? get name => r'fileToScalableImageProvider';
 }
 
-String $desktopEntriesHash() => r'b928031c1c972ae7dd1dc4ebba5f4ba46c41ec35';
+String _$desktopEntriesHash() => r'b928031c1c972ae7dd1dc4ebba5f4ba46c41ec35';
 
 /// See also [desktopEntries].
 final desktopEntriesProvider = FutureProvider<List<LocalizedDesktopEntry>>(
@@ -108,10 +108,10 @@ final desktopEntriesProvider = FutureProvider<List<LocalizedDesktopEntry>>(
   name: r'desktopEntriesProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : $desktopEntriesHash,
+      : _$desktopEntriesHash,
 );
 typedef DesktopEntriesRef = FutureProviderRef<List<LocalizedDesktopEntry>>;
-String $defaultIconThemeHash() => r'f82c403a2eef9a725fcfc5014c1ac9b84c534831';
+String _$defaultIconThemeHash() => r'f82c403a2eef9a725fcfc5014c1ac9b84c534831';
 
 /// See also [defaultIconTheme].
 final defaultIconThemeProvider = FutureProvider<FreedesktopIconTheme>(
@@ -119,6 +119,6 @@ final defaultIconThemeProvider = FutureProvider<FreedesktopIconTheme>(
   name: r'defaultIconThemeProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : $defaultIconThemeHash,
+      : _$defaultIconThemeHash,
 );
 typedef DefaultIconThemeRef = FutureProviderRef<FreedesktopIconTheme>;

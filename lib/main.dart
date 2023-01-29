@@ -5,7 +5,10 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/state/key_tracker.dart';
 import 'package:zenith/state/lock_screen_state.dart';
+import 'package:zenith/state/power_menu_state.dart';
+import 'package:zenith/state/root_overlay.dart';
 import 'package:zenith/state/screen_state.dart';
 import 'package:zenith/widgets/desktop.dart';
 
@@ -100,7 +103,7 @@ class Zenith extends ConsumerWidget {
                 body: Consumer(
                   builder: (BuildContext context, WidgetRef ref, Widget? child) {
                     return Overlay(
-                      key: ref.watch(lockScreenStateProvider.select((v) => v.overlayKey)),
+                      key: ref.watch(rootOverlayKeyProvider),
                       initialEntries: [
                         OverlayEntry(builder: (_) => const Desktop()),
                         // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
@@ -129,20 +132,51 @@ void _registerLockScreenKeyboardHandler(ProviderContainer container) {
 }
 
 void _registerPowerButtonHandler(ProviderContainer container) {
-  HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
-    if (keyEvent.logicalKey == LogicalKeyboardKey.powerOff) {
-      if (keyEvent is KeyDownEvent) {
-        final screenState = container.read(screenStateProvider);
-        final screenStateNotifier = container.read(screenStateProvider.notifier);
+  const KeyboardKey powerKey = LogicalKeyboardKey.powerOff;
 
-        if (screenState.on) {
-          screenStateNotifier.lockAndTurnOff();
-        } else {
-          screenStateNotifier.turnOn();
-        }
+  HardwareKeyboard.instance.addHandler((KeyEvent keyEvent) {
+    if (keyEvent.logicalKey == powerKey) {
+      if (keyEvent is KeyDownEvent) {
+        container.read(keyTrackerProvider(keyEvent.logicalKey).notifier).down();
+      } else if (keyEvent is KeyUpEvent) {
+        container.read(keyTrackerProvider(keyEvent.logicalKey).notifier).up();
       }
       return true;
     }
     return false;
+  });
+
+  bool turnedOn = false;
+
+  container.listen(keyTrackerProvider(powerKey).select((v) => v.down), (_, __) {
+    final screenState = container.read(screenStateProvider);
+    final screenStateNotifier = container.read(screenStateProvider.notifier);
+    if (!screenState.on) {
+      turnedOn = true;
+      screenStateNotifier.turnOn();
+      container.read(powerMenuStateProvider.notifier).removeOverlay();
+    } else {
+      turnedOn = false;
+    }
+  });
+
+  container.listen(keyTrackerProvider(powerKey).select((v) => v.shortPress), (_, __) {
+    final screenState = container.read(screenStateProvider);
+    final screenStateNotifier = container.read(screenStateProvider.notifier);
+    if (screenState.on && !turnedOn) {
+      screenStateNotifier.lockAndTurnOff();
+      container.read(powerMenuStateProvider.notifier).removeOverlay();
+    }
+  });
+
+  container.listen(keyTrackerProvider(powerKey).select((v) => v.longPress), (_, __) {
+    final state = container.read(powerMenuStateProvider);
+    final notifier = container.read(powerMenuStateProvider.notifier);
+
+    if (!state.shown) {
+      notifier.show();
+    } else {
+      notifier.hide();
+    }
   });
 }

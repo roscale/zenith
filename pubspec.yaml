@@ -41,6 +41,7 @@ dependencies:
   tuple: ^2.0.1
   freedesktop_desktop_entry: ^0.4.0
   jovial_svg: ^1.1.6
+  dbus: ^0.7.8
 
 dev_dependencies:
   flutter_test:
