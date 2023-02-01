@@ -17,7 +17,17 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$ScreenState {
   bool get on => throw _privateConstructorUsedError;
+
+  /// Turn on/off operations have not yet finished.
   bool get pending => throw _privateConstructorUsedError;
+
+  /// Rotation expressed in clockwise quarter turns.
+  int get rotation => throw _privateConstructorUsedError;
+
+  /// The screen size, after rotation.
+  /// If the physical screen is 500x1000 in portrait and the device is rotated in landscape, this
+  /// variable contains the size 1000x500.
+  Size get rotatedSize => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ScreenStateCopyWith<ScreenState> get copyWith =>
@@ -30,7 +40,7 @@ abstract class $ScreenStateCopyWith<$Res> {
           ScreenState value, $Res Function(ScreenState) then) =
       _$ScreenStateCopyWithImpl<$Res, ScreenState>;
   @useResult
-  $Res call({bool on, bool pending});
+  $Res call({bool on, bool pending, int rotation, Size rotatedSize});
 }
 
 /// @nodoc
@@ -48,6 +58,8 @@ class _$ScreenStateCopyWithImpl<$Res, $Val extends ScreenState>
   $Res call({
     Object? on = null,
     Object? pending = null,
+    Object? rotation = null,
+    Object? rotatedSize = null,
   }) {
     return _then(_value.copyWith(
       on: null == on
@@ -58,6 +70,14 @@ class _$ScreenStateCopyWithImpl<$Res, $Val extends ScreenState>
           ? _value.pending
           : pending // ignore: cast_nullable_to_non_nullable
               as bool,
+      rotation: null == rotation
+          ? _value.rotation
+          : rotation // ignore: cast_nullable_to_non_nullable
+              as int,
+      rotatedSize: null == rotatedSize
+          ? _value.rotatedSize
+          : rotatedSize // ignore: cast_nullable_to_non_nullable
+              as Size,
     ) as $Val);
   }
 }
@@ -70,7 +90,7 @@ abstract class _$$_ScreenStateCopyWith<$Res>
       __$$_ScreenStateCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool on, bool pending});
+  $Res call({bool on, bool pending, int rotation, Size rotatedSize});
 }
 
 /// @nodoc
@@ -86,6 +106,8 @@ class __$$_ScreenStateCopyWithImpl<$Res>
   $Res call({
     Object? on = null,
     Object? pending = null,
+    Object? rotation = null,
+    Object? rotatedSize = null,
   }) {
     return _then(_$_ScreenState(
       on: null == on
@@ -96,6 +118,14 @@ class __$$_ScreenStateCopyWithImpl<$Res>
           ? _value.pending
           : pending // ignore: cast_nullable_to_non_nullable
               as bool,
+      rotation: null == rotation
+          ? _value.rotation
+          : rotation // ignore: cast_nullable_to_non_nullable
+              as int,
+      rotatedSize: null == rotatedSize
+          ? _value.rotatedSize
+          : rotatedSize // ignore: cast_nullable_to_non_nullable
+              as Size,
     ));
   }
 }
@@ -103,16 +133,32 @@ class __$$_ScreenStateCopyWithImpl<$Res>
 /// @nodoc
 
 class _$_ScreenState implements _ScreenState {
-  const _$_ScreenState({required this.on, required this.pending});
+  const _$_ScreenState(
+      {required this.on,
+      required this.pending,
+      required this.rotation,
+      required this.rotatedSize});
 
   @override
   final bool on;
+
+  /// Turn on/off operations have not yet finished.
   @override
   final bool pending;
 
+  /// Rotation expressed in clockwise quarter turns.
+  @override
+  final int rotation;
+
+  /// The screen size, after rotation.
+  /// If the physical screen is 500x1000 in portrait and the device is rotated in landscape, this
+  /// variable contains the size 1000x500.
+  @override
+  final Size rotatedSize;
+
   @override
   String toString() {
-    return 'ScreenState(on: $on, pending: $pending)';
+    return 'ScreenState(on: $on, pending: $pending, rotation: $rotation, rotatedSize: $rotatedSize)';
   }
 
   @override
@@ -121,11 +167,16 @@ class _$_ScreenState implements _ScreenState {
         (other.runtimeType == runtimeType &&
             other is _$_ScreenState &&
             (identical(other.on, on) || other.on == on) &&
-            (identical(other.pending, pending) || other.pending == pending));
+            (identical(other.pending, pending) || other.pending == pending) &&
+            (identical(other.rotation, rotation) ||
+                other.rotation == rotation) &&
+            (identical(other.rotatedSize, rotatedSize) ||
+                other.rotatedSize == rotatedSize));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, on, pending);
+  int get hashCode =>
+      Object.hash(runtimeType, on, pending, rotation, rotatedSize);
 
   @JsonKey(ignore: true)
   @override
@@ -136,12 +187,27 @@ class _$_ScreenState implements _ScreenState {
 
 abstract class _ScreenState implements ScreenState {
   const factory _ScreenState(
-      {required final bool on, required final bool pending}) = _$_ScreenState;
+      {required final bool on,
+      required final bool pending,
+      required final int rotation,
+      required final Size rotatedSize}) = _$_ScreenState;
 
   @override
   bool get on;
   @override
+
+  /// Turn on/off operations have not yet finished.
   bool get pending;
+  @override
+
+  /// Rotation expressed in clockwise quarter turns.
+  int get rotation;
+  @override
+
+  /// The screen size, after rotation.
+  /// If the physical screen is 500x1000 in portrait and the device is rotated in landscape, this
+  /// variable contains the size 1000x500.
+  Size get rotatedSize;
   @override
   @JsonKey(ignore: true)
   _$$_ScreenStateCopyWith<_$_ScreenState> get copyWith =>

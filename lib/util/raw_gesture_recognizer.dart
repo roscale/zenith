@@ -27,7 +27,7 @@ class RawGestureRecognizer extends GestureRecognizer {
     final GestureArenaEntry arenaEntry = GestureBinding.instance.gestureArena.add(event.pointer, this);
     final _MultiDragPointerState state = _createNewPointerState(event, arenaEntry);
     _pointers![event.pointer] = state;
-    GestureBinding.instance.pointerRouter.addRoute(event.pointer, _handleEvent);
+    GestureBinding.instance.pointerRouter.addRoute(event.pointer, _handleEvent, event.transform);
   }
 
   _MultiDragPointerState _createNewPointerState(PointerDownEvent event, GestureArenaEntry entry) {

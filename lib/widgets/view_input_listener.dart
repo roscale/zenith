@@ -45,7 +45,9 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
                 () => RawGestureRecognizer(),
                 (RawGestureRecognizer instance) {
                   instance.onPointerDown = (PointerDownEvent event) async {
-                    var position = event.localPosition + inputRegion.topLeft;
+                    // TODO: event.position is actually the local position. Don't try to access
+                    // event.localPosition because it contains the wrong value.
+                    var position = event.position + inputRegion.topLeft;
 
                     if (event.kind == PointerDeviceKind.mouse) {
                       await pointerMoved(position);
@@ -56,7 +58,7 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
                     }
                   };
                   instance.onPointerMove = (PointerMoveEvent event) async {
-                    var position = event.localPosition + inputRegion.topLeft;
+                    var position = event.position + inputRegion.topLeft;
 
                     if (event.kind == PointerDeviceKind.mouse) {
                       // If a button is being pressed while another one is already down, it's considered a move event, not a down event.

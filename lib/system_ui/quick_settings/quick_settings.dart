@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/state/display_brightness_state.dart';
+import 'package:zenith/state/screen_state.dart';
 
-class QuickSettings extends StatefulWidget {
+class QuickSettings extends ConsumerStatefulWidget {
   final VoidCallback? onChangeBrightnessStart;
   final VoidCallback? onChangeBrightnessEnd;
 
@@ -13,10 +14,10 @@ class QuickSettings extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<QuickSettings> createState() => _QuickSettingsState();
+  ConsumerState<QuickSettings> createState() => _QuickSettingsState();
 }
 
-class _QuickSettingsState extends State<QuickSettings> {
+class _QuickSettingsState extends ConsumerState<QuickSettings> {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -49,13 +50,16 @@ class _QuickSettingsState extends State<QuickSettings> {
                     padding: EdgeInsets.zero,
                   ),
                   IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.screen_lock_rotation, size: 30),
+                    onPressed: () => ref.read(screenStateProvider.notifier).rotateClockwise(),
+                    icon: Transform.scale(
+                      scaleX: -1,
+                      child: const Icon(Icons.screen_rotation, size: 30),
+                    ),
                     padding: EdgeInsets.zero,
                   ),
                   IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.battery_full, size: 30),
+                    onPressed: () => ref.read(screenStateProvider.notifier).rotateCounterclockwise(),
+                    icon: const Icon(Icons.screen_rotation, size: 30),
                     padding: EdgeInsets.zero,
                   ),
                   IconButton(

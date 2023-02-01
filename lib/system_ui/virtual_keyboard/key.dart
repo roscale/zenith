@@ -82,7 +82,7 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
       },
     );
 
-    Overlay.of(context)!.insert(popupKeyOverlay!);
+    Overlay.of(context).insert(popupKeyOverlay!);
   }
 
   void pointerUp() {
@@ -113,7 +113,6 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
       child: GestureDetector(
         onDoubleTap: widget.onDoubleTap,
         child: Listener(
-          behavior: HitTestBehavior.translucent,
           onPointerDown: (_) => pointerDown(),
           onPointerUp: (_) {
             if (repeatKeyTimer == null) {

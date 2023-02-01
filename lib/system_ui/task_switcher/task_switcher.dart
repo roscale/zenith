@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
@@ -62,11 +61,12 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
       physics: const BouncingScrollPhysics(),
       context: this,
       debugLabel: "TaskSwitcher.scrollPosition",
-    );
-
-    scrollPosition.addListener(() {
-      ref.read(taskSwitcherPositionProvider.notifier).state = scrollPosition.pixels;
-    });
+    )
+      ..applyViewportDimension(0)
+      ..applyContentDimensions(0, 0)
+      ..addListener(() {
+        ref.read(taskSwitcherPositionProvider.notifier).state = scrollPosition.pixels;
+      });
 
     // Avoid executing _spawnTask and _stopTask concurrently because it causes visual glitches.
     // Make sure the async tasks are executed one after the other.
@@ -165,12 +165,18 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
 
     // addPostFrameCallback needed because riverpod triggers setState which cannot be called during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Determine the new scroll position. For example, if it was at 20% of the old scrollable area,
+      // it should also be at 20% of the new scrollable area.
+      double percent = (position - scrollPosition.minScrollExtent) /
+          (scrollPosition.maxScrollExtent - scrollPosition.minScrollExtent);
+
       ref.read(taskSwitcherStateProvider.notifier).constraints = constraints;
       scrollPosition.applyViewportDimension(constraints.maxWidth);
       _updateContentDimensions();
       _repositionTasks();
-      // Snap to the nearest task.
-      scrollPosition.jumpTo(taskIndexToPosition(taskPositionToIndex(position)));
+
+      double newPosition = lerpDouble(scrollPosition.minScrollExtent, scrollPosition.maxScrollExtent, percent)!;
+      scrollPosition.jumpTo(newPosition);
     });
   }
 

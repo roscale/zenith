@@ -7,12 +7,12 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'key_tracker.freezed.dart';
 
 final keyTrackerProvider =
-    StateNotifierProvider.family<KeyStateNotifier, KeyState, KeyboardKey>((ref, KeyboardKey key) {
-  return KeyStateNotifier(key);
+    StateNotifierProvider.family<KeyTrackerNotifier, KeyState, KeyboardKey>((ref, KeyboardKey key) {
+  return KeyTrackerNotifier(key);
 });
 
-class KeyStateNotifier extends StateNotifier<KeyState> {
-  KeyStateNotifier(KeyboardKey key)
+class KeyTrackerNotifier extends StateNotifier<KeyState> {
+  KeyTrackerNotifier(KeyboardKey key)
       : super(
           const KeyState(
             isDown: false,
@@ -33,7 +33,7 @@ class KeyStateNotifier extends StateNotifier<KeyState> {
       isDown: true,
       down: Object(),
       longPressTimer: Timer(
-        const Duration(milliseconds: 500),
+        const Duration(seconds: 1),
         _longPress,
       ),
     );

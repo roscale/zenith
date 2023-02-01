@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -15,7 +17,17 @@ final screenStateProvider = StateNotifierProvider<ScreenStateNotifier, ScreenSta
 class ScreenState with _$ScreenState {
   const factory ScreenState({
     required bool on,
-    required bool pending, // Turn on/off operations have not yet finished.
+
+    /// Turn on/off operations have not yet finished.
+    required bool pending,
+
+    /// Rotation expressed in clockwise quarter turns.
+    required int rotation,
+
+    /// The screen size, after rotation.
+    /// If the physical screen is 500x1000 in portrait and the device is rotated in landscape, this
+    /// variable contains the size 1000x500.
+    required Size rotatedSize,
   }) = _ScreenState;
 }
 
@@ -27,6 +39,8 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
           const ScreenState(
             on: true,
             pending: false,
+            rotation: 0,
+            rotatedSize: Size.zero,
           ),
         );
 
@@ -96,5 +110,21 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
         state = state.copyWith(pending: false);
       }
     }
+  }
+
+  void rotateClockwise() {
+    state = state.copyWith(rotation: (state.rotation + 1) % 4);
+  }
+
+  void rotateCounterclockwise() {
+    state = state.copyWith(rotation: (state.rotation - 1) % 4);
+  }
+
+  void setRotation(int quarterTurns) {
+    state = state.copyWith(rotation: quarterTurns);
+  }
+
+  void setRotatedSize(Size rotatedSize) {
+    state = state.copyWith(rotatedSize: rotatedSize);
   }
 }

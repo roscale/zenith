@@ -1,17 +1,20 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/state/screen_state.dart';
 import 'package:zenith/system_ui/quick_settings/quick_settings.dart';
 import 'package:zenith/system_ui/quick_settings/status_bar.dart';
 
-class StatusBarWithQuickSettings extends StatefulWidget {
+class StatusBarWithQuickSettings extends ConsumerStatefulWidget {
   const StatusBarWithQuickSettings({Key? key}) : super(key: key);
 
   @override
-  State<StatusBarWithQuickSettings> createState() => _StatusBarWithQuickSettingsState();
+  ConsumerState<StatusBarWithQuickSettings> createState() => _StatusBarWithQuickSettingsState();
 }
 
-class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings> with SingleTickerProviderStateMixin {
+class _StatusBarWithQuickSettingsState extends ConsumerState<StatusBarWithQuickSettings>
+    with SingleTickerProviderStateMixin {
   bool quickSettingsVisible = false;
 
   var startDragHorizontalPosition = 0.0;
@@ -41,8 +44,9 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
 
   @override
   Widget build(BuildContext context) {
-    final width = min(MediaQuery.of(context).size.width, 600.0);
-    const height = 300.0;
+    double screenWidth = ref.watch(screenStateProvider.select((v) => v.rotatedSize)).width;
+    double width = min(600.0, screenWidth);
+    const double height = 300.0;
 
     return Stack(
       children: [
@@ -52,19 +56,19 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
               verticalExpansionThreshold = 0;
               if (quickSettingsController.value <= 0.0) {
                 setState(() {
-                  startDragHorizontalPosition = details.globalPosition.dx;
+                  startDragHorizontalPosition = details.localPosition.dx;
                 });
               }
             },
             onVerticalDragUpdate: (details) {
               if (details.delta.dy < 0 &&
-                  details.globalPosition.dy > verticalExpansionThreshold &&
+                  details.localPosition.dy > verticalExpansionThreshold &&
                   verticalExpansionThreshold != 0) {
                 return;
               }
               quickSettingsController.value += details.delta.dy / height;
               if (quickSettingsController.value >= 1.0 && verticalExpansionThreshold == 0) {
-                verticalExpansionThreshold = details.globalPosition.dy;
+                verticalExpansionThreshold = details.localPosition.dy;
               }
             },
             onVerticalDragEnd: (details) {
@@ -103,7 +107,7 @@ class _StatusBarWithQuickSettingsState extends State<StatusBarWithQuickSettings>
           ),
         ),
         Positioned(
-          left: (startDragHorizontalPosition - width / 2).clamp(0, MediaQuery.of(context).size.width - width),
+          left: (startDragHorizontalPosition - width / 2).clamp(0, screenWidth - width),
           child: RepaintBoundary(
             child: SlideTransition(
               position: quickSettingsAnimation,
