@@ -26,6 +26,7 @@ AuthenticationResponse authenticate_current_user(const std::string& password) {
 }
 
 static AuthenticationResponse authenticate(const std::string& user, const std::string& password) {
+	int retval;
 	ConversationData conversation_data = {password, {}};
 
 	struct pam_conv conv = {
@@ -33,23 +34,29 @@ static AuthenticationResponse authenticate(const std::string& user, const std::s
 		  (void*) &conversation_data,
 	};
 
-	pam_handle_t* pam_handle = nullptr;
-	int retval = pam_start("zenith", user.c_str(), &conv, &pam_handle);
+	for (size_t i = 0; i < 10; i++) {
+		pam_handle_t* pam_handle = nullptr;
+		retval = pam_start("zenith", user.c_str(), &conv, &pam_handle);
 
-	if (retval == PAM_SUCCESS) {
-		// Disable fail delay.
-		retval = pam_set_item(pam_handle, PAM_FAIL_DELAY, (void*) delay_fn);
-	}
-	if (retval == PAM_SUCCESS) {
-		// Is user really user?
-		retval = pam_authenticate(pam_handle, 0);
-	}
-	if (retval == PAM_SUCCESS) {
-		// Permitted access?
-		retval = pam_acct_mgmt(pam_handle, 0);
-	}
+		if (retval == PAM_SUCCESS) {
+			// Disable fail delay.
+			retval = pam_set_item(pam_handle, PAM_FAIL_DELAY, (void*) delay_fn);
+		}
+		if (retval == PAM_SUCCESS) {
+			// Is user really user?
+			retval = pam_authenticate(pam_handle, 0);
+		}
+		if (retval == PAM_SUCCESS) {
+			// Permitted access?
+			retval = pam_acct_mgmt(pam_handle, 0);
+		}
 
-	pam_end(pam_handle, retval);
+		pam_end(pam_handle, retval);
+
+		if (retval == PAM_SUCCESS) {
+			break;
+		}
+	}
 
 	return AuthenticationResponse{retval == PAM_SUCCESS, conversation_data.message};
 }
