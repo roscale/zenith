@@ -17,7 +17,6 @@ class TaskSwitcherState with _$TaskSwitcherState {
     required bool disableUserControl, // Disables the ability to switch between tasks using gestures.
     required bool areAnimationsPlaying,
     required BoxConstraints constraints,
-    required Set<int> visibleTasks,
   }) = _TaskSwitcherState;
 }
 
@@ -31,7 +30,6 @@ class TaskSwitcherStateNotifier extends StateNotifier<TaskSwitcherState> {
           disableUserControl: false,
           areAnimationsPlaying: false,
           constraints: const BoxConstraints(),
-          visibleTasks: {},
         ));
 
   set inOverview(bool value) {
@@ -52,17 +50,5 @@ class TaskSwitcherStateNotifier extends StateNotifier<TaskSwitcherState> {
 
   set constraints(BoxConstraints value) {
     state = state.copyWith(constraints: value);
-  }
-
-  void makeTaskVisible(int viewId) {
-    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).visible = true;
-    state = state.copyWith(visibleTasks: {...state.visibleTasks, viewId});
-  }
-
-  void clearVisibleTasks() {
-    for (int viewId in state.visibleTasks) {
-      ref.read(zenithXdgToplevelStateProvider(viewId).notifier).visible = false;
-    }
-    state = state.copyWith(visibleTasks: {});
   }
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/zenith_surface_state.dart';
 import 'package:zenith/state/zenith_xdg_surface_state.dart';
+import 'package:zenith/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/util/rect_overflow_box.dart';
 import 'package:zenith/widgets/popup.dart';
 import 'package:zenith/widgets/surface.dart';
@@ -24,31 +26,38 @@ class Window extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ProviderScope(
-      overrides: [
-        _viewId.overrideWithValue(viewId),
-      ],
-      child: _PointerListener(
-        child: _Size(
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Surface(viewId: viewId),
-              // Consumer(builder: (_, WidgetRef ref, __) {
-              //   return ref.watch(surfaceWidget(ref.watch(_viewId)));
-              // }),
-              Consumer(
-                builder: (_, WidgetRef ref, __) {
-                  List<int> popups = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.popups));
-                  List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
+    return VisibilityDetector(
+      key: ValueKey(viewId),
+      onVisibilityChanged: (VisibilityInfo info) {
+        bool visible = info.visibleFraction > 0;
+        ref.read(zenithXdgToplevelStateProvider(viewId).notifier).visible = visible;
+      },
+      child: ProviderScope(
+        overrides: [
+          _viewId.overrideWithValue(viewId),
+        ],
+        child: _PointerListener(
+          child: _Size(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Surface(viewId: viewId),
+                // Consumer(builder: (_, WidgetRef ref, __) {
+                //   return ref.watch(surfaceWidget(ref.watch(_viewId)));
+                // }),
+                Consumer(
+                  builder: (_, WidgetRef ref, __) {
+                    List<int> popups = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.popups));
+                    List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
 
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: popupWidgets,
-                  );
-                },
-              )
-            ],
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: popupWidgets,
+                    );
+                  },
+                )
+              ],
+            ),
           ),
         ),
       ),

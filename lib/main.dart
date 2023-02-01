@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/state/key_tracker.dart';
 import 'package:zenith/state/lock_screen_state.dart';
@@ -15,11 +16,6 @@ import 'package:zenith/widgets/desktop.dart';
 void main() {
   // debugRepaintRainbowEnabled = true;
   // debugPrintGestureArenaDiagnostics = true;
-
-  // FIXME: FlutterEngineMarkExternalTextureFrameAvailable does not trigger a VSync fast enough,
-  // so Flutter will only VSync every second frame. Marking a texture after FlutterEngineOnVsync
-  // only fixes the problem partially because Flutter will still skip frames every once in a while.
-  // This forces Flutter to always schedule a new frame.
   WidgetsFlutterBinding.ensureInitialized();
 
   SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -31,6 +27,8 @@ void main() {
 
   _registerLockScreenKeyboardHandler(container);
   _registerPowerButtonHandler(container);
+
+  VisibilityDetectorController.instance.updateInterval = Duration.zero;
 
   runApp(
     UncontrolledProviderScope(

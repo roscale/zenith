@@ -380,10 +380,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   Future<void> switchToTaskByIndex(int index, {bool zoomOut = false}) async {
     final viewId = ref.read(taskListProvider)[index];
 
-    ref.read(taskSwitcherStateProvider.notifier)
-      ..inOverview = false
-      ..clearVisibleTasks()
-      ..makeTaskVisible(viewId);
+    ref.read(taskSwitcherStateProvider.notifier).inOverview = false;
 
     PlatformApi.activateWindow(viewId);
 

@@ -111,7 +111,7 @@ final desktopEntriesProvider = FutureProvider<List<LocalizedDesktopEntry>>(
       : _$desktopEntriesHash,
 );
 typedef DesktopEntriesRef = FutureProviderRef<List<LocalizedDesktopEntry>>;
-String _$defaultIconThemeHash() => r'f82c403a2eef9a725fcfc5014c1ac9b84c534831';
+String _$defaultIconThemeHash() => r'c464c43ae8cad5e84755fbb19b5ffdd5261383e3';
 
 /// See also [defaultIconTheme].
 final defaultIconThemeProvider = FutureProvider<FreedesktopIconTheme>(

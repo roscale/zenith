@@ -9,7 +9,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/system_ui/app_drawer/app_drawer.dart';
 
 part 'app_drawer_state.freezed.dart';
-
 part 'app_drawer_state.g.dart';
 
 final appDrawerStateProvider = StateProvider(
