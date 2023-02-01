@@ -68,7 +68,7 @@ Future<List<LocalizedDesktopEntry>> desktopEntries(DesktopEntriesRef ref) {
 
 @Riverpod(keepAlive: true)
 Future<FreedesktopIconTheme> defaultIconTheme(DefaultIconThemeRef ref) {
-  return FreedesktopIconTheme.load('breeze-dark');
+  return FreedesktopIconTheme.load('Adwaita');
 }
 
 Stream<File> _getAllDesktopEntryFiles() async* {

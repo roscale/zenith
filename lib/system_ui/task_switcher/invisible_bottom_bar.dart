@@ -12,7 +12,6 @@ class InvisibleBottomBar extends ConsumerStatefulWidget {
 }
 
 class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
-  late VelocityTracker velocityTracker;
   ScrollDragController? drag;
   late var tm = ref.read(taskSwitcherWidgetStateProvider);
   int draggingTask = 0;
@@ -44,8 +43,6 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
 
   void _onPointerDown(DragStartDetails details) {
     tm.stopScaleAnimation();
-    velocityTracker = VelocityTracker.withKind(PointerDeviceKind.touch);
-    velocityTracker.addPosition(details.sourceTimeStamp!, details.globalPosition);
     drag = tm.scrollPosition.drag(
       DragStartDetails(
         sourceTimeStamp: details.sourceTimeStamp!,
@@ -64,7 +61,6 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
     }
     final notifier = ref.read(taskSwitcherStateProvider.notifier);
 
-    velocityTracker.addPosition(details.sourceTimeStamp!, details.localPosition);
     if (ref.read(taskListProvider).isNotEmpty) {
       double scale = ref.read(taskSwitcherStateProvider).scale;
       notifier.scale = (scale + details.delta.dy / ref.read(taskSwitcherStateProvider).constraints.maxHeight * 2).clamp(0.5, 1);
@@ -87,8 +83,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
     }
     drag?.cancel();
 
-    // velocityTracker.addPosition(details.timeStamp, details.position);
-    var vel = velocityTracker.getVelocity().pixelsPerSecond;
+    var vel = details.velocity.pixelsPerSecond;
 
     var taskOffset = tm.taskIndexToPosition(tm.taskPositionToIndex(tm.position));
 

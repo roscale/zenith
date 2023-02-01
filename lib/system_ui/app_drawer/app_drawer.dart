@@ -112,6 +112,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
             child: child,
           );
         },
+        // Can't use a GestureDetector because the GridView will always win the arena.
         child: Listener(
           onPointerDown: (e) {
             _velocityTracker = VelocityTracker.withKind(PointerDeviceKind.touch);
