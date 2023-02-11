@@ -36,6 +36,7 @@ struct SubsurfaceParentState {
 
 struct SurfaceCommitMessage {
 	size_t view_id;
+	std::shared_ptr<wlr_buffer> buffer;
 	struct {
 		SurfaceRole role;
 		int texture_id;

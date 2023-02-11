@@ -42,44 +42,17 @@ int extract_sync_fd_from_dma_buf(wlr_buffer* buffer, const wlr_dmabuf_attributes
 
 int extract_fd_from_native_fence(EGLSyncKHR* sync_out);
 
-void schedule_buffer_commit_on_fd(int fd, size_t view_id, std::shared_ptr<wlr_buffer> buffer);
+void commit_surface(SurfaceCommitMessage* commit_message);
+
+void schedule_buffer_commit_on_fd(int fd, std::unique_ptr<SurfaceCommitMessage> commit_message);
 
 void zenith_surface_commit(wl_listener* listener, void* data) {
 	ZenithSurface* zenith_surface = wl_container_of(listener, zenith_surface, commit);
 	wlr_surface* surface = zenith_surface->surface;
 	wlr_buffer* buffer = &surface->buffer->base;
 
-	SurfaceCommitMessage commit_message{};
-	commit_message.view_id = zenith_surface->id;
-
-	wlr_texture* texture = wlr_surface_get_texture(surface);
-	if (texture != nullptr && wlr_texture_is_gles2(texture)) {
-		wlr_dmabuf_attributes dmabuf_attributes = {};
-		bool is_dma = wlr_buffer_get_dmabuf(&surface->buffer->base, &dmabuf_attributes);
-
-		if (is_dma) {
-			int sync_fd = extract_sync_fd_from_dma_buf(buffer, dmabuf_attributes);
-			if (sync_fd != -1) {
-				auto scoped_buffer = scoped_wlr_buffer(buffer, [sync_fd](wlr_buffer* buffer) {
-					close(sync_fd);
-				});
-				schedule_buffer_commit_on_fd(sync_fd, zenith_surface->id, scoped_buffer);
-			}
-		} else {
-			EGLSyncKHR sync = nullptr;
-			int fence_fd = extract_fd_from_native_fence(&sync);
-			if (fence_fd != -1 && sync != nullptr) {
-				wlr_egl* egl = wlr_gles2_renderer_get_egl(ZenithServer::instance()->renderer);
-				EGLDisplay egl_display = egl->display;
-
-				auto scoped_buffer = scoped_wlr_buffer(buffer, [fence_fd, egl_display, sync](wlr_buffer* buffer) {
-					eglDestroySyncKHR(egl_display, sync);
-					close(fence_fd);
-				});
-				schedule_buffer_commit_on_fd(fence_fd, zenith_surface->id, scoped_buffer);
-			}
-		}
-	}
+	auto commit_message = std::make_unique<SurfaceCommitMessage>();
+	commit_message->view_id = zenith_surface->id;
 
 	SurfaceRole role;
 	if (wlr_surface_is_xdg_surface(surface)) {
@@ -90,7 +63,7 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 		role = NONE;
 	}
 
-	commit_message.surface = {
+	commit_message->surface = {
 		  .role = role,
 		  .texture_id = (int) zenith_surface->id,
 		  .x = surface->sx,
@@ -124,13 +97,13 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 		above.push_back(state);
 	}
 
-	commit_message.subsurfaces_below = std::move(below);
-	commit_message.subsurfaces_above = std::move(above);
+	commit_message->subsurfaces_below = std::move(below);
+	commit_message->subsurfaces_above = std::move(above);
 
 	if (role == XDG_SURFACE) {
 		wlr_xdg_surface* xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
 		wlr_box visible_bounds = xdg_surface_get_visible_bounds(xdg_surface);
-		commit_message.xdg_surface = {
+		commit_message->xdg_surface = {
 			  .role = xdg_surface->role,
 			  .x = visible_bounds.x,
 			  .y = visible_bounds.y,
@@ -150,7 +123,7 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 			}
 
 			const wlr_box& geometry = popup->geometry;
-			commit_message.xdg_popup = {
+			commit_message->xdg_popup = {
 				  .parent_id = parent_id,
 				  .x = geometry.x,
 				  .y = geometry.y,
@@ -160,7 +133,49 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 		}
 	}
 
-	ZenithServer::instance()->embedder_state->commit_surface(commit_message);
+	std::shared_ptr<wlr_buffer> scoped_buffer = nullptr;
+	int wait_for_fd = -1;
+
+	wlr_texture* texture = wlr_surface_get_texture(surface);
+	if (texture != nullptr && wlr_texture_is_gles2(texture)) {
+		wlr_dmabuf_attributes dmabuf_attributes = {};
+		bool is_dma = wlr_buffer_get_dmabuf(&surface->buffer->base, &dmabuf_attributes);
+
+		if (is_dma) {
+			int sync_fd = extract_sync_fd_from_dma_buf(buffer, dmabuf_attributes);
+			if (sync_fd != -1) {
+				scoped_buffer = scoped_wlr_buffer(buffer, [sync_fd](wlr_buffer* buffer) {
+					close(sync_fd);
+				});
+				wait_for_fd = sync_fd;
+			} else {
+				scoped_buffer = scoped_wlr_buffer(buffer);
+			}
+		} else {
+			EGLSyncKHR sync = nullptr;
+			int fence_fd = extract_fd_from_native_fence(&sync);
+			if (fence_fd != -1 && sync != nullptr) {
+				wlr_egl* egl = wlr_gles2_renderer_get_egl(ZenithServer::instance()->renderer);
+				EGLDisplay egl_display = egl->display;
+				scoped_buffer = scoped_wlr_buffer(buffer, [fence_fd, egl_display, sync](
+					  wlr_buffer* buffer) {
+					eglDestroySyncKHR(egl_display, sync);
+					close(fence_fd);
+				});
+				wait_for_fd = fence_fd;
+			} else {
+				scoped_buffer = scoped_wlr_buffer(buffer);
+			}
+		}
+	}
+
+	commit_message->buffer = scoped_buffer;
+
+	if (wait_for_fd != -1) {
+		schedule_buffer_commit_on_fd(wait_for_fd, std::move(commit_message));
+	} else {
+		commit_surface(commit_message.get());
+	}
 }
 
 void zenith_surface_destroy(wl_listener* listener, void* data) {
@@ -230,38 +245,41 @@ int extract_fd_from_native_fence(EGLSyncKHR* sync_out) {
 	return fence_fd;
 }
 
+void commit_surface(SurfaceCommitMessage* commit_message) {
+	auto* server = ZenithServer::instance();
+	size_t id = commit_message->view_id;
+
+	std::shared_ptr<SurfaceBufferChain<wlr_buffer>> buffer_chain;
+	auto it = server->surface_buffer_chains.find(id);
+	if (it == server->surface_buffer_chains.end()) {
+		buffer_chain = std::make_shared<SurfaceBufferChain<wlr_buffer>>();
+		server->surface_buffer_chains.insert(std::pair(id, buffer_chain));
+		server->embedder_state->register_external_texture((int64_t) id);
+	} else {
+		buffer_chain = it->second;
+	}
+
+	buffer_chain->commit_buffer(std::move(commit_message->buffer));
+	server->embedder_state->mark_external_texture_frame_available((int64_t) id);
+	server->embedder_state->commit_surface(*commit_message);
+}
+
 // Commits the buffer when the file descriptor becomes readable.
-void schedule_buffer_commit_on_fd(int fd, size_t view_id, std::shared_ptr<wlr_buffer> buffer) {
+void schedule_buffer_commit_on_fd(int fd, std::unique_ptr<SurfaceCommitMessage> commit_message) {
 	struct SourceData {
-		size_t id;
-		std::shared_ptr<wlr_buffer> buffer;
+		std::unique_ptr<SurfaceCommitMessage> commit_message;
 		wl_event_source* source; // I want the source to remove itself.
 	};
 
 	auto* source_data = new SourceData{
-		  .id = view_id,
-		  .buffer = std::move(buffer),
+		  .commit_message = std::move(commit_message),
 		  .source = nullptr,
 	};
 
 	wl_event_loop_fd_func_t func = [](int fd, uint32_t mask, void* data) {
 		auto source_data = static_cast<SourceData*>(data);
-		auto* server = ZenithServer::instance();
-		size_t id = source_data->id;
 
-		std::shared_ptr<SurfaceBufferChain<wlr_buffer>> buffer_chain;
-		auto it = server->surface_buffer_chains.find(id);
-		if (it == server->surface_buffer_chains.end()) {
-			buffer_chain = std::make_shared<SurfaceBufferChain<wlr_buffer>>();
-			server->surface_buffer_chains.insert(std::pair(id, buffer_chain));
-			server->embedder_state->register_external_texture((int64_t) id);
-		} else {
-			buffer_chain = it->second;
-		}
-
-		buffer_chain->commit_buffer(std::move(source_data->buffer));
-
-		server->embedder_state->mark_external_texture_frame_available((int64_t) id);
+		commit_surface(source_data->commit_message.get());
 
 		wl_event_source_remove(source_data->source);
 		delete source_data;
