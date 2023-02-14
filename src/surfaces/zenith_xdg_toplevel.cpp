@@ -5,7 +5,9 @@ ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel,
                                      std::shared_ptr<ZenithXdgSurface> zenith_xdg_surface)
 	  : xdg_toplevel{xdg_toplevel}, zenith_xdg_surface(std::move(zenith_xdg_surface)) {
 	maximize();
-	// TODO: Set up callbacks.
+
+	request_fullscreen.notify = zenith_xdg_toplevel_request_fullscreen;
+	wl_signal_add(&xdg_toplevel->events.request_fullscreen, &request_fullscreen);
 }
 
 void ZenithXdgToplevel::focus() const {
@@ -68,4 +70,9 @@ void ZenithXdgToplevel::maximize() const {
 	auto* server = ZenithServer::instance();
 	wlr_xdg_toplevel_set_size(xdg_toplevel->base, server->max_window_size.width, server->max_window_size.height);
 	wlr_xdg_toplevel_set_maximized(xdg_toplevel->base, true);
+}
+
+void zenith_xdg_toplevel_request_fullscreen(wl_listener* listener, void* data) {
+	auto* event = static_cast<wlr_xdg_toplevel_set_fullscreen_event*>(data);
+	wlr_xdg_toplevel_set_fullscreen(event->surface, event->fullscreen);
 }
