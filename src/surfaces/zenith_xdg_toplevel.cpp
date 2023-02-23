@@ -8,6 +8,9 @@ ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel,
 
 	request_fullscreen.notify = zenith_xdg_toplevel_request_fullscreen;
 	wl_signal_add(&xdg_toplevel->events.request_fullscreen, &request_fullscreen);
+
+	set_app_id.notify = zenith_xdg_toplevel_set_app_id;
+	wl_signal_add(&xdg_toplevel->events.set_app_id, &set_app_id);
 }
 
 void ZenithXdgToplevel::focus() const {
@@ -75,4 +78,9 @@ void ZenithXdgToplevel::maximize() const {
 void zenith_xdg_toplevel_request_fullscreen(wl_listener* listener, void* data) {
 	auto* event = static_cast<wlr_xdg_toplevel_set_fullscreen_event*>(data);
 	wlr_xdg_toplevel_set_fullscreen(event->surface, event->fullscreen);
+}
+
+void zenith_xdg_toplevel_set_app_id(wl_listener* listener, void* data) {
+	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, set_app_id);
+	char* app_id = zenith_xdg_toplevel->zenith_xdg_surface->xdg_surface->toplevel->app_id;
 }

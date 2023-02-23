@@ -40,6 +40,8 @@ ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output,
 
 static size_t i = 1;
 
+static std::unique_ptr<SwapChain<wlr_gles2_buffer>> create_swap_chain(wlr_output* wlr_output);
+
 void output_create_handle(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_output);
 	auto* wlr_output = static_cast<struct wlr_output*>(data);
@@ -69,23 +71,8 @@ void output_create_handle(wl_listener* listener, void* data) {
 		}
 	}
 
-	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
-
-	std::array<std::shared_ptr<wlr_gles2_buffer>, 4> buffers = {};
-
-	wlr_drm_format* drm_format = get_output_format(wlr_output);
-	for (auto& buffer: buffers) {
-		wlr_buffer* buf = wlr_allocator_create_buffer(server->allocator, wlr_output->width, wlr_output->height,
-		                                              drm_format);
-		assert(wlr_renderer_is_gles2(server->renderer));
-		auto* gles2_renderer = (struct wlr_gles2_renderer*) server->renderer;
-		wlr_gles2_buffer* gles2_buffer = create_buffer(gles2_renderer, buf);
-		buffer = scoped_wlr_gles2_buffer(gles2_buffer);
-	}
-
-	auto swap_chain = std::make_unique<SwapChain<wlr_gles2_buffer>>(buffers);
-
 	// Create the output.
+	auto swap_chain = create_swap_chain(wlr_output);
 	auto output = std::make_unique<ZenithOutput>(server, wlr_output, std::move(swap_chain));
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
@@ -155,6 +142,8 @@ void mode_changed_event(wl_listener* listener, void* data) {
 	wlr_box* box = wlr_output_layout_get_box(output->server->output_layout, nullptr);
 	output->server->output_layout_box = *box;
 
+	output->swap_chain = create_swap_chain(output->wlr_output);
+
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
@@ -186,4 +175,24 @@ int vsync_callback(void* data) {
 		embedder_state->on_vsync(*baton, now, next_frame);
 	}
 	return 0;
+}
+
+std::unique_ptr<SwapChain<wlr_gles2_buffer>> create_swap_chain(wlr_output* wlr_output) {
+	ZenithServer* server = ZenithServer::instance();
+
+	wlr_egl_make_current(wlr_gles2_renderer_get_egl(server->renderer));
+
+	std::array<std::shared_ptr<wlr_gles2_buffer>, 4> buffers = {};
+
+	wlr_drm_format* drm_format = get_output_format(wlr_output);
+	for (auto& buffer: buffers) {
+		wlr_buffer* buf = wlr_allocator_create_buffer(server->allocator, wlr_output->width, wlr_output->height,
+		                                              drm_format);
+		assert(wlr_renderer_is_gles2(server->renderer));
+		auto* gles2_renderer = (struct wlr_gles2_renderer*) server->renderer;
+		wlr_gles2_buffer* gles2_buffer = create_buffer(gles2_renderer, buf);
+		buffer = scoped_wlr_gles2_buffer(gles2_buffer);
+	}
+
+	return std::make_unique<SwapChain<wlr_gles2_buffer>>(buffers);
 }

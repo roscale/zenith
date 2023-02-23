@@ -110,26 +110,30 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 			  .width = visible_bounds.width,
 			  .height = visible_bounds.height,
 		};
+		switch (xdg_surface->role) {
+			case WLR_XDG_SURFACE_ROLE_NONE:
+			case WLR_XDG_SURFACE_ROLE_TOPLEVEL:
+				break;
+			case WLR_XDG_SURFACE_ROLE_POPUP:
+				wlr_xdg_popup* popup = xdg_surface->popup;
+				int64_t parent_id;
+				if (popup->parent != nullptr) {
+					assert(wlr_surface_is_xdg_surface(popup->parent));
+					auto* parent = static_cast<ZenithSurface*>(popup->parent->data);
+					parent_id = (int64_t) parent->id;
+				} else {
+					parent_id = 0;
+				}
 
-		if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
-			wlr_xdg_popup* popup = xdg_surface->popup;
-			int64_t parent_id;
-			if (popup->parent != nullptr) {
-				assert(wlr_surface_is_xdg_surface(popup->parent));
-				auto* parent = static_cast<ZenithSurface*>(popup->parent->data);
-				parent_id = (int64_t) parent->id;
-			} else {
-				parent_id = 0;
-			}
-
-			const wlr_box& geometry = popup->geometry;
-			commit_message->xdg_popup = {
-				  .parent_id = parent_id,
-				  .x = geometry.x,
-				  .y = geometry.y,
-				  .width = geometry.width,
-				  .height = geometry.height,
-			};
+				const wlr_box& geometry = popup->geometry;
+				commit_message->xdg_popup = {
+					  .parent_id = parent_id,
+					  .x = geometry.x,
+					  .y = geometry.y,
+					  .width = geometry.width,
+					  .height = geometry.height,
+				};
+				break;
 		}
 	}
 
