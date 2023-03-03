@@ -30,9 +30,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  flutter_hooks: ^0.18.0
   flutter_riverpod: ^2.0.2
-  hooks_riverpod: ^2.0.2
   riverpod_annotation: ^1.0.4
   defer_pointer: ^0.0.2
   intl: ^0.17.0

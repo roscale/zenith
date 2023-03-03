@@ -3,14 +3,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/state/zenith_subsurface_state.dart';
-import 'package:zenith/state/zenith_surface_state.dart';
-import 'package:zenith/state/zenith_xdg_popup_state.dart';
-import 'package:zenith/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/widgets/popup.dart';
-import 'package:zenith/widgets/subsurface.dart';
-import 'package:zenith/widgets/surface.dart';
-import 'package:zenith/widgets/window.dart';
+import 'package:zenith/ui/common/state/zenith_subsurface_state.dart';
+import 'package:zenith/ui/common/state/zenith_surface_state.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
+import 'package:zenith/ui/common/subsurface.dart';
+import 'package:zenith/util/state_notifier_list.dart';
+
+final mappedWindowListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
+  return StateNotifierList<int>();
+});
 
 final windowMappedStreamProvider = StreamProvider<int>((ref) {
   return PlatformApi.windowMappedController.stream;
@@ -298,11 +300,6 @@ class PlatformApi {
             );
       }
     }
-
-    ref.read(surfaceWidget(viewId).notifier).state = Surface(
-      key: ref.read(zenithSurfaceStateProvider(viewId)).widgetKey,
-      viewId: viewId,
-    );
   }
 
   static void _mapXdgSurface(dynamic event) {
@@ -316,21 +313,13 @@ class PlatformApi {
           print("unreachable");
           print(StackTrace.current);
         }
-        break; // Unreachable.
+        break;
       case XdgSurfaceRole.toplevel:
-        ref.read(windowWidget(viewId).notifier).state = Window(
-          key: ref.read(zenithXdgSurfaceStateProvider(viewId)).widgetKey,
-          viewId: viewId,
-        );
+        ref.read(mappedWindowListProvider.notifier).add(viewId);
         windowMappedController.add(viewId);
         break;
       case XdgSurfaceRole.popup:
         var popup = ref.read(zenithXdgPopupStateProvider(viewId));
-
-        ref.read(popupWidget(viewId).notifier).state = Popup(
-          key: ref.read(zenithXdgSurfaceStateProvider(viewId)).widgetKey,
-          viewId: viewId,
-        );
 
         ref.read(zenithXdgSurfaceStateProvider(popup.parentViewId).notifier).addPopup(viewId);
 
@@ -351,6 +340,7 @@ class PlatformApi {
         }
         break; // Unreachable.
       case XdgSurfaceRole.toplevel:
+        ref.read(mappedWindowListProvider.notifier).remove(viewId);
         windowUnmappedController.add(viewId);
         break;
       case XdgSurfaceRole.popup:
@@ -367,10 +357,6 @@ class PlatformApi {
     int viewId = event["view_id"];
 
     ref.read(zenithSubsurfaceStateProvider(viewId).notifier).map(true);
-    ref.read(subsurfaceWidget(viewId).notifier).state = Subsurface(
-      key: ref.read(zenithSubsurfaceStateProvider(viewId)).widgetKey,
-      viewId: viewId,
-    );
   }
 
   static void _unmapSubsurface(dynamic event) {

@@ -6,12 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/state/key_tracker.dart';
-import 'package:zenith/state/lock_screen_state.dart';
-import 'package:zenith/state/power_menu_state.dart';
-import 'package:zenith/state/root_overlay.dart';
-import 'package:zenith/state/screen_state.dart';
-import 'package:zenith/widgets/desktop.dart';
+import 'package:zenith/ui/desktop/desktop_ui.dart';
+import 'package:zenith/ui/mobile/mobile_ui.dart';
+import 'package:zenith/ui/mobile/state/power_menu_state.dart';
+import 'package:zenith/util/state/key_tracker.dart';
+import 'package:zenith/util/state/lock_screen_state.dart';
+import 'package:zenith/util/state/root_overlay.dart';
+import 'package:zenith/util/state/screen_state.dart';
+import 'package:zenith/util/state/ui_mode_state.dart';
 
 void main() {
   // debugRepaintRainbowEnabled = true;
@@ -107,11 +109,32 @@ class Zenith extends ConsumerWidget {
                     child: Scaffold(
                       body: Consumer(
                         builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                          return Overlay(
-                            key: ref.watch(rootOverlayKeyProvider),
-                            initialEntries: [
-                              OverlayEntry(builder: (_) => const Desktop()),
-                              // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
+                          UiMode uiMode = ref.watch(uiModeStateProvider);
+
+                          return Stack(
+                            children: [
+                              if (uiMode == UiMode.mobile) const MobileUi(),
+                              if (uiMode == UiMode.desktop) const DesktopUi(),
+                              Overlay(
+                                key: ref.watch(rootOverlayKeyProvider),
+                                initialEntries: [
+                                  // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
+                                ],
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  final notifier = ref.read(uiModeStateProvider.notifier);
+                                  switch (ref.read(uiModeStateProvider)) {
+                                    case UiMode.mobile:
+                                      notifier.state = UiMode.desktop;
+                                      break;
+                                    case UiMode.desktop:
+                                      notifier.state = UiMode.mobile;
+                                      break;
+                                  }
+                                },
+                                child: const Text("Switch"),
+                              ),
                             ],
                           );
                         },
