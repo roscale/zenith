@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:zenith/ui/mobile/task_switcher/task.dart';
+import 'package:zenith/ui/mobile/task_switcher/task_switcher.dart';
 
 part 'task_state.freezed.dart';
 
@@ -17,7 +19,11 @@ final taskVerticalPositionProvider = StateProvider.family<double, int>((ref, int
 });
 
 final taskWidgetProvider = StateProvider.family<Widget, int>((ref, int viewId) {
-  return const SizedBox();
+  return Task(
+    key: GlobalKey(),
+    viewId: viewId,
+    onTap: () => ref.read(taskSwitcherWidgetStateProvider).switchToTask(viewId),
+  );
 });
 
 class TaskStateNotifier extends StateNotifier<TaskState> {

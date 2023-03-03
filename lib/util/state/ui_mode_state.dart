@@ -6,5 +6,5 @@ enum UiMode {
 }
 
 final uiModeStateProvider = StateProvider<UiMode>((ref) {
-  return UiMode.mobile;
+  return UiMode.desktop;
 });

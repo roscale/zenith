@@ -6,6 +6,12 @@ part 'window_stack_notifier_provider.freezed.dart';
 class WindowStackNotifierProvider extends StateNotifier<WindowStack> {
   WindowStackNotifierProvider() : super(const WindowStack(stack: []));
 
+  void set(Iterable<int> list) {
+    state = WindowStack(
+      stack: [...list],
+    );
+  }
+
   void add(int viewId) {
     state = WindowStack(
       stack: [

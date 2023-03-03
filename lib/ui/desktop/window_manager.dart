@@ -23,10 +23,7 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
     var tasks = ref.read(mappedWindowListProvider);
 
     Future.microtask(() {
-      windowStackNotifier.clear();
-      for (int task in tasks) {
-        windowStackNotifier.add(task);
-      }
+      windowStackNotifier.set(tasks);
     });
 
     ref.listenManual(windowMappedStreamProvider, (_, AsyncValue<int> next) {

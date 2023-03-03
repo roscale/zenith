@@ -14,7 +14,6 @@ import 'package:zenith/ui/mobile/app_drawer/handle.dart';
 import 'package:zenith/ui/mobile/state/task_state.dart';
 import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
 import 'package:zenith/ui/mobile/task_switcher/invisible_bottom_bar.dart';
-import 'package:zenith/ui/mobile/task_switcher/task.dart';
 import 'package:zenith/ui/mobile/task_switcher/task_switcher_scroller.dart';
 import 'package:zenith/util/state_notifier_list.dart';
 
@@ -58,6 +57,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     Future.microtask(() => ref.read(taskSwitcherWidgetStateProvider.notifier).state = this);
 
     scrollPosition = ScrollPositionWithSingleContext(
+      initialPixels: ref.read(taskSwitcherPositionProvider.notifier).state,
       physics: const BouncingScrollPhysics(),
       context: this,
       debugLabel: "TaskSwitcher.scrollPosition",
@@ -68,14 +68,14 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
         ref.read(taskSwitcherPositionProvider.notifier).state = scrollPosition.pixels;
       });
 
-    // Avoid executing _spawnTask and _stopTask concurrently because it causes visual glitches.
-    // Make sure the async tasks are executed one after the other.
-    Future<void> chain = Future.value(null);
-
     List<int> mappedWindows = ref.read(mappedWindowListProvider);
     Future.microtask(() {
       _initializeWithTasks(mappedWindows);
     });
+
+    // Avoid executing _spawnTask and _stopTask concurrently because it causes visual glitches.
+    // Make sure the async tasks are executed one after the other.
+    Future<void> chain = Future.value(null);
 
     ref.listenManual(windowMappedStreamProvider, (_, AsyncValue<int> next) {
       next.whenData((int viewId) {
@@ -141,18 +141,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   }
 
   void _initializeWithTasks(Iterable<int> viewIds) {
-    final taskListNotifier = ref.read(taskListProvider.notifier);
-    taskListNotifier.clear();
-
-    for (int viewId in viewIds) {
-      taskListNotifier.add(viewId);
-      ref.read(taskWidgetProvider(viewId).notifier).state = Task(
-        key: ValueKey(viewId),
-        viewId: viewId,
-        onTap: () => _switchToTask(viewId),
-      );
-    }
-
+    ref.read(taskListProvider.notifier).set(viewIds);
     _updateContentDimensions();
     _repositionTasks();
   }
@@ -161,11 +150,6 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     final taskIndex = ref.read(taskListProvider).length;
 
     ref.read(taskListProvider.notifier).add(viewId);
-    ref.read(taskWidgetProvider(viewId).notifier).state = Task(
-      key: ValueKey(viewId),
-      viewId: viewId,
-      onTap: () => _switchToTask(viewId),
-    );
     ref.read(taskPositionProvider(viewId).notifier).state = taskIndexToPosition(taskIndex);
 
     _updateContentDimensions();
@@ -386,7 +370,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     _scaleAnimationController = null;
   }
 
-  Future<void> _switchToTask(int viewId) async {
+  Future<void> switchToTask(int viewId) async {
     final notifier = ref.read(taskSwitcherStateProvider.notifier);
     notifier.areAnimationsPlaying = true;
     try {

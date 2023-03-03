@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class StateNotifierList<T> extends StateNotifier<List<T>> {
   StateNotifierList() : super(const []);
 
+  void set(Iterable<T> list) {
+    state = [...list];
+  }
+
   void add(T element) {
     state = [...state, element];
   }
