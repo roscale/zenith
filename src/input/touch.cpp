@@ -40,8 +40,9 @@ void touch_down_handle(wl_listener* listener, void* data) {
 	e.phase = kDown;
 	e.timestamp = current_time_microseconds();
 	// Map from [0, 1] to [output_width, output_height].
-	e.x = event->x * server->output_layout_box.width;
-	e.y = event->y * server->output_layout_box.height;
+	wlr_box* box = wlr_output_layout_get_box(server->output_layout, nullptr);
+	e.x = event->x * box->width;
+	e.y = event->y * box->height;
 
 	touch_device->last_touch_coordinates[event->touch_id] = std::pair(event->x, event->y);
 
@@ -62,8 +63,9 @@ void touch_motion_handle(wl_listener* listener, void* data) {
 	e.phase = kMove;
 
 	e.timestamp = current_time_microseconds();
-	e.x = event->x * server->output_layout_box.width;
-	e.y = event->y * server->output_layout_box.height;
+	wlr_box* box = wlr_output_layout_get_box(server->output_layout, nullptr);
+	e.x = event->x * box->width;
+	e.y = event->y * box->height;
 
 	touch_device->last_touch_coordinates[event->touch_id] = std::pair(event->x, event->y);
 
@@ -84,8 +86,9 @@ void touch_up_handle(wl_listener* listener, void* data) {
 	e.phase = kUp;
 
 	auto last_coordinates = touch_device->last_touch_coordinates[event->touch_id];
-	e.x = last_coordinates.first * server->output_layout_box.width;
-	e.y = last_coordinates.second * server->output_layout_box.height;
+	wlr_box* box = wlr_output_layout_get_box(server->output_layout, nullptr);
+	e.x = last_coordinates.first * box->width;
+	e.y = last_coordinates.second * box->height;
 
 	e.timestamp = current_time_microseconds();
 	e.device_kind = kFlutterPointerDeviceKindTouch;
@@ -105,8 +108,9 @@ void touch_cancel_handle(wl_listener* listener, void* data) {
 	e.phase = kCancel;
 
 	auto last_coordinates = touch_device->last_touch_coordinates[event->touch_id];
-	e.x = last_coordinates.first * server->output_layout_box.width;
-	e.y = last_coordinates.second * server->output_layout_box.height;
+	wlr_box* box = wlr_output_layout_get_box(server->output_layout, nullptr);
+	e.x = last_coordinates.first * box->width;
+	e.y = last_coordinates.second * box->height;
 
 	e.timestamp = current_time_microseconds();
 	e.device_kind = kFlutterPointerDeviceKindTouch;

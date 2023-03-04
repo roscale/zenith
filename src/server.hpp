@@ -62,14 +62,8 @@ public:
 	wlr_data_device_manager* data_device_manager;
 
 	wlr_output_layout* output_layout;
-	std::unique_ptr<ZenithOutput> output; // We support a single output at the moment.
-
-	// Box composed of all outputs.
-	// A single Flutter engine doesn't support multi-window/multiscreen apps and cannot draw to multiple framebuffers.
-	// If we are going to support multiple outputs in the future, we would have to create big framebuffer for all
-	// outputs of the size of this box and reserve a portion of the framebuffer for each.
-	// Right now, only one output is supported so the size of this box is essentially the size of the output.
-	wlr_box output_layout_box{};
+	std::vector<std::shared_ptr<ZenithOutput>> outputs = {};
+	std::shared_ptr<ZenithOutput> output = {}; // We support a single output at the moment.
 
 	// The maximum size a window can be, which is basically the size of the screen minus the status bar and possibly
 	// other decorations.

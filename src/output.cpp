@@ -19,14 +19,17 @@ extern "C" {
 #undef static
 }
 
-ZenithOutput::ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output,
-                           std::unique_ptr<SwapChain<wlr_gles2_buffer>> swap_chain)
-	  : server(server), wlr_output(wlr_output), swap_chain(std::move(swap_chain)) {
+ZenithOutput::ZenithOutput(struct wlr_output* wlr_output)
+	  : wlr_output(wlr_output) {
+
+	auto* server = ZenithServer::instance();
 
 	frame_listener.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &frame_listener);
 	mode_changed.notify = mode_changed_event;
 	wl_signal_add(&wlr_output->events.mode, &mode_changed);
+	destroy.notify = output_destroy;
+	wl_signal_add(&wlr_output->events.destroy, &destroy);
 
 	wlr_output_set_scale(wlr_output, server->display_scale);
 
@@ -47,38 +50,23 @@ void output_create_handle(wl_listener* listener, void* data) {
 	auto* wlr_output = static_cast<struct wlr_output*>(data);
 
 	/* Configures the output created by the backend to use our allocator and our renderer */
-	wlr_output_init_render(wlr_output, server->allocator, server->renderer);
-
-	static const char* selected_output_str = getenv("ZENITH_OUTPUT");
-	static size_t selected_output = selected_output_str != nullptr
-	                                ? selected_output_str[0] - '0'
-	                                : 0;
-
-	if (server->output != nullptr || i <= selected_output) {
-		i += 1;
-		// Allow only one output for the time being.
+	if (!wlr_output_init_render(wlr_output, server->allocator, server->renderer)) {
 		return;
 	}
 
-	if (!wl_list_empty(&wlr_output->modes)) {
-		// Set the preferred resolution and refresh rate of the monitor which will probably be the highest one.
-		wlr_output_enable(wlr_output, true);
-		wlr_output_mode* mode = wlr_output_preferred_mode(wlr_output);
-		wlr_output_set_mode(wlr_output, mode);
-
-		if (!wlr_output_commit(wlr_output)) {
-			return;
-		}
+	auto output = std::make_shared<ZenithOutput>(wlr_output);
+	if (!output->enable()) {
+		return;
 	}
 
-	// Create the output.
-	auto swap_chain = create_swap_chain(wlr_output);
-	auto output = std::make_unique<ZenithOutput>(server, wlr_output, std::move(swap_chain));
-	wlr_output_layout_add_auto(server->output_layout, wlr_output);
+	// Disable the last connected output.
+	if (!server->outputs.empty()) {
+		const auto& last_output = server->outputs.back();
+		last_output->disable();
+		wlr_output_layout_remove(server->output_layout, last_output->wlr_output);
+	}
 
-	// Cache the layout box.
-	wlr_box* box = wlr_output_layout_get_box(server->output_layout, nullptr);
-	server->output_layout_box = *box;
+	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
 	// Tell Flutter how big the screen is, so it can start rendering.
 	FlutterWindowMetricsEvent window_metrics = {};
@@ -89,21 +77,14 @@ void output_create_handle(wl_listener* listener, void* data) {
 
 	server->embedder_state->send_window_metrics(window_metrics);
 
-	server->output = std::move(output);
+	server->outputs.push_back(output);
+	server->output = output;
 }
 
 void output_frame(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, frame_listener);
-	ZenithServer* server = output->server;
+	auto* server = ZenithServer::instance();
 	wlr_output* wlr_output = output->wlr_output;
-
-	bool enabled = wlr_output->enabled;
-	if (wlr_output->pending.committed & WLR_OUTPUT_STATE_ENABLED) {
-		enabled = wlr_output->pending.enabled;
-	}
-	if (!enabled) {
-		return;
-	}
 
 	vsync_callback(server);
 
@@ -137,23 +118,22 @@ void output_frame(wl_listener* listener, void* data) {
 
 void mode_changed_event(wl_listener* listener, void* data) {
 	ZenithOutput* output = wl_container_of(listener, output, mode_changed);
+	auto* server = ZenithServer::instance();
 
-	// Update the layout box when the mode changes.
-	wlr_box* box = wlr_output_layout_get_box(output->server->output_layout, nullptr);
-	output->server->output_layout_box = *box;
+	output->recreate_swapchain();
 
-	output->swap_chain = create_swap_chain(output->wlr_output);
+	if (output == ZenithServer::instance()->output.get()) {
+		int width, height;
+		wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
-	int width, height;
-	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+		FlutterWindowMetricsEvent window_metrics = {};
+		window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
+		window_metrics.width = output->wlr_output->width;
+		window_metrics.height = output->wlr_output->height;
+		window_metrics.pixel_ratio = server->display_scale;
 
-	FlutterWindowMetricsEvent window_metrics = {};
-	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
-	window_metrics.width = output->wlr_output->width;
-	window_metrics.height = output->wlr_output->height;
-	window_metrics.pixel_ratio = output->server->display_scale;
-
-	output->server->embedder_state->send_window_metrics(window_metrics);
+		server->embedder_state->send_window_metrics(window_metrics);
+	}
 }
 
 int vsync_callback(void* data) {
@@ -195,4 +175,71 @@ std::unique_ptr<SwapChain<wlr_gles2_buffer>> create_swap_chain(wlr_output* wlr_o
 	}
 
 	return std::make_unique<SwapChain<wlr_gles2_buffer>>(buffers);
+}
+
+void output_destroy(wl_listener* listener, void* data) {
+	ZenithOutput* output = wl_container_of(listener, output, destroy);
+	auto* server = ZenithServer::instance();
+
+	wlr_output_layout_remove(server->output_layout, output->wlr_output);
+
+	auto it = std::remove_if(server->outputs.begin(), server->outputs.end(),
+	                         [output](const std::shared_ptr<ZenithOutput>& o) {
+		                         return o.get() == output;
+	                         });
+	server->outputs.erase(it, server->outputs.end());
+
+	if (!server->outputs.empty()) {
+		server->output = server->outputs.back();
+	} else {
+		server->output = nullptr;
+		return;
+	}
+
+	if (!server->output->enable()) {
+		return;
+	}
+
+	wlr_output_layout_add_auto(server->output_layout, server->output->wlr_output);
+
+	int width, height;
+	wlr_output_effective_resolution(server->output->wlr_output, &width, &height);
+
+	std::cout << "width " << width << " height " << height << std::endl;
+
+	FlutterWindowMetricsEvent window_metrics = {};
+	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
+	window_metrics.width = server->output->wlr_output->width;
+	window_metrics.height = server->output->wlr_output->height;
+	window_metrics.pixel_ratio = server->display_scale;
+
+	server->embedder_state->send_window_metrics(window_metrics);
+}
+
+bool ZenithOutput::enable() {
+	wlr_output_enable(wlr_output, true);
+	// Set the preferred resolution and refresh rate of the monitor which will probably be the highest one.
+	wlr_output_mode* mode = wlr_output_preferred_mode(wlr_output);
+	wlr_output_set_mode(wlr_output, mode);
+
+	if (!wlr_output_commit(wlr_output)) {
+		std::cout << "commit failed" << std::endl;
+		return false;
+	}
+
+	recreate_swapchain();
+	return true;
+}
+
+bool ZenithOutput::disable() const {
+	wlr_output_enable(wlr_output, false);
+	if (!wlr_output_commit(wlr_output)) {
+		std::cout << "commit failed" << std::endl;
+		return false;
+	}
+	return true;
+}
+
+void ZenithOutput::recreate_swapchain() {
+	swap_chain = create_swap_chain(wlr_output);
 }

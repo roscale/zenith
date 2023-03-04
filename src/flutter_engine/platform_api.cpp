@@ -384,10 +384,13 @@ void enable_display(ZenithServer* server, const flutter::MethodCall<>& call,
 	auto enable = std::get<bool>(args[flutter::EncodableValue("enable")]);
 
 	server->callable_queue.enqueue([server, enable] {
-		wlr_output* wlr_output = server->output->wlr_output;
-		wlr_output_enable(wlr_output, enable);
+		if (server->output == nullptr) {
+			return;
+		}
 		if (enable) {
-			wlr_output_schedule_frame(wlr_output);
+			server->output->enable();
+		} else {
+			server->output->disable();
 		}
 	});
 

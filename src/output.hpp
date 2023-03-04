@@ -19,17 +19,21 @@ extern "C" {
 struct ZenithServer;
 
 struct ZenithOutput {
-	ZenithOutput(ZenithServer* server, struct wlr_output* wlr_output,
-	             std::unique_ptr<SwapChain<wlr_gles2_buffer>> swap_chain);
-
-	ZenithServer* server = nullptr;
+	explicit ZenithOutput(struct wlr_output* wlr_output);
 
 	struct wlr_output* wlr_output = nullptr;
 	wl_listener frame_listener{};
 	wl_listener mode_changed{};
+	wl_listener destroy{};
 	wl_event_source* schedule_frame_timer;
 
 	std::unique_ptr<SwapChain<wlr_gles2_buffer>> swap_chain;
+
+	bool enable();
+
+	bool disable() const;
+
+	void recreate_swapchain();
 };
 
 /*
@@ -45,3 +49,5 @@ void output_frame(wl_listener* listener, void* data);
 void mode_changed_event(wl_listener* listener, void* data);
 
 int vsync_callback(void* data);
+
+void output_destroy(wl_listener* listener, void* data);

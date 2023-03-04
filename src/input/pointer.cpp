@@ -61,6 +61,10 @@ void server_cursor_motion(wl_listener* listener, void* data) {
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion*>(data);
 
+	if (server->output == nullptr) {
+		return;
+	}
+
 	pointer->set_visible(true);
 
 	/* The cursor doesn't move unless we tell it to. The cursor automatically
@@ -87,6 +91,10 @@ void server_cursor_motion_absolute(wl_listener* listener, void* data) {
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_motion_absolute*>(data);
 
+	if (server->output == nullptr) {
+		return;
+	}
+
 	pointer->set_visible(true);
 
 	wlr_cursor_warp_absolute(pointer->cursor, event->device, event->x, event->y);
@@ -109,6 +117,10 @@ void server_cursor_button(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_button);
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_button*>(data);
+
+	if (server->output == nullptr) {
+		return;
+	}
 
 	pointer->set_visible(true);
 
@@ -149,6 +161,10 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 	ZenithServer* server = pointer->server;
 	auto* event = static_cast<wlr_event_pointer_axis*>(data);
 
+	if (server->output == nullptr) {
+		return;
+	}
+
 	pointer->set_visible(true);
 
 	/* Notify the client with pointer focus of the axis event. */
@@ -181,6 +197,10 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 void server_cursor_frame(wl_listener* listener, void* data) {
 	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_frame);
 	ZenithServer* server = pointer->server;
+	
+	if (server->output == nullptr) {
+		return;
+	}
 
 	/* Notify the client with pointer focus of the frame event. */
 	wlr_seat_pointer_notify_frame(server->seat);
