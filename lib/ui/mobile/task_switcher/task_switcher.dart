@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/common/state/zenith_subsurface_state.dart';
 import 'package:zenith/ui/common/state/zenith_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
@@ -120,6 +121,7 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
                           children: [
                             for (int viewId in closingTasks) ref.watch(taskWidgetProvider(viewId)),
                             for (int viewId in tasks) ref.watch(taskWidgetProvider(viewId)),
+                            const PopupStack(),
                           ],
                         );
                       },

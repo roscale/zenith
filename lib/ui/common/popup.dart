@@ -1,11 +1,10 @@
-import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/common/state/zenith_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/common/surface.dart';
-import 'package:zenith/ui/common/surface_size.dart';
 
 final popupWidget = StateProvider.family<Popup, int>((ref, int viewId) {
   return Popup(
@@ -35,33 +34,10 @@ class Popup extends StatelessWidget {
             child: child!,
           );
         },
-        child: DeferPointer(
-          // Allow hit testing for nested popups
-          child: DeferredPointerHandler(
-            child: SurfaceSize(
-              // Need to specify the surface size, because the IgnorePointer parent
-              // needs a size and this stack doesn't have a size otherwise.
-              viewId: viewId,
-              child: Consumer(
-                builder: (_, WidgetRef ref, __) {
-                  Widget surface = ref.watch(surfaceWidget(viewId));
-                  List<int> popups = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.popups));
-                  List<Widget> popupWidgets = popups.map((e) => ref.watch(popupWidget(e))).toList();
-
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      surface,
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: popupWidgets,
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
+        child: Consumer(
+          builder: (_, WidgetRef ref, __) {
+            return ref.watch(surfaceWidget(viewId));
+          },
         ),
       ),
     );
@@ -83,13 +59,25 @@ class _Positioner extends ConsumerWidget {
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
         Offset position = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.position));
+        Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.visibleBounds));
         int parentId = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.parentViewId));
         Rect parentVisibleBounds = ref.watch(zenithXdgSurfaceStateProvider(parentId).select((v) => v.visibleBounds));
-        Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.visibleBounds));
+
+        RenderBox? parentRenderBox =
+            ref.read(zenithSurfaceStateProvider(parentId)).textureKey.currentContext?.findRenderObject() as RenderBox?;
+        RenderBox? popupStackRenderBox = ref.read(popupStackGlobalKey).currentContext?.findRenderObject() as RenderBox?;
+
+        Offset offset;
+        if (parentRenderBox != null && popupStackRenderBox != null) {
+          Offset global = parentRenderBox.localToGlobal(position);
+          offset = popupStackRenderBox.globalToLocal(global);
+        } else {
+          offset = position;
+        }
 
         return Positioned(
-          left: position.dx - visibleBounds.left + parentVisibleBounds.left,
-          top: position.dy - visibleBounds.top + parentVisibleBounds.top,
+          left: offset.dx - visibleBounds.left + parentVisibleBounds.left,
+          top: offset.dy - visibleBounds.top + parentVisibleBounds.top,
           child: child!,
         );
       },

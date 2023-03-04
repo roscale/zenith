@@ -23,7 +23,7 @@ class ZenithXdgSurfaceState with _$ZenithXdgSurfaceState {
   const factory ZenithXdgSurfaceState({
     required XdgSurfaceRole role,
     required Rect visibleBounds,
-    required Key widgetKey,
+    required GlobalKey widgetKey,
     required List<int> popups,
   }) = _ZenithXdgSurfaceState;
 }

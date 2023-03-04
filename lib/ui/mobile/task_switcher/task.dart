@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
@@ -99,10 +98,7 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
                 onVerticalDragCancel: inOverview ? _onVerticalDragCancel : null,
                 child: IgnorePointer(
                   ignoring: inOverview,
-                  child: DeferredPointerHandler(
-                    // Don't let the nested DeferPointer bypass the IgnorePointer.
-                    child: child!,
-                  ),
+                  child: child!,
                 ),
               ),
             );

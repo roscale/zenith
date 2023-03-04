@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/common/state/zenith_subsurface_state.dart';
 import 'package:zenith/ui/common/state/zenith_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
@@ -319,10 +320,7 @@ class PlatformApi {
         windowMappedController.add(viewId);
         break;
       case XdgSurfaceRole.popup:
-        var popup = ref.read(zenithXdgPopupStateProvider(viewId));
-
-        ref.read(zenithXdgSurfaceStateProvider(popup.parentViewId).notifier).addPopup(viewId);
-
+        ref.read(popupStackChildren.notifier).add(viewId);
         break;
     }
   }
@@ -345,10 +343,8 @@ class PlatformApi {
         break;
       case XdgSurfaceRole.popup:
         await ref.read(zenithXdgPopupStateProvider(viewId).notifier).animateClosing();
-
-        final state = ref.read(zenithXdgPopupStateProvider(viewId));
         PlatformApi.unregisterViewTexture(ref.read(zenithSurfaceStateProvider(viewId)).textureId);
-        ref.read(zenithXdgSurfaceStateProvider(state.parentViewId).notifier).removePopup(viewId);
+        ref.read(popupStackChildren.notifier).remove(viewId);
         break;
     }
   }

@@ -22,8 +22,10 @@ mixin _$ZenithSurfaceState {
   Offset get surfacePosition => throw _privateConstructorUsedError;
   Size get surfaceSize => throw _privateConstructorUsedError;
   double get scale => throw _privateConstructorUsedError;
-  Key get widgetKey => throw _privateConstructorUsedError;
-  Key get textureKey => throw _privateConstructorUsedError;
+  GlobalKey<State<StatefulWidget>> get widgetKey =>
+      throw _privateConstructorUsedError;
+  GlobalKey<State<StatefulWidget>> get textureKey =>
+      throw _privateConstructorUsedError;
   List<int> get subsurfacesBelow => throw _privateConstructorUsedError;
   List<int> get subsurfacesAbove => throw _privateConstructorUsedError;
   Rect get inputRegion => throw _privateConstructorUsedError;
@@ -46,8 +48,8 @@ abstract class $ZenithSurfaceStateCopyWith<$Res> {
       Offset surfacePosition,
       Size surfaceSize,
       double scale,
-      Key widgetKey,
-      Key textureKey,
+      GlobalKey<State<StatefulWidget>> widgetKey,
+      GlobalKey<State<StatefulWidget>> textureKey,
       List<int> subsurfacesBelow,
       List<int> subsurfacesAbove,
       Rect inputRegion});
@@ -106,11 +108,11 @@ class _$ZenithSurfaceStateCopyWithImpl<$Res, $Val extends ZenithSurfaceState>
       widgetKey: null == widgetKey
           ? _value.widgetKey
           : widgetKey // ignore: cast_nullable_to_non_nullable
-              as Key,
+              as GlobalKey<State<StatefulWidget>>,
       textureKey: null == textureKey
           ? _value.textureKey
           : textureKey // ignore: cast_nullable_to_non_nullable
-              as Key,
+              as GlobalKey<State<StatefulWidget>>,
       subsurfacesBelow: null == subsurfacesBelow
           ? _value.subsurfacesBelow
           : subsurfacesBelow // ignore: cast_nullable_to_non_nullable
@@ -142,8 +144,8 @@ abstract class _$$_ZenithSurfaceStateCopyWith<$Res>
       Offset surfacePosition,
       Size surfaceSize,
       double scale,
-      Key widgetKey,
-      Key textureKey,
+      GlobalKey<State<StatefulWidget>> widgetKey,
+      GlobalKey<State<StatefulWidget>> textureKey,
       List<int> subsurfacesBelow,
       List<int> subsurfacesAbove,
       Rect inputRegion});
@@ -200,11 +202,11 @@ class __$$_ZenithSurfaceStateCopyWithImpl<$Res>
       widgetKey: null == widgetKey
           ? _value.widgetKey
           : widgetKey // ignore: cast_nullable_to_non_nullable
-              as Key,
+              as GlobalKey<State<StatefulWidget>>,
       textureKey: null == textureKey
           ? _value.textureKey
           : textureKey // ignore: cast_nullable_to_non_nullable
-              as Key,
+              as GlobalKey<State<StatefulWidget>>,
       subsurfacesBelow: null == subsurfacesBelow
           ? _value._subsurfacesBelow
           : subsurfacesBelow // ignore: cast_nullable_to_non_nullable
@@ -252,9 +254,9 @@ class _$_ZenithSurfaceState implements _ZenithSurfaceState {
   @override
   final double scale;
   @override
-  final Key widgetKey;
+  final GlobalKey<State<StatefulWidget>> widgetKey;
   @override
-  final Key textureKey;
+  final GlobalKey<State<StatefulWidget>> textureKey;
   final List<int> _subsurfacesBelow;
   @override
   List<int> get subsurfacesBelow {
@@ -338,8 +340,8 @@ abstract class _ZenithSurfaceState implements ZenithSurfaceState {
       required final Offset surfacePosition,
       required final Size surfaceSize,
       required final double scale,
-      required final Key widgetKey,
-      required final Key textureKey,
+      required final GlobalKey<State<StatefulWidget>> widgetKey,
+      required final GlobalKey<State<StatefulWidget>> textureKey,
       required final List<int> subsurfacesBelow,
       required final List<int> subsurfacesAbove,
       required final Rect inputRegion}) = _$_ZenithSurfaceState;
@@ -357,9 +359,9 @@ abstract class _ZenithSurfaceState implements ZenithSurfaceState {
   @override
   double get scale;
   @override
-  Key get widgetKey;
+  GlobalKey<State<StatefulWidget>> get widgetKey;
   @override
-  Key get textureKey;
+  GlobalKey<State<StatefulWidget>> get textureKey;
   @override
   List<int> get subsurfacesBelow;
   @override

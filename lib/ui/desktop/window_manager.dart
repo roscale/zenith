@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/desktop/state/window_stack_notifier_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
 
 final windowStackNotifierProvider =
     StateNotifierProvider<WindowStackNotifierProvider, WindowStack>((ref) => WindowStackNotifierProvider());
+
+final windowStackGlobalKey = Provider((ref) => GlobalKey());
 
 class WindowManager extends ConsumerStatefulWidget {
   const WindowManager({super.key});
@@ -44,8 +47,10 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
     final tasks = ref.watch(windowStackNotifierProvider).windows;
 
     return Stack(
+      key: ref.watch(windowStackGlobalKey),
       children: [
         for (int viewId in tasks) ref.watch(windowWidget(viewId)),
+        const PopupStack(),
       ],
     );
   }

@@ -18,7 +18,8 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ZenithXdgSurfaceState {
   XdgSurfaceRole get role => throw _privateConstructorUsedError;
   Rect get visibleBounds => throw _privateConstructorUsedError;
-  Key get widgetKey => throw _privateConstructorUsedError;
+  GlobalKey<State<StatefulWidget>> get widgetKey =>
+      throw _privateConstructorUsedError;
   List<int> get popups => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -35,7 +36,7 @@ abstract class $ZenithXdgSurfaceStateCopyWith<$Res> {
   $Res call(
       {XdgSurfaceRole role,
       Rect visibleBounds,
-      Key widgetKey,
+      GlobalKey<State<StatefulWidget>> widgetKey,
       List<int> popups});
 }
 
@@ -70,7 +71,7 @@ class _$ZenithXdgSurfaceStateCopyWithImpl<$Res,
       widgetKey: null == widgetKey
           ? _value.widgetKey
           : widgetKey // ignore: cast_nullable_to_non_nullable
-              as Key,
+              as GlobalKey<State<StatefulWidget>>,
       popups: null == popups
           ? _value.popups
           : popups // ignore: cast_nullable_to_non_nullable
@@ -90,7 +91,7 @@ abstract class _$$_ZenithXdgSurfaceStateCopyWith<$Res>
   $Res call(
       {XdgSurfaceRole role,
       Rect visibleBounds,
-      Key widgetKey,
+      GlobalKey<State<StatefulWidget>> widgetKey,
       List<int> popups});
 }
 
@@ -122,7 +123,7 @@ class __$$_ZenithXdgSurfaceStateCopyWithImpl<$Res>
       widgetKey: null == widgetKey
           ? _value.widgetKey
           : widgetKey // ignore: cast_nullable_to_non_nullable
-              as Key,
+              as GlobalKey<State<StatefulWidget>>,
       popups: null == popups
           ? _value._popups
           : popups // ignore: cast_nullable_to_non_nullable
@@ -146,7 +147,7 @@ class _$_ZenithXdgSurfaceState implements _ZenithXdgSurfaceState {
   @override
   final Rect visibleBounds;
   @override
-  final Key widgetKey;
+  final GlobalKey<State<StatefulWidget>> widgetKey;
   final List<int> _popups;
   @override
   List<int> get popups {
@@ -189,7 +190,7 @@ abstract class _ZenithXdgSurfaceState implements ZenithXdgSurfaceState {
   const factory _ZenithXdgSurfaceState(
       {required final XdgSurfaceRole role,
       required final Rect visibleBounds,
-      required final Key widgetKey,
+      required final GlobalKey<State<StatefulWidget>> widgetKey,
       required final List<int> popups}) = _$_ZenithXdgSurfaceState;
 
   @override
@@ -197,7 +198,7 @@ abstract class _ZenithXdgSurfaceState implements ZenithXdgSurfaceState {
   @override
   Rect get visibleBounds;
   @override
-  Key get widgetKey;
+  GlobalKey<State<StatefulWidget>> get widgetKey;
   @override
   List<int> get popups;
   @override
