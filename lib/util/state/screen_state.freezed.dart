@@ -33,7 +33,8 @@ mixin _$ScreenState {
   Size get rotatedSize => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ScreenStateCopyWith<ScreenState> get copyWith => throw _privateConstructorUsedError;
+  $ScreenStateCopyWith<ScreenState> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -41,7 +42,6 @@ abstract class $ScreenStateCopyWith<$Res> {
   factory $ScreenStateCopyWith(
           ScreenState value, $Res Function(ScreenState) then) =
       _$ScreenStateCopyWithImpl<$Res, ScreenState>;
-
   @useResult
   $Res call({bool on, bool pending, int rotation, Size size, Size rotatedSize});
 }
@@ -96,7 +96,6 @@ abstract class _$$_ScreenStateCopyWith<$Res>
   factory _$$_ScreenStateCopyWith(
           _$_ScreenState value, $Res Function(_$_ScreenState) then) =
       __$$_ScreenStateCopyWithImpl<$Res>;
-
   @override
   @useResult
   $Res call({bool on, bool pending, int rotation, Size size, Size rotatedSize});
@@ -148,7 +147,11 @@ class __$$_ScreenStateCopyWithImpl<$Res>
 
 class _$_ScreenState implements _ScreenState {
   const _$_ScreenState(
-      {required this.on, required this.pending, required this.rotation, required this.size, required this.rotatedSize});
+      {required this.on,
+      required this.pending,
+      required this.rotation,
+      required this.size,
+      required this.rotatedSize});
 
   @override
   final bool on;
@@ -183,13 +186,16 @@ class _$_ScreenState implements _ScreenState {
             other is _$_ScreenState &&
             (identical(other.on, on) || other.on == on) &&
             (identical(other.pending, pending) || other.pending == pending) &&
-            (identical(other.rotation, rotation) || other.rotation == rotation) &&
+            (identical(other.rotation, rotation) ||
+                other.rotation == rotation) &&
             (identical(other.size, size) || other.size == size) &&
-            (identical(other.rotatedSize, rotatedSize) || other.rotatedSize == rotatedSize));
+            (identical(other.rotatedSize, rotatedSize) ||
+                other.rotatedSize == rotatedSize));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, on, pending, rotation, size, rotatedSize);
+  int get hashCode =>
+      Object.hash(runtimeType, on, pending, rotation, size, rotatedSize);
 
   @JsonKey(ignore: true)
   @override
@@ -208,30 +214,26 @@ abstract class _ScreenState implements ScreenState {
 
   @override
   bool get on;
-
   @override
 
   /// Turn on/off operations have not yet finished.
   bool get pending;
-
   @override
 
   /// Rotation expressed in clockwise quarter turns.
   int get rotation;
-
   @override
 
   /// The screen size, before rotation.
   Size get size;
-
   @override
 
   /// The screen size, after rotation.
   /// If the physical screen is 500x1000 in portrait and the device is rotated in landscape, this
   /// variable contains the size 1000x500.
   Size get rotatedSize;
-
   @override
   @JsonKey(ignore: true)
-  _$$_ScreenStateCopyWith<_$_ScreenState> get copyWith => throw _privateConstructorUsedError;
+  _$$_ScreenStateCopyWith<_$_ScreenState> get copyWith =>
+      throw _privateConstructorUsedError;
 }

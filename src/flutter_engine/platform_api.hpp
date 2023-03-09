@@ -22,6 +22,10 @@ void resize_window(ZenithServer* server,
                    const flutter::MethodCall<>& call,
                    std::unique_ptr<flutter::MethodResult<>>&& result);
 
+void maximize_window(ZenithServer* server,
+                     const flutter::MethodCall<>& call,
+                     std::unique_ptr<flutter::MethodResult<>>&& result);
+
 // We want to keep the last frame of a window or popup in order to animate the closing.
 // When the closing animation is done, there's no reason to keep the texture on the GPU and leak VRAM.
 void unregister_view_texture(ZenithServer* server,
@@ -60,9 +64,13 @@ void emulate_keycode(ZenithServer* server,
                      const flutter::MethodCall<>& call,
                      std::unique_ptr<flutter::MethodResult<>>&& result);
 
-void initial_window_size(ZenithServer* server,
-                         const flutter::MethodCall<>& call,
-                         std::unique_ptr<flutter::MethodResult<>>&& result);
+void start_windows_maximized(ZenithServer* server,
+                             const flutter::MethodCall<>& call,
+                             std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void maximized_window_size(ZenithServer* server,
+                           const flutter::MethodCall<>& call,
+                           std::unique_ptr<flutter::MethodResult<>>&& result);
 
 void startup_complete(ZenithServer* server,
                       const flutter::MethodCall<>& call,

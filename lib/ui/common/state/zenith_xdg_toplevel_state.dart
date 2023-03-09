@@ -17,6 +17,7 @@ class ZenithXdgToplevelState with _$ZenithXdgToplevelState {
   const factory ZenithXdgToplevelState({
     required bool visible,
     required Key virtualKeyboardKey,
+    required Object interactiveMoveRequested,
   }) = _ZenithXdgToplevelState;
 }
 
@@ -27,8 +28,9 @@ class ZenithXdgToplevelStateNotifier
 
   ZenithXdgToplevelStateNotifier(this._ref, this._viewId)
       : super(ZenithXdgToplevelState(
-          visible: true,
+    visible: true,
           virtualKeyboardKey: GlobalKey(),
+          interactiveMoveRequested: Object(),
         ));
 
   set visible(bool value) {
@@ -36,5 +38,19 @@ class ZenithXdgToplevelStateNotifier
       PlatformApi.changeWindowVisibility(_viewId, value);
       state = state.copyWith(visible: value);
     }
+  }
+
+  void maximize(bool value) {
+    PlatformApi.maximizeWindow(_viewId, value);
+  }
+
+  void resize(int width, int height) {
+    PlatformApi.resizeWindow(_viewId, width, height);
+  }
+
+  void requestInteractiveMove() {
+    state = state.copyWith(
+      interactiveMoveRequested: Object(),
+    );
   }
 }

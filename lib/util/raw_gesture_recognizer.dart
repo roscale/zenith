@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 
 /// Gesture recognizer that provides similar callbacks to the Listener widget, but fights in
 /// gesture arenas against other GestureDetectors.
+/// It only claims victory at the very end on a pointer up event.
 /// onPointerCancel is called when it loses in the arena.
 class RawGestureRecognizer extends GestureRecognizer {
   RawGestureRecognizer({
@@ -46,19 +47,15 @@ class RawGestureRecognizer extends GestureRecognizer {
         ));
       });
     } else if (event is PointerMoveEvent && onPointerMove != null) {
-      if (state.gestureAccepted) {
-        final accumulatedDelta = event.localDelta + state.pendingDelta;
-        state.localPosition += accumulatedDelta;
+      final accumulatedDelta = event.localDelta + state.pendingDelta;
+      state.localPosition += accumulatedDelta;
 
-        var moveEvent = event.copyWith(
-          position: state.localPosition,
-          delta: accumulatedDelta,
-        );
-        state.pendingDelta = Offset.zero;
-        invokeCallback<void>('onPointerMove', () => onPointerMove!(moveEvent));
-      } else {
-        state.pendingDelta += event.localDelta;
-      }
+      var moveEvent = event.copyWith(
+        position: state.localPosition,
+        delta: accumulatedDelta,
+      );
+      state.pendingDelta = Offset.zero;
+      invokeCallback<void>('onPointerMove', () => onPointerMove!(moveEvent));
     } else if (event is PointerUpEvent && onPointerUp != null) {
       invokeCallback<void>('onPointerUp', () {
         onPointerUp!(event.copyWith(

@@ -4,13 +4,21 @@
 ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel,
                                      std::shared_ptr<ZenithXdgSurface> zenith_xdg_surface)
 	  : xdg_toplevel{xdg_toplevel}, zenith_xdg_surface(std::move(zenith_xdg_surface)) {
-	maximize();
+
+	auto* server = ZenithServer::instance();
+	if (server->start_windows_maximized) {
+		resize(server->max_window_size.width, server->max_window_size.height);
+		maximize(true);
+	}
 
 	request_fullscreen.notify = zenith_xdg_toplevel_request_fullscreen;
 	wl_signal_add(&xdg_toplevel->events.request_fullscreen, &request_fullscreen);
 
 	set_app_id.notify = zenith_xdg_toplevel_set_app_id;
 	wl_signal_add(&xdg_toplevel->events.set_app_id, &set_app_id);
+
+	request_move.notify = zenith_xdg_toplevel_request_move;
+	wl_signal_add(&xdg_toplevel->events.request_move, &request_move);
 }
 
 void ZenithXdgToplevel::focus() const {
@@ -69,10 +77,12 @@ void ZenithXdgToplevel::focus() const {
 	}
 }
 
-void ZenithXdgToplevel::maximize() const {
-	auto* server = ZenithServer::instance();
-	wlr_xdg_toplevel_set_size(xdg_toplevel->base, server->max_window_size.width, server->max_window_size.height);
-	wlr_xdg_toplevel_set_maximized(xdg_toplevel->base, true);
+void ZenithXdgToplevel::maximize(bool value) const {
+	wlr_xdg_toplevel_set_maximized(xdg_toplevel->base, value);
+}
+
+void ZenithXdgToplevel::resize(size_t width, size_t height) const {
+	wlr_xdg_toplevel_set_size(xdg_toplevel->base, width, height);
 }
 
 void zenith_xdg_toplevel_request_fullscreen(wl_listener* listener, void* data) {
@@ -83,4 +93,10 @@ void zenith_xdg_toplevel_request_fullscreen(wl_listener* listener, void* data) {
 void zenith_xdg_toplevel_set_app_id(wl_listener* listener, void* data) {
 	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, set_app_id);
 	char* app_id = zenith_xdg_toplevel->zenith_xdg_surface->xdg_surface->toplevel->app_id;
+}
+
+void zenith_xdg_toplevel_request_move(wl_listener* listener, void* data) {
+	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, request_move);
+	size_t id = zenith_xdg_toplevel->zenith_xdg_surface->zenith_surface->id;
+	ZenithServer::instance()->embedder_state->interactive_move(id);
 }

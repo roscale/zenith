@@ -40,18 +40,30 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
         windowStackNotifier.remove(viewId);
       });
     });
+
+    PlatformApi.startWindowsMaximized(false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final tasks = ref.watch(windowStackNotifierProvider).windows;
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        PlatformApi.maximizedWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
 
-    return Stack(
-      key: ref.watch(windowStackGlobalKey),
-      children: [
-        for (int viewId in tasks) ref.watch(windowWidget(viewId)),
-        const PopupStack(),
-      ],
+        return Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            final tasks = ref.watch(windowStackNotifierProvider).windows;
+
+            return Stack(
+              key: ref.watch(windowStackGlobalKey),
+              children: [
+                for (int viewId in tasks) ref.watch(windowWidget(viewId)),
+                const PopupStack(),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

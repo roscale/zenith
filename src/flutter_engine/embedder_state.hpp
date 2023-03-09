@@ -53,6 +53,8 @@ struct EmbedderState {
 
 	void send_text_input_event(size_t view_id, TextInputEventType event_type);
 
+	void interactive_move(size_t view_id);
+
 	/*
 	 * The following fields have to be public because they are used by Flutter engine callbacks,
 	 * which are just plain C functions.

@@ -126,6 +126,8 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
         chain = chain.then((_) => _closeTask(viewId));
       });
     });
+
+    PlatformApi.startWindowsMaximized(true);
   }
 
   @override
@@ -206,7 +208,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   }
 
   void _constraintsChanged(BoxConstraints constraints) {
-    PlatformApi.initialWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
+    PlatformApi.maximizedWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
 
     // addPostFrameCallback needed because riverpod triggers setState which cannot be called during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {

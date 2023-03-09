@@ -8,6 +8,7 @@ import 'package:zenith/ui/common/state/zenith_subsurface_state.dart';
 import 'package:zenith/ui/common/state/zenith_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/common/subsurface.dart';
 import 'package:zenith/util/state_notifier_list.dart';
 
@@ -59,6 +60,9 @@ class PlatformApi {
           break;
         case "send_text_input_event":
           _sendTextInputEvent(call.arguments);
+          break;
+        case "interactive_move":
+          _interactiveMove(call.arguments);
           break;
         default:
           throw PlatformException(
@@ -152,10 +156,21 @@ class PlatformApi {
     });
   }
 
-  static Future<void> initialWindowSize(int width, int height) {
-    return platform.invokeMethod("initial_window_size", {
+  static Future<void> startWindowsMaximized(bool value) {
+    return platform.invokeMethod("start_windows_maximized", value);
+  }
+
+  static Future<void> maximizedWindowSize(int width, int height) {
+    return platform.invokeMethod("maximized_window_size", {
       "width": width,
       "height": height,
+    });
+  }
+
+  static Future<void> maximizeWindow(int viewId, bool value) {
+    return platform.invokeMethod("maximize_window", {
+      "view_id": viewId,
+      "value": value,
     });
   }
 
@@ -364,6 +379,11 @@ class PlatformApi {
 
   static void _sendTextInputEvent(dynamic event) {
     textInputEventsStreamController.sink.add(event);
+  }
+
+  static void _interactiveMove(dynamic event) {
+    int viewId = event["view_id"];
+    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).requestInteractiveMove();
   }
 }
 

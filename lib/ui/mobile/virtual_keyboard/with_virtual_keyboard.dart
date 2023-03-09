@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
 import 'package:zenith/ui/mobile/state/virtual_keyboard_state.dart';
 import 'package:zenith/ui/mobile/virtual_keyboard/layouts.dart';
@@ -167,13 +168,14 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
             SchedulerBinding.instance.addPostFrameCallback(_determineVirtualKeyboardSize);
           }
 
-          PlatformApi.resizeWindow(
-            widget.viewId,
-            constraints.maxWidth.toInt(),
-            keyboardActivated && !keyboardSize.isEmpty
-                ? (constraints.maxHeight - keyboardSize.height).toInt()
-                : constraints.maxHeight.toInt(),
-          );
+          ref.read(zenithXdgToplevelStateProvider(widget.viewId).notifier)
+            ..maximize(true)
+            ..resize(
+              constraints.maxWidth.toInt(),
+              keyboardActivated && !keyboardSize.isEmpty
+                  ? (constraints.maxHeight - keyboardSize.height).toInt()
+                  : constraints.maxHeight.toInt(),
+            );
 
           return child!;
         },

@@ -73,6 +73,7 @@ public:
 		  .width = 0,
 		  .height = 0,
 	};
+	bool start_windows_maximized = false;
 
 	wl_listener new_output{};
 	wl_listener new_surface{};

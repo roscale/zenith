@@ -163,6 +163,8 @@ void EmbedderState::register_platform_api() {
 				  close_window(server, call, std::move(result));
 			  } else if (method_name == "resize_window") {
 				  resize_window(server, call, std::move(result));
+			  } else if (method_name == "maximize_window") {
+				  maximize_window(server, call, std::move(result));
 			  } else if (method_name == "unregister_view_texture") {
 				  unregister_view_texture(server, call, std::move(result));
 			  } else if (method_name == "mouse_button_event") {
@@ -181,8 +183,10 @@ void EmbedderState::register_platform_api() {
 				  insert_text(server, call, std::move(result));
 			  } else if (method_name == "emulate_keycode") {
 				  emulate_keycode(server, call, std::move(result));
-			  } else if (method_name == "initial_window_size") {
-				  initial_window_size(server, call, std::move(result));
+			  } else if (method_name == "start_windows_maximized") {
+				  start_windows_maximized(server, call, std::move(result));
+			  } else if (method_name == "maximized_window_size") {
+				  maximized_window_size(server, call, std::move(result));
 			  } else if (method_name == "unlock_session") {
 				  unlock_session(server, call, std::move(result));
 			  } else if (method_name == "enable_display") {
@@ -452,5 +456,14 @@ void EmbedderState::send_text_input_event(size_t view_id, TextInputEventType eve
 			  {EncodableValue("type"),    EncodableValue(type)},
 		});
 		platform_method_channel->InvokeMethod("send_text_input_event", std::move(value));
+	});
+}
+
+void EmbedderState::interactive_move(size_t view_id) {
+	callable_queue.enqueue([=] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+		});
+		platform_method_channel->InvokeMethod("interactive_move", std::move(value));
 	});
 }

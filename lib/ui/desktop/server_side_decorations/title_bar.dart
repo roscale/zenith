@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/ui/desktop/state/window_move_state_notifier_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
 
 class TitleBar extends ConsumerStatefulWidget {
@@ -22,14 +23,17 @@ class _TitleBarState extends ConsumerState<TitleBar> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onPanDown: (DragDownDetails details) {
-        startPosition = ref.read(windowPositionStateProvider(widget.viewId));
-        delta = Offset.zero;
+        Offset startPosition = ref.read(windowPositionStateProvider(widget.viewId));
+        ref.read(windowMoveStateNotifierProvider(widget.viewId).notifier).startMove(startPosition);
       },
       onPanUpdate: (DragUpdateDetails details) {
-        delta += details.delta;
-        var offset = startPosition + delta;
-        offset = Offset(offset.dx.roundToDouble(), offset.dy.roundToDouble());
-        ref.read(windowPositionStateProvider(widget.viewId).notifier).state = offset;
+        ref.read(windowMoveStateNotifierProvider(widget.viewId).notifier).move(details.delta);
+      },
+      onPanEnd: (_) {
+        ref.read(windowMoveStateNotifierProvider(widget.viewId).notifier).endMove();
+      },
+      onPanCancel: () {
+        ref.read(windowMoveStateNotifierProvider(widget.viewId).notifier).cancelMove();
       },
       child: SizedBox(
         height: 30,
