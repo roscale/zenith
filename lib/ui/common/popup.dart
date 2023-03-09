@@ -68,7 +68,10 @@ class _Positioner extends ConsumerWidget {
         RenderBox? popupStackRenderBox = ref.read(popupStackGlobalKey).currentContext?.findRenderObject() as RenderBox?;
 
         Offset offset;
-        if (parentRenderBox != null && popupStackRenderBox != null) {
+        if (parentRenderBox != null &&
+            popupStackRenderBox != null &&
+            parentRenderBox.attached &&
+            popupStackRenderBox.attached) {
           Offset global = parentRenderBox.localToGlobal(position);
           offset = popupStackRenderBox.globalToLocal(global);
         } else {

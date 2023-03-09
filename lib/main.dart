@@ -13,7 +13,6 @@ import 'package:zenith/util/state/key_tracker.dart';
 import 'package:zenith/util/state/lock_screen_state.dart';
 import 'package:zenith/util/state/root_overlay.dart';
 import 'package:zenith/util/state/screen_state.dart';
-import 'package:zenith/util/state/ui_mode_state.dart';
 
 void main() {
   // debugRepaintRainbowEnabled = true;
@@ -72,81 +71,73 @@ class Zenith extends ConsumerWidget {
     // therefore these keys don't get forwarded to the Wayland client.
     // Let's use a WidgetApp for now. We cannot anymore select UI elements via the keyboard, but we
     // don't care about that on a mobile phone.
-    return RotatedBox(
-      quarterTurns: ref.watch(screenStateProvider.select((v) => v.rotation)),
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          Future.microtask(() => ref.read(screenStateProvider.notifier).setRotatedSize(constraints.biggest));
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        Future.microtask(() => ref.read(screenStateProvider.notifier).setSize(constraints.biggest));
 
-          return WidgetsApp(
-            color: Colors.blue,
-            builder: (BuildContext context, Widget? child) {
-              return ScrollConfiguration(
-                behavior: const MaterialScrollBehavior().copyWith(
-                  // Enable scrolling by dragging the mouse cursor.
-                  dragDevices: {
-                    PointerDeviceKind.touch,
-                    PointerDeviceKind.mouse,
-                    PointerDeviceKind.stylus,
-                    PointerDeviceKind.invertedStylus,
-                    PointerDeviceKind.trackpad,
-                    PointerDeviceKind.unknown,
-                  },
-                ),
-                child: MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    padding: EdgeInsets.only(
-                      top: _notchHeight / MediaQuery.of(context).devicePixelRatio,
+        return RotatedBox(
+          quarterTurns: ref.watch(screenStateProvider.select((v) => v.rotation)),
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              Future.microtask(() => ref.read(screenStateProvider.notifier).setRotatedSize(constraints.biggest));
+
+              return WidgetsApp(
+                color: Colors.blue,
+                builder: (BuildContext context, Widget? child) {
+                  return ScrollConfiguration(
+                    behavior: const MaterialScrollBehavior().copyWith(
+                      // Enable scrolling by dragging the mouse cursor.
+                      dragDevices: {
+                        PointerDeviceKind.touch,
+                        PointerDeviceKind.mouse,
+                        PointerDeviceKind.stylus,
+                        PointerDeviceKind.invertedStylus,
+                        PointerDeviceKind.trackpad,
+                        PointerDeviceKind.unknown,
+                      },
                     ),
-                  ),
-                  // https://docs.flutter.dev/release/breaking-changes/text-field-material-localizations
-                  child: Localizations(
-                    locale: const Locale('en', 'US'),
-                    delegates: const <LocalizationsDelegate<dynamic>>[
-                      DefaultWidgetsLocalizations.delegate,
-                      DefaultMaterialLocalizations.delegate,
-                    ],
-                    child: Scaffold(
-                      body: Consumer(
-                        builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                          UiMode uiMode = ref.watch(uiModeStateProvider);
-
-                          return Stack(
-                            children: [
-                              if (uiMode == UiMode.mobile) const MobileUi(),
-                              if (uiMode == UiMode.desktop) const DesktopUi(),
-                              Overlay(
-                                key: ref.watch(rootOverlayKeyProvider),
-                                initialEntries: [
-                                  // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
+                    child: MediaQuery(
+                      data: MediaQuery.of(context).copyWith(
+                        padding: EdgeInsets.only(
+                          top: _notchHeight / MediaQuery.of(context).devicePixelRatio,
+                        ),
+                      ),
+                      // https://docs.flutter.dev/release/breaking-changes/text-field-material-localizations
+                      child: Localizations(
+                        locale: const Locale('en', 'US'),
+                        delegates: const <LocalizationsDelegate<dynamic>>[
+                          DefaultWidgetsLocalizations.delegate,
+                          DefaultMaterialLocalizations.delegate,
+                        ],
+                        child: Scaffold(
+                          body: Consumer(
+                            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                              // UiMode uiMode = ref.watch(uiModeStateProvider);
+                              Size screenSize = ref.watch(screenStateProvider.select((v) => v.size));
+                              return Stack(
+                                children: [
+                                  if (screenSize.aspectRatio >= 1) const DesktopUi(),
+                                  if (screenSize.aspectRatio < 1) const MobileUi(),
+                                  Overlay(
+                                    key: ref.watch(rootOverlayKeyProvider),
+                                    initialEntries: [
+                                      // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
+                                    ],
+                                  ),
                                 ],
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  final notifier = ref.read(uiModeStateProvider.notifier);
-                                  switch (ref.read(uiModeStateProvider)) {
-                                    case UiMode.mobile:
-                                      notifier.state = UiMode.desktop;
-                                      break;
-                                    case UiMode.desktop:
-                                      notifier.state = UiMode.mobile;
-                                      break;
-                                  }
-                                },
-                                child: const Text("Switch"),
-                              ),
-                            ],
-                          );
-                        },
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -25,14 +25,17 @@ class ServerSideDecorations extends ConsumerWidget {
         ..._buildResizeHandles(),
         Padding(
           padding: EdgeInsets.all(borderWidth),
-          child: IntrinsicWidth(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TitleBar(viewId: viewId),
-                child,
-              ],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: IntrinsicWidth(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TitleBar(viewId: viewId),
+                  child,
+                ],
+              ),
             ),
           ),
         ),

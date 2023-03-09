@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
@@ -42,6 +41,9 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   }
 
   void _onPointerDown(DragStartDetails details) {
+    if (ref.read(taskListProvider).isEmpty) {
+      return;
+    }
     tm.stopScaleAnimation();
     drag = tm.scrollPosition.drag(
       DragStartDetails(
@@ -63,7 +65,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
 
     if (ref.read(taskListProvider).isNotEmpty) {
       double scale = ref.read(taskSwitcherStateProvider).scale;
-      notifier.scale = (scale + details.delta.dy / ref.read(taskSwitcherStateProvider).constraints.maxHeight * 2).clamp(0.5, 1);
+      notifier.scale = (scale + details.delta.dy / taskSwitcherConstraints.maxHeight * 2).clamp(0.5, 1);
       scale = ref.read(taskSwitcherStateProvider).scale;
 
       drag?.update(DragUpdateDetails(
@@ -76,15 +78,13 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   }
 
   void _onPointerUp(DragEndDetails details) {
-    final tasks = ref.read(taskListProvider);
-
     if (drag == null) {
       return;
     }
     drag?.cancel();
 
+    final tasks = ref.read(taskListProvider);
     var vel = details.velocity.pixelsPerSecond;
-
     var taskOffset = tm.taskIndexToPosition(tm.taskPositionToIndex(tm.position));
 
     if (vel.dx.abs() > 365 && vel.dx.abs() > vel.dy.abs()) {

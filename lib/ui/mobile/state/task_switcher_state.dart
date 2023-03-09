@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 
 part 'task_switcher_state.freezed.dart';
 
 final taskSwitcherStateProvider = StateNotifierProvider<TaskSwitcherStateNotifier, TaskSwitcherState>((ref) {
   return TaskSwitcherStateNotifier(ref);
 });
+
+/// To ensure widgets access the latest value even during build, this cannot be a Riverpod provider.
+/// Riverpod cannot set provider values during build.
+/// We still use Riverpod to announce changes to this variable.
+BoxConstraints taskSwitcherConstraints = BoxConstraints.tight(Size.zero);
 
 @freezed
 class TaskSwitcherState with _$TaskSwitcherState {
@@ -16,7 +20,7 @@ class TaskSwitcherState with _$TaskSwitcherState {
     required double scale,
     required bool disableUserControl, // Disables the ability to switch between tasks using gestures.
     required bool areAnimationsPlaying,
-    required BoxConstraints constraints,
+    required Object constraintsChanged,
   }) = _TaskSwitcherState;
 }
 
@@ -24,13 +28,15 @@ class TaskSwitcherStateNotifier extends StateNotifier<TaskSwitcherState> {
   final Ref ref;
 
   TaskSwitcherStateNotifier(this.ref)
-      : super(TaskSwitcherState(
-          inOverview: false,
-          scale: 1.0,
-          disableUserControl: false,
-          areAnimationsPlaying: false,
-          constraints: const BoxConstraints(),
-        ));
+      : super(
+          TaskSwitcherState(
+            inOverview: false,
+            scale: 1.0,
+            disableUserControl: false,
+            areAnimationsPlaying: false,
+            constraintsChanged: Object(),
+          ),
+        );
 
   set inOverview(bool value) {
     state = state.copyWith(inOverview: value);
@@ -48,7 +54,7 @@ class TaskSwitcherStateNotifier extends StateNotifier<TaskSwitcherState> {
     state = state.copyWith(areAnimationsPlaying: value);
   }
 
-  set constraints(BoxConstraints value) {
-    state = state.copyWith(constraints: value);
+  void constraintsHaveChanged() {
+    state = state.copyWith(constraintsChanged: Object());
   }
 }

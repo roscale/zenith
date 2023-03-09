@@ -158,7 +158,8 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
     return ClipRect(
       child: Consumer(
         builder: (_, WidgetRef ref, Widget? child) {
-          final constraints = ref.watch(taskSwitcherStateProvider.select((v) => v.constraints));
+          ref.watch(taskSwitcherStateProvider.select((v) => v.constraintsChanged));
+          final constraints = taskSwitcherConstraints;
           final keyboardActivated = ref.watch(virtualKeyboardStateProvider(widget.viewId).select((v) => v.activated));
           final keyboardSize = ref.watch(virtualKeyboardStateProvider(widget.viewId).select((v) => v.keyboardSize));
 

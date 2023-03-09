@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/ui/mobile/state/task_state.dart';
-import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
+import 'package:zenith/ui/mobile/state/task_state.dart';
+import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
 import 'package:zenith/ui/mobile/task_switcher/fitted_window.dart';
 import 'package:zenith/ui/mobile/task_switcher/task_switcher.dart';
 import 'package:zenith/ui/mobile/virtual_keyboard/with_virtual_keyboard.dart';
@@ -54,15 +54,15 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
         final position = ref.watch(taskPositionProvider(widget.viewId));
-        final constraints = ref.watch(taskSwitcherStateProvider.select((v) => v.constraints));
+        ref.watch(taskSwitcherStateProvider.select((v) => v.constraintsChanged));
 
         double taskSwitcherPosition = ref.watch(taskSwitcherPositionProvider);
         double scale = ref.watch(taskSwitcherStateProvider.select((v) => v.scale));
 
         return Positioned(
           left: scale * (-taskSwitcherPosition + position),
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
+          width: taskSwitcherConstraints.maxWidth,
+          height: taskSwitcherConstraints.maxHeight,
           child: Transform.scale(
             scale: scale,
             child: child!,

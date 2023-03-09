@@ -12,7 +12,7 @@ part 'app_drawer_state.freezed.dart';
 part 'app_drawer_state.g.dart';
 
 final appDrawerStateProvider = StateProvider(
-  (ref) => AppDrawerState(
+  (ref) => const AppDrawerState(
     /// The drawer is in a state where a drag can be engaged, e.g. the drawer is fully scrolled at the top.
     draggable: false,
 
@@ -32,9 +32,6 @@ final appDrawerStateProvider = StateProvider(
     /// The amount the user has to drag to open the drawer.
     slideDistance: 300,
 
-    /// The actual drawer widget that is inserted into the Overlay.
-    overlayEntry: OverlayEntry(builder: (_) => const AppDrawer()),
-
     /// Event to notify the drawer to initiate the closing animations.
     /// Just assigning a new Object() will do the trick because 2 different Object instances will always be unequal.
     closePanel: Object(),
@@ -50,7 +47,6 @@ class AppDrawerState with _$AppDrawerState {
     required double dragVelocity,
     required double offset,
     required double slideDistance,
-    required OverlayEntry overlayEntry,
     required Object closePanel,
   }) = _AppDrawerState;
 }

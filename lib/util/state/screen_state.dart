@@ -24,6 +24,9 @@ class ScreenState with _$ScreenState {
     /// Rotation expressed in clockwise quarter turns.
     required int rotation,
 
+    /// The screen size, before rotation.
+    required Size size,
+
     /// The screen size, after rotation.
     /// If the physical screen is 500x1000 in portrait and the device is rotated in landscape, this
     /// variable contains the size 1000x500.
@@ -39,6 +42,7 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
           const ScreenState(
             on: true,
             pending: false,
+            size: Size.zero,
             rotation: 0,
             rotatedSize: Size.zero,
           ),
@@ -122,6 +126,10 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
 
   void setRotation(int quarterTurns) {
     state = state.copyWith(rotation: quarterTurns);
+  }
+
+  void setSize(Size size) {
+    state = state.copyWith(size: size);
   }
 
   void setRotatedSize(Size rotatedSize) {

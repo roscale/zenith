@@ -26,23 +26,53 @@ final closingTaskListProvider = StateNotifierProvider<StateNotifierList<int>, Li
   return StateNotifierList<int>();
 });
 
-final taskSwitcherWidgetStateProvider = StateProvider((ref) => _TaskSwitcherState());
+final taskSwitcherWidgetStateProvider = StateProvider((ref) => _TaskSwitcherWidgetState());
 
 final taskSwitcherPositionProvider = StateProvider((ref) => 0.0);
 
-class TaskSwitcher extends ConsumerStatefulWidget {
+final _scrollPositionMinScrollExtentProvider = StateProvider((ref) => 0.0);
+
+final _scrollPositionMaxScrollExtentProvider = StateProvider((ref) => 1.0);
+
+class TaskSwitcher extends ConsumerWidget {
   final double spacing;
 
   const TaskSwitcher({
+    super.key,
+    required this.spacing,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        taskSwitcherConstraints = constraints;
+        Future.microtask(() {
+          ref.read(taskSwitcherStateProvider.notifier).constraintsHaveChanged();
+        });
+        return _TaskSwitcherWidget(
+          spacing: spacing,
+        );
+      },
+    );
+  }
+}
+
+class _TaskSwitcherWidget extends ConsumerStatefulWidget {
+  final double spacing;
+
+  const _TaskSwitcherWidget({
     Key? key,
     required this.spacing,
   }) : super(key: key);
 
   @override
-  ConsumerState<TaskSwitcher> createState() => _TaskSwitcherState();
+  ConsumerState<_TaskSwitcherWidget> createState() => _TaskSwitcherWidgetState();
 }
 
-class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProviderStateMixin implements ScrollContext {
+class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
+    with TickerProviderStateMixin
+    implements ScrollContext {
   late final ScrollPosition scrollPosition;
 
   double get position => scrollPosition.pixels;
@@ -57,20 +87,27 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
 
     Future.microtask(() => ref.read(taskSwitcherWidgetStateProvider.notifier).state = this);
 
+    List<int> mappedWindows = ref.read(mappedWindowListProvider);
+
+    double lastPosition = ref.read(taskSwitcherPositionProvider);
+    double minScrollExtent = 0;
+    double maxScrollExtent = _computeScrollableExtent(mappedWindows.length);
+    double position = clampDouble(lastPosition, minScrollExtent, maxScrollExtent);
+
     scrollPosition = ScrollPositionWithSingleContext(
-      initialPixels: ref.read(taskSwitcherPositionProvider.notifier).state,
+      initialPixels: position,
       physics: const BouncingScrollPhysics(),
       context: this,
-      debugLabel: "TaskSwitcher.scrollPosition",
+      debugLabel: "TaskSwitcherWidget.scrollPosition",
     )
       ..applyViewportDimension(0)
-      ..applyContentDimensions(0, 0)
+      ..applyContentDimensions(minScrollExtent, maxScrollExtent)
       ..addListener(() {
         ref.read(taskSwitcherPositionProvider.notifier).state = scrollPosition.pixels;
       });
 
-    List<int> mappedWindows = ref.read(mappedWindowListProvider);
     Future.microtask(() {
+      ref.read(taskSwitcherPositionProvider.notifier).state = position;
       _initializeWithTasks(mappedWindows);
     });
 
@@ -175,10 +212,14 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Determine the new scroll position. For example, if it was at 20% of the old scrollable area,
       // it should also be at 20% of the new scrollable area.
-      double percent = (position - scrollPosition.minScrollExtent) /
-          (scrollPosition.maxScrollExtent - scrollPosition.minScrollExtent);
+      double percent;
+      if (scrollPosition.minScrollExtent != scrollPosition.maxScrollExtent) {
+        percent = (position - scrollPosition.minScrollExtent) /
+            (scrollPosition.maxScrollExtent - scrollPosition.minScrollExtent);
+      } else {
+        percent = 0.0;
+      }
 
-      ref.read(taskSwitcherStateProvider.notifier).constraints = constraints;
       scrollPosition.applyViewportDimension(constraints.maxWidth);
       _updateContentDimensions();
       _repositionTasks();
@@ -190,12 +231,18 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
 
   /// Readjust the scrollable area.
   void _updateContentDimensions({double? minScrollExtent}) {
-    int length = ref.read(taskListProvider).length;
+    int taskCount = ref.read(taskListProvider).length;
     minScrollExtent = minScrollExtent ?? (scrollPosition.hasContentDimensions ? scrollPosition.minScrollExtent : 0);
     scrollPosition.applyContentDimensions(
       minScrollExtent,
-      minScrollExtent + (length <= 1 ? 0 : (length - 1) * _interTaskOffset),
+      minScrollExtent + _computeScrollableExtent(taskCount),
     );
+    ref.read(_scrollPositionMinScrollExtentProvider.notifier).state = scrollPosition.minScrollExtent;
+    ref.read(_scrollPositionMaxScrollExtentProvider.notifier).state = scrollPosition.maxScrollExtent;
+  }
+
+  double _computeScrollableExtent(int taskCount) {
+    return taskCount <= 1 ? 0 : (taskCount - 1) * _interTaskOffset;
   }
 
   /// Resets the position of all tasks where they all should be after the animations are finished.
@@ -209,28 +256,30 @@ class _TaskSwitcherState extends ConsumerState<TaskSwitcher> with TickerProvider
   double taskIndexToPosition(int taskIndex) => scrollPosition.minScrollExtent + taskIndex * _interTaskOffset;
 
   int taskPositionToIndex(double position) {
-    final taskListLength = ref.read(taskListProvider).length;
+    int taskListLength = ref.read(taskListProvider).length;
     if (taskListLength == 0) {
       return 0;
     }
     // 0 is the center of the first task.
-    var offset = (position - scrollPosition.minScrollExtent) + _interTaskOffset / 2;
-    var index = offset ~/ _interTaskOffset;
+    double offset = (position - scrollPosition.minScrollExtent) + _interTaskOffset / 2;
+    int index = offset ~/ _interTaskOffset;
     return index.clamp(0, taskListLength - 1);
   }
 
-  double get _interTaskOffset => ref.read(taskSwitcherStateProvider).constraints.maxWidth + widget.spacing;
+  double get _interTaskOffset => taskSwitcherConstraints.maxWidth + widget.spacing;
 
   void _closeTaskInOverview(int viewId) async {
     ref.read(taskStateProvider(viewId).notifier).startDismissAnimation();
 
     final tasks = ref.read(taskListProvider);
-    var closingTaskIndex = tasks.indexOf(viewId);
+    int closingTaskIndex = tasks.indexOf(viewId);
 
     // Dispose the controller instead of just stopping it because we want to clear the listeners.
     _taskPositionAnimationController?.dispose();
     _taskPositionAnimationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     final controller = _taskPositionAnimationController!;
 
     int taskIndexUnder = taskPositionToIndex(position);

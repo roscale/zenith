@@ -19,7 +19,6 @@ class DesktopUi extends ConsumerWidget {
               OverlayEntry(
                 builder: (_) => const WindowManager(),
               ),
-              // ref.watch(appDrawerStateProvider).overlayEntry,
             ],
           ),
         ),
