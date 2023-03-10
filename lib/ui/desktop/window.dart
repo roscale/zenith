@@ -2,7 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
 import 'package:zenith/ui/desktop/manual_pan_gesture_recognizer.dart';
@@ -37,10 +37,12 @@ class _WindowState extends ConsumerState<Window> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(zenithSurfaceStateProvider(widget.viewId).select((v) => v.surfaceSize), (Size? previous, Size? next) {
+    ref.listen(zenithXdgSurfaceStateProvider(widget.viewId).select((v) => v.visibleBounds),
+        (Rect? previous, Rect? next) {
       if (previous != null && next != null) {
-        Offset offset =
-            ref.read(resizingStateNotifierProvider(widget.viewId).notifier).computeWindowOffset(previous, next);
+        Offset offset = ref
+            .read(resizingStateNotifierProvider(widget.viewId).notifier)
+            .computeWindowOffset(previous.size, next.size);
         ref.read(windowPositionStateProvider(widget.viewId).notifier).update((state) => state + offset);
       }
     });

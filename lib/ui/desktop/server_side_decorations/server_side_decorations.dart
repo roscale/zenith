@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/desktop/server_side_decorations/title_bar.dart';
 import 'package:zenith/ui/desktop/state/resizing_state_notifier_provider.dart';
 
@@ -32,8 +32,14 @@ class ServerSideDecorations extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TitleBar(viewId: viewId),
-                  child,
+                  TitleBar(
+                    viewId: viewId,
+                  ),
+                  ClipRect(
+                    child: UnconstrainedBox(
+                      child: child,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -195,7 +201,7 @@ class ResizeHandle extends ConsumerWidget {
       cursor: _getMouseCursor(),
       child: GestureDetector(
         onPanDown: (_) {
-          Size size = ref.read(zenithSurfaceStateProvider(viewId)).surfaceSize;
+          Size size = ref.read(zenithXdgSurfaceStateProvider(viewId)).visibleBounds.size;
           ref.read(resizingStateNotifierProvider(viewId).notifier).startResize(resizingSide, size);
         },
         onPanUpdate: (DragUpdateDetails details) {
