@@ -19,23 +19,80 @@ class ResizingStateNotifierProvider extends StateNotifier<ResizerState> {
   ResizingStateNotifierProvider(this.viewId)
       : super(
           const ResizerState(
-            resizingSide: null,
+            resizing: false,
+            resizeEdge: null,
+            startSize: Size.zero,
             wantedSize: Size.zero,
+            delta: Offset.zero,
           ),
         );
 
-  void startResize(ResizingSide side, Size size) {
-    state = ResizerState(
-      resizingSide: side,
-      wantedSize: size,
+  void startPotentialResize() {
+    state = state.copyWith(
+      resizing: false,
+      delta: Offset.zero,
     );
   }
 
-  void resize(Offset delta) {
-    delta = _computeResizeOffset(delta);
-
+  void startResize(ResizeEdge edge, Size size) {
+    if (state.resizing) {
+      return;
+    }
     state = state.copyWith(
-      wantedSize: state.wantedSize + delta,
+      resizing: true,
+      startSize: size,
+      resizeEdge: edge,
+    );
+    if (state.delta != Offset.zero) {
+      Offset delta = _computeResizeOffset(state.delta);
+      state = state.copyWith(
+        wantedSize: state.startSize + delta,
+      );
+    }
+  }
+
+  void resize(Offset delta) {
+    state = state.copyWith(
+      delta: state.delta + delta,
+    );
+
+    if (state.resizing) {
+      Offset delta = _computeResizeOffset(state.delta);
+      state = state.copyWith(
+        wantedSize: state.startSize + delta,
+      );
+
+      int width = max(1, state.wantedSize.width.toInt());
+      int height = max(1, state.wantedSize.height.toInt());
+
+      PlatformApi.resizeWindow(
+        viewId,
+        width,
+        height,
+      );
+    }
+  }
+
+  void endResize() {
+    if (!state.resizing) {
+      return;
+    }
+    state = state.copyWith(
+      resizing: false,
+      resizeEdge: null,
+      delta: Offset.zero,
+    );
+  }
+
+  void cancelResize() {
+    if (!state.resizing) {
+      return;
+    }
+    state = state.copyWith(
+      resizing: false,
+      resizeEdge: null,
+      delta: Offset.zero,
+      wantedSize: state.startSize,
     );
 
     int width = max(1, state.wantedSize.width.toInt());
@@ -48,31 +105,24 @@ class ResizingStateNotifierProvider extends StateNotifier<ResizerState> {
     );
   }
 
-  void endResize() {
-    state = const ResizerState(
-      resizingSide: null,
-      wantedSize: Size.zero,
-    );
-  }
-
   Offset computeWindowOffset(Size oldSize, Size newSize) {
     Offset offset = (newSize - oldSize) as Offset;
 
     double dx = offset.dx;
     double dy = offset.dy;
 
-    switch (state.resizingSide) {
-      case ResizingSide.topLeft:
+    switch (state.resizeEdge) {
+      case ResizeEdge.topLeft:
         return Offset(-dx, -dy);
-      case ResizingSide.top:
-      case ResizingSide.topRight:
+      case ResizeEdge.top:
+      case ResizeEdge.topRight:
         return Offset(0, -dy);
-      case ResizingSide.left:
-      case ResizingSide.bottomLeft:
+      case ResizeEdge.left:
+      case ResizeEdge.bottomLeft:
         return Offset(-dx, 0);
-      case ResizingSide.right:
-      case ResizingSide.bottomRight:
-      case ResizingSide.bottom:
+      case ResizeEdge.right:
+      case ResizeEdge.bottomRight:
+      case ResizeEdge.bottom:
       case null:
         return Offset.zero;
     }
@@ -82,22 +132,22 @@ class ResizingStateNotifierProvider extends StateNotifier<ResizerState> {
     double dx = delta.dx;
     double dy = delta.dy;
 
-    switch (state.resizingSide) {
-      case ResizingSide.topLeft:
+    switch (state.resizeEdge) {
+      case ResizeEdge.topLeft:
         return Offset(-dx, -dy);
-      case ResizingSide.top:
+      case ResizeEdge.top:
         return Offset(0, -dy);
-      case ResizingSide.topRight:
+      case ResizeEdge.topRight:
         return Offset(dx, -dy);
-      case ResizingSide.right:
+      case ResizeEdge.right:
         return Offset(dx, 0);
-      case ResizingSide.bottomRight:
+      case ResizeEdge.bottomRight:
         return Offset(dx, dy);
-      case ResizingSide.bottom:
+      case ResizeEdge.bottom:
         return Offset(0, dy);
-      case ResizingSide.bottomLeft:
+      case ResizeEdge.bottomLeft:
         return Offset(-dx, dy);
-      case ResizingSide.left:
+      case ResizeEdge.left:
         return Offset(-dx, 0);
       case null:
         return Offset(dx, dy);
@@ -108,7 +158,10 @@ class ResizingStateNotifierProvider extends StateNotifier<ResizerState> {
 @freezed
 class ResizerState with _$ResizerState {
   const factory ResizerState({
-    required ResizingSide? resizingSide,
+    required bool resizing,
+    required ResizeEdge? resizeEdge,
+    required Size startSize,
     required Size wantedSize,
+    required Offset delta,
   }) = _ResizerState;
 }

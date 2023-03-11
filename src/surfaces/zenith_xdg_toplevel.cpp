@@ -19,6 +19,9 @@ ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel,
 
 	request_move.notify = zenith_xdg_toplevel_request_move;
 	wl_signal_add(&xdg_toplevel->events.request_move, &request_move);
+
+	request_resize.notify = zenith_xdg_toplevel_request_resize;
+	wl_signal_add(&xdg_toplevel->events.request_resize, &request_resize);
 }
 
 void ZenithXdgToplevel::focus() const {
@@ -99,4 +102,16 @@ void zenith_xdg_toplevel_request_move(wl_listener* listener, void* data) {
 	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, request_move);
 	size_t id = zenith_xdg_toplevel->zenith_xdg_surface->zenith_surface->id;
 	ZenithServer::instance()->embedder_state->interactive_move(id);
+}
+
+void zenith_xdg_toplevel_request_resize(wl_listener* listener, void* data) {
+	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, request_resize);
+	auto* event = static_cast<wlr_xdg_toplevel_resize_event*>(data);
+	auto edge = static_cast<xdg_toplevel_resize_edge>(event->edges);
+	if (edge == XDG_TOPLEVEL_RESIZE_EDGE_NONE) {
+		// I don't know how to interpret this event.
+		return;
+	}
+	size_t id = zenith_xdg_toplevel->zenith_xdg_surface->zenith_surface->id;
+	ZenithServer::instance()->embedder_state->interactive_resize(id, edge);
 }

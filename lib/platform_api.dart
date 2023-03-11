@@ -10,6 +10,7 @@ import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/common/subsurface.dart';
+import 'package:zenith/ui/desktop/server_side_decorations/server_side_decorations.dart';
 import 'package:zenith/util/state_notifier_list.dart';
 
 final mappedWindowListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
@@ -63,6 +64,9 @@ class PlatformApi {
           break;
         case "interactive_move":
           _interactiveMove(call.arguments);
+          break;
+        case "interactive_resize":
+          _interactiveResize(call.arguments);
           break;
         default:
           throw PlatformException(
@@ -384,6 +388,13 @@ class PlatformApi {
   static void _interactiveMove(dynamic event) {
     int viewId = event["view_id"];
     ref.read(zenithXdgToplevelStateProvider(viewId).notifier).requestInteractiveMove();
+  }
+
+  static void _interactiveResize(dynamic event) {
+    int viewId = event["view_id"];
+    int edge = event["edge"];
+    ResizeEdge resizeEdge = ResizeEdge.fromInt(edge);
+    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).requestInteractiveResize(resizeEdge);
   }
 }
 

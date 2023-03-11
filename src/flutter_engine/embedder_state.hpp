@@ -55,6 +55,8 @@ struct EmbedderState {
 
 	void interactive_move(size_t view_id);
 
+	void interactive_resize(size_t view_id, xdg_toplevel_resize_edge edge);
+
 	/*
 	 * The following fields have to be public because they are used by Flutter engine callbacks,
 	 * which are just plain C functions.

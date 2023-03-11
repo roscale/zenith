@@ -467,3 +467,13 @@ void EmbedderState::interactive_move(size_t view_id) {
 		platform_method_channel->InvokeMethod("interactive_move", std::move(value));
 	});
 }
+
+void EmbedderState::interactive_resize(size_t view_id, xdg_toplevel_resize_edge edge) {
+	callable_queue.enqueue([=] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+			  {EncodableValue("edge"), EncodableValue((int64_t) edge)},
+		});
+		platform_method_channel->InvokeMethod("interactive_resize", std::move(value));
+	});
+}

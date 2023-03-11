@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/desktop/server_side_decorations/title_bar.dart';
 import 'package:zenith/ui/desktop/state/resizing_state_notifier_provider.dart';
+import 'package:zenith/util/rect_overflow_box.dart';
 
 class ServerSideDecorations extends ConsumerWidget {
   final int viewId;
@@ -35,9 +36,19 @@ class ServerSideDecorations extends ConsumerWidget {
                   TitleBar(
                     viewId: viewId,
                   ),
-                  ClipRect(
-                    child: UnconstrainedBox(
-                      child: child,
+                  UnconstrainedBox(
+                    child: ClipRect(
+                      child: Consumer(
+                        builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                          Rect visibleBounds =
+                              ref.watch(zenithXdgSurfaceStateProvider(viewId).select((value) => value.visibleBounds));
+                          return RectOverflowBox(
+                            rect: visibleBounds,
+                            child: child!,
+                          );
+                        },
+                        child: child,
+                      ),
                     ),
                   ),
                 ],
@@ -61,14 +72,14 @@ class ServerSideDecorations extends ConsumerWidget {
             children: [
               Container(
                 constraints: BoxConstraints(maxWidth: cornerWidth),
-                child: ResizeHandle(viewId: viewId, resizingSide: ResizingSide.topLeft),
+                child: ResizeHandle(viewId: viewId, resizeEdge: ResizeEdge.topLeft),
               ),
               Expanded(
-                child: ResizeHandle(viewId: viewId, resizingSide: ResizingSide.top),
+                child: ResizeHandle(viewId: viewId, resizeEdge: ResizeEdge.top),
               ),
               Container(
                 constraints: BoxConstraints(maxWidth: cornerWidth),
-                child: ResizeHandle(viewId: viewId, resizingSide: ResizingSide.topRight),
+                child: ResizeHandle(viewId: viewId, resizeEdge: ResizeEdge.topRight),
               ),
             ],
           ),
@@ -86,20 +97,20 @@ class ServerSideDecorations extends ConsumerWidget {
                 constraints: BoxConstraints(maxWidth: cornerWidth),
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.bottomLeft,
+                  resizeEdge: ResizeEdge.bottomLeft,
                 ),
               ),
               Expanded(
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.bottom,
+                  resizeEdge: ResizeEdge.bottom,
                 ),
               ),
               Container(
                 constraints: BoxConstraints(maxWidth: cornerWidth),
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.bottomRight,
+                  resizeEdge: ResizeEdge.bottomRight,
                 ),
               ),
             ],
@@ -118,20 +129,20 @@ class ServerSideDecorations extends ConsumerWidget {
                 constraints: BoxConstraints(maxHeight: cornerWidth),
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.topLeft,
+                  resizeEdge: ResizeEdge.topLeft,
                 ),
               ),
               Expanded(
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.left,
+                  resizeEdge: ResizeEdge.left,
                 ),
               ),
               Container(
                 constraints: BoxConstraints(maxHeight: cornerWidth),
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.bottomLeft,
+                  resizeEdge: ResizeEdge.bottomLeft,
                 ),
               ),
             ],
@@ -150,20 +161,20 @@ class ServerSideDecorations extends ConsumerWidget {
                 constraints: BoxConstraints(maxHeight: cornerWidth),
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.topRight,
+                  resizeEdge: ResizeEdge.topRight,
                 ),
               ),
               Expanded(
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.right,
+                  resizeEdge: ResizeEdge.right,
                 ),
               ),
               Container(
                 constraints: BoxConstraints(maxHeight: cornerWidth),
                 child: ResizeHandle(
                   viewId: viewId,
-                  resizingSide: ResizingSide.bottomRight,
+                  resizeEdge: ResizeEdge.bottomRight,
                 ),
               ),
             ],
@@ -174,7 +185,7 @@ class ServerSideDecorations extends ConsumerWidget {
   }
 }
 
-enum ResizingSide {
+enum ResizeEdge {
   topLeft,
   top,
   topRight,
@@ -182,17 +193,40 @@ enum ResizingSide {
   bottomRight,
   bottom,
   bottomLeft,
-  left,
+  left;
+
+  static ResizeEdge fromInt(int n) {
+    switch (n) {
+      case 1:
+        return top;
+      case 2:
+        return bottom;
+      case 4:
+        return left;
+      case 5:
+        return topLeft;
+      case 6:
+        return bottomLeft;
+      case 8:
+        return right;
+      case 9:
+        return topRight;
+      case 10:
+        return bottomRight;
+      default:
+        return bottomRight;
+    }
+  }
 }
 
 class ResizeHandle extends ConsumerWidget {
   final int viewId;
-  final ResizingSide resizingSide;
+  final ResizeEdge resizeEdge;
 
   const ResizeHandle({
     super.key,
     required this.viewId,
-    required this.resizingSide,
+    required this.resizeEdge,
   });
 
   @override
@@ -202,7 +236,7 @@ class ResizeHandle extends ConsumerWidget {
       child: GestureDetector(
         onPanDown: (_) {
           Size size = ref.read(zenithXdgSurfaceStateProvider(viewId)).visibleBounds.size;
-          ref.read(resizingStateNotifierProvider(viewId).notifier).startResize(resizingSide, size);
+          ref.read(resizingStateNotifierProvider(viewId).notifier).startResize(resizeEdge, size);
         },
         onPanUpdate: (DragUpdateDetails details) {
           ref.read(resizingStateNotifierProvider(viewId).notifier).resize(details.delta);
@@ -218,22 +252,22 @@ class ResizeHandle extends ConsumerWidget {
   }
 
   MouseCursor _getMouseCursor() {
-    switch (resizingSide) {
-      case ResizingSide.topLeft:
+    switch (resizeEdge) {
+      case ResizeEdge.topLeft:
         return SystemMouseCursors.resizeUpLeft;
-      case ResizingSide.top:
+      case ResizeEdge.top:
         return SystemMouseCursors.resizeUp;
-      case ResizingSide.topRight:
+      case ResizeEdge.topRight:
         return SystemMouseCursors.resizeUpRight;
-      case ResizingSide.right:
+      case ResizeEdge.right:
         return SystemMouseCursors.resizeRight;
-      case ResizingSide.bottomRight:
+      case ResizeEdge.bottomRight:
         return SystemMouseCursors.resizeDownRight;
-      case ResizingSide.bottom:
+      case ResizeEdge.bottom:
         return SystemMouseCursors.resizeDown;
-      case ResizingSide.bottomLeft:
+      case ResizeEdge.bottomLeft:
         return SystemMouseCursors.resizeDownLeft;
-      case ResizingSide.left:
+      case ResizeEdge.left:
         return SystemMouseCursors.resizeLeft;
     }
   }
