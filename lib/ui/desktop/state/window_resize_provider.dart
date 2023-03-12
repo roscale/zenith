@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/ui/desktop/server_side_decorations/server_side_decorations.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 
-part 'resizing_state_notifier_provider.freezed.dart';
+part 'window_resize_provider.freezed.dart';
 
-final resizingStateNotifierProvider =
+final windowResizeProvider =
     StateNotifierProvider.family<ResizingStateNotifierProvider, ResizerState, int>((ref, int viewId) {
   return ResizingStateNotifierProvider(viewId);
 });

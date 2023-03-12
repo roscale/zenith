@@ -21,6 +21,7 @@ mixin _$ZenithXdgToplevelState {
   Object get interactiveMoveRequested => throw _privateConstructorUsedError;
   ResizeEdgeObject get interactiveResizeRequested =>
       throw _privateConstructorUsedError;
+  ToplevelDecoration get decoration => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $ZenithXdgToplevelStateCopyWith<ZenithXdgToplevelState> get copyWith =>
@@ -37,7 +38,8 @@ abstract class $ZenithXdgToplevelStateCopyWith<$Res> {
       {bool visible,
       Key virtualKeyboardKey,
       Object interactiveMoveRequested,
-      ResizeEdgeObject interactiveResizeRequested});
+      ResizeEdgeObject interactiveResizeRequested,
+      ToplevelDecoration decoration});
 }
 
 /// @nodoc
@@ -58,6 +60,7 @@ class _$ZenithXdgToplevelStateCopyWithImpl<$Res,
     Object? virtualKeyboardKey = null,
     Object? interactiveMoveRequested = null,
     Object? interactiveResizeRequested = null,
+    Object? decoration = null,
   }) {
     return _then(_value.copyWith(
       visible: null == visible
@@ -75,6 +78,10 @@ class _$ZenithXdgToplevelStateCopyWithImpl<$Res,
           ? _value.interactiveResizeRequested
           : interactiveResizeRequested // ignore: cast_nullable_to_non_nullable
               as ResizeEdgeObject,
+      decoration: null == decoration
+          ? _value.decoration
+          : decoration // ignore: cast_nullable_to_non_nullable
+              as ToplevelDecoration,
     ) as $Val);
   }
 }
@@ -91,7 +98,8 @@ abstract class _$$_ZenithXdgToplevelStateCopyWith<$Res>
       {bool visible,
       Key virtualKeyboardKey,
       Object interactiveMoveRequested,
-      ResizeEdgeObject interactiveResizeRequested});
+      ResizeEdgeObject interactiveResizeRequested,
+      ToplevelDecoration decoration});
 }
 
 /// @nodoc
@@ -110,6 +118,7 @@ class __$$_ZenithXdgToplevelStateCopyWithImpl<$Res>
     Object? virtualKeyboardKey = null,
     Object? interactiveMoveRequested = null,
     Object? interactiveResizeRequested = null,
+    Object? decoration = null,
   }) {
     return _then(_$_ZenithXdgToplevelState(
       visible: null == visible
@@ -127,6 +136,10 @@ class __$$_ZenithXdgToplevelStateCopyWithImpl<$Res>
           ? _value.interactiveResizeRequested
           : interactiveResizeRequested // ignore: cast_nullable_to_non_nullable
               as ResizeEdgeObject,
+      decoration: null == decoration
+          ? _value.decoration
+          : decoration // ignore: cast_nullable_to_non_nullable
+              as ToplevelDecoration,
     ));
   }
 }
@@ -138,7 +151,8 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
       {required this.visible,
       required this.virtualKeyboardKey,
       required this.interactiveMoveRequested,
-      required this.interactiveResizeRequested});
+      required this.interactiveResizeRequested,
+      required this.decoration});
 
   @override
   final bool visible;
@@ -148,10 +162,12 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
   final Object interactiveMoveRequested;
   @override
   final ResizeEdgeObject interactiveResizeRequested;
+  @override
+  final ToplevelDecoration decoration;
 
   @override
   String toString() {
-    return 'ZenithXdgToplevelState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey, interactiveMoveRequested: $interactiveMoveRequested, interactiveResizeRequested: $interactiveResizeRequested)';
+    return 'ZenithXdgToplevelState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey, interactiveMoveRequested: $interactiveMoveRequested, interactiveResizeRequested: $interactiveResizeRequested, decoration: $decoration)';
   }
 
   @override
@@ -167,7 +183,9 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
             (identical(other.interactiveResizeRequested,
                     interactiveResizeRequested) ||
                 other.interactiveResizeRequested ==
-                    interactiveResizeRequested));
+                    interactiveResizeRequested) &&
+            (identical(other.decoration, decoration) ||
+                other.decoration == decoration));
   }
 
   @override
@@ -176,7 +194,8 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
       visible,
       virtualKeyboardKey,
       const DeepCollectionEquality().hash(interactiveMoveRequested),
-      interactiveResizeRequested);
+      interactiveResizeRequested,
+      decoration);
 
   @JsonKey(ignore: true)
   @override
@@ -191,7 +210,8 @@ abstract class _ZenithXdgToplevelState implements ZenithXdgToplevelState {
           {required final bool visible,
           required final Key virtualKeyboardKey,
           required final Object interactiveMoveRequested,
-          required final ResizeEdgeObject interactiveResizeRequested}) =
+          required final ResizeEdgeObject interactiveResizeRequested,
+          required final ToplevelDecoration decoration}) =
       _$_ZenithXdgToplevelState;
 
   @override
@@ -202,6 +222,8 @@ abstract class _ZenithXdgToplevelState implements ZenithXdgToplevelState {
   Object get interactiveMoveRequested;
   @override
   ResizeEdgeObject get interactiveResizeRequested;
+  @override
+  ToplevelDecoration get decoration;
   @override
   @JsonKey(ignore: true)
   _$$_ZenithXdgToplevelStateCopyWith<_$_ZenithXdgToplevelState> get copyWith =>

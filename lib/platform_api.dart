@@ -10,7 +10,6 @@ import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/common/subsurface.dart';
-import 'package:zenith/ui/desktop/server_side_decorations/server_side_decorations.dart';
 import 'package:zenith/util/state_notifier_list.dart';
 
 final mappedWindowListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
@@ -319,6 +318,13 @@ class PlatformApi {
               position: Offset(x.toDouble(), y.toDouble()),
             );
       }
+    }
+
+    bool hasToplevelDecoration = event["has_toplevel_decoration"];
+    if (hasToplevelDecoration) {
+      int toplevelDecorationInt = event["toplevel_decoration"];
+      var decoration = ToplevelDecoration.fromInt(toplevelDecorationInt);
+      ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setDecoration(decoration);
     }
   }
 

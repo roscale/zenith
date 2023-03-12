@@ -3,6 +3,7 @@
 #include "assert.hpp"
 #include "util/egl/egl_extensions.hpp"
 #include "egl/create_shared_egl_context.hpp"
+#include "zenith_toplevel_decoration.hpp"
 #include <unistd.h>
 #include <sys/eventfd.h>
 
@@ -141,7 +142,7 @@ ZenithServer::ZenithServer() {
 	new_text_input.notify = text_input_create_handle;
 	wl_signal_add(&text_input_manager->events.text_input, &new_text_input);
 
-	new_toplevel_decoration.notify = server_new_toplevel_decoration;
+	new_toplevel_decoration.notify = toplevel_decoration_create_handle;
 	wl_signal_add(&decoration_manager->events.new_toplevel_decoration, &new_toplevel_decoration);
 
 	request_set_selection.notify = server_seat_request_set_selection;
@@ -292,11 +293,6 @@ void server_seat_request_cursor(wl_listener* listener, void* data) {
 			wlr_cursor_set_surface(server->pointer->cursor, event->surface, event->hotspot_x, event->hotspot_y);
 		}
 	}
-}
-
-void server_new_toplevel_decoration(wl_listener* listener, void* data) {
-	auto* wlr_toplevel_decoration = static_cast<wlr_xdg_toplevel_decoration_v1*>(data);
-	wlr_xdg_toplevel_decoration_v1_set_mode(wlr_toplevel_decoration, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 }
 
 void server_seat_request_set_selection(wl_listener* listener, void* data) {

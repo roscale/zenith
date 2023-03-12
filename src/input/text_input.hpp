@@ -10,9 +10,8 @@ extern "C" {
 struct ZenithServer;
 
 struct ZenithTextInput {
-	ZenithTextInput(ZenithServer* server, wlr_text_input_v3* wlr_text_input);
+	explicit ZenithTextInput(wlr_text_input_v3* wlr_text_input);
 
-	ZenithServer* server;
 	wlr_text_input_v3* wlr_text_input;
 
 	wl_listener text_input_enable{};

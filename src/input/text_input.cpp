@@ -5,8 +5,8 @@
 
 using namespace flutter;
 
-ZenithTextInput::ZenithTextInput(ZenithServer* server, wlr_text_input_v3* wlr_text_input)
-	  : server(server), wlr_text_input(wlr_text_input) {
+ZenithTextInput::ZenithTextInput(wlr_text_input_v3* wlr_text_input)
+	  : wlr_text_input(wlr_text_input) {
 
 	text_input_enable.notify = text_input_enable_handle;
 	wl_signal_add(&wlr_text_input->events.enable, &text_input_enable);
@@ -20,6 +20,7 @@ ZenithTextInput::ZenithTextInput(ZenithServer* server, wlr_text_input_v3* wlr_te
 	text_input_destroy.notify = text_input_destroy_handle;
 	wl_signal_add(&wlr_text_input->events.destroy, &text_input_destroy);
 
+	auto* server = ZenithServer::instance();
 	wlr_surface* focused_surface = server->seat->keyboard_state.focused_surface;
 	if (focused_surface != nullptr &&
 	    wl_resource_get_client(focused_surface->resource) == wl_resource_get_client(wlr_text_input->resource)) {
@@ -49,7 +50,7 @@ void text_input_create_handle(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_text_input);
 
 	auto* wlr_text_input = static_cast<wlr_text_input_v3*>(data);
-	auto text_input = new ZenithTextInput(server, wlr_text_input);
+	auto text_input = new ZenithTextInput(wlr_text_input);
 	server->text_inputs.insert(text_input);
 }
 
@@ -95,7 +96,7 @@ void text_input_commit_handle(wl_listener* listener, void* data) {
 void text_input_destroy_handle(wl_listener* listener, void* data) {
 	ZenithTextInput* text_input = wl_container_of(listener, text_input, text_input_destroy);
 	wlr_text_input_v3* wlr_text_input = text_input->wlr_text_input;
-	ZenithServer* server = text_input->server;
+	auto* server = ZenithServer::instance();
 
 	if (wlr_text_input->current_enabled && wlr_text_input->focused_surface != nullptr) {
 		text_input->disable();

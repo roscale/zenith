@@ -396,6 +396,13 @@ void EmbedderState::commit_surface(const SurfaceCommitMessage& message) {
 			map.insert({EncodableValue("has_xdg_popup"), EncodableValue(false)});
 		}
 
+		if (message.toplevel_decoration.has_value()) {
+			map.insert({EncodableValue("has_toplevel_decoration"), EncodableValue(true)});
+			map.insert({EncodableValue("toplevel_decoration"), EncodableValue((int64_t) *message.toplevel_decoration)});
+		} else {
+			map.insert({EncodableValue("has_toplevel_decoration"), EncodableValue(false)});
+		}
+
 		auto value = std::make_unique<EncodableValue>(map);
 		platform_method_channel->InvokeMethod("commit_surface", std::move(value));
 	});

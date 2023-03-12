@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
+import 'package:zenith/ui/desktop/decorations/with_decorations.dart';
 import 'package:zenith/ui/desktop/interactive_move_and_resize_listener.dart';
-import 'package:zenith/ui/desktop/server_side_decorations/server_side_decorations.dart';
-import 'package:zenith/ui/desktop/state/resizing_state_notifier_provider.dart';
 import 'package:zenith/ui/desktop/state/window_move_state_notifier_provider.dart';
+import 'package:zenith/ui/desktop/state/window_resize_provider.dart';
 
 final windowPositionStateProvider = StateProvider.family<Offset, int>((ref, int viewId) => Offset.zero);
 
@@ -28,8 +28,7 @@ class Window extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen(zenithXdgSurfaceStateProvider(viewId).select((v) => v.visibleBounds), (Rect? previous, Rect? next) {
       if (previous != null && next != null) {
-        Offset offset =
-            ref.read(resizingStateNotifierProvider(viewId).notifier).computeWindowOffset(previous.size, next.size);
+        Offset offset = ref.read(windowResizeProvider(viewId).notifier).computeWindowOffset(previous.size, next.size);
         ref.read(windowPositionStateProvider(viewId).notifier).update((state) => state + offset);
       }
     });
@@ -52,7 +51,7 @@ class Window extends ConsumerWidget {
           child: child!,
         );
       },
-      child: ServerSideDecorations(
+      child: WithDecorations(
         viewId: viewId,
         child: InteractiveMoveAndResizeListener(
           viewId: viewId,

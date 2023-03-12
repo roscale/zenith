@@ -5,9 +5,6 @@ import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/desktop/state/window_stack_notifier_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
 
-final windowStackNotifierProvider =
-    StateNotifierProvider<WindowStackNotifierProvider, WindowStack>((ref) => WindowStackNotifierProvider());
-
 final windowStackGlobalKey = Provider((ref) => GlobalKey());
 
 class WindowManager extends ConsumerStatefulWidget {

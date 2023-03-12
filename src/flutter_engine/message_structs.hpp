@@ -23,7 +23,7 @@ struct XdgPopupCommitMessage {
 	int width, height;
 };
 
-enum SurfaceRole {
+enum class SurfaceRole {
 	NONE = 0,
 	XDG_SURFACE = 1,
 	SUBSURFACE = 2,
@@ -32,6 +32,12 @@ enum SurfaceRole {
 struct SubsurfaceParentState {
 	int64_t id;
 	int32_t x, y;
+};
+
+enum class ToplevelDecoration {
+	NONE = 0,
+	CLIENT_SIZE = 1,
+	SERVER_SIZE = 2,
 };
 
 struct SurfaceCommitMessage {
@@ -49,6 +55,7 @@ struct SurfaceCommitMessage {
 	std::vector<SubsurfaceParentState> subsurfaces_above;
 	std::optional<XdgSurfaceCommitMessage> xdg_surface;
 	std::optional<XdgPopupCommitMessage> xdg_popup;
+	std::optional<ToplevelDecoration> toplevel_decoration;
 };
 
 enum class TextInputEventType {

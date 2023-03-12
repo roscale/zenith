@@ -19,6 +19,7 @@
 #include "util/rethreading/callable_queue.hpp"
 #include "util/offset.hpp"
 #include "flutter_engine/embedder_state.hpp"
+#include "zenith_toplevel_decoration.hpp"
 
 extern "C" {
 #define static
@@ -89,6 +90,7 @@ public:
 	std::unordered_map<size_t, std::shared_ptr<ZenithXdgSurface>> xdg_surfaces{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithXdgToplevel>> xdg_toplevels{};
 	std::unordered_map<size_t, std::shared_ptr<ZenithXdgPopup>> xdg_popups{};
+	std::unordered_map<size_t, std::shared_ptr<ZenithToplevelDecoration>> toplevel_decorations{};
 
 	wlr_seat* seat;
 	std::unique_ptr<ZenithPointer> pointer;
@@ -114,7 +116,5 @@ void server_new_input(wl_listener* listener, void* data);
  * This event is raised by the seat when a client provides a cursor image.
  */
 void server_seat_request_cursor(wl_listener* listener, void* data);
-
-void server_new_toplevel_decoration(wl_listener* listener, void* data);
 
 void server_seat_request_set_selection(wl_listener* listener, void* data);

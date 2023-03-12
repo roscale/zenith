@@ -3,6 +3,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'window_stack_notifier_provider.freezed.dart';
 
+final windowStackNotifierProvider =
+    StateNotifierProvider<WindowStackNotifierProvider, WindowStack>((ref) => WindowStackNotifierProvider());
+
 class WindowStackNotifierProvider extends StateNotifier<WindowStack> {
   WindowStackNotifierProvider() : super(const WindowStack(stack: []));
 

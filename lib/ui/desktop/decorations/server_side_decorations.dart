@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/ui/desktop/server_side_decorations/title_bar.dart';
-import 'package:zenith/ui/desktop/state/resizing_state_notifier_provider.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
+import 'package:zenith/ui/desktop/activate_and_raise.dart';
+import 'package:zenith/ui/desktop/decorations/title_bar.dart';
+import 'package:zenith/ui/desktop/state/window_resize_provider.dart';
 import 'package:zenith/util/rect_overflow_box.dart';
 
 class ServerSideDecorations extends ConsumerWidget {
@@ -21,42 +23,45 @@ class ServerSideDecorations extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Stack(
-      children: [
-        ..._buildResizeHandles(),
-        Padding(
-          padding: EdgeInsets.all(borderWidth),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(5),
-            child: IntrinsicWidth(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TitleBar(
-                    viewId: viewId,
-                  ),
-                  UnconstrainedBox(
-                    child: ClipRect(
-                      child: Consumer(
-                        builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                          Rect visibleBounds =
-                              ref.watch(zenithXdgSurfaceStateProvider(viewId).select((value) => value.visibleBounds));
-                          return RectOverflowBox(
-                            rect: visibleBounds,
-                            child: child!,
-                          );
-                        },
-                        child: child,
+    return ActivateAndRaise(
+      viewId: viewId,
+      child: Stack(
+        children: [
+          ..._buildResizeHandles(),
+          Padding(
+            padding: EdgeInsets.all(borderWidth),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: IntrinsicWidth(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TitleBar(
+                      viewId: viewId,
+                    ),
+                    UnconstrainedBox(
+                      child: ClipRect(
+                        child: Consumer(
+                          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                            Rect visibleBounds =
+                                ref.watch(zenithXdgSurfaceStateProvider(viewId).select((value) => value.visibleBounds));
+                            return RectOverflowBox(
+                              rect: visibleBounds,
+                              child: child!,
+                            );
+                          },
+                          child: child,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -185,40 +190,6 @@ class ServerSideDecorations extends ConsumerWidget {
   }
 }
 
-enum ResizeEdge {
-  topLeft,
-  top,
-  topRight,
-  right,
-  bottomRight,
-  bottom,
-  bottomLeft,
-  left;
-
-  static ResizeEdge fromInt(int n) {
-    switch (n) {
-      case 1:
-        return top;
-      case 2:
-        return bottom;
-      case 4:
-        return left;
-      case 5:
-        return topLeft;
-      case 6:
-        return bottomLeft;
-      case 8:
-        return right;
-      case 9:
-        return topRight;
-      case 10:
-        return bottomRight;
-      default:
-        return bottomRight;
-    }
-  }
-}
-
 class ResizeHandle extends ConsumerWidget {
   final int viewId;
   final ResizeEdge resizeEdge;
@@ -236,16 +207,16 @@ class ResizeHandle extends ConsumerWidget {
       child: GestureDetector(
         onPanDown: (_) {
           Size size = ref.read(zenithXdgSurfaceStateProvider(viewId)).visibleBounds.size;
-          ref.read(resizingStateNotifierProvider(viewId).notifier).startResize(resizeEdge, size);
+          ref.read(windowResizeProvider(viewId).notifier).startResize(resizeEdge, size);
         },
         onPanUpdate: (DragUpdateDetails details) {
-          ref.read(resizingStateNotifierProvider(viewId).notifier).resize(details.delta);
+          ref.read(windowResizeProvider(viewId).notifier).resize(details.delta);
         },
         onPanEnd: (_) {
-          ref.read(resizingStateNotifierProvider(viewId).notifier).endResize();
+          ref.read(windowResizeProvider(viewId).notifier).endResize();
         },
         onPanCancel: () {
-          ref.read(resizingStateNotifierProvider(viewId).notifier).endResize();
+          ref.read(windowResizeProvider(viewId).notifier).endResize();
         },
       ),
     );
