@@ -9,14 +9,14 @@ import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 part 'window_resize_provider.freezed.dart';
 
 final windowResizeProvider =
-    StateNotifierProvider.family<ResizingStateNotifierProvider, ResizerState, int>((ref, int viewId) {
-  return ResizingStateNotifierProvider(viewId);
+    StateNotifierProvider.family<WindowResizeStateNotifierProvider, ResizerState, int>((ref, int viewId) {
+  return WindowResizeStateNotifierProvider(viewId);
 });
 
-class ResizingStateNotifierProvider extends StateNotifier<ResizerState> {
+class WindowResizeStateNotifierProvider extends StateNotifier<ResizerState> {
   final int viewId;
 
-  ResizingStateNotifierProvider(this.viewId)
+  WindowResizeStateNotifierProvider(this.viewId)
       : super(
           const ResizerState(
             resizing: false,

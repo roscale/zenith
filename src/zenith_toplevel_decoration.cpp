@@ -35,8 +35,6 @@ void request_mode_handle(wl_listener* listener, void* data) {
 	wlr_xdg_toplevel_decoration_v1* wlr_toplevel_decoration = toplevel_decoration->wlr_toplevel_decoration;
 	wlr_xdg_toplevel_decoration_v1_mode requested_mode = wlr_toplevel_decoration->requested_mode;
 
-	std::cout << "req " << requested_mode << std::endl;
-
 	if (requested_mode != WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_NONE) {
 		wlr_xdg_toplevel_decoration_v1_set_mode(wlr_toplevel_decoration, requested_mode);
 	} else {

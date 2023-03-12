@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'window_stack_notifier_provider.freezed.dart';
+part 'window_stack_provider.freezed.dart';
 
-final windowStackNotifierProvider =
+final windowStackProvider =
     StateNotifierProvider<WindowStackNotifierProvider, WindowStack>((ref) => WindowStackNotifierProvider());
 
 class WindowStackNotifierProvider extends StateNotifier<WindowStack> {

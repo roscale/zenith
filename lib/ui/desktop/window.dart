@@ -4,7 +4,7 @@ import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
 import 'package:zenith/ui/desktop/decorations/with_decorations.dart';
 import 'package:zenith/ui/desktop/interactive_move_and_resize_listener.dart';
-import 'package:zenith/ui/desktop/state/window_move_state_notifier_provider.dart';
+import 'package:zenith/ui/desktop/state/window_move_provider.dart';
 import 'package:zenith/ui/desktop/state/window_resize_provider.dart';
 
 final windowPositionStateProvider = StateProvider.family<Offset, int>((ref, int viewId) => Offset.zero);
@@ -33,7 +33,7 @@ class Window extends ConsumerWidget {
       }
     });
 
-    ref.listen(windowMoveStateNotifierProvider(viewId).select((v) => v.movedPosition), (_, Offset? position) {
+    ref.listen(windowMoveProvider(viewId).select((v) => v.movedPosition), (_, Offset? position) {
       if (position != null) {
         ref.read(windowPositionStateProvider(viewId).notifier).state = Offset(
           position.dx.roundToDouble(),

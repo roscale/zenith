@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
-import 'package:zenith/ui/desktop/state/window_stack_notifier_provider.dart';
+import 'package:zenith/ui/desktop/state/window_stack_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
 
 final windowStackGlobalKey = Provider((ref) => GlobalKey());
@@ -19,7 +19,7 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
   void initState() {
     super.initState();
 
-    var windowStackNotifier = ref.read(windowStackNotifierProvider.notifier);
+    var windowStackNotifier = ref.read(windowStackProvider.notifier);
     var tasks = ref.read(mappedWindowListProvider);
 
     Future.microtask(() {
@@ -49,7 +49,9 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
 
         return Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            final tasks = ref.watch(windowStackNotifierProvider).windows;
+            final tasks = ref
+                .watch(windowStackProvider)
+                .windows;
 
             return Stack(
               key: ref.watch(windowStackGlobalKey),

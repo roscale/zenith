@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'window_move_state_notifier_provider.freezed.dart';
+part 'window_move_provider.freezed.dart';
 
-final windowMoveStateNotifierProvider =
+final windowMoveProvider =
     StateNotifierProvider.family<WindowMoveStateNotifierProvider, WindowMoveState, int>((ref, int viewId) {
   return WindowMoveStateNotifierProvider(ref, viewId);
 });

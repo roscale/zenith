@@ -1,12 +1,10 @@
 import 'dart:io';
 
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:jovial_svg/jovial_svg.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:zenith/ui/mobile/app_drawer/app_drawer.dart';
 
 part 'app_drawer_state.freezed.dart';
 part 'app_drawer_state.g.dart';
