@@ -61,11 +61,15 @@ class _Positioner extends ConsumerWidget {
         Offset position = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.position));
         Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.visibleBounds));
         int parentId = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.parentViewId));
-        Rect parentVisibleBounds = ref.watch(zenithXdgSurfaceStateProvider(parentId).select((v) => v.visibleBounds));
+        // FIXME: cannot use watch because the popup thinks the window is at 0,0 when these bounds change.
+        Rect parentVisibleBounds = ref.read(zenithXdgSurfaceStateProvider(parentId).select((v) => v.visibleBounds));
 
-        RenderBox? parentRenderBox =
-            ref.read(zenithSurfaceStateProvider(parentId)).textureKey.currentContext?.findRenderObject() as RenderBox?;
-        RenderBox? popupStackRenderBox = ref.read(popupStackGlobalKey).currentContext?.findRenderObject() as RenderBox?;
+        RenderBox? parentRenderBox = ref
+            .watch(zenithSurfaceStateProvider(parentId).select((v) => v.textureKey))
+            .currentContext
+            ?.findRenderObject() as RenderBox?;
+        RenderBox? popupStackRenderBox =
+            ref.watch(popupStackGlobalKey).currentContext?.findRenderObject() as RenderBox?;
 
         Offset offset;
         if (parentRenderBox != null &&
