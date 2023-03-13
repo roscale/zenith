@@ -16,7 +16,7 @@ ZenithXdgSurface::ZenithXdgSurface(wlr_xdg_surface* xdg_surface, std::shared_ptr
 }
 
 void zenith_xdg_surface_create(wl_listener* listener, void* data) {
-	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface2);
+	ZenithServer* server = wl_container_of(listener, server, new_xdg_surface);
 	auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
 	auto* zenith_surface = static_cast<ZenithSurface*>(xdg_surface->surface->data);
 	const std::shared_ptr<ZenithSurface>& zenith_surface_ref = server->surfaces.at(zenith_surface->id);

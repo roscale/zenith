@@ -57,6 +57,8 @@ struct EmbedderState {
 
 	void interactive_resize(size_t view_id, xdg_toplevel_resize_edge edge);
 
+	void set_window_title(size_t view_id, const std::string& title);
+
 	/*
 	 * The following fields have to be public because they are used by Flutter engine callbacks,
 	 * which are just plain C functions.

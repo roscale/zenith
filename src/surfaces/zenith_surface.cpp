@@ -75,13 +75,6 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 		  .input_region = surface->input_region.extents,
 	};
 
-	if (role == SurfaceRole::XDG_SURFACE) {
-		auto it = server->toplevel_decorations.find(zenith_surface->id);
-		if (it != server->toplevel_decorations.end()) {
-			commit_message->toplevel_decoration = (ToplevelDecoration) it->second->wlr_toplevel_decoration->pending.mode;
-		}
-	}
-
 	std::vector<SubsurfaceParentState> below{};
 	std::vector<SubsurfaceParentState> above{};
 
@@ -119,10 +112,18 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 			  .height = visible_bounds.height,
 		};
 		switch (xdg_surface->role) {
-			case WLR_XDG_SURFACE_ROLE_NONE:
-			case WLR_XDG_SURFACE_ROLE_TOPLEVEL:
+			case WLR_XDG_SURFACE_ROLE_TOPLEVEL: {
+				auto it = server->toplevel_decorations.find(zenith_surface->id);
+				if (it != server->toplevel_decorations.end()) {
+					commit_message->toplevel_decoration = (ToplevelDecoration) it->second->wlr_toplevel_decoration->pending.mode;
+				}
+				const char* title = xdg_surface->toplevel->title;
+				if (title != nullptr) {
+					commit_message->toplevel_title = title;
+				}
 				break;
-			case WLR_XDG_SURFACE_ROLE_POPUP:
+			}
+			case WLR_XDG_SURFACE_ROLE_POPUP: {
 				wlr_xdg_popup* popup = xdg_surface->popup;
 				int64_t parent_id;
 				if (popup->parent != nullptr) {
@@ -141,6 +142,9 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 					  .width = geometry.width,
 					  .height = geometry.height,
 				};
+				break;
+			}
+			case WLR_XDG_SURFACE_ROLE_NONE:
 				break;
 		}
 	}

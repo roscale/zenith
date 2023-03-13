@@ -78,7 +78,7 @@ public:
 
 	wl_listener new_output{};
 	wl_listener new_surface{};
-	wl_listener new_xdg_surface2{};
+	wl_listener new_xdg_surface{};
 	wl_listener new_input{};
 	wl_listener request_cursor{};
 	wl_listener new_text_input{};

@@ -17,6 +17,9 @@ ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel,
 	set_app_id.notify = zenith_xdg_toplevel_set_app_id;
 	wl_signal_add(&xdg_toplevel->events.set_app_id, &set_app_id);
 
+	set_title.notify = zenith_xdg_toplevel_set_title;
+	wl_signal_add(&xdg_toplevel->events.set_title, &set_title);
+
 	request_move.notify = zenith_xdg_toplevel_request_move;
 	wl_signal_add(&xdg_toplevel->events.request_move, &request_move);
 
@@ -96,6 +99,14 @@ void zenith_xdg_toplevel_request_fullscreen(wl_listener* listener, void* data) {
 void zenith_xdg_toplevel_set_app_id(wl_listener* listener, void* data) {
 	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, set_app_id);
 	char* app_id = zenith_xdg_toplevel->zenith_xdg_surface->xdg_surface->toplevel->app_id;
+	std::cout << app_id << std::endl;
+}
+
+void zenith_xdg_toplevel_set_title(wl_listener* listener, void* data) {
+	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, set_title);
+	size_t id = zenith_xdg_toplevel->zenith_xdg_surface->zenith_surface->id;
+	char* title = zenith_xdg_toplevel->zenith_xdg_surface->xdg_surface->toplevel->title;
+	ZenithServer::instance()->embedder_state->set_window_title(id, title);
 }
 
 void zenith_xdg_toplevel_request_move(wl_listener* listener, void* data) {

@@ -403,6 +403,13 @@ void EmbedderState::commit_surface(const SurfaceCommitMessage& message) {
 			map.insert({EncodableValue("has_toplevel_decoration"), EncodableValue(false)});
 		}
 
+		if (message.toplevel_title.has_value()) {
+			map.insert({EncodableValue("has_toplevel_title"), EncodableValue(true)});
+			map.insert({EncodableValue("toplevel_title"), EncodableValue(*message.toplevel_title)});
+		} else {
+			map.insert({EncodableValue("has_toplevel_title"), EncodableValue(false)});
+		}
+
 		auto value = std::make_unique<EncodableValue>(map);
 		platform_method_channel->InvokeMethod("commit_surface", std::move(value));
 	});
@@ -479,8 +486,18 @@ void EmbedderState::interactive_resize(size_t view_id, xdg_toplevel_resize_edge 
 	callable_queue.enqueue([=] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
-			  {EncodableValue("edge"), EncodableValue((int64_t) edge)},
+			  {EncodableValue("edge"),    EncodableValue((int64_t) edge)},
 		});
 		platform_method_channel->InvokeMethod("interactive_resize", std::move(value));
+	});
+}
+
+void EmbedderState::set_window_title(size_t view_id, const std::string& title) {
+	callable_queue.enqueue([=] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+			  {EncodableValue("title"),   EncodableValue(title)},
+		});
+		platform_method_channel->InvokeMethod("set_title", std::move(value));
 	});
 }

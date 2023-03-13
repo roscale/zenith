@@ -56,6 +56,7 @@ struct SurfaceCommitMessage {
 	std::optional<XdgSurfaceCommitMessage> xdg_surface;
 	std::optional<XdgPopupCommitMessage> xdg_popup;
 	std::optional<ToplevelDecoration> toplevel_decoration;
+	std::optional<std::string> toplevel_title;
 };
 
 enum class TextInputEventType {

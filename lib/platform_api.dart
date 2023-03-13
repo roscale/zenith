@@ -67,6 +67,9 @@ class PlatformApi {
         case "interactive_resize":
           _interactiveResize(call.arguments);
           break;
+        case "set_title":
+          _setTitle(call.arguments);
+          break;
         default:
           throw PlatformException(
             code: "unknown_method",
@@ -326,6 +329,12 @@ class PlatformApi {
       var decoration = ToplevelDecoration.fromInt(toplevelDecorationInt);
       ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setDecoration(decoration);
     }
+
+    bool hasToplevelTitle = event["has_toplevel_title"];
+    if (hasToplevelTitle) {
+      String title = event["toplevel_title"];
+      ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(title);
+    }
   }
 
   static void _mapXdgSurface(dynamic event) {
@@ -401,6 +410,12 @@ class PlatformApi {
     int edge = event["edge"];
     ResizeEdge resizeEdge = ResizeEdge.fromInt(edge);
     ref.read(zenithXdgToplevelStateProvider(viewId).notifier).requestInteractiveResize(resizeEdge);
+  }
+
+  static void _setTitle(dynamic event) {
+    int viewId = event["view_id"];
+    String title = event["title"];
+    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(title);
   }
 }
 

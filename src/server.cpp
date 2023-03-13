@@ -127,8 +127,8 @@ ZenithServer::ZenithServer() {
 	new_surface.notify = zenith_surface_create;
 	wl_signal_add(&compositor->events.new_surface, &new_surface);
 
-	new_xdg_surface2.notify = zenith_xdg_surface_create;
-	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface2);
+	new_xdg_surface.notify = zenith_xdg_surface_create;
+	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
 
 	// Called at the start for each available input device, but also when the user plugs in a new input
 	// device, like a mouse, keyboard, drawing tablet, etc.
