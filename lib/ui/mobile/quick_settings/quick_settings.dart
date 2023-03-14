@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/util/state/display_brightness_state.dart';
 import 'package:zenith/util/state/screen_state.dart';
+import 'package:zenith/util/state/ui_mode_state.dart';
 
 class QuickSettings extends ConsumerStatefulWidget {
   final VoidCallback? onChangeBrightnessStart;
@@ -62,10 +63,26 @@ class _QuickSettingsState extends ConsumerState<QuickSettings> {
                     icon: const Icon(Icons.screen_rotation, size: 30),
                     padding: EdgeInsets.zero,
                   ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.airplanemode_active, size: 30),
-                    padding: EdgeInsets.zero,
+                  Consumer(
+                    builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                      UiMode mode = ref.watch(uiModeStateProvider);
+
+                      return IconButton(
+                        onPressed: () {
+                          var notifier = ref.read(uiModeStateProvider.notifier);
+                          if (mode == UiMode.desktop) {
+                            notifier.state = UiMode.mobile;
+                          } else {
+                            notifier.state = UiMode.desktop;
+                          }
+                        },
+                        icon: Icon(
+                          mode == UiMode.desktop ? Icons.phone_android : Icons.desktop_windows_outlined,
+                          size: 30,
+                        ),
+                        padding: EdgeInsets.zero,
+                      );
+                    },
                   ),
                 ],
               ),

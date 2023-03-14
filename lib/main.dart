@@ -13,6 +13,7 @@ import 'package:zenith/util/state/key_tracker.dart';
 import 'package:zenith/util/state/lock_screen_state.dart';
 import 'package:zenith/util/state/root_overlay.dart';
 import 'package:zenith/util/state/screen_state.dart';
+import 'package:zenith/util/state/ui_mode_state.dart';
 
 void main() {
   // debugRepaintRainbowEnabled = true;
@@ -112,12 +113,11 @@ class Zenith extends ConsumerWidget {
                         child: Scaffold(
                           body: Consumer(
                             builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                              // UiMode uiMode = ref.watch(uiModeStateProvider);
-                              Size screenSize = ref.watch(screenStateProvider.select((v) => v.size));
+                              UiMode uiMode = ref.watch(uiModeStateProvider);
                               return Stack(
                                 children: [
-                                  if (screenSize.aspectRatio >= 1) const DesktopUi(),
-                                  if (screenSize.aspectRatio < 1) const MobileUi(),
+                                  if (uiMode == UiMode.desktop) const DesktopUi(),
+                                  if (uiMode == UiMode.mobile) const MobileUi(),
                                   Overlay(
                                     key: ref.watch(rootOverlayKeyProvider),
                                     initialEntries: [

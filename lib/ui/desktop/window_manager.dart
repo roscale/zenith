@@ -49,11 +49,10 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
 
         return Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            final tasks = ref
-                .watch(windowStackProvider)
-                .windows;
+            final tasks = ref.watch(windowStackProvider).windows;
 
             return Stack(
+              clipBehavior: Clip.none,
               key: ref.watch(windowStackGlobalKey),
               children: [
                 for (int viewId in tasks) ref.watch(windowWidget(viewId)),
