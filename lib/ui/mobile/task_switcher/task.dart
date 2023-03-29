@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/ui/common/app_icon.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
 import 'package:zenith/ui/mobile/state/task_state.dart';
@@ -77,7 +78,12 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
             offset: Offset(0, position),
             child: Opacity(
               opacity: (1 - position.abs() / 1000).clamp(0, 1),
-              child: child!,
+              child: Stack(
+                children: [
+                  child!,
+                  TaskIcon(viewId: widget.viewId),
+                ],
+              ),
             ),
           );
         },
@@ -199,5 +205,39 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
     ).animate(CurvedAnimation(parent: animationController, curve: Curves.easeOutCubic));
 
     return animationController.forward(from: 0);
+  }
+}
+
+class TaskIcon extends ConsumerWidget {
+  final int viewId;
+
+  const TaskIcon({
+    super.key,
+    required this.viewId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AnimatedOpacity(
+      opacity: ref.watch(taskSwitcherStateProvider.select((value) => value.inOverview)) ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      child: Align(
+        heightFactor: 0,
+        child: Transform.translate(
+          offset: const Offset(0, -80),
+          child: Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              String appId = ref.watch(zenithXdgToplevelStateProvider(viewId).select((v) => v.appId));
+              return SizedBox(
+                width: 100,
+                height: 100,
+                child: AppIconById(id: appId),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -121,6 +121,10 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 				if (title != nullptr) {
 					commit_message->toplevel_title = title;
 				}
+				const char* app_id = xdg_surface->toplevel->app_id;
+				if (app_id != nullptr) {
+					commit_message->toplevel_app_id = app_id;
+				}
 				break;
 			}
 			case WLR_XDG_SURFACE_ROLE_POPUP: {

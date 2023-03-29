@@ -70,6 +70,9 @@ class PlatformApi {
         case "set_title":
           _setTitle(call.arguments);
           break;
+        case "set_app_id":
+          _setAppId(call.arguments);
+          break;
         default:
           throw PlatformException(
             code: "unknown_method",
@@ -335,6 +338,12 @@ class PlatformApi {
       String title = event["toplevel_title"];
       ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(title);
     }
+
+    bool hasToplevelAppId = event["has_toplevel_app_id"];
+    if (hasToplevelAppId) {
+      String appId = event["toplevel_app_id"];
+      ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setAppId(appId);
+    }
   }
 
   static void _mapXdgSurface(dynamic event) {
@@ -416,6 +425,12 @@ class PlatformApi {
     int viewId = event["view_id"];
     String title = event["title"];
     ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(title);
+  }
+
+  static void _setAppId(dynamic event) {
+    int viewId = event["view_id"];
+    String appId = event["app_id"];
+    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(appId);
   }
 }
 

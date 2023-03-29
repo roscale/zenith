@@ -1,13 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:jovial_svg/jovial_svg.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_drawer_state.freezed.dart';
-part 'app_drawer_state.g.dart';
 
 final appDrawerStateProvider = StateProvider(
   (ref) => const AppDrawerState(
@@ -47,55 +41,4 @@ class AppDrawerState with _$AppDrawerState {
     required double slideDistance,
     required Object closePanel,
   }) = _AppDrawerState;
-}
-
-@Riverpod(keepAlive: true)
-Future<ScalableImage> fileToScalableImage(FileToScalableImageRef ref, String path) async {
-  String svg = await File(path).readAsString();
-  return ScalableImage.fromSvgString(svg);
-}
-
-@Riverpod(keepAlive: true)
-Future<List<LocalizedDesktopEntry>> desktopEntries(DesktopEntriesRef ref) {
-  return _getAllDesktopEntriesLocalized();
-}
-
-@Riverpod(keepAlive: true)
-Future<FreedesktopIconTheme> defaultIconTheme(DefaultIconThemeRef ref) {
-  return FreedesktopIconTheme.load('Adwaita');
-}
-
-Stream<File> _getAllDesktopEntryFiles() async* {
-  for (String dir in getAppBaseDirectories()) {
-    Directory appDir = Directory(dir);
-    if (await appDir.exists()) {
-      await for (FileSystemEntity entity in appDir.list()) {
-        if (entity is File) {
-          yield entity.absolute;
-        }
-      }
-    }
-  }
-}
-
-Stream<DesktopEntry> _getAllDesktopEntries() async* {
-  await for (File file in _getAllDesktopEntryFiles()) {
-    final desktopEntry = DesktopEntry.parse(await file.readAsString());
-    if (!desktopEntry.isHidden()) {
-      yield desktopEntry;
-    }
-  }
-}
-
-Future<List<LocalizedDesktopEntry>> _getAllDesktopEntriesLocalized() async {
-  List<LocalizedDesktopEntry> localizedDesktopEntries =
-      await _getAllDesktopEntries().map((event) => event.localize(lang: 'en')).toList();
-
-  localizedDesktopEntries.sort((a, b) {
-    String aName = a.entries[DesktopEntryKey.name.string]!;
-    String bName = b.entries[DesktopEntryKey.name.string]!;
-    return aName.toLowerCase().compareTo(bName.toLowerCase());
-  });
-
-  return localizedDesktopEntries;
 }

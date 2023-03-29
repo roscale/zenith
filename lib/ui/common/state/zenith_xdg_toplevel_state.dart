@@ -21,6 +21,7 @@ class ZenithXdgToplevelState with _$ZenithXdgToplevelState {
     required ResizeEdgeObject interactiveResizeRequested,
     required ToplevelDecoration decoration,
     required String title,
+    required String appId,
   }) = _ZenithXdgToplevelState;
 }
 
@@ -38,6 +39,7 @@ class ZenithXdgToplevelStateNotifier
             interactiveResizeRequested: ResizeEdgeObject(ResizeEdge.top),
             decoration: ToplevelDecoration.none,
             title: "",
+            appId: "",
           ),
         );
 
@@ -77,6 +79,12 @@ class ZenithXdgToplevelStateNotifier
   void setTitle(String title) {
     state = state.copyWith(
       title: title,
+    );
+  }
+
+  void setAppId(String appId) {
+    state = state.copyWith(
+      appId: appId,
     );
   }
 }

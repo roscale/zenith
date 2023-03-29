@@ -247,10 +247,10 @@ packages:
     dependency: "direct main"
     description:
       name: freedesktop_desktop_entry
-      sha256: "6a3391e1a007ddcf339492a0e90853df2271bf93a5947707a3a9d8b3cfcf5fb7"
+      sha256: "1e8033afff340da6314703bb03c7be49320ddc7340ec2a2be2ce486ace783912"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.0"
+    version: "0.5.0"
   freezed:
     dependency: "direct main"
     description:

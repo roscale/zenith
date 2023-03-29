@@ -59,6 +59,8 @@ struct EmbedderState {
 
 	void set_window_title(size_t view_id, const std::string& title);
 
+	void set_app_id(size_t view_id, const std::string& app_id);
+
 	/*
 	 * The following fields have to be public because they are used by Flutter engine callbacks,
 	 * which are just plain C functions.

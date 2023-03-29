@@ -410,6 +410,13 @@ void EmbedderState::commit_surface(const SurfaceCommitMessage& message) {
 			map.insert({EncodableValue("has_toplevel_title"), EncodableValue(false)});
 		}
 
+		if (message.toplevel_app_id.has_value()) {
+			map.insert({EncodableValue("has_toplevel_app_id"), EncodableValue(true)});
+			map.insert({EncodableValue("toplevel_app_id"), EncodableValue(*message.toplevel_app_id)});
+		} else {
+			map.insert({EncodableValue("has_toplevel_app_id"), EncodableValue(false)});
+		}
+
 		auto value = std::make_unique<EncodableValue>(map);
 		platform_method_channel->InvokeMethod("commit_surface", std::move(value));
 	});
@@ -499,5 +506,15 @@ void EmbedderState::set_window_title(size_t view_id, const std::string& title) {
 			  {EncodableValue("title"),   EncodableValue(title)},
 		});
 		platform_method_channel->InvokeMethod("set_title", std::move(value));
+	});
+}
+
+void EmbedderState::set_app_id(size_t view_id, const std::string& app_id) {
+	callable_queue.enqueue([=] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+			  {EncodableValue("app_id"),  EncodableValue(app_id)},
+		});
+		platform_method_channel->InvokeMethod("set_app_id", std::move(value));
 	});
 }

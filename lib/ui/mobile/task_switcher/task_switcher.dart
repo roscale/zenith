@@ -137,13 +137,11 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
         _constraintsChanged(constraints);
 
         return Stack(
-          clipBehavior: Clip.none,
           children: [
             Positioned.fill(
               child: TaskSwitcherScroller(
                 scrollPosition: scrollPosition,
                 child: Stack(
-                  clipBehavior: Clip.none,
                   children: [
                     const Positioned(
                       bottom: 0,
@@ -156,7 +154,6 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
                         final tasks = ref.watch(taskListProvider);
                         final closingTasks = ref.watch(closingTaskListProvider);
                         return Stack(
-                          clipBehavior: Clip.none,
                           children: [
                             for (int viewId in closingTasks) ref.watch(taskWidgetProvider(viewId)),
                             for (int viewId in tasks) ref.watch(taskWidgetProvider(viewId)),

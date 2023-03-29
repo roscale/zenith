@@ -3,11 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
-import 'package:jovial_svg/jovial_svg.dart';
+import 'package:zenith/ui/common/app_icon.dart';
+import 'package:zenith/ui/common/state/desktop_entries.dart';
 import 'package:zenith/ui/mobile/state/app_drawer_state.dart';
 
 final _appWidgetCacheProvider = Provider<List<Widget>>((ref) {
-  return ref.watch(desktopEntriesProvider).when(
+  return ref.watch(appDrawerDesktopEntriesProvider).when(
         data: (List<LocalizedDesktopEntry> desktopEntries) {
           return desktopEntries
               .map(
@@ -86,8 +87,11 @@ class AppEntry extends ConsumerWidget {
       child: Column(
         children: [
           Expanded(
-            child: AppIcon(
-              icon: desktopEntry.entries[DesktopEntryKey.icon.string],
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: AppIconByPath(
+                path: desktopEntry.entries[DesktopEntryKey.icon.string],
+              ),
             ),
           ),
           Text(
@@ -100,79 +104,6 @@ class AppEntry extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class AppIcon extends StatelessWidget {
-  final String? icon;
-
-  const AppIcon({
-    Key? key,
-    required this.icon,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer(
-      builder: (_, WidgetRef ref, __) {
-        if (icon == null) {
-          return const SizedBox();
-        }
-
-        return ref.watch(defaultIconThemeProvider).when(
-              data: (iconTheme) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: _buildIcon(iconTheme, icon!),
-                );
-              },
-              error: (_, __) => const SizedBox(),
-              loading: () => const SizedBox(),
-            );
-      },
-    );
-  }
-
-  Widget _buildIcon(FreedesktopIconTheme iconTheme, String icon) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        File? file = iconTheme.findIcon(
-          name: icon,
-          size: constraints.biggest.shortestSide.floor(),
-          extensions: {'svg', 'png'},
-        );
-
-        if (file == null) {
-          return const SizedBox();
-        }
-
-        if (file.path.endsWith('.svg')) {
-          return Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            return ref.watch(fileToScalableImageProvider(file.path)).when(
-              data: (ScalableImage si) {
-                return SizedBox.expand(
-                  child: ScalableImageWidget(
-                    si: si,
-                  ),
-                );
-              },
-              error: (Object error, StackTrace stackTrace) {
-                return const SizedBox();
-              },
-              loading: () {
-                return const SizedBox();
-              },
-            );
-          });
-        }
-
-        return Image.file(
-          file,
-          filterQuality: FilterQuality.medium,
-          fit: BoxFit.fill,
-        );
-      },
     );
   }
 }

@@ -185,7 +185,7 @@ void ZenithServer::run(const char* startup_command) {
 	setenv("QT_QPA_PLATFORM", "wayland", true); // Force QT apps to run on Wayland.
 
 	wlr_egl* main_egl = wlr_gles2_renderer_get_egl(renderer);
-	
+
 	// Create 2 OpenGL shared contexts for rendering operations.
 	wlr_egl* flutter_gl_context = create_shared_egl_context(main_egl);
 	wlr_egl* flutter_resource_gl_context = create_shared_egl_context(main_egl);

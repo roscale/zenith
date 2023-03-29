@@ -98,8 +98,9 @@ void zenith_xdg_toplevel_request_fullscreen(wl_listener* listener, void* data) {
 
 void zenith_xdg_toplevel_set_app_id(wl_listener* listener, void* data) {
 	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, set_app_id);
+	size_t id = zenith_xdg_toplevel->zenith_xdg_surface->zenith_surface->id;
 	char* app_id = zenith_xdg_toplevel->zenith_xdg_surface->xdg_surface->toplevel->app_id;
-	std::cout << app_id << std::endl;
+	ZenithServer::instance()->embedder_state->set_app_id(id, app_id);
 }
 
 void zenith_xdg_toplevel_set_title(wl_listener* listener, void* data) {

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/ui/common/app_icon.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/state/window_move_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
@@ -69,6 +70,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
                       width: 30,
@@ -82,6 +84,19 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                           PlatformApi.closeView(widget.viewId);
                         },
                       ),
+                    ),
+                    Consumer(
+                      builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                        String appId = ref.watch(zenithXdgToplevelStateProvider(widget.viewId).select((v) => v.appId));
+                        return SizedBox(
+                          height: 30,
+                          width: 30,
+                          child: Padding(
+                            padding: const EdgeInsets.all(2.0),
+                            child: AppIconById(id: appId),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
