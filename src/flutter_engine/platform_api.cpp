@@ -282,7 +282,7 @@ void touch_cancel(ZenithServer* server, const flutter::MethodCall<>& call,
 			return;
 		}
 
-		wlr_seat_touch_notify_cancel(server->seat, surface);
+		zenith::wlr_seat_touch_notify_cancel(server->seat, surface);
 		wlr_seat_touch_notify_frame(server->seat);
 	});
 

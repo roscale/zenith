@@ -20,16 +20,17 @@ jobs:
           apt install -y sudo git git-lfs nodejs npm zip unzip curl file debianutils xz-utils pkg-config build-essential jq docker.io
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           lfs: true
 
-      - uses: subosito/flutter-action@v2
+      - id: flutter-action
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
-          cache-key: flutter # optional, change this to force refresh cache
-          cache-path: ${{ runner.tool_cache }}/flutter # optional, change this to specify the cache path
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:' # optional, change this to force refresh cache
+          cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:' # optional, change this to specify the cache path
           architecture: x64 # optional, x64 or arm64
 
       - name: Install dependencies
@@ -38,7 +39,11 @@ jobs:
 
       - name: Build amd64 artifacts
         run: |
+          git config --global --add safe.directory ${{ runner.tool_cache }}/flutter/${{ steps.flutter-action.outputs.CHANNEL }}-${{ steps.flutter-action.outputs.VERSION }}-${{ steps.flutter-action.outputs.ARCHITECTURE }}
+          
           flutter config --enable-linux-desktop
+          flutter doctor
+          
           flutter pub get
           make release_bundle -j16
           make deb_package VERSION=${{ github.ref_name }}
@@ -67,7 +72,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           lfs: true
 
@@ -82,10 +87,17 @@ jobs:
             apt update -y
             apt install -y sudo curl file git unzip debianutils xz-utils zip pkg-config build-essential
             ./install_dependencies_debian.sh
+            
             git clone -b stable https://github.com/flutter/flutter.git
             export PATH="$PATH:$PWD/flutter/bin"
             flutter config --enable-linux-desktop
             flutter doctor
+            
+            # Patch Flutter engine
+            # https://github.com/flutter/flutter/issues/116703
+            curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_`flutter --version | head -n 1 | awk '{print $2}'`-`flutter --version | head -n 1 | awk '{print $5}'`.tar.xz
+            tar -xvf flutter_linux_`flutter --version | head -n 1 | awk '{print $2}'`-`flutter --version | head -n 1 | awk '{print $5}'`.tar.xz flutter/bin/cache/artifacts/engine/linux-x64/shader_lib
+            cp -R flutter/bin/cache/artifacts/engine/linux-x64/shader_lib flutter/bin/cache/artifacts/engine/linux-arm64
             
             flutter pub get
             make deb_package -j16 VERSION=${{ github.ref_name }}

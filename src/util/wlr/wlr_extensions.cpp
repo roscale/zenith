@@ -72,38 +72,39 @@ static void touch_point_destroy(struct wlr_touch_point* point) {
 	free(point);
 }
 
-// Copied from wlroots 0.16.
-void wlr_seat_touch_send_cancel(struct wlr_seat* seat, struct wlr_surface* surface) {
-	struct wl_client* client = wl_resource_get_client(surface->resource);
-	struct wlr_seat_client* seat_client = wlr_seat_client_for_wl_client(seat, client);
-	if (seat_client == NULL) {
-		return;
-	}
-
-	struct wl_resource* resource;
-	wl_resource_for_each(resource, &seat_client->touches) {
-		if (seat_client_from_touch_resource(resource) == NULL) {
-			continue;
+namespace zenith {
+	// Copied from wlroots 0.16.
+	void wlr_seat_touch_send_cancel(struct ::wlr_seat* seat, struct ::wlr_surface* surface) {
+		struct wl_client* client = wl_resource_get_client(surface->resource);
+		struct wlr_seat_client* seat_client = wlr_seat_client_for_wl_client(seat, client);
+		if (seat_client == NULL) {
+			return;
 		}
-		wl_touch_send_cancel(resource);
+
+		struct wl_resource* resource;
+		wl_resource_for_each(resource, &seat_client->touches) {
+			if (seat_client_from_touch_resource(resource) == NULL) {
+				continue;
+			}
+			wl_touch_send_cancel(resource);
+		}
 	}
 
-}
+	// Copied from wlroots 0.16.
+	void wlr_seat_touch_notify_cancel(struct ::wlr_seat* seat, struct ::wlr_surface* surface) {
+		struct wlr_seat_touch_grab* grab = seat->touch_state.grab;
+		zenith::wlr_seat_touch_send_cancel(grab->seat, surface);
 
-// Copied from wlroots 0.16.
-void wlr_seat_touch_notify_cancel(struct wlr_seat* seat, struct wlr_surface* surface) {
-	struct wlr_seat_touch_grab* grab = seat->touch_state.grab;
-	wlr_seat_touch_send_cancel(grab->seat, surface);
-
-	struct wl_client* client = wl_resource_get_client(surface->resource);
-	struct wlr_seat_client* seat_client = wlr_seat_client_for_wl_client(seat, client);
-	if (seat_client == NULL) {
-		return;
-	}
-	struct wlr_touch_point* point, * tmp;
-	wl_list_for_each_safe(point, tmp, &seat->touch_state.touch_points, link) {
-		if (point->client == seat_client) {
-			touch_point_destroy(point);
+		struct wl_client* client = wl_resource_get_client(surface->resource);
+		struct wlr_seat_client* seat_client = wlr_seat_client_for_wl_client(seat, client);
+		if (seat_client == NULL) {
+			return;
+		}
+		struct wlr_touch_point* point, * tmp;
+		wl_list_for_each_safe(point, tmp, &seat->touch_state.touch_points, link) {
+			if (point->client == seat_client) {
+				touch_point_destroy(point);
+			}
 		}
 	}
 }
