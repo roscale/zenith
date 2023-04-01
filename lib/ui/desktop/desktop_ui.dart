@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/ui/desktop/task_bar.dart';
 import 'package:zenith/ui/desktop/window_manager.dart';
 import 'package:zenith/ui/mobile/quick_settings/status_bar_with_quick_settings.dart';
 
@@ -17,7 +18,15 @@ class DesktopUi extends ConsumerWidget {
           child: Overlay(
             initialEntries: [
               OverlayEntry(
-                builder: (_) => const WindowManager(),
+                builder: (_) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Expanded(
+                      child: WindowManager(),
+                    ),
+                    TaskBar(),
+                  ],
+                ),
               ),
             ],
           ),

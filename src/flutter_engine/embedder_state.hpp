@@ -11,6 +11,8 @@
 #include "surface_buffer_chain.hpp"
 #include "callable_queue.hpp"
 #include "message_structs.hpp"
+#include "text_input_model.h"
+#include "text_input_client.hpp"
 
 extern "C" {
 #include <wlr/render/egl.h>
@@ -107,4 +109,8 @@ private:
 	// Represents the `flutter/keyevent` channel provided by Flutter to send key events.
 	// https://api.flutter.dev/flutter/services/KeyEvent-class.html
 	std::unique_ptr<flutter::BasicMessageChannel<rapidjson::Document>> key_event_channel;
+	// Represents the 'flutter/textinput' channel provided by Flutter.
+	std::unique_ptr<flutter::MethodChannel<rapidjson::Document>> text_input_method_channel;
+
+	std::optional<TextInputClient> text_input_client = {};
 };
