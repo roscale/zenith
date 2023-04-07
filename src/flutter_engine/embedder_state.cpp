@@ -9,6 +9,7 @@
 #include "server.hpp"
 #include "cursor_image_mapping.hpp"
 #include "json_method_codec.h"
+#include "keyboard_helpers.hpp"
 
 using namespace flutter;
 
@@ -296,42 +297,6 @@ void EmbedderState::send_pointer_event(FlutterPointerEvent pointer_event) {
 	});
 }
 
-size_t skip_word(std::string_view str, size_t pos, bool forward) {
-	assert(pos >= 0 && pos <= str.length());
-	auto forward_valid = [&]() -> bool {
-		return pos >= 0 && pos < str.length();
-	};
-	auto backward_valid = [&]() -> bool {
-		return pos > 0 && pos <= str.length();
-	};
-	auto is_delimiter = [](char c) {
-		return std::isspace(c) || std::ispunct(c);
-	};
-
-	size_t skip = 0;
-
-	if (forward) {
-		while (forward_valid() && !is_delimiter(str[pos])) {
-			skip++;
-			pos++;
-		}
-		while (forward_valid() && is_delimiter(str[pos])) {
-			skip++;
-			pos++;
-		}
-	} else {
-		while (backward_valid() && is_delimiter(str[pos - 1])) {
-			skip++;
-			pos--;
-		}
-		while (backward_valid() && !is_delimiter(str[pos - 1])) {
-			skip++;
-			pos--;
-		}
-	}
-	return skip;
-}
-
 void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
 	callable_queue.enqueue([=] {
 		rapidjson::Document json;
@@ -351,13 +316,20 @@ void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
 		// Normally I would also set `unicodeScalarValues`, but I don't anticipate using this feature.
 		// https://github.com/flutter/flutter/blob/b8f7f1f986/packages/flutter/lib/src/services/raw_keyboard_linux.dart#L55
 
-		switch (message.event.state) {
-			case WL_KEYBOARD_KEY_STATE_PRESSED: {
+		switch (message.state) {
+			case KeyboardKeyState::press: {
+				json.AddMember("type", "keydown", json.GetAllocator());
+				key_repeater.schedule_repeat(message);
+				break;
+			}
+			case KeyboardKeyState::repeat: {
+				// Multiple keydown events means repeated key.
 				json.AddMember("type", "keydown", json.GetAllocator());
 				break;
 			}
-			case WL_KEYBOARD_KEY_STATE_RELEASED: {
+			case KeyboardKeyState::release: {
 				json.AddMember("type", "keyup", json.GetAllocator());
+				key_repeater.cancel_repeat();
 				break;
 			}
 		}
@@ -366,22 +338,23 @@ void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
 			auto obj = flutter::JsonMessageCodec::GetInstance().DecodeMessage(reply, reply_size);
 			auto& handled_object = obj->GetObject()["handled"];
 			bool handled = handled_object.GetBool();
-
 			if (handled) {
 				return;
 			}
 
-			if (!text_input_client.has_value()) {
-				// If the Flutter engine doesn't handle the key press, forward it to the Wayland client.
+			if (!text_input_client.has_value() && message.state != KeyboardKeyState::repeat) {
 				ZenithServer::instance()->callable_queue.enqueue([message] {
-					wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, message.event.time_msec,
-					                             message.event.keycode,
-					                             message.event.state);
+					uint32_t wlr_state = message.state == KeyboardKeyState::press ? WL_KEYBOARD_KEY_STATE_PRESSED
+					                                                              : WL_KEYBOARD_KEY_STATE_RELEASED;
+
+					wlr_seat_keyboard_notify_key(ZenithServer::instance()->seat, current_time_milliseconds(),
+					                             message.keycode,
+					                             wlr_state);
 				});
 				return;
 			}
 
-			if (message.event.state != WL_KEYBOARD_KEY_STATE_PRESSED) {
+			if (!text_input_client.has_value() || message.state == KeyboardKeyState::release) {
 				return;
 			}
 

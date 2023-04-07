@@ -1,4 +1,4 @@
-#include "string_to_keycode.hpp"
+#include "keyboard_helpers.hpp"
 #include <tuple>
 
 std::optional<KeyCombination> string_to_keycode(const char* string, xkb_state* state) {
@@ -47,4 +47,13 @@ std::optional<KeyCombination> string_to_keycode(const char* string, xkb_state* s
 		  &tuple
 	);
 	return return_value;
+}
+
+uint32_t wlr_modifiers_to_gtk(uint32_t mods) {
+	// https://master-api.flutter.dev/flutter/services/GtkKeyHelper-class.html
+	if (mods & WLR_MODIFIER_LOGO) {
+		mods = mods & ~WLR_MODIFIER_LOGO;
+		mods = mods | (1 << 26);
+	}
+	return mods;
 }

@@ -4,7 +4,7 @@
 #include "server.hpp"
 #include "encodable_value.h"
 #include "time.hpp"
-#include "util/embedder/string_to_keycode.hpp"
+#include "util/embedder/keyboard_helpers.hpp"
 #include "assert.hpp"
 #include "util/wlr/wlr_extensions.hpp"
 #include "auth.hpp"

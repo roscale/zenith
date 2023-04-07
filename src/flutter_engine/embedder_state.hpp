@@ -13,6 +13,7 @@
 #include "message_structs.hpp"
 #include "text_input_model.h"
 #include "text_input_client.hpp"
+#include "key_repeater.hpp"
 
 extern "C" {
 #include <wlr/render/egl.h>
@@ -79,6 +80,9 @@ struct EmbedderState {
 	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain<wlr_buffer>>> buffer_chains_in_use = {};
 	std::mutex buffer_chains_mutex = {};
 
+	// A function queue tied to the event loop.
+	CallableQueue callable_queue;
+	wl_event_loop* event_loop;
 private:
 	void configure_and_run_engine();
 
@@ -87,9 +91,6 @@ private:
 	FlutterEngine engine = nullptr;
 	// The thread on which the Flutter engine and its task runner is run.
 	std::thread embedder_thread;
-	wl_event_loop* event_loop;
-	// A function queue tied to the event loop above.
-	CallableQueue callable_queue;
 
 	// After every vblank, Flutter gives us an opaque handle, and we need to give it back at the
 	// next vblank.
@@ -113,4 +114,6 @@ private:
 	std::unique_ptr<flutter::MethodChannel<rapidjson::Document>> text_input_method_channel;
 
 	std::optional<TextInputClient> text_input_client = {};
+
+	KeyRepeater key_repeater;
 };

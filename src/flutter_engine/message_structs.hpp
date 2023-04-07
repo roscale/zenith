@@ -66,8 +66,15 @@ enum class TextInputEventType {
 	commit,
 };
 
+enum class KeyboardKeyState {
+	press,
+	repeat,
+	release,
+};
+
 struct KeyboardKeyEventMessage {
-	wlr_event_keyboard_key event;
+	KeyboardKeyState state;
+	uint32_t keycode;
 	xkb_keycode_t scan_code;
 	xkb_keysym_t keysym;
 	uint32_t modifiers;

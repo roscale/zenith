@@ -1,8 +1,7 @@
-#include <libinput.h>
 #include "keyboard.hpp"
 #include "server.hpp"
 #include "encodable_value.h"
-#include "json_message_codec.h"
+#include "keyboard_helpers.hpp"
 
 extern "C" {
 #include <wayland-util.h>
@@ -76,11 +75,13 @@ void keyboard_handle_key(wl_listener* listener, void* data) {
 	}
 
 	auto message = KeyboardKeyEventMessage{
-		  .event = *event,
+		  .state = event->state == WL_KEYBOARD_KEY_STATE_PRESSED ? KeyboardKeyState::press : KeyboardKeyState::release,
+		  .keycode = event->keycode,
 		  .scan_code = scan_code,
 		  .keysym = keysym,
-		  .modifiers = modifiers,
+		  .modifiers = wlr_modifiers_to_gtk(modifiers),
 	};
+	// FIXME: Flutter doesn't like it when you press Shift + Alt, and sends an empty reply.
 	ZenithServer::instance()->embedder_state->send_key_event(message);
 }
 
