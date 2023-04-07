@@ -33,15 +33,17 @@ void activate_window(ZenithServer* server,
                      const flutter::MethodCall<>& call,
                      std::unique_ptr<flutter::MethodResult<>>&& result) {
 
-	size_t view_id = std::get<int>(call.arguments()[0]);
+	auto list = std::get<flutter::EncodableList>(call.arguments()[0]);
+	size_t view_id = list[0].LongValue();
+	bool activate = std::get<bool>(list[1]);
 
-	server->callable_queue.enqueue([server, view_id] {
+	server->callable_queue.enqueue([server, view_id, activate] {
 		auto view_it = server->xdg_toplevels.find(view_id);
 		if (view_it == server->xdg_toplevels.end()) {
 			return;
 		}
 		auto* view = view_it->second.get();
-		view->focus();
+		view->focus(activate);
 	});
 
 	result->Success();
@@ -55,7 +57,7 @@ void pointer_hover(ZenithServer* server,
 
 	double x = std::get<double>(args[flutter::EncodableValue("x")]);
 	double y = std::get<double>(args[flutter::EncodableValue("y")]);
-	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 
 	server->callable_queue.enqueue([server, x, y, view_id] {
 		auto view_it = server->surfaces.find(view_id);
@@ -88,7 +90,7 @@ void close_window(ZenithServer* server,
                   std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
-	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 
 	server->callable_queue.enqueue([server, view_id] {
 		auto view_it = server->xdg_toplevels.find(view_id);
@@ -106,7 +108,7 @@ void resize_window(ZenithServer* server,
                    std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
-	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 	auto width = std::get<int>(args[flutter::EncodableValue("width")]);
 	auto height = std::get<int>(args[flutter::EncodableValue("height")]);
 
@@ -125,7 +127,7 @@ void resize_window(ZenithServer* server,
 void maximize_window(ZenithServer* server, const flutter::MethodCall<>& call,
                      std::unique_ptr<flutter::MethodResult<>>&& result) {
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
-	size_t view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 	auto value = std::get<bool>(args[flutter::EncodableValue("value")]);
 
 	server->callable_queue.enqueue([server, view_id, value] {
@@ -144,7 +146,7 @@ void unregister_view_texture(ZenithServer* server,
                              const flutter::MethodCall<>& call,
                              std::unique_ptr<flutter::MethodResult<>>&& result) {
 
-	size_t texture_id = std::get<int>(call.arguments()[0]);
+	size_t texture_id = call.arguments()[0].LongValue();
 
 	FlutterEngineUnregisterExternalTexture(server->embedder_state->get_engine(), (int64_t) texture_id);
 
@@ -199,7 +201,7 @@ void change_window_visibility(ZenithServer* server, const flutter::MethodCall<>&
                               std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
-	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 	auto visible = std::get<bool>(args[flutter::EncodableValue("visible")]);
 
 	server->callable_queue.enqueue([server, view_id, visible] {
@@ -217,7 +219,7 @@ void touch_down(ZenithServer* server, const flutter::MethodCall<>& call,
                 std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
-	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 	auto touch_id = std::get<int>(args[flutter::EncodableValue("touch_id")]);
 	auto x = std::get<double>(args[flutter::EncodableValue("x")]);
 	auto y = std::get<double>(args[flutter::EncodableValue("y")]);
@@ -293,7 +295,7 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
                  std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
-	auto view_id = std::get<int>(args[flutter::EncodableValue("view_id")]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 	auto text = std::get<std::string>(args[flutter::EncodableValue("text")]);
 
 	server->callable_queue.enqueue([server, view_id, text] {

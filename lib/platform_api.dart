@@ -107,8 +107,8 @@ class PlatformApi {
     return platform.invokeMethod("pointer_exit");
   }
 
-  static Future<void> activateWindow(int viewId) {
-    return platform.invokeMethod('activate_window', viewId);
+  static Future<void> activateWindow(int viewId, bool activate) {
+    return platform.invokeMethod('activate_window', [viewId, activate]);
   }
 
   static Future<void> changeWindowVisibility(int viewId, bool visible) {

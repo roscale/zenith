@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
+import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/state/window_stack_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
 
@@ -29,6 +30,7 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
     ref.listenManual(windowMappedStreamProvider, (_, AsyncValue<int> next) {
       next.whenData((int viewId) {
         windowStackNotifier.add(viewId);
+        ref.read(zenithXdgToplevelStateProvider(viewId)).focusNode.requestFocus();
       });
     });
 

@@ -21,7 +21,7 @@ struct ZenithXdgToplevel {
 	wl_listener set_app_id = {};
 	wl_listener set_title = {};
 
-	void focus() const;
+	void focus(bool focus) const;
 
 	void maximize(bool value) const;
 

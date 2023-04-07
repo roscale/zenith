@@ -18,6 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ZenithXdgToplevelState {
   bool get visible => throw _privateConstructorUsedError;
   Key get virtualKeyboardKey => throw _privateConstructorUsedError;
+  FocusNode get focusNode => throw _privateConstructorUsedError;
   Object get interactiveMoveRequested => throw _privateConstructorUsedError;
   ResizeEdgeObject get interactiveResizeRequested =>
       throw _privateConstructorUsedError;
@@ -39,6 +40,7 @@ abstract class $ZenithXdgToplevelStateCopyWith<$Res> {
   $Res call(
       {bool visible,
       Key virtualKeyboardKey,
+      FocusNode focusNode,
       Object interactiveMoveRequested,
       ResizeEdgeObject interactiveResizeRequested,
       ToplevelDecoration decoration,
@@ -62,6 +64,7 @@ class _$ZenithXdgToplevelStateCopyWithImpl<$Res,
   $Res call({
     Object? visible = null,
     Object? virtualKeyboardKey = null,
+    Object? focusNode = null,
     Object? interactiveMoveRequested = null,
     Object? interactiveResizeRequested = null,
     Object? decoration = null,
@@ -77,6 +80,10 @@ class _$ZenithXdgToplevelStateCopyWithImpl<$Res,
           ? _value.virtualKeyboardKey
           : virtualKeyboardKey // ignore: cast_nullable_to_non_nullable
               as Key,
+      focusNode: null == focusNode
+          ? _value.focusNode
+          : focusNode // ignore: cast_nullable_to_non_nullable
+              as FocusNode,
       interactiveMoveRequested: null == interactiveMoveRequested
           ? _value.interactiveMoveRequested
           : interactiveMoveRequested,
@@ -111,6 +118,7 @@ abstract class _$$_ZenithXdgToplevelStateCopyWith<$Res>
   $Res call(
       {bool visible,
       Key virtualKeyboardKey,
+      FocusNode focusNode,
       Object interactiveMoveRequested,
       ResizeEdgeObject interactiveResizeRequested,
       ToplevelDecoration decoration,
@@ -132,6 +140,7 @@ class __$$_ZenithXdgToplevelStateCopyWithImpl<$Res>
   $Res call({
     Object? visible = null,
     Object? virtualKeyboardKey = null,
+    Object? focusNode = null,
     Object? interactiveMoveRequested = null,
     Object? interactiveResizeRequested = null,
     Object? decoration = null,
@@ -147,6 +156,10 @@ class __$$_ZenithXdgToplevelStateCopyWithImpl<$Res>
           ? _value.virtualKeyboardKey
           : virtualKeyboardKey // ignore: cast_nullable_to_non_nullable
               as Key,
+      focusNode: null == focusNode
+          ? _value.focusNode
+          : focusNode // ignore: cast_nullable_to_non_nullable
+              as FocusNode,
       interactiveMoveRequested: null == interactiveMoveRequested
           ? _value.interactiveMoveRequested
           : interactiveMoveRequested,
@@ -176,6 +189,7 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
   const _$_ZenithXdgToplevelState(
       {required this.visible,
       required this.virtualKeyboardKey,
+      required this.focusNode,
       required this.interactiveMoveRequested,
       required this.interactiveResizeRequested,
       required this.decoration,
@@ -186,6 +200,8 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
   final bool visible;
   @override
   final Key virtualKeyboardKey;
+  @override
+  final FocusNode focusNode;
   @override
   final Object interactiveMoveRequested;
   @override
@@ -199,7 +215,7 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
 
   @override
   String toString() {
-    return 'ZenithXdgToplevelState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey, interactiveMoveRequested: $interactiveMoveRequested, interactiveResizeRequested: $interactiveResizeRequested, decoration: $decoration, title: $title, appId: $appId)';
+    return 'ZenithXdgToplevelState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey, focusNode: $focusNode, interactiveMoveRequested: $interactiveMoveRequested, interactiveResizeRequested: $interactiveResizeRequested, decoration: $decoration, title: $title, appId: $appId)';
   }
 
   @override
@@ -210,6 +226,8 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
             (identical(other.visible, visible) || other.visible == visible) &&
             (identical(other.virtualKeyboardKey, virtualKeyboardKey) ||
                 other.virtualKeyboardKey == virtualKeyboardKey) &&
+            (identical(other.focusNode, focusNode) ||
+                other.focusNode == focusNode) &&
             const DeepCollectionEquality().equals(
                 other.interactiveMoveRequested, interactiveMoveRequested) &&
             (identical(other.interactiveResizeRequested,
@@ -227,6 +245,7 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
       runtimeType,
       visible,
       virtualKeyboardKey,
+      focusNode,
       const DeepCollectionEquality().hash(interactiveMoveRequested),
       interactiveResizeRequested,
       decoration,
@@ -245,6 +264,7 @@ abstract class _ZenithXdgToplevelState implements ZenithXdgToplevelState {
   const factory _ZenithXdgToplevelState(
       {required final bool visible,
       required final Key virtualKeyboardKey,
+      required final FocusNode focusNode,
       required final Object interactiveMoveRequested,
       required final ResizeEdgeObject interactiveResizeRequested,
       required final ToplevelDecoration decoration,
@@ -255,6 +275,8 @@ abstract class _ZenithXdgToplevelState implements ZenithXdgToplevelState {
   bool get visible;
   @override
   Key get virtualKeyboardKey;
+  @override
+  FocusNode get focusNode;
   @override
   Object get interactiveMoveRequested;
   @override

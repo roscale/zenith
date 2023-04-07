@@ -67,77 +67,61 @@ class Zenith extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // FIXME:
-    // We cannot use MaterialApp because it somehow captures the arrow keys and tab automatically,
-    // therefore these keys don't get forwarded to the Wayland client.
-    // Let's use a WidgetApp for now. We cannot anymore select UI elements via the keyboard, but we
-    // don't care about that on a mobile phone.
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        Future.microtask(() => ref.read(screenStateProvider.notifier).setSize(constraints.biggest));
+    return MaterialApp(
+      home: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          Future.microtask(() => ref.read(screenStateProvider.notifier).setSize(constraints.biggest));
 
-        return RotatedBox(
-          quarterTurns: ref.watch(screenStateProvider.select((v) => v.rotation)),
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              Future.microtask(() => ref.read(screenStateProvider.notifier).setRotatedSize(constraints.biggest));
+          return RotatedBox(
+            quarterTurns: ref.watch(screenStateProvider.select((v) => v.rotation)),
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                Future.microtask(() => ref.read(screenStateProvider.notifier).setRotatedSize(constraints.biggest));
 
-              return WidgetsApp(
-                color: Colors.blue,
-                builder: (BuildContext context, Widget? child) {
-                  return ScrollConfiguration(
-                    behavior: const MaterialScrollBehavior().copyWith(
-                      // Enable scrolling by dragging the mouse cursor.
-                      dragDevices: {
-                        PointerDeviceKind.touch,
-                        PointerDeviceKind.mouse,
-                        PointerDeviceKind.stylus,
-                        PointerDeviceKind.invertedStylus,
-                        PointerDeviceKind.trackpad,
-                        PointerDeviceKind.unknown,
-                      },
-                    ),
-                    child: MediaQuery(
-                      data: MediaQuery.of(context).copyWith(
-                        padding: EdgeInsets.only(
-                          top: _notchHeight / MediaQuery.of(context).devicePixelRatio,
-                        ),
+                return ScrollConfiguration(
+                  behavior: const MaterialScrollBehavior().copyWith(
+                    // Enable scrolling by dragging the mouse cursor.
+                    dragDevices: {
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.mouse,
+                      PointerDeviceKind.stylus,
+                      PointerDeviceKind.invertedStylus,
+                      PointerDeviceKind.trackpad,
+                      PointerDeviceKind.unknown,
+                    },
+                  ),
+                  child: MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      padding: EdgeInsets.only(
+                        top: _notchHeight / MediaQuery.of(context).devicePixelRatio,
                       ),
-                      // https://docs.flutter.dev/release/breaking-changes/text-field-material-localizations
-                      child: Localizations(
-                        locale: const Locale('en', 'US'),
-                        delegates: const <LocalizationsDelegate<dynamic>>[
-                          DefaultWidgetsLocalizations.delegate,
-                          DefaultMaterialLocalizations.delegate,
-                        ],
-                        child: Scaffold(
-                          body: Consumer(
-                            builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                              UiMode uiMode = ref.watch(uiModeStateProvider);
-                              return Stack(
-                                children: [
-                                  if (uiMode == UiMode.desktop) const DesktopUi(),
-                                  if (uiMode == UiMode.mobile) const MobileUi(),
-                                  Overlay(
-                                    key: ref.watch(rootOverlayKeyProvider),
-                                    initialEntries: [
-                                      // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
-                                    ],
-                                  ),
+                    ),
+                    child: Scaffold(
+                      body: Consumer(
+                        builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                          UiMode uiMode = ref.watch(uiModeStateProvider);
+                          return Stack(
+                            children: [
+                              if (uiMode == UiMode.desktop) const DesktopUi(),
+                              if (uiMode == UiMode.mobile) const MobileUi(),
+                              Overlay(
+                                key: ref.watch(rootOverlayKeyProvider),
+                                initialEntries: [
+                                  // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
                                 ],
-                              );
-                            },
-                          ),
-                        ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
-                  );
-                },
-              );
-            },
-          ),
-        );
-      },
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
 import 'package:zenith/ui/common/surface.dart';
-import 'package:zenith/util/rect_overflow_box.dart';
 
 final xdgToplevelSurfaceWidget = StateProvider.family<XdgToplevelSurface, int>((ref, int viewId) {
   return XdgToplevelSurface(key: ref.read(zenithXdgSurfaceStateProvider(viewId)).widgetKey, viewId: viewId);
@@ -30,10 +29,61 @@ class XdgToplevelSurface extends ConsumerWidget {
           ref.read(zenithXdgToplevelStateProvider(viewId).notifier).visible = visible;
         }
       },
-      child: _PointerListener(
+      child: _SurfaceFocus(
         viewId: viewId,
-        child: Surface(
+        child: _PointerListener(
           viewId: viewId,
+          child: Surface(
+            viewId: viewId,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SurfaceFocus extends ConsumerWidget {
+  final int viewId;
+  final Widget child;
+
+  const _SurfaceFocus({
+    super.key,
+    required this.viewId,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Shortcuts(
+      shortcuts: {
+        const SingleActivator(LogicalKeyboardKey.tab): DisableFocusTraversalIntent(),
+        const SingleActivator(LogicalKeyboardKey.tab, shift: true): DisableFocusTraversalIntent(),
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): DisableFocusTraversalIntent(),
+        const SingleActivator(LogicalKeyboardKey.arrowRight): DisableFocusTraversalIntent(),
+        const SingleActivator(LogicalKeyboardKey.arrowDown): DisableFocusTraversalIntent(),
+        const SingleActivator(LogicalKeyboardKey.arrowUp): DisableFocusTraversalIntent(),
+      },
+      child: Actions(
+        actions: {
+          DisableFocusTraversalIntent: DisableFocusTraversalAction(),
+        },
+        child: Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            final focusNode = ref.watch(zenithXdgToplevelStateProvider(viewId)).focusNode;
+
+            return Focus(
+              focusNode: focusNode,
+              onFocusChange: (bool focused) {
+                if (focused) {
+                  PlatformApi.activateWindow(viewId, true);
+                } else {
+                  PlatformApi.activateWindow(viewId, false);
+                }
+              },
+              child: child!,
+            );
+          },
+          child: child,
         ),
       ),
     );
@@ -53,8 +103,19 @@ class _PointerListener extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Listener(
-      onPointerDown: (_) => PlatformApi.activateWindow(viewId),
+      onPointerDown: (_) => ref.read(zenithXdgToplevelStateProvider(viewId)).focusNode.requestFocus(),
       child: child,
     );
   }
+}
+
+class DisableFocusTraversalIntent extends Intent {}
+
+class DisableFocusTraversalAction extends Action<DisableFocusTraversalIntent> {
+  @override
+  Object? invoke(DisableFocusTraversalIntent intent) => null;
+
+  /// The embedder will only send key events to Wayland clients if they are not handled by Flutter.
+  @override
+  bool consumesKey(DisableFocusTraversalIntent intent) => false;
 }

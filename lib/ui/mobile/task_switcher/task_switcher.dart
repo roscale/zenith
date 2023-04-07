@@ -437,8 +437,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
     final viewId = ref.read(taskListProvider)[index];
 
     ref.read(taskSwitcherStateProvider.notifier).inOverview = false;
-
-    PlatformApi.activateWindow(viewId);
+    ref.read(zenithXdgToplevelStateProvider(viewId)).focusNode.requestFocus();
 
     stopScaleAnimation();
     _scaleAnimationController = AnimationController(

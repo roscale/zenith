@@ -17,6 +17,7 @@ class ZenithXdgToplevelState with _$ZenithXdgToplevelState {
   const factory ZenithXdgToplevelState({
     required bool visible,
     required Key virtualKeyboardKey,
+    required FocusNode focusNode,
     required Object interactiveMoveRequested,
     required ResizeEdgeObject interactiveResizeRequested,
     required ToplevelDecoration decoration,
@@ -35,6 +36,7 @@ class ZenithXdgToplevelStateNotifier
           ZenithXdgToplevelState(
             visible: true,
             virtualKeyboardKey: GlobalKey(),
+            focusNode: FocusNode(),
             interactiveMoveRequested: Object(),
             interactiveResizeRequested: ResizeEdgeObject(ResizeEdge.top),
             decoration: ToplevelDecoration.none,
@@ -86,6 +88,12 @@ class ZenithXdgToplevelStateNotifier
     state = state.copyWith(
       appId: appId,
     );
+  }
+
+  @override
+  void dispose() {
+    state.focusNode.dispose();
+    super.dispose();
   }
 }
 
