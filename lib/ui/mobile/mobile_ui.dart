@@ -4,6 +4,7 @@ import 'package:zenith/ui/mobile/app_drawer/app_drawer.dart';
 import 'package:zenith/ui/mobile/quick_settings/status_bar_with_quick_settings.dart';
 import 'package:zenith/ui/mobile/state/mobile_lock_screen_widget_state.dart';
 import 'package:zenith/ui/mobile/task_switcher/task_switcher.dart';
+import 'package:zenith/ui/mobile/virtual_keyboard/with_virtual_keyboard.dart';
 
 class MobileUi extends ConsumerWidget {
   const MobileUi({super.key});
@@ -19,15 +20,18 @@ class MobileUi extends ConsumerWidget {
       children: [
         Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
         SafeArea(
-          child: Overlay(
-            initialEntries: [
-              OverlayEntry(
-                builder: (_) => const TaskSwitcher(
-                  spacing: 20,
+          child: WithVirtualKeyboard(
+            viewId: 0,
+            child: Overlay(
+              initialEntries: [
+                OverlayEntry(
+                  builder: (_) => const TaskSwitcher(
+                    spacing: 20,
+                  ),
                 ),
-              ),
-              OverlayEntry(builder: (_) => const AppDrawer()),
-            ],
+                OverlayEntry(builder: (_) => const AppDrawer()),
+              ],
+            ),
           ),
         ),
         const RepaintBoundary(

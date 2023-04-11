@@ -147,6 +147,11 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
             color: Colors.black.withOpacity(0.8),
             child: Column(
               children: [
+                const TextField(
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
                 Expanded(
                   child: AppDrawerScrollNotificationListener(
                     child: AppGrid(scrollController: _scrollController),

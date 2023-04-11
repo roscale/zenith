@@ -33,35 +33,38 @@ class VirtualKeyboard extends ConsumerWidget {
           final id = ref.watch(keyboardIdProvider);
           Future.microtask(() => ref.read(keyboardKeyWidthProvider(id).notifier).state = keyWidth);
 
-          return Material(
-            color: Color.lerp(Colors.black, Colors.white, 0.9),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                NotificationListener(
-                  child: const KeyboardLayers(),
-                  onNotification: (Notification notification) {
-                    if (notification is OnCharacterNotification) {
-                      onCharacter(notification.character);
-                      return true;
-                    } else if (notification is OnKeyCodeNotification) {
-                      onKeyCode(notification.keyCode);
-                      return true;
-                    }
-                    return false;
-                  },
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 30),
-                      padding: EdgeInsets.zero,
-                      onPressed: onDismiss,
-                    ),
-                  ],
-                ),
-              ],
+          // Keyboard presses must not unfocus the active text field.
+          return TextFieldTapRegion(
+            child: Material(
+              color: Color.lerp(Colors.black, Colors.white, 0.9),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NotificationListener(
+                    child: const KeyboardLayers(),
+                    onNotification: (Notification notification) {
+                      if (notification is OnCharacterNotification) {
+                        onCharacter(notification.character);
+                        return true;
+                      } else if (notification is OnKeyCodeNotification) {
+                        onKeyCode(notification.keyCode);
+                        return true;
+                      }
+                      return false;
+                    },
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.keyboard_arrow_down, size: 30),
+                        padding: EdgeInsets.zero,
+                        onPressed: onDismiss,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         },

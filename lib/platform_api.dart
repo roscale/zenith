@@ -432,6 +432,12 @@ class PlatformApi {
     String appId = event["app_id"];
     ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(appId);
   }
+
+  static Future<void> hideKeyboard(int viewId) {
+    return platform.invokeMethod('hide_keyboard', {
+      "view_id": viewId,
+    });
+  }
 }
 
 abstract class TextInputEventType {}

@@ -83,3 +83,7 @@ void unlock_session(ZenithServer* server,
 void enable_display(ZenithServer* server,
                     const flutter::MethodCall<>& call,
                     std::unique_ptr<flutter::MethodResult<>>&& result);
+
+void hide_keyboard(ZenithServer* server,
+                    const flutter::MethodCall<>& call,
+                    std::unique_ptr<flutter::MethodResult<>>&& result);

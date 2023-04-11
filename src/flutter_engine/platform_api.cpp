@@ -298,7 +298,19 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 	auto text = std::get<std::string>(args[flutter::EncodableValue("text")]);
 
-	server->callable_queue.enqueue([server, view_id, text] {
+	if (view_id == 0) {
+		// Text field focused in the compositor, not an application.
+		server->embedder_state->callable_queue.enqueue([server, text] {
+			auto& client = server->embedder_state->text_input_client;
+			if (client.has_value()) {
+				client->add_text(text);
+			}
+		});
+		result->Success();
+		return;
+	}
+
+	server->callable_queue.enqueue([server, view_id, text = std::move(text)] {
 		auto view_it = server->surfaces.find(view_id);
 		if (view_it == server->surfaces.end()) {
 			return;
@@ -344,7 +356,33 @@ void emulate_keycode(ZenithServer* server, const flutter::MethodCall<>& call,
                      std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 	auto keycode = std::get<int>(args[flutter::EncodableValue("keycode")]);
+
+	if (view_id == 0) {
+		// Text field focused in the compositor, not an application.
+		server->embedder_state->callable_queue.enqueue([server, keycode] {
+			auto& embedder_state = server->embedder_state;
+			auto& client = embedder_state->text_input_client;
+			if (client.has_value()) {
+				switch (keycode) {
+					case 14:
+						client->backspace();
+						break;
+					case 28: {
+						client->enter();
+						break;
+					}
+					default:
+						break;
+				}
+				embedder_state->update_text_editing_state();
+			}
+		});
+
+		result->Success();
+		return;
+	}
 
 	server->callable_queue.enqueue([server, keycode] {
 		wlr_keyboard* keyboard = wlr_seat_get_keyboard(server->seat);
@@ -422,6 +460,22 @@ void enable_display(ZenithServer* server, const flutter::MethodCall<>& call,
 			server->output->enable();
 		} else {
 			server->output->disable();
+		}
+	});
+
+	result->Success();
+}
+
+void hide_keyboard(ZenithServer* server, const flutter::MethodCall<>& call,
+                   std::unique_ptr<flutter::MethodResult<>>&& result) {
+
+	flutter::EncodableMap args = std::get<flutter::EncodableMap>(call.arguments()[0]);
+	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
+
+	server->embedder_state->callable_queue.enqueue([=]() {
+		auto& client = server->embedder_state->text_input_client;
+		if (view_id == 0 && client.has_value()) {
+			client->close_connection();
 		}
 	});
 

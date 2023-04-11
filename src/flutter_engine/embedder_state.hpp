@@ -64,6 +64,8 @@ struct EmbedderState {
 
 	void set_app_id(size_t view_id, const std::string& app_id);
 
+	void update_text_editing_state();
+
 	/*
 	 * The following fields have to be public because they are used by Flutter engine callbacks,
 	 * which are just plain C functions.
@@ -83,6 +85,11 @@ struct EmbedderState {
 	// A function queue tied to the event loop.
 	CallableQueue callable_queue;
 	wl_event_loop* event_loop;
+	std::optional<TextInputClient> text_input_client = {};
+
+	// Represents the 'flutter/textinput' channel provided by Flutter.
+	std::unique_ptr<flutter::MethodChannel<rapidjson::Document>> text_input_method_channel;
+
 private:
 	void configure_and_run_engine();
 
@@ -110,10 +117,6 @@ private:
 	// Represents the `flutter/keyevent` channel provided by Flutter to send key events.
 	// https://api.flutter.dev/flutter/services/KeyEvent-class.html
 	std::unique_ptr<flutter::BasicMessageChannel<rapidjson::Document>> key_event_channel;
-	// Represents the 'flutter/textinput' channel provided by Flutter.
-	std::unique_ptr<flutter::MethodChannel<rapidjson::Document>> text_input_method_channel;
-
-	std::optional<TextInputClient> text_input_client = {};
 
 	KeyRepeater key_repeater;
 };

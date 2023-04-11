@@ -11,14 +11,14 @@ class VirtualKeyboardKey extends StatefulWidget {
   final bool repeatOnLongPress;
 
   const VirtualKeyboardKey({
-    Key? key,
+    super.key,
     required this.width,
     required this.child,
     this.onTap,
     this.onDoubleTap,
     this.popUpOnPress = true,
     this.repeatOnLongPress = false,
-  }) : super(key: key);
+  });
 
   @override
   State<VirtualKeyboardKey> createState() => _VirtualKeyboardKeyState();
@@ -53,7 +53,7 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
     }
 
     var size = renderBox.size;
-    var overlayRenderObject = Overlay.of(context)!.context.findRenderObject()!;
+    var overlayRenderObject = Overlay.of(context).context.findRenderObject()!;
     var offset = renderBox.localToGlobal(Offset.zero, ancestor: overlayRenderObject);
 
     popupKeyOverlay = OverlayEntry(

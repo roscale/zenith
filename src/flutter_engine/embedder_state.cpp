@@ -193,6 +193,8 @@ void EmbedderState::register_platform_api() {
 				  unlock_session(server, call, std::move(result));
 			  } else if (method_name == "enable_display") {
 				  enable_display(server, call, std::move(result));
+			  } else if (method_name == "hide_keyboard") {
+				  hide_keyboard(server, call, std::move(result));
 			  } else {
 				  result->Error("method_does_not_exist", "Method " + method_name + " does not exist");
 			  }
@@ -242,7 +244,7 @@ void EmbedderState::register_platform_api() {
 		  [this](const flutter::MethodCall<rapidjson::Document>& call,
 		         std::unique_ptr<flutter::MethodResult<rapidjson::Document>> result) {
 			  const std::string& method_name = call.method_name();
-			  std::cout << "METHOD NAME " << method_name << std::endl;
+
 			  if (method_name == "TextInput.setClient") {
 				  auto array = call.arguments()->GetArray();
 				  int64_t transaction = array[0].GetInt64();
@@ -252,25 +254,30 @@ void EmbedderState::register_platform_api() {
 				                              config["inputAction"].GetStringLength()};
 				  std::cout << "input action: " << input_action << std::endl;
 
-				  text_input_client = TextInputClient(transaction, input_action);
-
+				  text_input_client.emplace(*text_input_method_channel, transaction, input_action);
 
 			  } else if (method_name == "TextInput.setEditingState") {
 				  auto object = call.arguments()->GetObject();
 
 				  std::string text = {object["text"].GetString(), object["text"].GetStringLength()};
-				  text_input_client->model.SetText(text);
+				  flutter::TextRange composing_range(
+					    object["composingBase"].GetInt64(),
+					    object["composingExtent"].GetInt64()
+				  );
+				  flutter::TextRange selection(
+					    object["selectionBase"].GetInt64(),
+					    object["selectionExtent"].GetInt64()
+				  );
+				  text_input_client->set_editing_state(text, composing_range, selection);
 
-				  text_input_client->model.SetComposingRange(flutter::TextRange(
-						object["composingBase"].GetInt64(),
-						object["composingExtent"].GetInt64()
-				  ), text_input_client->model.selection().extent());
-				  text_input_client->model.SetSelection(flutter::TextRange(
-						object["selectionBase"].GetInt64(),
-						object["selectionExtent"].GetInt64()
-				  ));
 			  } else if (method_name == "TextInput.clearClient") {
 				  text_input_client = std::nullopt;
+
+			  } else if (method_name == "TextInput.show") {
+				  send_text_input_event(0, TextInputEventType::enable);
+
+			  } else if (method_name == "TextInput.hide") {
+				  send_text_input_event(0, TextInputEventType::disable);
 			  }
 
 			  result->Success();
@@ -358,65 +365,18 @@ void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
 				return;
 			}
 
-			flutter::TextInputModel& model = text_input_client->model;
-
-			auto update_editing_state = [&] {
-				auto json = std::make_unique<rapidjson::Document>();
-				auto& allocator = json->GetAllocator();
-
-				json->SetArray();
-				json->PushBack(text_input_client->transaction, allocator);
-
-				rapidjson::Value editing_values = {};
-				editing_values.SetObject();
-
-				std::string text = model.GetText();
-				rapidjson::Value text_value;
-				text_value.SetString(text.c_str(), text.length(), allocator);
-				editing_values.AddMember("text", text_value, allocator);
-
-				TextRange selection = model.selection();
-				editing_values.AddMember("selectionBase", selection.base(), allocator);
-				editing_values.AddMember("selectionExtent", selection.extent(), allocator);
-
-				TextRange composing_range = model.composing_range();
-				editing_values.AddMember("composingBase", composing_range.base(), allocator);
-				editing_values.AddMember("composingExtent", composing_range.extent(), allocator);
-
-				json->PushBack(editing_values, allocator);
-
-				text_input_method_channel->InvokeMethod("TextInputClient.updateEditingState", std::move(json));
-			};
-
 			switch (message.keysym) {
 				case XKB_KEY_Return:
 				case XKB_KEY_KP_Enter: {
-					if (text_input_client->input_action == "TextInputAction.newline") {
-						model.AddText("\n");
-						update_editing_state();
-					}
-
-					auto json = std::make_unique<rapidjson::Document>();
-					auto& allocator = json->GetAllocator();
-
-					json->SetArray();
-					json->PushBack(text_input_client->transaction, allocator);
-
-					rapidjson::Value input_action_value;
-					input_action_value.SetString(text_input_client->input_action.c_str(),
-					                             text_input_client->input_action.length(), allocator);
-					json->PushBack(input_action_value, allocator);
-
-					text_input_method_channel->InvokeMethod("TextInputClient.performAction", std::move(json));
+					text_input_client->enter();
 					break;
 				}
 				default: {
 					static char buffer[64];
 					size_t bytes_written = xkb_keysym_to_utf8(message.keysym, buffer, sizeof(buffer));
 					if (bytes_written != 0) {
-						model.AddText(buffer);
+						text_input_client->add_text(buffer);
 					}
-					update_editing_state();
 				}
 			}
 		});
@@ -640,5 +600,12 @@ void EmbedderState::set_app_id(size_t view_id, const std::string& app_id) {
 			  {EncodableValue("app_id"),  EncodableValue(app_id)},
 		});
 		platform_method_channel->InvokeMethod("set_app_id", std::move(value));
+	});
+}
+
+void EmbedderState::update_text_editing_state() {
+	callable_queue.enqueue([=] {
+		assert(text_input_client.has_value());
+		text_input_client->update_editing_state();
 	});
 }

@@ -33,7 +33,7 @@ class AppDrawerHandle extends ConsumerWidget {
       },
       child: Container(
         color: Colors.black.withOpacity(0.5),
-        height: 70,
+        height: 150,
         alignment: Alignment.center,
         child: const Icon(
           Icons.keyboard_arrow_up,
