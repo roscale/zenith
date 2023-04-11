@@ -252,7 +252,6 @@ void EmbedderState::register_platform_api() {
 				  auto config = array[1].GetObject();
 				  std::string input_action = {config["inputAction"].GetString(),
 				                              config["inputAction"].GetStringLength()};
-				  std::cout << "input action: " << input_action << std::endl;
 
 				  text_input_client.emplace(*text_input_method_channel, transaction, input_action);
 

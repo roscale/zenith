@@ -23,6 +23,7 @@ mixin _$AppDrawerState {
   double get offset => throw _privateConstructorUsedError;
   double get slideDistance => throw _privateConstructorUsedError;
   Object get closePanel => throw _privateConstructorUsedError;
+  bool get fullyClosed => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $AppDrawerStateCopyWith<AppDrawerState> get copyWith =>
@@ -42,7 +43,8 @@ abstract class $AppDrawerStateCopyWith<$Res> {
       double dragVelocity,
       double offset,
       double slideDistance,
-      Object closePanel});
+      Object closePanel,
+      bool fullyClosed});
 }
 
 /// @nodoc
@@ -65,6 +67,7 @@ class _$AppDrawerStateCopyWithImpl<$Res, $Val extends AppDrawerState>
     Object? offset = null,
     Object? slideDistance = null,
     Object? closePanel = null,
+    Object? fullyClosed = null,
   }) {
     return _then(_value.copyWith(
       draggable: null == draggable
@@ -92,6 +95,10 @@ class _$AppDrawerStateCopyWithImpl<$Res, $Val extends AppDrawerState>
           : slideDistance // ignore: cast_nullable_to_non_nullable
               as double,
       closePanel: null == closePanel ? _value.closePanel : closePanel,
+      fullyClosed: null == fullyClosed
+          ? _value.fullyClosed
+          : fullyClosed // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -111,7 +118,8 @@ abstract class _$$_AppDrawerStateCopyWith<$Res>
       double dragVelocity,
       double offset,
       double slideDistance,
-      Object closePanel});
+      Object closePanel,
+      bool fullyClosed});
 }
 
 /// @nodoc
@@ -132,6 +140,7 @@ class __$$_AppDrawerStateCopyWithImpl<$Res>
     Object? offset = null,
     Object? slideDistance = null,
     Object? closePanel = null,
+    Object? fullyClosed = null,
   }) {
     return _then(_$_AppDrawerState(
       draggable: null == draggable
@@ -159,6 +168,10 @@ class __$$_AppDrawerStateCopyWithImpl<$Res>
           : slideDistance // ignore: cast_nullable_to_non_nullable
               as double,
       closePanel: null == closePanel ? _value.closePanel : closePanel,
+      fullyClosed: null == fullyClosed
+          ? _value.fullyClosed
+          : fullyClosed // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -173,7 +186,8 @@ class _$_AppDrawerState implements _AppDrawerState {
       required this.dragVelocity,
       required this.offset,
       required this.slideDistance,
-      required this.closePanel});
+      required this.closePanel,
+      required this.fullyClosed});
 
   @override
   final bool draggable;
@@ -189,10 +203,12 @@ class _$_AppDrawerState implements _AppDrawerState {
   final double slideDistance;
   @override
   final Object closePanel;
+  @override
+  final bool fullyClosed;
 
   @override
   String toString() {
-    return 'AppDrawerState(draggable: $draggable, dragging: $dragging, interactable: $interactable, dragVelocity: $dragVelocity, offset: $offset, slideDistance: $slideDistance, closePanel: $closePanel)';
+    return 'AppDrawerState(draggable: $draggable, dragging: $dragging, interactable: $interactable, dragVelocity: $dragVelocity, offset: $offset, slideDistance: $slideDistance, closePanel: $closePanel, fullyClosed: $fullyClosed)';
   }
 
   @override
@@ -212,7 +228,9 @@ class _$_AppDrawerState implements _AppDrawerState {
             (identical(other.slideDistance, slideDistance) ||
                 other.slideDistance == slideDistance) &&
             const DeepCollectionEquality()
-                .equals(other.closePanel, closePanel));
+                .equals(other.closePanel, closePanel) &&
+            (identical(other.fullyClosed, fullyClosed) ||
+                other.fullyClosed == fullyClosed));
   }
 
   @override
@@ -224,7 +242,8 @@ class _$_AppDrawerState implements _AppDrawerState {
       dragVelocity,
       offset,
       slideDistance,
-      const DeepCollectionEquality().hash(closePanel));
+      const DeepCollectionEquality().hash(closePanel),
+      fullyClosed);
 
   @JsonKey(ignore: true)
   @override
@@ -241,7 +260,8 @@ abstract class _AppDrawerState implements AppDrawerState {
       required final double dragVelocity,
       required final double offset,
       required final double slideDistance,
-      required final Object closePanel}) = _$_AppDrawerState;
+      required final Object closePanel,
+      required final bool fullyClosed}) = _$_AppDrawerState;
 
   @override
   bool get draggable;
@@ -257,6 +277,8 @@ abstract class _AppDrawerState implements AppDrawerState {
   double get slideDistance;
   @override
   Object get closePanel;
+  @override
+  bool get fullyClosed;
   @override
   @JsonKey(ignore: true)
   _$$_AppDrawerStateCopyWith<_$_AppDrawerState> get copyWith =>

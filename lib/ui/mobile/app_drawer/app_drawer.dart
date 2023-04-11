@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/mobile/state/app_drawer_state.dart';
 import 'package:zenith/ui/mobile/app_drawer/app_grid.dart';
+import 'package:zenith/ui/mobile/state/app_drawer_state.dart';
 
 class AppDrawer extends ConsumerStatefulWidget {
   const AppDrawer({super.key});
@@ -17,6 +17,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
   final _scrollController = ScrollController();
 
   var _velocityTracker = VelocityTracker.withKind(PointerDeviceKind.touch);
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -49,48 +50,20 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
     ref.listenManual(appDrawerStateProvider.select((value) => value.closePanel), (_, __) {
       animateClosing(1);
     });
-  }
 
-  void cancelAnimations() {
-    _slideAnimation?.removeListener(_updateOffset);
-    _slideAnimation = null;
-  }
-
-  void animateOpening(double velocity) {
-    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(interactable: true));
-    cancelAnimations();
-    animateTo(0, velocity);
-  }
-
-  void animateClosing(double velocity) {
-    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(interactable: false));
-    cancelAnimations();
-    animateTo(ref.read(appDrawerStateProvider).slideDistance, velocity);
-  }
-
-  void animateTo(double target, double velocity) {
-    _slideAnimation = _animationController.drive(Tween(
-      begin: ref.read(appDrawerStateProvider).offset,
-      end: target,
-    ))
-      ..addListener(_updateOffset);
-    _animationController
-      ..reset()
-      ..fling(velocity: velocity);
-  }
-
-  void _updateOffset() {
-    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(offset: _slideAnimation!.value));
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+    _searchController.addListener(() {
+      ref.read(appDrawerFilter.notifier).state = _searchController.text;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(appDrawerStateProvider.select((value) => value.fullyClosed), (_, bool closed) {
+      if (closed) {
+        _searchController.clear();
+      }
+    });
+
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
         bool interactable = ref.watch(appDrawerStateProvider.select((value) => value.interactable));
@@ -123,9 +96,9 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
 
             if (appDrawerState.draggable) {
               ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(
-                    dragging: true,
-                    offset: (state.offset + e.localDelta.dy).clamp(0, appDrawerState.slideDistance),
-                  ));
+                dragging: true,
+                offset: (state.offset + e.localDelta.dy).clamp(0, appDrawerState.slideDistance),
+              ));
               _velocityTracker.addPosition(e.timeStamp, e.localPosition);
             }
           },
@@ -137,19 +110,38 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
 
             ref.read(appDrawerStateProvider.notifier).update(
                   (state) => state.copyWith(
-                    dragging: false,
-                    draggable: doesntScroll ? true : false,
-                    dragVelocity: _velocityTracker.getVelocity().pixelsPerSecond.dy,
-                  ),
-                );
+                dragging: false,
+                draggable: doesntScroll ? true : false,
+                dragVelocity: _velocityTracker.getVelocity().pixelsPerSecond.dy,
+              ),
+            );
           },
           child: Material(
             color: Colors.black.withOpacity(0.8),
             child: Column(
               children: [
-                const TextField(
-                  style: TextStyle(
-                    color: Colors.white,
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(color: Colors.grey),
+                    decoration: InputDecoration(
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.fromLTRB(15, 0, 10, 0),
+                        child: Icon(Icons.search),
+                      ),
+                      prefixIconColor: Colors.grey,
+                      hintText: "Search apps",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white10, width: 32.0),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white10, width: 32.0),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
                   ),
                 ),
                 Expanded(
@@ -163,6 +155,50 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
         ),
       ),
     );
+  }
+
+  void cancelAnimations() {
+    _slideAnimation?.removeListener(_updateOffset);
+    _slideAnimation = null;
+  }
+
+  void animateOpening(double velocity) {
+    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(interactable: true));
+    cancelAnimations();
+    animateTo(0, velocity);
+  }
+
+  void animateClosing(double velocity) {
+    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(interactable: false));
+    cancelAnimations();
+    animateTo(ref.read(appDrawerStateProvider).slideDistance, velocity);
+  }
+
+  void animateTo(double target, double velocity) {
+    _slideAnimation = _animationController.drive(Tween(
+      begin: ref.read(appDrawerStateProvider).offset,
+      end: target,
+    ))
+      ..addListener(_updateOffset);
+    _animationController
+      ..reset()
+      ..fling(velocity: velocity);
+  }
+
+  void _updateOffset() {
+    ref.read(appDrawerStateProvider.notifier).update(
+          (state) => state.copyWith(
+            offset: _slideAnimation!.value,
+            fullyClosed: _slideAnimation!.value == state.slideDistance,
+          ),
+        );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 }
 

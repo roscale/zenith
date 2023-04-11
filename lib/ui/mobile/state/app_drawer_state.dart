@@ -27,6 +27,9 @@ final appDrawerStateProvider = StateProvider(
     /// Event to notify the drawer to initiate the closing animations.
     /// Just assigning a new Object() will do the trick because 2 different Object instances will always be unequal.
     closePanel: Object(),
+
+    // The panel is fully closed.
+    fullyClosed: true,
   ),
 );
 
@@ -40,5 +43,6 @@ class AppDrawerState with _$AppDrawerState {
     required double offset,
     required double slideDistance,
     required Object closePanel,
+    required bool fullyClosed,
   }) = _AppDrawerState;
 }
