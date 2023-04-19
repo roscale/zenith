@@ -67,7 +67,7 @@ class AppIconByPath extends StatelessWidget {
         return Image.file(
           file,
           filterQuality: FilterQuality.medium,
-          fit: BoxFit.fill,
+          fit: BoxFit.contain,
         );
       },
     );

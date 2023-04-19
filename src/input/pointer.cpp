@@ -124,36 +124,25 @@ void server_cursor_button(wl_listener* listener, void* data) {
 
 	pointer->set_visible(true);
 
-	/* Notify the client with pointer focus that a button press has occurred */
+	FlutterPointerEvent e = {};
+	e.struct_size = sizeof(FlutterPointerEvent);
 
 	if (event->state == WLR_BUTTON_RELEASED) {
 		pointer->mouse_button_tracker.release_button(event->button);
-
-		FlutterPointerEvent e = {};
-		e.struct_size = sizeof(FlutterPointerEvent);
 		e.phase = pointer->mouse_button_tracker.are_any_buttons_pressed() ? kMove : kUp;
-		e.timestamp = current_time_microseconds();
-		e.x = pointer->cursor->x * server->output->wlr_output->scale;
-		e.y = pointer->cursor->y * server->output->wlr_output->scale;
-		e.device_kind = kFlutterPointerDeviceKindMouse;
-		e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
-
-		server->embedder_state->send_pointer_event(e);
 	} else {
 		bool are_any_buttons_pressed = pointer->mouse_button_tracker.are_any_buttons_pressed();
 		pointer->mouse_button_tracker.press_button(event->button);
-
-		FlutterPointerEvent e = {};
-		e.struct_size = sizeof(FlutterPointerEvent);
 		e.phase = are_any_buttons_pressed ? kMove : kDown;
-		e.timestamp = current_time_microseconds();
-		e.x = pointer->cursor->x * server->output->wlr_output->scale;
-		e.y = pointer->cursor->y * server->output->wlr_output->scale;
-		e.device_kind = kFlutterPointerDeviceKindMouse;
-		e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
-
-		server->embedder_state->send_pointer_event(e);
 	}
+
+	e.timestamp = current_time_microseconds();
+	e.x = pointer->cursor->x * server->output->wlr_output->scale;
+	e.y = pointer->cursor->y * server->output->wlr_output->scale;
+	e.device_kind = kFlutterPointerDeviceKindMouse;
+	e.buttons = pointer->mouse_button_tracker.get_flutter_mouse_state();
+
+	server->embedder_state->send_pointer_event(e);
 }
 
 void server_cursor_axis(wl_listener* listener, void* data) {
@@ -195,13 +184,6 @@ void server_cursor_axis(wl_listener* listener, void* data) {
 }
 
 void server_cursor_frame(wl_listener* listener, void* data) {
-	ZenithPointer* pointer = wl_container_of(listener, pointer, cursor_frame);
-	ZenithServer* server = pointer->server;
-	
-	if (server->output == nullptr) {
-		return;
-	}
-
 	/* Notify the client with pointer focus of the frame event. */
-	wlr_seat_pointer_notify_frame(server->seat);
+	wlr_seat_pointer_notify_frame(ZenithServer::instance()->seat);
 }

@@ -13,16 +13,9 @@ final localizedDesktopEntriesProvider = FutureProvider<Map<String, LocalizedDesk
   return desktopEntries.map((key, value) => MapEntry(key, value.localize(lang: 'en')));
 });
 
-final appDrawerDesktopEntriesProvider = FutureProvider<List<LocalizedDesktopEntry>>((ref) async {
+final appDrawerDesktopEntriesProvider = FutureProvider<Iterable<LocalizedDesktopEntry>>((ref) async {
   final localizedDesktopEntries = await ref.watch(localizedDesktopEntriesProvider.future);
-  List<LocalizedDesktopEntry> entries =
-      localizedDesktopEntries.values.where((element) => !element.desktopEntry.isHidden()).toList();
-  entries.sort((a, b) {
-    String aName = a.entries[DesktopEntryKey.name.string]!;
-    String bName = b.entries[DesktopEntryKey.name.string]!;
-    return aName.toLowerCase().compareTo(bName.toLowerCase());
-  });
-  return entries;
+  return localizedDesktopEntries.values.where((element) => !element.desktopEntry.isHidden());
 });
 
 final defaultIconThemeProvider = FutureProvider<FreedesktopIconTheme>((ref) {
