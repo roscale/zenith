@@ -21,24 +21,24 @@ class AppIconByPath extends StatelessWidget {
         if (path == null) {
           return const SizedBox();
         }
-
-        return ref.watch(defaultIconThemeProvider).when(
-              data: (iconTheme) => _buildIcon(iconTheme, path!),
-              error: (_, __) => const SizedBox(),
-              loading: () => const SizedBox(),
-            );
+        return _buildIcon(ref, path!);
       },
     );
   }
 
-  Widget _buildIcon(FreedesktopIconTheme iconTheme, String icon) {
+  Widget _buildIcon(WidgetRef ref, String icon) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        File? file = iconTheme.findIcon(
+        AsyncValue<File?> asyncValue = ref.watch(iconProvider(IconQuery(
           name: icon,
           size: constraints.biggest.shortestSide.floor(),
-          extensions: {'svg', 'png'},
-        );
+          extensions: const ['svg', 'png'],
+        )));
+
+        if (!asyncValue.hasValue) {
+          return const SizedBox();
+        }
+        File? file = asyncValue.value;
 
         if (file == null) {
           return const SizedBox();

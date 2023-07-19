@@ -61,18 +61,20 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
         return Positioned(
           left: offset.dx,
           top: offset.dy - 40,
-          child: Transform.scale(
-            scale: 1.2,
-            child: SizedBox(
-              width: size.width,
-              height: size.height,
-              child: Card(
-                elevation: 10,
-                margin: const EdgeInsets.all(3),
-                child: Center(
-                  child: DefaultTextStyle(
-                    style: const TextStyle(color: Colors.black, fontSize: 20),
-                    child: widget.child,
+          child: IgnorePointer(
+            child: Transform.scale(
+              scale: 1.2,
+              child: SizedBox(
+                width: size.width,
+                height: size.height,
+                child: Card(
+                  elevation: 10,
+                  margin: const EdgeInsets.all(3),
+                  child: Center(
+                    child: DefaultTextStyle(
+                      style: const TextStyle(color: Colors.black, fontSize: 20),
+                      child: widget.child,
+                    ),
                   ),
                 ),
               ),
@@ -107,36 +109,39 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.width,
-      height: 50,
-      child: GestureDetector(
-        onDoubleTap: widget.onDoubleTap,
-        child: Listener(
-          onPointerDown: (_) => pointerDown(),
-          onPointerUp: (_) {
-            if (repeatKeyTimer == null) {
-              actuate();
-            }
-            pointerUp();
-          },
+    return GestureDetector(
+      onDoubleTap: widget.onDoubleTap,
+      child: Listener(
+        onPointerDown: (_) => pointerDown(),
+        onPointerUp: (_) {
+          if (repeatKeyTimer == null) {
+            actuate();
+          }
+          pointerUp();
+        },
+        onPointerCancel: (_) => pointerUp(),
+        child: SizedBox(
+          width: widget.width,
+          height: 50,
           child: ValueListenableBuilder(
             valueListenable: beingPressed,
             builder: (BuildContext context, bool beingPressed, Widget? child) {
-              return Container(
-                margin: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4.0),
-                  color: beingPressed ? Colors.grey.shade300 : Theme.of(context).cardColor,
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.grey,
-                      offset: Offset(0.0, 1.0),
-                      blurRadius: 1.0,
-                    ),
-                  ],
+              return Padding(
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4.0),
+                    color: beingPressed ? Colors.grey.shade300 : Theme.of(context).cardColor,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.grey,
+                        offset: Offset(0.0, 1.0),
+                        blurRadius: 1.0,
+                      ),
+                    ],
+                  ),
+                  child: child!,
                 ),
-                child: child!,
               );
             },
             child: Center(

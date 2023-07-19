@@ -42,47 +42,65 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
           child: RawGestureDetector(
             gestures: <Type, GestureRecognizerFactory>{
               RawGestureRecognizer: GestureRecognizerFactoryWithHandlers<RawGestureRecognizer>(
-                () => RawGestureRecognizer(),
+                () => RawGestureRecognizer(debugOwner: this),
                 (RawGestureRecognizer instance) {
-                  instance.onPointerDown = (PointerDownEvent event) async {
-                    // TODO: event.position is actually the local position. Don't try to access
-                    // event.localPosition because it contains the wrong value.
-                    var position = event.position + inputRegion.topLeft;
+                  instance.onPointerDown = (PointerDownEvent event) {
+                    () async {
+                      var position = event.localPosition + inputRegion.topLeft;
 
-                    if (event.kind == PointerDeviceKind.mouse) {
-                      await _pointerMoved(position);
-                      await _sendMouseButtonsToPlatform(event.buttons);
-                      pointerFocusManager.startPotentialDrag();
-                    } else if (event.kind == PointerDeviceKind.touch) {
-                      await PlatformApi.touchDown(widget.viewId, event.pointer, position);
-                    }
+                      if (event.kind == PointerDeviceKind.mouse) {
+                        await _pointerMoved(position);
+                        await _sendMouseButtonsToPlatform(event.buttons);
+                        pointerFocusManager.startPotentialDrag();
+                      } else if (event.kind == PointerDeviceKind.touch) {
+                        await PlatformApi.touchDown(widget.viewId, event.pointer, position);
+                      }
+                    }();
+                    return null;
                   };
-                  instance.onPointerMove = (PointerMoveEvent event) async {
-                    var position = event.position + inputRegion.topLeft;
+                  instance.onPointerMove = (PointerMoveEvent event, GestureDisposition? gestureDisposition) {
+                    if (gestureDisposition == GestureDisposition.rejected) {
+                      return;
+                    }
+                    () async {
+                      var position = event.localPosition + inputRegion.topLeft;
 
-                    if (event.kind == PointerDeviceKind.mouse) {
-                      // If a button is being pressed while another one is already down, it's considered a move event, not a down event.
-                      await _sendMouseButtonsToPlatform(event.buttons);
-                      await _pointerMoved(position);
-                    } else if (event.kind == PointerDeviceKind.touch) {
-                      await PlatformApi.touchMotion(event.pointer, position);
-                    }
+                      if (event.kind == PointerDeviceKind.mouse) {
+                        // If a button is being pressed while another one is already down, it's considered a move event, not a down event.
+                        await _sendMouseButtonsToPlatform(event.buttons);
+                        await _pointerMoved(position);
+                      } else if (event.kind == PointerDeviceKind.touch) {
+                        await PlatformApi.touchMotion(event.pointer, position);
+                      }
+                    }();
+                    return null;
                   };
-                  instance.onPointerUp = (PointerUpEvent event) async {
-                    if (event.kind == PointerDeviceKind.mouse) {
-                      await _sendMouseButtonsToPlatform(event.buttons);
-                      pointerFocusManager.stopPotentialDrag();
-                    } else if (event.kind == PointerDeviceKind.touch) {
-                      await PlatformApi.touchUp(event.pointer);
+                  instance.onPointerUp = (PointerUpEvent event, GestureDisposition? gestureDisposition) {
+                    if (gestureDisposition == GestureDisposition.rejected) {
+                      return null;
                     }
+                    () async {
+                      if (event.kind == PointerDeviceKind.mouse) {
+                        await _sendMouseButtonsToPlatform(event.buttons);
+                        pointerFocusManager.stopPotentialDrag();
+                      } else if (event.kind == PointerDeviceKind.touch) {
+                        await PlatformApi.touchUp(event.pointer);
+                      }
+                    }();
+                    return GestureDisposition.accepted;
                   };
-                  instance.onPointerCancel = (PointerCancelEvent event) async {
+
+                  Future<void> cancelPointer(PointerEvent event) async {
                     if (event.kind == PointerDeviceKind.mouse) {
-                      await _sendMouseButtonsToPlatform(event.buttons);
+                      await _sendMouseButtonsToPlatform(0);
                       pointerFocusManager.stopPotentialDrag();
                     } else if (event.kind == PointerDeviceKind.touch) {
                       await PlatformApi.touchCancel(event.pointer);
                     }
+                  }
+
+                  instance.onLose = (PointerEvent event) {
+                    cancelPointer(event);
                   };
                 },
               ),

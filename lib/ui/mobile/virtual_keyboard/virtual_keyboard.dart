@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:glissando/glissando.dart';
 import 'package:zenith/ui/mobile/virtual_keyboard/key.dart';
 import 'package:zenith/ui/mobile/virtual_keyboard/layouts.dart';
 
@@ -81,13 +82,15 @@ class KeyboardLayers extends ConsumerWidget {
     final id = ref.watch(keyboardIdProvider);
     final layerIndex = ref.watch(keyboardLayerProvider(id)).index;
 
-    return IndexedStack(
-      index: layerIndex,
-      children: const [
-        KeyboardFirstLayer(),
-        KeyboardSecondLayer(),
-        KeyboardThirdLayer(),
-      ],
+    return Glissando(
+      child: IndexedStack(
+        index: layerIndex,
+        children: const [
+          KeyboardFirstLayer(),
+          KeyboardSecondLayer(),
+          KeyboardThirdLayer(),
+        ],
+      ),
     );
   }
 }

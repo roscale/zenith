@@ -1,109 +1,125 @@
 import 'package:flutter/gestures.dart';
-import 'package:flutter/rendering.dart';
 
-/// Gesture recognizer that provides similar callbacks to the Listener widget, but fights in
-/// gesture arenas against other GestureDetectors.
-/// It only claims victory at the very end on a pointer up event.
-/// onPointerCancel is called when it loses in the arena.
 class RawGestureRecognizer extends GestureRecognizer {
   RawGestureRecognizer({
-    Object? debugOwner,
-    Set<PointerDeviceKind>? supportedDevices,
-  }) : super(
-          debugOwner: debugOwner,
-          supportedDevices: supportedDevices,
-        );
+    required super.debugOwner,
+    super.supportedDevices,
+    super.allowedButtonsFilter,
+  });
 
-  PointerDownEventListener? onPointerDown;
-  PointerMoveEventListener? onPointerMove;
-  PointerUpEventListener? onPointerUp;
-  PointerCancelEventListener? onPointerCancel;
+  GestureDisposition? Function(PointerDownEvent)? onPointerDown;
+  GestureDisposition? Function(PointerMoveEvent, GestureDisposition?)? onPointerMove;
+  GestureDisposition? Function(PointerUpEvent, GestureDisposition?)? onPointerUp;
+  GestureDisposition? Function(PointerCancelEvent, GestureDisposition?)? onPointerCancel;
+  void Function(PointerEvent)? onWin;
+  void Function(PointerEvent)? onLose;
 
-  Map<int, _MultiDragPointerState>? _pointers = <int, _MultiDragPointerState>{};
+  Map<int, _PointerData>? _pointers = {};
 
   @override
   void addAllowedPointer(PointerDownEvent event) {
     assert(_pointers != null);
     assert(!_pointers!.containsKey(event.pointer));
-    final GestureArenaEntry arenaEntry = GestureBinding.instance.gestureArena.add(event.pointer, this);
-    final _MultiDragPointerState state = _createNewPointerState(event, arenaEntry);
-    _pointers![event.pointer] = state;
-    GestureBinding.instance.pointerRouter.addRoute(event.pointer, _handleEvent, event.transform);
-  }
 
-  _MultiDragPointerState _createNewPointerState(PointerDownEvent event, GestureArenaEntry entry) {
-    return _MultiDragPointerState(downEvent: event, arenaEntry: entry);
+    GestureBinding.instance.pointerRouter.addRoute(event.pointer, _handleEvent, event.transform);
+    GestureArenaEntry entry = GestureBinding.instance.gestureArena.add(event.pointer, this);
+    final pointerData = _PointerData(entry, event);
+    _pointers![event.pointer] = pointerData;
   }
 
   void _handleEvent(PointerEvent event) {
     assert(_pointers != null);
     assert(_pointers!.containsKey(event.pointer));
-    final _MultiDragPointerState state = _pointers![event.pointer]!;
+    final pointerData = _pointers![event.pointer]!;
 
-    if (event is PointerDownEvent && onPointerDown != null) {
-      invokeCallback<void>('onPointerDown', () {
-        onPointerDown!(event.copyWith(
-          position: state.localPosition,
-        ));
-      });
-    } else if (event is PointerMoveEvent && onPointerMove != null) {
-      final accumulatedDelta = event.localDelta + state.pendingDelta;
-      state.localPosition += accumulatedDelta;
-
-      var moveEvent = event.copyWith(
-        position: state.localPosition,
-        delta: accumulatedDelta,
-      );
-      state.pendingDelta = Offset.zero;
-      invokeCallback<void>('onPointerMove', () => onPointerMove!(moveEvent));
-    } else if (event is PointerUpEvent && onPointerUp != null) {
-      invokeCallback<void>('onPointerUp', () {
-        onPointerUp!(event.copyWith(
-          position: state.localPosition,
-        ));
-      });
-      state.resolve(GestureDisposition.accepted);
-      _removeState(event.pointer);
-    } else if (event is PointerCancelEvent && onPointerCancel != null) {
-      state.resolve(GestureDisposition.rejected);
+    if (event is PointerDownEvent) {
+      if (onPointerDown != null) {
+        final gestureDisposition = invokeCallback('onPointerDown', () {
+          return onPointerDown!(event);
+        });
+        _resolveGestureArenaEntry(pointerData.gestureArenaEntry, gestureDisposition);
+      }
+    } else if (event is PointerMoveEvent) {
+      _pointers![event.pointer]!.lastPointerEvent = event;
+      if (onPointerMove != null) {
+        final gestureDisposition = invokeCallback('onPointerMove', () {
+          return onPointerMove!(event, pointerData.gestureDisposition);
+        });
+        _resolveGestureArenaEntry(pointerData.gestureArenaEntry, gestureDisposition);
+      }
+    } else if (event is PointerUpEvent) {
+      GestureDisposition? gestureDisposition = GestureDisposition.accepted;
+      if (onPointerUp != null) {
+        gestureDisposition = invokeCallback('onPointerUp', () {
+          return onPointerUp!(event, pointerData.gestureDisposition);
+        });
+      }
+      // We might be disposed here.
+      _removeState(event.pointer, gestureDisposition);
+    } else if (event is PointerCancelEvent) {
+      GestureDisposition? gestureDisposition = GestureDisposition.rejected;
+      if (onPointerCancel != null) {
+        gestureDisposition = invokeCallback('onPointerCancel', () {
+          return onPointerCancel!(event, pointerData.gestureDisposition);
+        });
+      }
+      // We might be disposed here.
+      _removeState(event.pointer, gestureDisposition);
+    } else {
+      assert(false);
     }
   }
 
   @override
   void acceptGesture(int pointer) {
     assert(_pointers != null);
-    _pointers![pointer]!.gestureAccepted = true;
+    if (!_pointers!.containsKey(pointer)) {
+      // We already preemptively forgot about it (e.g. we got an up event).
+      return;
+    }
+    final pointerData = _pointers![pointer]!;
+    pointerData.gestureDisposition ??= GestureDisposition.accepted;
+    if (onWin != null) {
+      invokeCallback('onWin', () => onWin!(pointerData.lastPointerEvent));
+    }
   }
 
   @override
   void rejectGesture(int pointer) {
     assert(_pointers != null);
-    if (_pointers!.containsKey(pointer)) {
-      var state = _pointers![pointer]!;
-      invokeCallback<void>('onPointerCancel', () {
-        onPointerCancel!(PointerCancelEvent(
-          pointer: pointer,
-          kind: state.downEvent.kind,
-          device: state.downEvent.device,
-          embedderId: state.downEvent.embedderId,
-        ));
-      });
-      _removeState(pointer);
+    if (!_pointers!.containsKey(pointer)) {
+      // We already preemptively forgot about it (e.g. we got an up event).
+      return;
+    }
+    final pointerData = _pointers![pointer]!;
+    pointerData.gestureDisposition ??= GestureDisposition.rejected;
+
+    if (onLose != null) {
+      invokeCallback('onLose', () => onLose!(pointerData.lastPointerEvent));
     }
   }
 
-  void _removeState(int pointer) {
-    assert(_pointers != null);
+  void _removeState(int pointer, GestureDisposition? gestureDisposition) {
+    if (_pointers == null) {
+      // We've already been disposed. It's harmless to skip removing the state
+      // for the given pointer because dispose() has already removed it.
+      return;
+    }
     assert(_pointers!.containsKey(pointer));
     GestureBinding.instance.pointerRouter.removeRoute(pointer, _handleEvent);
-    _pointers!.remove(pointer)!.dispose();
+    GestureArenaEntry entry = _pointers!.remove(pointer)!.gestureArenaEntry;
+    _resolveGestureArenaEntry(entry, gestureDisposition);
+  }
+
+  void _resolveGestureArenaEntry(GestureArenaEntry entry, GestureDisposition? gestureDisposition) {
+    if (gestureDisposition != null) {
+      entry.resolve(gestureDisposition);
+    }
   }
 
   @override
   void dispose() {
-    _pointers!.keys.toList().forEach((int pointer) {
-      _pointers![pointer]!.arenaEntry!.resolve(GestureDisposition.rejected);
-    });
+    _pointers!.keys.toList().forEach((int pointer) => _removeState(pointer, GestureDisposition.rejected));
     assert(_pointers!.isEmpty);
     _pointers = null;
     super.dispose();
@@ -113,24 +129,10 @@ class RawGestureRecognizer extends GestureRecognizer {
   String get debugDescription => "Raw gesture recognizer";
 }
 
-class _MultiDragPointerState {
-  /// Creates per-pointer state for a [RawGestureRecognizer].
-  _MultiDragPointerState({required this.downEvent, required this.arenaEntry});
+class _PointerData {
+  GestureArenaEntry gestureArenaEntry;
+  PointerEvent lastPointerEvent;
+  GestureDisposition? gestureDisposition;
 
-  final PointerDownEvent downEvent;
-  late Offset localPosition = downEvent.localPosition;
-  GestureArenaEntry? arenaEntry;
-
-  bool gestureAccepted = false;
-  Offset pendingDelta = Offset.zero;
-
-  /// Resolve this pointer's entry in the [GestureArenaManager] with the given disposition.
-  void resolve(GestureDisposition disposition) {
-    arenaEntry!.resolve(disposition);
-  }
-
-  /// Releases any resources used by the object.
-  void dispose() {
-    arenaEntry = null;
-  }
+  _PointerData(this.gestureArenaEntry, this.lastPointerEvent);
 }

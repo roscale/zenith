@@ -18,8 +18,15 @@ final appDrawerDesktopEntriesProvider = FutureProvider<Iterable<LocalizedDesktop
   return localizedDesktopEntries.values.where((element) => !element.desktopEntry.isHidden());
 });
 
-final defaultIconThemeProvider = FutureProvider<FreedesktopIconTheme>((ref) {
-  return FreedesktopIconTheme.load('Adwaita');
+final iconThemesProvider = FutureProvider<FreedesktopIconThemes>((ref) async {
+  final themes = FreedesktopIconThemes();
+  await themes.loadThemes();
+  return themes;
+});
+
+final iconProvider = FutureProvider.family((ref, IconQuery query) async {
+  final themes = await ref.watch(iconThemesProvider.future);
+  return themes.findIcon(query);
 });
 
 final fileToScalableImageProvider = FutureProvider.family<ScalableImage, String>((ref, String path) async {
