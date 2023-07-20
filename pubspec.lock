@@ -25,6 +25,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.2"
+  arena_listener:
+    dependency: "direct main"
+    description:
+      name: arena_listener
+      sha256: f6aa26199e3d35ca3aaf89ce3497acf5ee8451cf15bb0bbb800478decb919ec8
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   args:
     dependency: transitive
     description:
@@ -708,5 +716,5 @@ packages:
     source: hosted
     version: "3.1.1"
 sdks:
-  dart: ">=3.0.5 <4.0.0"
+  dart: ">=3.0.6 <4.0.0"
   flutter: ">=3.1.0-0"
