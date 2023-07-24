@@ -2,28 +2,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/app_drawer.dart';
+import 'package:zenith/ui/common/state/app_drawer.dart';
 import 'package:zenith/ui/desktop/app_drawer/app_grid.dart';
 
-class AppDrawer extends ConsumerStatefulWidget {
+class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
-
-  @override
-  ConsumerState<AppDrawer> createState() => _AppDrawerState();
-}
-
-class _AppDrawerState extends ConsumerState<AppDrawer> {
-  final _searchController = TextEditingController();
-  final _searchFocusNode = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() {
-      ref.read(appDrawerFilterProvider.notifier).state = _searchController.text;
-    });
-    _searchFocusNode.requestFocus();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,30 +26,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(30, 30, 30, 10),
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.fromLTRB(15, 0, 10, 0),
-                        child: Icon(Icons.search),
-                      ),
-                      prefixIconColor: Colors.grey,
-                      hintText: "Search apps",
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
+                  child: _AppDrawerTextField(),
                 ),
                 const Expanded(
                   child: AppGrid(),
@@ -74,6 +34,53 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AppDrawerTextField extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_AppDrawerTextField> createState() => _AppDrawerTextFieldState();
+}
+
+class _AppDrawerTextFieldState extends ConsumerState<_AppDrawerTextField> {
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      ref.read(appDrawerFilterProvider.notifier).state = _searchController.text;
+    });
+    _searchFocusNode.requestFocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _searchController,
+      focusNode: _searchFocusNode,
+      autofocus: true,
+      decoration: InputDecoration(
+        prefixIcon: const Padding(
+          padding: EdgeInsets.fromLTRB(15, 0, 10, 0),
+          child: Icon(Icons.search),
+        ),
+        prefixIconColor: Colors.grey,
+        hintText: "Search apps",
+        hintStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: Colors.white,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(5),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(5),
+          borderSide: BorderSide.none,
         ),
       ),
     );

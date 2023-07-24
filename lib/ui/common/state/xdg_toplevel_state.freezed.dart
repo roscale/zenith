@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'zenith_xdg_toplevel_state.dart';
+part of 'xdg_toplevel_state.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,7 +15,7 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
-mixin _$ZenithXdgToplevelState {
+mixin _$XdgToplevelState {
   bool get visible => throw _privateConstructorUsedError;
   Key get virtualKeyboardKey => throw _privateConstructorUsedError;
   FocusNode get focusNode => throw _privateConstructorUsedError;
@@ -27,15 +27,15 @@ mixin _$ZenithXdgToplevelState {
   String get appId => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ZenithXdgToplevelStateCopyWith<ZenithXdgToplevelState> get copyWith =>
+  $XdgToplevelStateCopyWith<XdgToplevelState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ZenithXdgToplevelStateCopyWith<$Res> {
-  factory $ZenithXdgToplevelStateCopyWith(ZenithXdgToplevelState value,
-          $Res Function(ZenithXdgToplevelState) then) =
-      _$ZenithXdgToplevelStateCopyWithImpl<$Res, ZenithXdgToplevelState>;
+abstract class $XdgToplevelStateCopyWith<$Res> {
+  factory $XdgToplevelStateCopyWith(
+          XdgToplevelState value, $Res Function(XdgToplevelState) then) =
+      _$XdgToplevelStateCopyWithImpl<$Res, XdgToplevelState>;
   @useResult
   $Res call(
       {bool visible,
@@ -49,10 +49,9 @@ abstract class $ZenithXdgToplevelStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ZenithXdgToplevelStateCopyWithImpl<$Res,
-        $Val extends ZenithXdgToplevelState>
-    implements $ZenithXdgToplevelStateCopyWith<$Res> {
-  _$ZenithXdgToplevelStateCopyWithImpl(this._value, this._then);
+class _$XdgToplevelStateCopyWithImpl<$Res, $Val extends XdgToplevelState>
+    implements $XdgToplevelStateCopyWith<$Res> {
+  _$XdgToplevelStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -108,11 +107,11 @@ class _$ZenithXdgToplevelStateCopyWithImpl<$Res,
 }
 
 /// @nodoc
-abstract class _$$_ZenithXdgToplevelStateCopyWith<$Res>
-    implements $ZenithXdgToplevelStateCopyWith<$Res> {
-  factory _$$_ZenithXdgToplevelStateCopyWith(_$_ZenithXdgToplevelState value,
-          $Res Function(_$_ZenithXdgToplevelState) then) =
-      __$$_ZenithXdgToplevelStateCopyWithImpl<$Res>;
+abstract class _$$_XdgToplevelStateCopyWith<$Res>
+    implements $XdgToplevelStateCopyWith<$Res> {
+  factory _$$_XdgToplevelStateCopyWith(
+          _$_XdgToplevelState value, $Res Function(_$_XdgToplevelState) then) =
+      __$$_XdgToplevelStateCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -127,12 +126,11 @@ abstract class _$$_ZenithXdgToplevelStateCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_ZenithXdgToplevelStateCopyWithImpl<$Res>
-    extends _$ZenithXdgToplevelStateCopyWithImpl<$Res,
-        _$_ZenithXdgToplevelState>
-    implements _$$_ZenithXdgToplevelStateCopyWith<$Res> {
-  __$$_ZenithXdgToplevelStateCopyWithImpl(_$_ZenithXdgToplevelState _value,
-      $Res Function(_$_ZenithXdgToplevelState) _then)
+class __$$_XdgToplevelStateCopyWithImpl<$Res>
+    extends _$XdgToplevelStateCopyWithImpl<$Res, _$_XdgToplevelState>
+    implements _$$_XdgToplevelStateCopyWith<$Res> {
+  __$$_XdgToplevelStateCopyWithImpl(
+      _$_XdgToplevelState _value, $Res Function(_$_XdgToplevelState) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -147,7 +145,7 @@ class __$$_ZenithXdgToplevelStateCopyWithImpl<$Res>
     Object? title = null,
     Object? appId = null,
   }) {
-    return _then(_$_ZenithXdgToplevelState(
+    return _then(_$_XdgToplevelState(
       visible: null == visible
           ? _value.visible
           : visible // ignore: cast_nullable_to_non_nullable
@@ -185,8 +183,8 @@ class __$$_ZenithXdgToplevelStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
-  const _$_ZenithXdgToplevelState(
+class _$_XdgToplevelState implements _XdgToplevelState {
+  const _$_XdgToplevelState(
       {required this.visible,
       required this.virtualKeyboardKey,
       required this.focusNode,
@@ -215,14 +213,14 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
 
   @override
   String toString() {
-    return 'ZenithXdgToplevelState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey, focusNode: $focusNode, interactiveMoveRequested: $interactiveMoveRequested, interactiveResizeRequested: $interactiveResizeRequested, decoration: $decoration, title: $title, appId: $appId)';
+    return 'XdgToplevelState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey, focusNode: $focusNode, interactiveMoveRequested: $interactiveMoveRequested, interactiveResizeRequested: $interactiveResizeRequested, decoration: $decoration, title: $title, appId: $appId)';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ZenithXdgToplevelState &&
+            other is _$_XdgToplevelState &&
             (identical(other.visible, visible) || other.visible == visible) &&
             (identical(other.virtualKeyboardKey, virtualKeyboardKey) ||
                 other.virtualKeyboardKey == virtualKeyboardKey) &&
@@ -255,13 +253,12 @@ class _$_ZenithXdgToplevelState implements _ZenithXdgToplevelState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ZenithXdgToplevelStateCopyWith<_$_ZenithXdgToplevelState> get copyWith =>
-      __$$_ZenithXdgToplevelStateCopyWithImpl<_$_ZenithXdgToplevelState>(
-          this, _$identity);
+  _$$_XdgToplevelStateCopyWith<_$_XdgToplevelState> get copyWith =>
+      __$$_XdgToplevelStateCopyWithImpl<_$_XdgToplevelState>(this, _$identity);
 }
 
-abstract class _ZenithXdgToplevelState implements ZenithXdgToplevelState {
-  const factory _ZenithXdgToplevelState(
+abstract class _XdgToplevelState implements XdgToplevelState {
+  const factory _XdgToplevelState(
       {required final bool visible,
       required final Key virtualKeyboardKey,
       required final FocusNode focusNode,
@@ -269,7 +266,7 @@ abstract class _ZenithXdgToplevelState implements ZenithXdgToplevelState {
       required final ResizeEdgeObject interactiveResizeRequested,
       required final ToplevelDecoration decoration,
       required final String title,
-      required final String appId}) = _$_ZenithXdgToplevelState;
+      required final String appId}) = _$_XdgToplevelState;
 
   @override
   bool get visible;
@@ -289,6 +286,6 @@ abstract class _ZenithXdgToplevelState implements ZenithXdgToplevelState {
   String get appId;
   @override
   @JsonKey(ignore: true)
-  _$$_ZenithXdgToplevelStateCopyWith<_$_ZenithXdgToplevelState> get copyWith =>
+  _$$_XdgToplevelStateCopyWith<_$_XdgToplevelState> get copyWith =>
       throw _privateConstructorUsedError;
 }

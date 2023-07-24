@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/decorations/client_side_decorations.dart';
 import 'package:zenith/ui/desktop/decorations/server_side_decorations.dart';
 
@@ -16,7 +16,7 @@ class WithDecorations extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var decoration = ref.watch(zenithXdgToplevelStateProvider(viewId).select((v) => v.decoration));
+    var decoration = ref.watch(xdgToplevelStatesProvider(viewId).select((v) => v.decoration));
     switch (decoration) {
       case ToplevelDecoration.none:
       case ToplevelDecoration.clientSide:

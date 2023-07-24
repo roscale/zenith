@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
+import 'package:zenith/ui/common/state/surface_state.dart';
 import 'package:zenith/util/rect_overflow_box.dart';
 
 class ContainToInputRegion extends ConsumerWidget {
@@ -15,7 +15,7 @@ class ContainToInputRegion extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Rect inputRegion = ref.watch(zenithSurfaceStateProvider(viewId).select((v) => v.inputRegion));
+    Rect inputRegion = ref.watch(surfaceStatesProvider(viewId).select((v) => v.inputRegion));
 
     return RectOverflowBox(
       rect: inputRegion,

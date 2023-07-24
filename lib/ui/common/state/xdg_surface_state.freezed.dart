@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'zenith_xdg_surface_state.dart';
+part of 'xdg_surface_state.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,7 +15,7 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
-mixin _$ZenithXdgSurfaceState {
+mixin _$XdgSurfaceState {
   XdgSurfaceRole get role => throw _privateConstructorUsedError;
   Rect get visibleBounds => throw _privateConstructorUsedError;
   GlobalKey<State<StatefulWidget>> get widgetKey =>
@@ -23,15 +23,15 @@ mixin _$ZenithXdgSurfaceState {
   List<int> get popups => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ZenithXdgSurfaceStateCopyWith<ZenithXdgSurfaceState> get copyWith =>
+  $XdgSurfaceStateCopyWith<XdgSurfaceState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ZenithXdgSurfaceStateCopyWith<$Res> {
-  factory $ZenithXdgSurfaceStateCopyWith(ZenithXdgSurfaceState value,
-          $Res Function(ZenithXdgSurfaceState) then) =
-      _$ZenithXdgSurfaceStateCopyWithImpl<$Res, ZenithXdgSurfaceState>;
+abstract class $XdgSurfaceStateCopyWith<$Res> {
+  factory $XdgSurfaceStateCopyWith(
+          XdgSurfaceState value, $Res Function(XdgSurfaceState) then) =
+      _$XdgSurfaceStateCopyWithImpl<$Res, XdgSurfaceState>;
   @useResult
   $Res call(
       {XdgSurfaceRole role,
@@ -41,10 +41,9 @@ abstract class $ZenithXdgSurfaceStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ZenithXdgSurfaceStateCopyWithImpl<$Res,
-        $Val extends ZenithXdgSurfaceState>
-    implements $ZenithXdgSurfaceStateCopyWith<$Res> {
-  _$ZenithXdgSurfaceStateCopyWithImpl(this._value, this._then);
+class _$XdgSurfaceStateCopyWithImpl<$Res, $Val extends XdgSurfaceState>
+    implements $XdgSurfaceStateCopyWith<$Res> {
+  _$XdgSurfaceStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -81,11 +80,11 @@ class _$ZenithXdgSurfaceStateCopyWithImpl<$Res,
 }
 
 /// @nodoc
-abstract class _$$_ZenithXdgSurfaceStateCopyWith<$Res>
-    implements $ZenithXdgSurfaceStateCopyWith<$Res> {
-  factory _$$_ZenithXdgSurfaceStateCopyWith(_$_ZenithXdgSurfaceState value,
-          $Res Function(_$_ZenithXdgSurfaceState) then) =
-      __$$_ZenithXdgSurfaceStateCopyWithImpl<$Res>;
+abstract class _$$_XdgSurfaceStateCopyWith<$Res>
+    implements $XdgSurfaceStateCopyWith<$Res> {
+  factory _$$_XdgSurfaceStateCopyWith(
+          _$_XdgSurfaceState value, $Res Function(_$_XdgSurfaceState) then) =
+      __$$_XdgSurfaceStateCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -96,11 +95,11 @@ abstract class _$$_ZenithXdgSurfaceStateCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_ZenithXdgSurfaceStateCopyWithImpl<$Res>
-    extends _$ZenithXdgSurfaceStateCopyWithImpl<$Res, _$_ZenithXdgSurfaceState>
-    implements _$$_ZenithXdgSurfaceStateCopyWith<$Res> {
-  __$$_ZenithXdgSurfaceStateCopyWithImpl(_$_ZenithXdgSurfaceState _value,
-      $Res Function(_$_ZenithXdgSurfaceState) _then)
+class __$$_XdgSurfaceStateCopyWithImpl<$Res>
+    extends _$XdgSurfaceStateCopyWithImpl<$Res, _$_XdgSurfaceState>
+    implements _$$_XdgSurfaceStateCopyWith<$Res> {
+  __$$_XdgSurfaceStateCopyWithImpl(
+      _$_XdgSurfaceState _value, $Res Function(_$_XdgSurfaceState) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -111,7 +110,7 @@ class __$$_ZenithXdgSurfaceStateCopyWithImpl<$Res>
     Object? widgetKey = null,
     Object? popups = null,
   }) {
-    return _then(_$_ZenithXdgSurfaceState(
+    return _then(_$_XdgSurfaceState(
       role: null == role
           ? _value.role
           : role // ignore: cast_nullable_to_non_nullable
@@ -134,8 +133,8 @@ class __$$_ZenithXdgSurfaceStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_ZenithXdgSurfaceState implements _ZenithXdgSurfaceState {
-  const _$_ZenithXdgSurfaceState(
+class _$_XdgSurfaceState implements _XdgSurfaceState {
+  const _$_XdgSurfaceState(
       {required this.role,
       required this.visibleBounds,
       required this.widgetKey,
@@ -158,14 +157,14 @@ class _$_ZenithXdgSurfaceState implements _ZenithXdgSurfaceState {
 
   @override
   String toString() {
-    return 'ZenithXdgSurfaceState(role: $role, visibleBounds: $visibleBounds, widgetKey: $widgetKey, popups: $popups)';
+    return 'XdgSurfaceState(role: $role, visibleBounds: $visibleBounds, widgetKey: $widgetKey, popups: $popups)';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ZenithXdgSurfaceState &&
+            other is _$_XdgSurfaceState &&
             (identical(other.role, role) || other.role == role) &&
             (identical(other.visibleBounds, visibleBounds) ||
                 other.visibleBounds == visibleBounds) &&
@@ -181,17 +180,16 @@ class _$_ZenithXdgSurfaceState implements _ZenithXdgSurfaceState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ZenithXdgSurfaceStateCopyWith<_$_ZenithXdgSurfaceState> get copyWith =>
-      __$$_ZenithXdgSurfaceStateCopyWithImpl<_$_ZenithXdgSurfaceState>(
-          this, _$identity);
+  _$$_XdgSurfaceStateCopyWith<_$_XdgSurfaceState> get copyWith =>
+      __$$_XdgSurfaceStateCopyWithImpl<_$_XdgSurfaceState>(this, _$identity);
 }
 
-abstract class _ZenithXdgSurfaceState implements ZenithXdgSurfaceState {
-  const factory _ZenithXdgSurfaceState(
+abstract class _XdgSurfaceState implements XdgSurfaceState {
+  const factory _XdgSurfaceState(
       {required final XdgSurfaceRole role,
       required final Rect visibleBounds,
       required final GlobalKey<State<StatefulWidget>> widgetKey,
-      required final List<int> popups}) = _$_ZenithXdgSurfaceState;
+      required final List<int> popups}) = _$_XdgSurfaceState;
 
   @override
   XdgSurfaceRole get role;
@@ -203,6 +201,6 @@ abstract class _ZenithXdgSurfaceState implements ZenithXdgSurfaceState {
   List<int> get popups;
   @override
   @JsonKey(ignore: true)
-  _$$_ZenithXdgSurfaceStateCopyWith<_$_ZenithXdgSurfaceState> get copyWith =>
+  _$$_XdgSurfaceStateCopyWith<_$_XdgSurfaceState> get copyWith =>
       throw _privateConstructorUsedError;
 }

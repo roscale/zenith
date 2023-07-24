@@ -1,22 +1,25 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'window_stack_provider.freezed.dart';
 
-final windowStackProvider =
-    StateNotifierProvider<WindowStackNotifierProvider, WindowStack>((ref) => WindowStackNotifierProvider());
+part 'window_stack_provider.g.dart';
 
-class WindowStackNotifierProvider extends StateNotifier<WindowStack> {
-  WindowStackNotifierProvider() : super(const WindowStack(stack: []));
+@Riverpod(keepAlive: true)
+class WindowStack extends _$WindowStack {
+  @override
+  WindowStackState build() {
+    return const WindowStackState(stack: []);
+  }
 
   void set(Iterable<int> list) {
-    state = WindowStack(
+    state = WindowStackState(
       stack: [...list],
     );
   }
 
   void add(int viewId) {
-    state = WindowStack(
+    state = WindowStackState(
       stack: [
         ...state.stack,
         viewId,
@@ -25,7 +28,7 @@ class WindowStackNotifierProvider extends StateNotifier<WindowStack> {
   }
 
   void remove(int viewId) {
-    state = WindowStack(
+    state = WindowStackState(
       stack: [
         for (int id in state.stack)
           if (id != viewId) id
@@ -39,17 +42,17 @@ class WindowStackNotifierProvider extends StateNotifier<WindowStack> {
   }
 
   void clear() {
-    state = const WindowStack(stack: []);
+    state = const WindowStackState(stack: []);
   }
 }
 
 @freezed
-class WindowStack with _$WindowStack {
-  const WindowStack._();
+class WindowStackState with _$WindowStackState {
+  const WindowStackState._();
 
-  const factory WindowStack({
+  const factory WindowStackState({
     required List<int> stack,
-  }) = _WindowStack;
+  }) = _WindowStackState;
 
   Iterable<int> get windows => stack;
 }

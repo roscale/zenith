@@ -1,10 +1,25 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/state/desktop_entries.dart';
 
-final appDrawerFilterProvider = StateProvider((ref) => "");
+part 'app_drawer.g.dart';
 
-final appDrawerFilteredDesktopEntriesProvider = FutureProvider((ref) async {
+@Riverpod(keepAlive: true)
+class AppDrawerFilter extends _$AppDrawerFilter {
+  // Make it public. Was protected in the superclass.
+  @override
+  set state(String value) {
+    super.state = value;
+  }
+
+  @override
+  String build() {
+    return '';
+  }
+}
+
+@Riverpod(keepAlive: true)
+Future<List<LocalizedDesktopEntry>> appDrawerFilteredDesktopEntries(AppDrawerFilteredDesktopEntriesRef ref) async {
   String filter = ref.watch(appDrawerFilterProvider);
   var desktopEntries = await ref.watch(appDrawerDesktopEntriesProvider.future);
 
@@ -51,4 +66,4 @@ final appDrawerFilteredDesktopEntriesProvider = FutureProvider((ref) async {
   filtered.addAll(keywordsMatched);
 
   return filtered;
-});
+}

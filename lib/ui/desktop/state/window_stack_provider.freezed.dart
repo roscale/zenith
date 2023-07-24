@@ -15,27 +15,27 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
-mixin _$WindowStack {
+mixin _$WindowStackState {
   List<int> get stack => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $WindowStackCopyWith<WindowStack> get copyWith =>
+  $WindowStackStateCopyWith<WindowStackState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $WindowStackCopyWith<$Res> {
-  factory $WindowStackCopyWith(
-          WindowStack value, $Res Function(WindowStack) then) =
-      _$WindowStackCopyWithImpl<$Res, WindowStack>;
+abstract class $WindowStackStateCopyWith<$Res> {
+  factory $WindowStackStateCopyWith(
+          WindowStackState value, $Res Function(WindowStackState) then) =
+      _$WindowStackStateCopyWithImpl<$Res, WindowStackState>;
   @useResult
   $Res call({List<int> stack});
 }
 
 /// @nodoc
-class _$WindowStackCopyWithImpl<$Res, $Val extends WindowStack>
-    implements $WindowStackCopyWith<$Res> {
-  _$WindowStackCopyWithImpl(this._value, this._then);
+class _$WindowStackStateCopyWithImpl<$Res, $Val extends WindowStackState>
+    implements $WindowStackStateCopyWith<$Res> {
+  _$WindowStackStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -57,22 +57,22 @@ class _$WindowStackCopyWithImpl<$Res, $Val extends WindowStack>
 }
 
 /// @nodoc
-abstract class _$$_WindowStackCopyWith<$Res>
-    implements $WindowStackCopyWith<$Res> {
-  factory _$$_WindowStackCopyWith(
-          _$_WindowStack value, $Res Function(_$_WindowStack) then) =
-      __$$_WindowStackCopyWithImpl<$Res>;
+abstract class _$$_WindowStackStateCopyWith<$Res>
+    implements $WindowStackStateCopyWith<$Res> {
+  factory _$$_WindowStackStateCopyWith(
+          _$_WindowStackState value, $Res Function(_$_WindowStackState) then) =
+      __$$_WindowStackStateCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({List<int> stack});
 }
 
 /// @nodoc
-class __$$_WindowStackCopyWithImpl<$Res>
-    extends _$WindowStackCopyWithImpl<$Res, _$_WindowStack>
-    implements _$$_WindowStackCopyWith<$Res> {
-  __$$_WindowStackCopyWithImpl(
-      _$_WindowStack _value, $Res Function(_$_WindowStack) _then)
+class __$$_WindowStackStateCopyWithImpl<$Res>
+    extends _$WindowStackStateCopyWithImpl<$Res, _$_WindowStackState>
+    implements _$$_WindowStackStateCopyWith<$Res> {
+  __$$_WindowStackStateCopyWithImpl(
+      _$_WindowStackState _value, $Res Function(_$_WindowStackState) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -80,7 +80,7 @@ class __$$_WindowStackCopyWithImpl<$Res>
   $Res call({
     Object? stack = null,
   }) {
-    return _then(_$_WindowStack(
+    return _then(_$_WindowStackState(
       stack: null == stack
           ? _value._stack
           : stack // ignore: cast_nullable_to_non_nullable
@@ -91,8 +91,8 @@ class __$$_WindowStackCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_WindowStack extends _WindowStack {
-  const _$_WindowStack({required final List<int> stack})
+class _$_WindowStackState extends _WindowStackState {
+  const _$_WindowStackState({required final List<int> stack})
       : _stack = stack,
         super._();
 
@@ -106,14 +106,14 @@ class _$_WindowStack extends _WindowStack {
 
   @override
   String toString() {
-    return 'WindowStack(stack: $stack)';
+    return 'WindowStackState(stack: $stack)';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_WindowStack &&
+            other is _$_WindowStackState &&
             const DeepCollectionEquality().equals(other._stack, _stack));
   }
 
@@ -124,18 +124,19 @@ class _$_WindowStack extends _WindowStack {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_WindowStackCopyWith<_$_WindowStack> get copyWith =>
-      __$$_WindowStackCopyWithImpl<_$_WindowStack>(this, _$identity);
+  _$$_WindowStackStateCopyWith<_$_WindowStackState> get copyWith =>
+      __$$_WindowStackStateCopyWithImpl<_$_WindowStackState>(this, _$identity);
 }
 
-abstract class _WindowStack extends WindowStack {
-  const factory _WindowStack({required final List<int> stack}) = _$_WindowStack;
-  const _WindowStack._() : super._();
+abstract class _WindowStackState extends WindowStackState {
+  const factory _WindowStackState({required final List<int> stack}) =
+      _$_WindowStackState;
+  const _WindowStackState._() : super._();
 
   @override
   List<int> get stack;
   @override
   @JsonKey(ignore: true)
-  _$$_WindowStackCopyWith<_$_WindowStack> get copyWith =>
+  _$$_WindowStackStateCopyWith<_$_WindowStackState> get copyWith =>
       throw _privateConstructorUsedError;
 }

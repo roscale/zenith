@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:zenith/ui/common/surface.dart';
 
-part 'zenith_surface_state.freezed.dart';
+part 'surface_state.freezed.dart';
 
-final zenithSurfaceStateProvider = StateNotifierProvider.family<
-    ZenithSurfaceStateNotifier, ZenithSurfaceState, int>((ref, int viewId) {
-  return ZenithSurfaceStateNotifier(ref, viewId);
-});
+part 'surface_state.g.dart';
 
-enum SurfaceRole {
-  none,
-  xdgSurface,
-  subsurface,
+@Riverpod(keepAlive: true)
+Surface surfaceWidget(SurfaceWidgetRef ref, int viewId) {
+  return Surface(
+    key: ref.watch(surfaceStatesProvider(viewId).select((state) => state.widgetKey)),
+    viewId: viewId,
+  );
 }
 
 @freezed
-class ZenithSurfaceState with _$ZenithSurfaceState {
-  const factory ZenithSurfaceState({
+class SurfaceState with _$SurfaceState {
+  const factory SurfaceState({
     required SurfaceRole role,
     required int viewId,
     required int textureId,
@@ -29,26 +29,27 @@ class ZenithSurfaceState with _$ZenithSurfaceState {
     required List<int> subsurfacesBelow,
     required List<int> subsurfacesAbove,
     required Rect inputRegion,
-  }) = _ZenithSurfaceState;
+  }) = _SurfaceState;
 }
 
-class ZenithSurfaceStateNotifier extends StateNotifier<ZenithSurfaceState> {
-  final Ref ref;
-
-  ZenithSurfaceStateNotifier(this.ref, int viewId)
-      : super(ZenithSurfaceState(
-    role: SurfaceRole.none,
-          viewId: viewId,
-          textureId: -1,
-          surfacePosition: Offset.zero,
-          surfaceSize: Size.zero,
-          scale: 1,
-          widgetKey: GlobalKey(),
-          textureKey: GlobalKey(),
-          subsurfacesBelow: [],
-          subsurfacesAbove: [],
-          inputRegion: Rect.zero,
-        ));
+@Riverpod(keepAlive: true)
+class SurfaceStates extends _$SurfaceStates {
+  @override
+  SurfaceState build(int viewId) {
+    return SurfaceState(
+      role: SurfaceRole.none,
+      viewId: viewId,
+      textureId: -1,
+      surfacePosition: Offset.zero,
+      surfaceSize: Size.zero,
+      scale: 1,
+      widgetKey: GlobalKey(),
+      textureKey: GlobalKey(),
+      subsurfacesBelow: [],
+      subsurfacesAbove: [],
+      inputRegion: Rect.zero,
+    );
+  }
 
   void commit({
     required SurfaceRole role,
@@ -71,4 +72,10 @@ class ZenithSurfaceStateNotifier extends StateNotifier<ZenithSurfaceState> {
       inputRegion: inputRegion,
     );
   }
+}
+
+enum SurfaceRole {
+  none,
+  xdgSurface,
+  subsurface,
 }

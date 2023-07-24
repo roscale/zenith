@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
 import 'package:zenith/ui/mobile/state/virtual_keyboard_state.dart';
 import 'package:zenith/ui/mobile/virtual_keyboard/animated_virtual_keyboard.dart';
@@ -59,7 +59,7 @@ class WithVirtualKeyboardState extends ConsumerState<WithVirtualKeyboard> with S
           final keyboardActivated = ref.watch(virtualKeyboardStateProvider(widget.viewId).select((v) => v.activated));
           final keyboardSize = ref.watch(virtualKeyboardStateProvider(widget.viewId).select((v) => v.keyboardSize));
 
-          ref.read(zenithXdgToplevelStateProvider(widget.viewId).notifier)
+          ref.read(xdgToplevelStatesProvider(widget.viewId).notifier)
             ..maximize(true)
             ..resize(
               constraints.maxWidth.toInt(),

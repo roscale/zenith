@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
-import 'package:zenith/ui/common/app_drawer.dart';
+import 'package:zenith/ui/common/state/app_drawer.dart';
 import 'package:zenith/ui/common/app_icon.dart';
 import 'package:zenith/ui/mobile/state/app_drawer_state.dart';
 import 'package:zenith/util/app_launch.dart';

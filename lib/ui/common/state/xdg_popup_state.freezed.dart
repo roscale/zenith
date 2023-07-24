@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'zenith_xdg_popup_state.dart';
+part of 'xdg_popup_state.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,7 +15,7 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
-mixin _$ZenithXdgPopupState {
+mixin _$XdgPopupState {
   int get parentViewId => throw _privateConstructorUsedError;
   Offset get position => throw _privateConstructorUsedError;
   GlobalKey<AnimationsState> get animationsKey =>
@@ -23,15 +23,15 @@ mixin _$ZenithXdgPopupState {
   bool get isClosing => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ZenithXdgPopupStateCopyWith<ZenithXdgPopupState> get copyWith =>
+  $XdgPopupStateCopyWith<XdgPopupState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ZenithXdgPopupStateCopyWith<$Res> {
-  factory $ZenithXdgPopupStateCopyWith(
-          ZenithXdgPopupState value, $Res Function(ZenithXdgPopupState) then) =
-      _$ZenithXdgPopupStateCopyWithImpl<$Res, ZenithXdgPopupState>;
+abstract class $XdgPopupStateCopyWith<$Res> {
+  factory $XdgPopupStateCopyWith(
+          XdgPopupState value, $Res Function(XdgPopupState) then) =
+      _$XdgPopupStateCopyWithImpl<$Res, XdgPopupState>;
   @useResult
   $Res call(
       {int parentViewId,
@@ -41,9 +41,9 @@ abstract class $ZenithXdgPopupStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ZenithXdgPopupStateCopyWithImpl<$Res, $Val extends ZenithXdgPopupState>
-    implements $ZenithXdgPopupStateCopyWith<$Res> {
-  _$ZenithXdgPopupStateCopyWithImpl(this._value, this._then);
+class _$XdgPopupStateCopyWithImpl<$Res, $Val extends XdgPopupState>
+    implements $XdgPopupStateCopyWith<$Res> {
+  _$XdgPopupStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -80,11 +80,11 @@ class _$ZenithXdgPopupStateCopyWithImpl<$Res, $Val extends ZenithXdgPopupState>
 }
 
 /// @nodoc
-abstract class _$$_ZenithXdgPopupStateCopyWith<$Res>
-    implements $ZenithXdgPopupStateCopyWith<$Res> {
-  factory _$$_ZenithXdgPopupStateCopyWith(_$_ZenithXdgPopupState value,
-          $Res Function(_$_ZenithXdgPopupState) then) =
-      __$$_ZenithXdgPopupStateCopyWithImpl<$Res>;
+abstract class _$$_XdgPopupStateCopyWith<$Res>
+    implements $XdgPopupStateCopyWith<$Res> {
+  factory _$$_XdgPopupStateCopyWith(
+          _$_XdgPopupState value, $Res Function(_$_XdgPopupState) then) =
+      __$$_XdgPopupStateCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -95,11 +95,11 @@ abstract class _$$_ZenithXdgPopupStateCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_ZenithXdgPopupStateCopyWithImpl<$Res>
-    extends _$ZenithXdgPopupStateCopyWithImpl<$Res, _$_ZenithXdgPopupState>
-    implements _$$_ZenithXdgPopupStateCopyWith<$Res> {
-  __$$_ZenithXdgPopupStateCopyWithImpl(_$_ZenithXdgPopupState _value,
-      $Res Function(_$_ZenithXdgPopupState) _then)
+class __$$_XdgPopupStateCopyWithImpl<$Res>
+    extends _$XdgPopupStateCopyWithImpl<$Res, _$_XdgPopupState>
+    implements _$$_XdgPopupStateCopyWith<$Res> {
+  __$$_XdgPopupStateCopyWithImpl(
+      _$_XdgPopupState _value, $Res Function(_$_XdgPopupState) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -110,7 +110,7 @@ class __$$_ZenithXdgPopupStateCopyWithImpl<$Res>
     Object? animationsKey = null,
     Object? isClosing = null,
   }) {
-    return _then(_$_ZenithXdgPopupState(
+    return _then(_$_XdgPopupState(
       parentViewId: null == parentViewId
           ? _value.parentViewId
           : parentViewId // ignore: cast_nullable_to_non_nullable
@@ -133,10 +133,8 @@ class __$$_ZenithXdgPopupStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_ZenithXdgPopupState
-    with DiagnosticableTreeMixin
-    implements _ZenithXdgPopupState {
-  const _$_ZenithXdgPopupState(
+class _$_XdgPopupState with DiagnosticableTreeMixin implements _XdgPopupState {
+  const _$_XdgPopupState(
       {required this.parentViewId,
       required this.position,
       required this.animationsKey,
@@ -153,14 +151,14 @@ class _$_ZenithXdgPopupState
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'ZenithXdgPopupState(parentViewId: $parentViewId, position: $position, animationsKey: $animationsKey, isClosing: $isClosing)';
+    return 'XdgPopupState(parentViewId: $parentViewId, position: $position, animationsKey: $animationsKey, isClosing: $isClosing)';
   }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
     properties
-      ..add(DiagnosticsProperty('type', 'ZenithXdgPopupState'))
+      ..add(DiagnosticsProperty('type', 'XdgPopupState'))
       ..add(DiagnosticsProperty('parentViewId', parentViewId))
       ..add(DiagnosticsProperty('position', position))
       ..add(DiagnosticsProperty('animationsKey', animationsKey))
@@ -171,7 +169,7 @@ class _$_ZenithXdgPopupState
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ZenithXdgPopupState &&
+            other is _$_XdgPopupState &&
             (identical(other.parentViewId, parentViewId) ||
                 other.parentViewId == parentViewId) &&
             (identical(other.position, position) ||
@@ -189,17 +187,16 @@ class _$_ZenithXdgPopupState
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ZenithXdgPopupStateCopyWith<_$_ZenithXdgPopupState> get copyWith =>
-      __$$_ZenithXdgPopupStateCopyWithImpl<_$_ZenithXdgPopupState>(
-          this, _$identity);
+  _$$_XdgPopupStateCopyWith<_$_XdgPopupState> get copyWith =>
+      __$$_XdgPopupStateCopyWithImpl<_$_XdgPopupState>(this, _$identity);
 }
 
-abstract class _ZenithXdgPopupState implements ZenithXdgPopupState {
-  const factory _ZenithXdgPopupState(
+abstract class _XdgPopupState implements XdgPopupState {
+  const factory _XdgPopupState(
       {required final int parentViewId,
       required final Offset position,
       required final GlobalKey<AnimationsState> animationsKey,
-      required final bool isClosing}) = _$_ZenithXdgPopupState;
+      required final bool isClosing}) = _$_XdgPopupState;
 
   @override
   int get parentViewId;
@@ -211,6 +208,6 @@ abstract class _ZenithXdgPopupState implements ZenithXdgPopupState {
   bool get isClosing;
   @override
   @JsonKey(ignore: true)
-  _$$_ZenithXdgPopupStateCopyWith<_$_ZenithXdgPopupState> get copyWith =>
+  _$$_XdgPopupStateCopyWith<_$_XdgPopupState> get copyWith =>
       throw _privateConstructorUsedError;
 }

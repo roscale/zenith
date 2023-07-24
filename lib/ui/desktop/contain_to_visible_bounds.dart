@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 import 'package:zenith/util/rect_overflow_box.dart';
 
 class ContainToVisibleBounds extends ConsumerWidget {
@@ -15,7 +15,7 @@ class ContainToVisibleBounds extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((value) => value.visibleBounds));
+    Rect visibleBounds = ref.watch(xdgSurfaceStatesProvider(viewId).select((value) => value.visibleBounds));
 
     return RectOverflowBox(
       rect: visibleBounds,

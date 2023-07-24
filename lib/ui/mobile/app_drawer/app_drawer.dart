@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/app_drawer.dart';
+import 'package:zenith/ui/common/state/app_drawer.dart';
 import 'package:zenith/ui/mobile/app_drawer/app_grid.dart';
 import 'package:zenith/ui/mobile/state/app_drawer_state.dart';
 

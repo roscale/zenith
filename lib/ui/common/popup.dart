@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/ui/common/surface.dart';
-
-final popupWidget = StateProvider.family<Popup, int>((ref, int viewId) {
-  return Popup(
-    key: ref.read(zenithXdgSurfaceStateProvider(viewId)).widgetKey,
-    viewId: viewId,
-  );
-});
+import 'package:zenith/ui/common/state/surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_popup_state.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 
 class Popup extends StatelessWidget {
   final int viewId;
@@ -27,7 +19,7 @@ class Popup extends StatelessWidget {
       viewId: viewId,
       child: Consumer(
         builder: (BuildContext context, WidgetRef ref, Widget? child) {
-          Key key = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.animationsKey));
+          Key key = ref.watch(xdgPopupStatesProvider(viewId).select((v) => v.animationsKey));
           return _Animations(
             key: key,
             viewId: viewId,
@@ -36,7 +28,7 @@ class Popup extends StatelessWidget {
         },
         child: Consumer(
           builder: (_, WidgetRef ref, __) {
-            return ref.watch(surfaceWidget(viewId));
+            return ref.watch(surfaceWidgetProvider(viewId));
           },
         ),
       ),
@@ -58,18 +50,18 @@ class _Positioner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        Offset position = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.position));
-        Rect visibleBounds = ref.watch(zenithXdgSurfaceStateProvider(viewId).select((v) => v.visibleBounds));
-        int parentId = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.parentViewId));
+        Offset position = ref.watch(xdgPopupStatesProvider(viewId).select((v) => v.position));
+        Rect visibleBounds = ref.watch(xdgSurfaceStatesProvider(viewId).select((v) => v.visibleBounds));
+        int parentId = ref.watch(xdgPopupStatesProvider(viewId).select((v) => v.parentViewId));
         // FIXME: cannot use watch because the popup thinks the window is at 0,0 when these bounds change.
-        Rect parentVisibleBounds = ref.read(zenithXdgSurfaceStateProvider(parentId).select((v) => v.visibleBounds));
+        Rect parentVisibleBounds = ref.read(xdgSurfaceStatesProvider(parentId).select((v) => v.visibleBounds));
 
         RenderBox? parentRenderBox = ref
-            .watch(zenithSurfaceStateProvider(parentId).select((v) => v.textureKey))
+            .watch(surfaceStatesProvider(parentId).select((v) => v.textureKey))
             .currentContext
             ?.findRenderObject() as RenderBox?;
         RenderBox? popupStackRenderBox =
-            ref.watch(popupStackGlobalKey).currentContext?.findRenderObject() as RenderBox?;
+            ref.watch(popupStackGlobalKeyProvider).currentContext?.findRenderObject() as RenderBox?;
 
         Offset offset;
         if (parentRenderBox != null &&
@@ -90,7 +82,7 @@ class _Positioner extends ConsumerWidget {
       },
       child: Consumer(
         builder: (_, WidgetRef ref, Widget? child) {
-          bool isClosing = ref.watch(zenithXdgPopupStateProvider(viewId).select((v) => v.isClosing));
+          bool isClosing = ref.watch(xdgPopupStatesProvider(viewId).select((v) => v.isClosing));
           return IgnorePointer(
             ignoring: isClosing,
             child: child,
@@ -138,7 +130,7 @@ class AnimationsState extends ConsumerState<_Animations> with SingleTickerProvid
   late final Animation<Offset> _offsetAnimation = Tween<Offset>(
     begin: Offset(
       0.0,
-      -10.0 / ref.read(zenithSurfaceStateProvider(widget.viewId)).surfaceSize.height,
+      -10.0 / ref.read(surfaceStatesProvider(widget.viewId)).surfaceSize.height,
     ),
     end: Offset.zero,
   ).animate(CurvedAnimation(

@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'window_move_provider.freezed.dart';
 
-final windowMoveProvider =
-    StateNotifierProvider.family<WindowMoveStateNotifierProvider, WindowMoveState, int>((ref, int viewId) {
-  return WindowMoveStateNotifierProvider(ref, viewId);
-});
+part 'window_move_provider.g.dart';
 
-class WindowMoveStateNotifierProvider extends StateNotifier<WindowMoveState> {
-  final Ref ref;
-  final int viewId;
-
-  WindowMoveStateNotifierProvider(this.ref, this.viewId)
-      : super(
-          const WindowMoveState(
-            moving: false,
-            startPosition: Offset.zero,
-            movedPosition: Offset.zero,
-            delta: Offset.zero,
-          ),
-        );
+@Riverpod(keepAlive: true)
+class WindowMove extends _$WindowMove {
+  @override
+  WindowMoveState build(int viewId) {
+    return const WindowMoveState(
+      moving: false,
+      startPosition: Offset.zero,
+      movedPosition: Offset.zero,
+      delta: Offset.zero,
+    );
+  }
 
   void startPotentialMove() {
     state = state.copyWith(

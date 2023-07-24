@@ -342,6 +342,9 @@ void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
 
 		key_event_channel->Send(json, [this, message](const uint8_t* reply, size_t reply_size) {
 			auto obj = flutter::JsonMessageCodec::GetInstance().DecodeMessage(reply, reply_size);
+			if (obj == nullptr) {
+				return;
+			}
 			auto& handled_object = obj->GetObject()["handled"];
 			bool handled = handled_object.GetBool();
 			if (handled) {

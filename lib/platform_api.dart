@@ -1,20 +1,34 @@
 import 'dart:async';
 
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
-import 'package:zenith/ui/common/state/zenith_subsurface_state.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
-import 'package:zenith/ui/common/subsurface.dart';
-import 'package:zenith/util/state_notifier_list.dart';
+import 'package:zenith/ui/common/state/subsurface_state.dart';
+import 'package:zenith/ui/common/state/surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_popup_state.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 
-final mappedWindowListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
-  return StateNotifierList<int>();
-});
+part 'platform_api.g.dart';
+
+@Riverpod(keepAlive: true)
+class MappedWindowList extends _$MappedWindowList {
+  @override
+  IList<int> build() {
+    return IList();
+  }
+
+  void add(int viewId) => state = state.add(viewId);
+
+  void remove(int viewId) => state = state.remove(viewId);
+}
+
+// final mappedWindowListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
+//   return StateNotifierList<int>();
+// });
 
 final windowMappedStreamProvider = StreamProvider<int>((ref) {
   return PlatformApi.windowMappedController.stream;
@@ -266,7 +280,7 @@ class PlatformApi {
       subsurfaceIdsBelow.add(id);
 
       var position = Offset(x.toDouble(), y.toDouble());
-      ref.read(zenithSubsurfaceStateProvider(id).notifier).commit(position: position);
+      ref.read(subsurfaceStatesProvider(id).notifier).commit(position: position);
     }
 
     for (dynamic subsurface in subsurfacesAbove) {
@@ -277,10 +291,10 @@ class PlatformApi {
       subsurfaceIdsAbove.add(id);
 
       var position = Offset(x.toDouble(), y.toDouble());
-      ref.read(zenithSubsurfaceStateProvider(id).notifier).commit(position: position);
+      ref.read(subsurfaceStatesProvider(id).notifier).commit(position: position);
     }
 
-    ref.read(zenithSurfaceStateProvider(viewId).notifier).commit(
+    ref.read(surfaceStatesProvider(viewId).notifier).commit(
           role: SurfaceRole.values[role],
           textureId: textureId,
           surfacePosition: Offset(x.toDouble(), y.toDouble()),
@@ -300,7 +314,7 @@ class PlatformApi {
       int width = xdgSurface["width"];
       int height = xdgSurface["height"];
 
-      ref.read(zenithXdgSurfaceStateProvider(viewId).notifier).commit(
+      ref.read(xdgSurfaceStatesProvider(viewId).notifier).commit(
             role: XdgSurfaceRole.values[role],
             visibleBounds: Rect.fromLTWH(
               x.toDouble(),
@@ -319,7 +333,7 @@ class PlatformApi {
         int width = xdgPopup["width"];
         int height = xdgPopup["height"];
 
-        ref.read(zenithXdgPopupStateProvider(viewId).notifier).commit(
+        ref.read(xdgPopupStatesProvider(viewId).notifier).commit(
               parentViewId: parentId,
               position: Offset(x.toDouble(), y.toDouble()),
             );
@@ -330,32 +344,31 @@ class PlatformApi {
     if (hasToplevelDecoration) {
       int toplevelDecorationInt = event["toplevel_decoration"];
       var decoration = ToplevelDecoration.fromInt(toplevelDecorationInt);
-      ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setDecoration(decoration);
+      ref.read(xdgToplevelStatesProvider(viewId).notifier).setDecoration(decoration);
     }
 
     bool hasToplevelTitle = event["has_toplevel_title"];
     if (hasToplevelTitle) {
       String title = event["toplevel_title"];
-      ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(title);
+      ref.read(xdgToplevelStatesProvider(viewId).notifier).setTitle(title);
     }
 
     bool hasToplevelAppId = event["has_toplevel_app_id"];
     if (hasToplevelAppId) {
       String appId = event["toplevel_app_id"];
-      ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setAppId(appId);
+      ref.read(xdgToplevelStatesProvider(viewId).notifier).setAppId(appId);
     }
   }
 
   static void _mapXdgSurface(dynamic event) {
     int viewId = event["view_id"];
 
-    XdgSurfaceRole role = ref.read(zenithXdgSurfaceStateProvider(viewId)).role;
+    XdgSurfaceRole role = ref.read(xdgSurfaceStatesProvider(viewId)).role;
+
     switch (role) {
       case XdgSurfaceRole.none:
         if (kDebugMode) {
           assert(false);
-          print("unreachable");
-          print(StackTrace.current);
         }
         break;
       case XdgSurfaceRole.toplevel:
@@ -363,7 +376,7 @@ class PlatformApi {
         windowMappedController.add(viewId);
         break;
       case XdgSurfaceRole.popup:
-        ref.read(popupStackChildren.notifier).add(viewId);
+        ref.read(popupStackChildrenProvider.notifier).add(viewId);
         break;
     }
   }
@@ -371,13 +384,11 @@ class PlatformApi {
   static void _unmapXdgSurface(dynamic event) async {
     int viewId = event["view_id"];
 
-    XdgSurfaceRole role = ref.read(zenithXdgSurfaceStateProvider(viewId)).role;
+    XdgSurfaceRole role = ref.read(xdgSurfaceStatesProvider(viewId)).role;
     switch (role) {
       case XdgSurfaceRole.none:
         if (kDebugMode) {
           assert(false);
-          print("unreachable");
-          print(StackTrace.current);
         }
         break; // Unreachable.
       case XdgSurfaceRole.toplevel:
@@ -385,9 +396,9 @@ class PlatformApi {
         windowUnmappedController.add(viewId);
         break;
       case XdgSurfaceRole.popup:
-        await ref.read(zenithXdgPopupStateProvider(viewId).notifier).animateClosing();
-        PlatformApi.unregisterViewTexture(ref.read(zenithSurfaceStateProvider(viewId)).textureId);
-        ref.read(popupStackChildren.notifier).remove(viewId);
+        await ref.read(xdgPopupStatesProvider(viewId).notifier).animateClosing();
+        PlatformApi.unregisterViewTexture(ref.read(surfaceStatesProvider(viewId)).textureId);
+        ref.read(popupStackChildrenProvider.notifier).remove(viewId);
         break;
     }
   }
@@ -395,14 +406,14 @@ class PlatformApi {
   static void _mapSubsurface(dynamic event) {
     int viewId = event["view_id"];
 
-    ref.read(zenithSubsurfaceStateProvider(viewId).notifier).map(true);
+    ref.read(subsurfaceStatesProvider(viewId).notifier).map(true);
   }
 
   static void _unmapSubsurface(dynamic event) {
     int viewId = event["view_id"];
 
-    ref.read(zenithSubsurfaceStateProvider(viewId).notifier).map(false);
-    ref.invalidate(subsurfaceWidget(viewId));
+    ref.read(subsurfaceStatesProvider(viewId).notifier).map(false);
+    ref.invalidate(subsurfaceWidgetProvider(viewId));
   }
 
   static void _sendTextInputEvent(dynamic event) {
@@ -411,26 +422,26 @@ class PlatformApi {
 
   static void _interactiveMove(dynamic event) {
     int viewId = event["view_id"];
-    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).requestInteractiveMove();
+    ref.read(xdgToplevelStatesProvider(viewId).notifier).requestInteractiveMove();
   }
 
   static void _interactiveResize(dynamic event) {
     int viewId = event["view_id"];
     int edge = event["edge"];
     ResizeEdge resizeEdge = ResizeEdge.fromInt(edge);
-    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).requestInteractiveResize(resizeEdge);
+    ref.read(xdgToplevelStatesProvider(viewId).notifier).requestInteractiveResize(resizeEdge);
   }
 
   static void _setTitle(dynamic event) {
     int viewId = event["view_id"];
     String title = event["title"];
-    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(title);
+    ref.read(xdgToplevelStatesProvider(viewId).notifier).setTitle(title);
   }
 
   static void _setAppId(dynamic event) {
     int viewId = event["view_id"];
     String appId = event["app_id"];
-    ref.read(zenithXdgToplevelStateProvider(viewId).notifier).setTitle(appId);
+    ref.read(xdgToplevelStatesProvider(viewId).notifier).setTitle(appId);
   }
 
   static Future<void> hideKeyboard(int viewId) {

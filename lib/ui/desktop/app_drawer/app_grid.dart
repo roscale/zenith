@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
-import 'package:zenith/ui/common/app_drawer.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/app_icon.dart';
+import 'package:zenith/ui/common/state/app_drawer.dart';
 import 'package:zenith/ui/desktop/app_drawer/app_drawer_button.dart';
 import 'package:zenith/util/app_launch.dart';
 
-final _appWidgetsProvider = Provider<List<Widget>>((ref) {
+part 'app_grid.g.dart';
+
+@Riverpod(keepAlive: true)
+List<AppEntry> appEntryWidget(AppEntryWidgetRef ref) {
   var desktopEntries = ref.watch(appDrawerFilteredDesktopEntriesProvider);
-  if (!desktopEntries.hasValue) {
-    return [];
-  }
-  return [
-    for (var desktopEntry in desktopEntries.value!) AppEntry(desktopEntry: desktopEntry),
-  ];
-});
+  return desktopEntries.maybeWhen(
+    skipLoadingOnReload: true,
+    data: (List<LocalizedDesktopEntry> desktopEntries) =>
+        desktopEntries.map((desktopEntry) => AppEntry(desktopEntry: desktopEntry)).toList(),
+    orElse: () => [],
+  );
+}
 
 class AppGrid extends ConsumerStatefulWidget {
   const AppGrid({super.key});
@@ -26,7 +30,7 @@ class AppGrid extends ConsumerStatefulWidget {
 class _AppGridState extends ConsumerState<AppGrid> {
   @override
   Widget build(BuildContext context) {
-    final widgets = ref.watch(_appWidgetsProvider);
+    final widgets = ref.watch(appEntryWidgetProvider);
 
     return Material(
       color: Colors.transparent,

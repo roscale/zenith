@@ -47,10 +47,10 @@ class AppIconByPath extends StatelessWidget {
         if (file.path.endsWith('.svg')) {
           return Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
             return ref.watch(fileToScalableImageProvider(file.absolute.path)).when(
-              data: (ScalableImage si) {
+              data: (ScalableImage scalableImage) {
                 return SizedBox.expand(
                   child: ScalableImageWidget(
-                    si: si,
+                    si: scalableImage,
                   ),
                 );
               },

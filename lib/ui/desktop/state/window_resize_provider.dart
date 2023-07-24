@@ -1,31 +1,27 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 
 part 'window_resize_provider.freezed.dart';
 
-final windowResizeProvider =
-    StateNotifierProvider.family<WindowResizeStateNotifierProvider, ResizerState, int>((ref, int viewId) {
-  return WindowResizeStateNotifierProvider(viewId);
-});
+part 'window_resize_provider.g.dart';
 
-class WindowResizeStateNotifierProvider extends StateNotifier<ResizerState> {
-  final int viewId;
-
-  WindowResizeStateNotifierProvider(this.viewId)
-      : super(
-          const ResizerState(
-            resizing: false,
-            resizeEdge: null,
-            startSize: Size.zero,
-            wantedSize: Size.zero,
-            delta: Offset.zero,
-          ),
-        );
+@Riverpod(keepAlive: true)
+class WindowResize extends _$WindowResize {
+  @override
+  ResizerState build(int viewId) {
+    return const ResizerState(
+      resizing: false,
+      resizeEdge: null,
+      startSize: Size.zero,
+      wantedSize: Size.zero,
+      delta: Offset.zero,
+    );
+  }
 
   void startPotentialResize() {
     state = state.copyWith(

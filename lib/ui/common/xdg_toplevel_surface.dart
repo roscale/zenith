@@ -3,13 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
-import 'package:zenith/ui/common/surface.dart';
-
-final xdgToplevelSurfaceWidget = StateProvider.family<XdgToplevelSurface, int>((ref, int viewId) {
-  return XdgToplevelSurface(key: ref.read(zenithXdgSurfaceStateProvider(viewId)).widgetKey, viewId: viewId);
-});
+import 'package:zenith/ui/common/state/surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 
 class XdgToplevelSurface extends ConsumerWidget {
   final int viewId;
@@ -26,16 +21,14 @@ class XdgToplevelSurface extends ConsumerWidget {
       onVisibilityChanged: (VisibilityInfo info) {
         bool visible = info.visibleFraction > 0;
         if (ref.context.mounted) {
-          ref.read(zenithXdgToplevelStateProvider(viewId).notifier).visible = visible;
+          ref.read(xdgToplevelStatesProvider(viewId).notifier).visible = visible;
         }
       },
       child: _SurfaceFocus(
         viewId: viewId,
         child: _PointerListener(
           viewId: viewId,
-          child: Surface(
-            viewId: viewId,
-          ),
+          child: ref.watch(surfaceWidgetProvider(viewId)),
         ),
       ),
     );
@@ -69,7 +62,7 @@ class _SurfaceFocus extends ConsumerWidget {
         },
         child: Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            final focusNode = ref.watch(zenithXdgToplevelStateProvider(viewId)).focusNode;
+            final focusNode = ref.watch(xdgToplevelStatesProvider(viewId)).focusNode;
 
             return Focus(
               focusNode: focusNode,
@@ -103,7 +96,7 @@ class _PointerListener extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Listener(
-      onPointerDown: (_) => ref.read(zenithXdgToplevelStateProvider(viewId)).focusNode.requestFocus(),
+      onPointerDown: (_) => ref.read(xdgToplevelStatesProvider(viewId)).focusNode.requestFocus(),
       child: child,
     );
   }

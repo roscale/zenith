@@ -43,6 +43,7 @@ dependencies:
   flutter_portal: ^1.1.4
   glissando: ^0.0.3
   arena_listener: ^0.0.1
+  fast_immutable_collections: ^9.1.5
 
 dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to

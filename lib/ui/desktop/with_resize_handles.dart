@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/state/window_resize_provider.dart';
 
 class WithResizeHandles extends StatelessWidget {
@@ -172,7 +172,7 @@ class ResizeHandle extends ConsumerWidget {
       cursor: _getMouseCursor(),
       child: GestureDetector(
         onPanDown: (_) {
-          Size size = ref.read(zenithXdgSurfaceStateProvider(viewId)).visibleBounds.size;
+          Size size = ref.read(xdgSurfaceStatesProvider(viewId)).visibleBounds.size;
           ref.read(windowResizeProvider(viewId).notifier).startResize(resizeEdge, size);
         },
         onPanUpdate: (DragUpdateDetails details) {

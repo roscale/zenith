@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'zenith_subsurface_state.dart';
+part of 'subsurface_state.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,31 +15,30 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
-mixin _$ZenithSubsurfaceState {
+mixin _$SubsurfaceState {
   Offset get position =>
       throw _privateConstructorUsedError; // relative to the parent
   bool get mapped => throw _privateConstructorUsedError;
   Key get widgetKey => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ZenithSubsurfaceStateCopyWith<ZenithSubsurfaceState> get copyWith =>
+  $SubsurfaceStateCopyWith<SubsurfaceState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ZenithSubsurfaceStateCopyWith<$Res> {
-  factory $ZenithSubsurfaceStateCopyWith(ZenithSubsurfaceState value,
-          $Res Function(ZenithSubsurfaceState) then) =
-      _$ZenithSubsurfaceStateCopyWithImpl<$Res, ZenithSubsurfaceState>;
+abstract class $SubsurfaceStateCopyWith<$Res> {
+  factory $SubsurfaceStateCopyWith(
+          SubsurfaceState value, $Res Function(SubsurfaceState) then) =
+      _$SubsurfaceStateCopyWithImpl<$Res, SubsurfaceState>;
   @useResult
   $Res call({Offset position, bool mapped, Key widgetKey});
 }
 
 /// @nodoc
-class _$ZenithSubsurfaceStateCopyWithImpl<$Res,
-        $Val extends ZenithSubsurfaceState>
-    implements $ZenithSubsurfaceStateCopyWith<$Res> {
-  _$ZenithSubsurfaceStateCopyWithImpl(this._value, this._then);
+class _$SubsurfaceStateCopyWithImpl<$Res, $Val extends SubsurfaceState>
+    implements $SubsurfaceStateCopyWith<$Res> {
+  _$SubsurfaceStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -71,22 +70,22 @@ class _$ZenithSubsurfaceStateCopyWithImpl<$Res,
 }
 
 /// @nodoc
-abstract class _$$_ZenithSubsurfaceStateCopyWith<$Res>
-    implements $ZenithSubsurfaceStateCopyWith<$Res> {
-  factory _$$_ZenithSubsurfaceStateCopyWith(_$_ZenithSubsurfaceState value,
-          $Res Function(_$_ZenithSubsurfaceState) then) =
-      __$$_ZenithSubsurfaceStateCopyWithImpl<$Res>;
+abstract class _$$_SubsurfaceStateCopyWith<$Res>
+    implements $SubsurfaceStateCopyWith<$Res> {
+  factory _$$_SubsurfaceStateCopyWith(
+          _$_SubsurfaceState value, $Res Function(_$_SubsurfaceState) then) =
+      __$$_SubsurfaceStateCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({Offset position, bool mapped, Key widgetKey});
 }
 
 /// @nodoc
-class __$$_ZenithSubsurfaceStateCopyWithImpl<$Res>
-    extends _$ZenithSubsurfaceStateCopyWithImpl<$Res, _$_ZenithSubsurfaceState>
-    implements _$$_ZenithSubsurfaceStateCopyWith<$Res> {
-  __$$_ZenithSubsurfaceStateCopyWithImpl(_$_ZenithSubsurfaceState _value,
-      $Res Function(_$_ZenithSubsurfaceState) _then)
+class __$$_SubsurfaceStateCopyWithImpl<$Res>
+    extends _$SubsurfaceStateCopyWithImpl<$Res, _$_SubsurfaceState>
+    implements _$$_SubsurfaceStateCopyWith<$Res> {
+  __$$_SubsurfaceStateCopyWithImpl(
+      _$_SubsurfaceState _value, $Res Function(_$_SubsurfaceState) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -96,7 +95,7 @@ class __$$_ZenithSubsurfaceStateCopyWithImpl<$Res>
     Object? mapped = null,
     Object? widgetKey = null,
   }) {
-    return _then(_$_ZenithSubsurfaceState(
+    return _then(_$_SubsurfaceState(
       position: null == position
           ? _value.position
           : position // ignore: cast_nullable_to_non_nullable
@@ -115,8 +114,8 @@ class __$$_ZenithSubsurfaceStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_ZenithSubsurfaceState implements _ZenithSubsurfaceState {
-  const _$_ZenithSubsurfaceState(
+class _$_SubsurfaceState implements _SubsurfaceState {
+  const _$_SubsurfaceState(
       {required this.position, required this.mapped, required this.widgetKey});
 
   @override
@@ -129,14 +128,14 @@ class _$_ZenithSubsurfaceState implements _ZenithSubsurfaceState {
 
   @override
   String toString() {
-    return 'ZenithSubsurfaceState(position: $position, mapped: $mapped, widgetKey: $widgetKey)';
+    return 'SubsurfaceState(position: $position, mapped: $mapped, widgetKey: $widgetKey)';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ZenithSubsurfaceState &&
+            other is _$_SubsurfaceState &&
             (identical(other.position, position) ||
                 other.position == position) &&
             (identical(other.mapped, mapped) || other.mapped == mapped) &&
@@ -150,16 +149,15 @@ class _$_ZenithSubsurfaceState implements _ZenithSubsurfaceState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ZenithSubsurfaceStateCopyWith<_$_ZenithSubsurfaceState> get copyWith =>
-      __$$_ZenithSubsurfaceStateCopyWithImpl<_$_ZenithSubsurfaceState>(
-          this, _$identity);
+  _$$_SubsurfaceStateCopyWith<_$_SubsurfaceState> get copyWith =>
+      __$$_SubsurfaceStateCopyWithImpl<_$_SubsurfaceState>(this, _$identity);
 }
 
-abstract class _ZenithSubsurfaceState implements ZenithSubsurfaceState {
-  const factory _ZenithSubsurfaceState(
+abstract class _SubsurfaceState implements SubsurfaceState {
+  const factory _SubsurfaceState(
       {required final Offset position,
       required final bool mapped,
-      required final Key widgetKey}) = _$_ZenithSubsurfaceState;
+      required final Key widgetKey}) = _$_SubsurfaceState;
 
   @override
   Offset get position;
@@ -169,6 +167,6 @@ abstract class _ZenithSubsurfaceState implements ZenithSubsurfaceState {
   Key get widgetKey;
   @override
   @JsonKey(ignore: true)
-  _$$_ZenithSubsurfaceStateCopyWith<_$_ZenithSubsurfaceState> get copyWith =>
+  _$$_SubsurfaceStateCopyWith<_$_SubsurfaceState> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/state/zenith_subsurface_state.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
+import 'package:zenith/ui/common/state/subsurface_state.dart';
+import 'package:zenith/ui/common/state/surface_state.dart';
 import 'package:zenith/ui/common/subsurface.dart';
 import 'package:zenith/ui/common/surface_size.dart';
 import 'package:zenith/ui/common/view_input_listener.dart';
-
-final surfaceWidget = StateProvider.family<Surface, int>((ref, int viewId) {
-  return Surface(
-    key: ref.read(zenithSurfaceStateProvider(viewId)).widgetKey,
-    viewId: viewId,
-  );
-});
 
 class Surface extends ConsumerWidget {
   final int viewId;
@@ -28,26 +21,16 @@ class Surface extends ConsumerWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Consumer(
-            builder: (_, WidgetRef ref, __) {
-              List<Widget> subsurfacesBelow = ref
-                  .watch(zenithSurfaceStateProvider(viewId).select((v) => v.subsurfacesBelow))
-                  .where((e) => ref.watch(zenithSubsurfaceStateProvider(e).select((v) => v.mapped)))
-                  .map((e) => Subsurface(viewId: e))
-                  .toList();
-
-              return Stack(
-                clipBehavior: Clip.none,
-                children: subsurfacesBelow,
-              );
-            },
+          _Subsurfaces(
+            viewId: viewId,
+            layer: _SubsurfaceLayer.below,
           ),
           ViewInputListener(
             viewId: viewId,
             child: Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                Key key = ref.watch(zenithSurfaceStateProvider(viewId).select((v) => v.textureKey));
-                int textureId = ref.watch(zenithSurfaceStateProvider(viewId).select((v) => v.textureId));
+                Key key = ref.watch(surfaceStatesProvider(viewId).select((v) => v.textureKey));
+                int textureId = ref.watch(surfaceStatesProvider(viewId).select((v) => v.textureId));
 
                 return Texture(
                   key: key,
@@ -57,22 +40,43 @@ class Surface extends ConsumerWidget {
               },
             ),
           ),
-          Consumer(
-            builder: (_, WidgetRef ref, __) {
-              List<Widget> subsurfacesAbove = ref
-                  .watch(zenithSurfaceStateProvider(viewId).select((v) => v.subsurfacesAbove))
-                  .where((e) => ref.watch(zenithSubsurfaceStateProvider(e).select((v) => v.mapped)))
-                  .map((e) => Subsurface(viewId: e))
-                  .toList();
-
-              return Stack(
-                clipBehavior: Clip.none,
-                children: subsurfacesAbove,
-              );
-            },
+          _Subsurfaces(
+            viewId: viewId,
+            layer: _SubsurfaceLayer.above,
           ),
         ],
       ),
     );
   }
 }
+
+class _Subsurfaces extends ConsumerWidget {
+  final int viewId;
+  final _SubsurfaceLayer layer;
+
+  const _Subsurfaces({
+    super.key,
+    required this.viewId,
+    required this.layer,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selector = layer == _SubsurfaceLayer.below
+        ? (SurfaceState ss) => ss.subsurfacesBelow
+        : (SurfaceState ss) => ss.subsurfacesAbove;
+
+    List<Widget> subsurfaces = ref
+        .watch(surfaceStatesProvider(viewId).select(selector))
+        .where((id) => ref.watch(subsurfaceStatesProvider(id).select((ss) => ss.mapped)))
+        .map((id) => Subsurface(viewId: id))
+        .toList();
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: subsurfaces,
+    );
+  }
+}
+
+enum _SubsurfaceLayer { below, above }

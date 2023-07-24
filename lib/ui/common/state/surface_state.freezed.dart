@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'zenith_surface_state.dart';
+part of 'surface_state.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -15,7 +15,7 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
-mixin _$ZenithSurfaceState {
+mixin _$SurfaceState {
   SurfaceRole get role => throw _privateConstructorUsedError;
   int get viewId => throw _privateConstructorUsedError;
   int get textureId => throw _privateConstructorUsedError;
@@ -31,15 +31,15 @@ mixin _$ZenithSurfaceState {
   Rect get inputRegion => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
-  $ZenithSurfaceStateCopyWith<ZenithSurfaceState> get copyWith =>
+  $SurfaceStateCopyWith<SurfaceState> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ZenithSurfaceStateCopyWith<$Res> {
-  factory $ZenithSurfaceStateCopyWith(
-          ZenithSurfaceState value, $Res Function(ZenithSurfaceState) then) =
-      _$ZenithSurfaceStateCopyWithImpl<$Res, ZenithSurfaceState>;
+abstract class $SurfaceStateCopyWith<$Res> {
+  factory $SurfaceStateCopyWith(
+          SurfaceState value, $Res Function(SurfaceState) then) =
+      _$SurfaceStateCopyWithImpl<$Res, SurfaceState>;
   @useResult
   $Res call(
       {SurfaceRole role,
@@ -56,9 +56,9 @@ abstract class $ZenithSurfaceStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ZenithSurfaceStateCopyWithImpl<$Res, $Val extends ZenithSurfaceState>
-    implements $ZenithSurfaceStateCopyWith<$Res> {
-  _$ZenithSurfaceStateCopyWithImpl(this._value, this._then);
+class _$SurfaceStateCopyWithImpl<$Res, $Val extends SurfaceState>
+    implements $SurfaceStateCopyWith<$Res> {
+  _$SurfaceStateCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -130,11 +130,11 @@ class _$ZenithSurfaceStateCopyWithImpl<$Res, $Val extends ZenithSurfaceState>
 }
 
 /// @nodoc
-abstract class _$$_ZenithSurfaceStateCopyWith<$Res>
-    implements $ZenithSurfaceStateCopyWith<$Res> {
-  factory _$$_ZenithSurfaceStateCopyWith(_$_ZenithSurfaceState value,
-          $Res Function(_$_ZenithSurfaceState) then) =
-      __$$_ZenithSurfaceStateCopyWithImpl<$Res>;
+abstract class _$$_SurfaceStateCopyWith<$Res>
+    implements $SurfaceStateCopyWith<$Res> {
+  factory _$$_SurfaceStateCopyWith(
+          _$_SurfaceState value, $Res Function(_$_SurfaceState) then) =
+      __$$_SurfaceStateCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -152,11 +152,11 @@ abstract class _$$_ZenithSurfaceStateCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_ZenithSurfaceStateCopyWithImpl<$Res>
-    extends _$ZenithSurfaceStateCopyWithImpl<$Res, _$_ZenithSurfaceState>
-    implements _$$_ZenithSurfaceStateCopyWith<$Res> {
-  __$$_ZenithSurfaceStateCopyWithImpl(
-      _$_ZenithSurfaceState _value, $Res Function(_$_ZenithSurfaceState) _then)
+class __$$_SurfaceStateCopyWithImpl<$Res>
+    extends _$SurfaceStateCopyWithImpl<$Res, _$_SurfaceState>
+    implements _$$_SurfaceStateCopyWith<$Res> {
+  __$$_SurfaceStateCopyWithImpl(
+      _$_SurfaceState _value, $Res Function(_$_SurfaceState) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -174,7 +174,7 @@ class __$$_ZenithSurfaceStateCopyWithImpl<$Res>
     Object? subsurfacesAbove = null,
     Object? inputRegion = null,
   }) {
-    return _then(_$_ZenithSurfaceState(
+    return _then(_$_SurfaceState(
       role: null == role
           ? _value.role
           : role // ignore: cast_nullable_to_non_nullable
@@ -225,8 +225,8 @@ class __$$_ZenithSurfaceStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_ZenithSurfaceState implements _ZenithSurfaceState {
-  const _$_ZenithSurfaceState(
+class _$_SurfaceState implements _SurfaceState {
+  const _$_SurfaceState(
       {required this.role,
       required this.viewId,
       required this.textureId,
@@ -280,14 +280,14 @@ class _$_ZenithSurfaceState implements _ZenithSurfaceState {
 
   @override
   String toString() {
-    return 'ZenithSurfaceState(role: $role, viewId: $viewId, textureId: $textureId, surfacePosition: $surfacePosition, surfaceSize: $surfaceSize, scale: $scale, widgetKey: $widgetKey, textureKey: $textureKey, subsurfacesBelow: $subsurfacesBelow, subsurfacesAbove: $subsurfacesAbove, inputRegion: $inputRegion)';
+    return 'SurfaceState(role: $role, viewId: $viewId, textureId: $textureId, surfacePosition: $surfacePosition, surfaceSize: $surfaceSize, scale: $scale, widgetKey: $widgetKey, textureKey: $textureKey, subsurfacesBelow: $subsurfacesBelow, subsurfacesAbove: $subsurfacesAbove, inputRegion: $inputRegion)';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_ZenithSurfaceState &&
+            other is _$_SurfaceState &&
             (identical(other.role, role) || other.role == role) &&
             (identical(other.viewId, viewId) || other.viewId == viewId) &&
             (identical(other.textureId, textureId) ||
@@ -327,13 +327,12 @@ class _$_ZenithSurfaceState implements _ZenithSurfaceState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ZenithSurfaceStateCopyWith<_$_ZenithSurfaceState> get copyWith =>
-      __$$_ZenithSurfaceStateCopyWithImpl<_$_ZenithSurfaceState>(
-          this, _$identity);
+  _$$_SurfaceStateCopyWith<_$_SurfaceState> get copyWith =>
+      __$$_SurfaceStateCopyWithImpl<_$_SurfaceState>(this, _$identity);
 }
 
-abstract class _ZenithSurfaceState implements ZenithSurfaceState {
-  const factory _ZenithSurfaceState(
+abstract class _SurfaceState implements SurfaceState {
+  const factory _SurfaceState(
       {required final SurfaceRole role,
       required final int viewId,
       required final int textureId,
@@ -344,7 +343,7 @@ abstract class _ZenithSurfaceState implements ZenithSurfaceState {
       required final GlobalKey<State<StatefulWidget>> textureKey,
       required final List<int> subsurfacesBelow,
       required final List<int> subsurfacesAbove,
-      required final Rect inputRegion}) = _$_ZenithSurfaceState;
+      required final Rect inputRegion}) = _$_SurfaceState;
 
   @override
   SurfaceRole get role;
@@ -370,6 +369,6 @@ abstract class _ZenithSurfaceState implements ZenithSurfaceState {
   Rect get inputRegion;
   @override
   @JsonKey(ignore: true)
-  _$$_ZenithSurfaceStateCopyWith<_$_ZenithSurfaceState> get copyWith =>
+  _$$_SurfaceStateCopyWith<_$_SurfaceState> get copyWith =>
       throw _privateConstructorUsedError;
 }

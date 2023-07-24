@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
 
 /// Scales down a window if it doesn't want to resize to the screen size. We don't want windows to be drawn on top of
@@ -26,7 +26,7 @@ class FittedWindow extends ConsumerWidget {
             child: Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
                 Rect visibleBounds = ref.watch(
-                    zenithXdgSurfaceStateProvider(window.viewId)
+                    xdgSurfaceStatesProvider(window.viewId)
                         .select((v) => v.visibleBounds));
 
                 Size biggest = constraints.biggest;

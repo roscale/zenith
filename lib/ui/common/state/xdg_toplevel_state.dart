@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
+import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
 
-part 'zenith_xdg_toplevel_state.freezed.dart';
+part 'xdg_toplevel_state.freezed.dart';
 
-final zenithXdgToplevelStateProvider = StateNotifierProvider.family<
-    ZenithXdgToplevelStateNotifier,
-    ZenithXdgToplevelState,
-    int>((ref, int viewId) {
-  return ZenithXdgToplevelStateNotifier(ref, viewId);
-});
+part 'xdg_toplevel_state.g.dart';
+
+@Riverpod(keepAlive: true)
+XdgToplevelSurface xdgToplevelSurfaceWidget(XdgToplevelSurfaceWidgetRef ref, int viewId) {
+  return XdgToplevelSurface(
+    key: ref.watch(xdgSurfaceStatesProvider(viewId).select((state) => state.widgetKey)),
+    viewId: viewId,
+  );
+}
 
 @freezed
-class ZenithXdgToplevelState with _$ZenithXdgToplevelState {
-  const factory ZenithXdgToplevelState({
+class XdgToplevelState with _$XdgToplevelState {
+  const factory XdgToplevelState({
     required bool visible,
     required Key virtualKeyboardKey,
     required FocusNode focusNode,
@@ -23,41 +28,45 @@ class ZenithXdgToplevelState with _$ZenithXdgToplevelState {
     required ToplevelDecoration decoration,
     required String title,
     required String appId,
-  }) = _ZenithXdgToplevelState;
+  }) = _XdgToplevelState;
 }
 
-class ZenithXdgToplevelStateNotifier
-    extends StateNotifier<ZenithXdgToplevelState> {
-  final Ref _ref;
-  final int _viewId;
+@Riverpod(keepAlive: true)
+class XdgToplevelStates extends _$XdgToplevelStates {
+  @override
+  XdgToplevelState build(int viewId) {
+    final focusNode = FocusNode();
 
-  ZenithXdgToplevelStateNotifier(this._ref, this._viewId)
-      : super(
-          ZenithXdgToplevelState(
-            visible: true,
-            virtualKeyboardKey: GlobalKey(),
-            focusNode: FocusNode(),
-            interactiveMoveRequested: Object(),
-            interactiveResizeRequested: ResizeEdgeObject(ResizeEdge.top),
-            decoration: ToplevelDecoration.none,
-            title: "",
-            appId: "",
-          ),
-        );
+    // Cannot access `state` inside onDispose.
+    ref.onDispose(() {
+      focusNode.dispose();
+    });
+
+    return XdgToplevelState(
+      visible: true,
+      virtualKeyboardKey: GlobalKey(),
+      focusNode: focusNode,
+      interactiveMoveRequested: Object(),
+      interactiveResizeRequested: ResizeEdgeObject(ResizeEdge.top),
+      decoration: ToplevelDecoration.none,
+      title: "",
+      appId: "",
+    );
+  }
 
   set visible(bool value) {
     if (value != state.visible) {
-      PlatformApi.changeWindowVisibility(_viewId, value);
+      PlatformApi.changeWindowVisibility(viewId, value);
       state = state.copyWith(visible: value);
     }
   }
 
   void maximize(bool value) {
-    PlatformApi.maximizeWindow(_viewId, value);
+    PlatformApi.maximizeWindow(viewId, value);
   }
 
   void resize(int width, int height) {
-    PlatformApi.resizeWindow(_viewId, width, height);
+    PlatformApi.resizeWindow(viewId, width, height);
   }
 
   void requestInteractiveMove() {
@@ -88,12 +97,6 @@ class ZenithXdgToplevelStateNotifier
     state = state.copyWith(
       appId: appId,
     );
-  }
-
-  @override
-  void dispose() {
-    state.focusNode.dispose();
-    super.dispose();
   }
 }
 

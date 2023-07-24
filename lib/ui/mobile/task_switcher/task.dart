@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/app_icon.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
 import 'package:zenith/ui/mobile/state/task_state.dart';
 import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
@@ -112,7 +112,7 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
           child: Consumer(
             builder: (_, WidgetRef ref, Widget? child) {
               final virtualKeyboardKey =
-                  ref.watch(zenithXdgToplevelStateProvider(widget.viewId).select((v) => v.virtualKeyboardKey));
+                  ref.watch(xdgToplevelStatesProvider(widget.viewId).select((v) => v.virtualKeyboardKey));
               return WithVirtualKeyboard(
                 key: virtualKeyboardKey,
                 viewId: widget.viewId,
@@ -121,7 +121,7 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
             },
             child: Consumer(
               builder: (_, WidgetRef ref, __) {
-                final window = ref.watch(xdgToplevelSurfaceWidget(widget.viewId));
+                final window = ref.watch(xdgToplevelSurfaceWidgetProvider(widget.viewId));
                 return FittedWindow(
                   alignment: Alignment.topCenter,
                   window: window,
@@ -228,7 +228,7 @@ class TaskIcon extends ConsumerWidget {
           offset: const Offset(0, -80),
           child: Consumer(
             builder: (BuildContext context, WidgetRef ref, Widget? child) {
-              String appId = ref.watch(zenithXdgToplevelStateProvider(viewId).select((v) => v.appId));
+              String appId = ref.watch(xdgToplevelStatesProvider(viewId).select((v) => v.appId));
               return SizedBox(
                 width: 100,
                 height: 100,

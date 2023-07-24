@@ -1,39 +1,43 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/popup.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 
-part 'zenith_xdg_popup_state.freezed.dart';
+part 'xdg_popup_state.freezed.dart';
 
-final zenithXdgPopupStateProvider =
-    StateNotifierProvider.family<ZenithXdgPopupStateNotifier, ZenithXdgPopupState, int>((ref, int viewId) {
-  return ZenithXdgPopupStateNotifier(ref, viewId);
-});
+part 'xdg_popup_state.g.dart';
+
+@Riverpod(keepAlive: true)
+Popup popupWidget(PopupWidgetRef ref, int viewId) {
+  return Popup(
+    key: ref.watch(xdgSurfaceStatesProvider(viewId).select((state) => state.widgetKey)),
+    viewId: viewId,
+  );
+}
 
 @freezed
-class ZenithXdgPopupState with _$ZenithXdgPopupState {
-  const factory ZenithXdgPopupState({
+class XdgPopupState with _$XdgPopupState {
+  const factory XdgPopupState({
     required int parentViewId,
     required Offset position,
     required GlobalKey<AnimationsState> animationsKey,
     required bool isClosing,
-  }) = _ZenithXdgPopupState;
+  }) = _XdgPopupState;
 }
 
-class ZenithXdgPopupStateNotifier extends StateNotifier<ZenithXdgPopupState> {
-  final Ref _ref;
-  final int _viewId;
-
-  ZenithXdgPopupStateNotifier(this._ref, this._viewId)
-      : super(ZenithXdgPopupState(
-          parentViewId: -1,
-          position: Offset.zero,
-          animationsKey: GlobalKey<AnimationsState>(),
-          isClosing: false,
-        ));
+@Riverpod(keepAlive: true)
+class XdgPopupStates extends _$XdgPopupStates {
+  @override
+  XdgPopupState build(int viewId) {
+    return XdgPopupState(
+      parentViewId: -1,
+      position: Offset.zero,
+      animationsKey: GlobalKey<AnimationsState>(),
+      isClosing: false,
+    );
+  }
 
   void commit({
     required int parentViewId,

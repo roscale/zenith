@@ -1,30 +1,56 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
-import 'package:zenith/ui/common/state/zenith_subsurface_state.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_popup_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_toplevel_state.dart';
-import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
+import 'package:zenith/ui/common/state/subsurface_state.dart';
+import 'package:zenith/ui/common/state/surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_popup_state.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/mobile/app_drawer/handle.dart';
 import 'package:zenith/ui/mobile/state/task_state.dart';
 import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
 import 'package:zenith/ui/mobile/task_switcher/invisible_bottom_bar.dart';
 import 'package:zenith/ui/mobile/task_switcher/task_switcher_scroller.dart';
-import 'package:zenith/util/state_notifier_list.dart';
 
-final taskListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
-  return StateNotifierList<int>();
-});
+part 'task_switcher.g.dart';
 
-final closingTaskListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
-  return StateNotifierList<int>();
-});
+@Riverpod(keepAlive: true)
+class TaskList extends _$TaskList {
+  @override
+  IList<int> build() {
+    return IList();
+  }
+
+  void init(Iterable<int> values) => state = IList(values);
+
+  void add(int viewId) => state = state.add(viewId);
+
+  void remove(int viewId) => state = state.remove(viewId);
+
+  int? removeAt(int index) {
+    final removedItem = Output<int>();
+    state = state.removeAt(index, removedItem);
+    return removedItem.value;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ClosingTaskList extends _$ClosingTaskList {
+  @override
+  IList<int> build() {
+    return IList();
+  }
+
+  void add(int viewId) => state = state.add(viewId);
+
+  void remove(int viewId) => state = state.remove(viewId);
+}
 
 final taskSwitcherWidgetStateProvider = StateProvider((ref) => _TaskSwitcherWidgetState());
 
@@ -87,7 +113,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
 
     Future.microtask(() => ref.read(taskSwitcherWidgetStateProvider.notifier).state = this);
 
-    List<int> mappedWindows = ref.read(mappedWindowListProvider);
+    IList<int> mappedWindows = ref.read(mappedWindowListProvider);
 
     double lastPosition = ref.read(taskSwitcherPositionProvider);
     double minScrollExtent = 0;
@@ -179,7 +205,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   }
 
   void _initializeWithTasks(Iterable<int> viewIds) {
-    ref.read(taskListProvider.notifier).set(viewIds);
+    ref.read(taskListProvider.notifier).init(viewIds);
     _updateContentDimensions();
     _repositionTasks();
   }
@@ -246,7 +272,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
 
   /// Resets the position of all tasks where they all should be after the animations are finished.
   void _repositionTasks() {
-    final List<int> tasks = ref.read(taskListProvider);
+    final IList<int> tasks = ref.read(taskListProvider);
     for (int i = 0; i < tasks.length; i++) {
       ref.read(taskPositionProvider(tasks[i]).notifier).state = taskIndexToPosition(i);
     }
@@ -379,22 +405,22 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   }
 
   void _destroyTask(int viewId) {
-    final textureId = ref.read(zenithSurfaceStateProvider(viewId)).textureId;
+    final textureId = ref.read(surfaceStatesProvider(viewId)).textureId;
     PlatformApi.unregisterViewTexture(textureId);
 
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).remove(viewId);
 
-    ref.invalidate(xdgToplevelSurfaceWidget(viewId));
+    ref.invalidate(xdgToplevelSurfaceWidgetProvider(viewId));
     ref.invalidate(taskPositionProvider(viewId));
     ref.invalidate(taskVerticalPositionProvider(viewId));
     ref.invalidate(taskWidgetProvider(viewId));
     ref.invalidate(taskStateProvider(viewId));
-    ref.invalidate(zenithSurfaceStateProvider(viewId));
-    ref.invalidate(zenithXdgSurfaceStateProvider(viewId));
-    ref.invalidate(zenithXdgToplevelStateProvider(viewId));
-    ref.invalidate(zenithXdgPopupStateProvider(viewId));
-    ref.invalidate(zenithSubsurfaceStateProvider(viewId));
+    ref.invalidate(surfaceStatesProvider(viewId));
+    ref.invalidate(xdgSurfaceStatesProvider(viewId));
+    ref.invalidate(xdgToplevelStatesProvider(viewId));
+    ref.invalidate(xdgPopupStatesProvider(viewId));
+    ref.invalidate(subsurfaceStatesProvider(viewId));
   }
 
   int? taskToFocusAfterClosing(int closingTaskIndex) {
@@ -437,7 +463,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
     final viewId = ref.read(taskListProvider)[index];
 
     ref.read(taskSwitcherStateProvider.notifier).inOverview = false;
-    ref.read(zenithXdgToplevelStateProvider(viewId)).focusNode.requestFocus();
+    ref.read(xdgToplevelStatesProvider(viewId)).focusNode.requestFocus();
 
     stopScaleAnimation();
     _scaleAnimationController = AnimationController(
@@ -488,7 +514,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
     if (ref.read(taskListProvider).isNotEmpty) {
       int currentTaskIndex = taskPositionToIndex(position);
       final notifier = ref.read(taskListProvider.notifier);
-      var task = notifier.removeAt(currentTaskIndex);
+      var task = notifier.removeAt(currentTaskIndex)!;
       notifier.add(task);
     }
   }

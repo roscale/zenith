@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_portal/flutter_portal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/desktop/app_drawer/app_drawer_button.dart';
 import 'package:zenith/ui/desktop/task_bar.dart';
 import 'package:zenith/ui/desktop/window_manager.dart';
-import 'package:zenith/ui/mobile/quick_settings/status_bar_with_quick_settings.dart';
 
 class DesktopUi extends ConsumerStatefulWidget {
   const DesktopUi({Key? key}) : super(key: key);

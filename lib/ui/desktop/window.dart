@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/ui/common/state/zenith_xdg_surface_state.dart';
-import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/decorations/with_decorations.dart';
 import 'package:zenith/ui/desktop/interactive_move_and_resize_listener.dart';
 import 'package:zenith/ui/desktop/state/window_move_provider.dart';
@@ -26,7 +26,7 @@ class Window extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(zenithXdgSurfaceStateProvider(viewId).select((v) => v.visibleBounds), (Rect? previous, Rect? next) {
+    ref.listen(xdgSurfaceStatesProvider(viewId).select((v) => v.visibleBounds), (Rect? previous, Rect? next) {
       if (previous != null && next != null) {
         Offset offset = ref.read(windowResizeProvider(viewId).notifier).computeWindowOffset(previous.size, next.size);
         ref.read(windowPositionStateProvider(viewId).notifier).update((state) => state + offset);
@@ -57,7 +57,7 @@ class Window extends ConsumerWidget {
           viewId: viewId,
           child: Consumer(
             builder: (BuildContext context, WidgetRef ref, Widget? child) {
-              return ref.watch(xdgToplevelSurfaceWidget(viewId));
+              return ref.watch(xdgToplevelSurfaceWidgetProvider(viewId));
             },
           ),
         ),

@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
-import 'package:zenith/ui/common/state/zenith_surface_state.dart';
+import 'package:zenith/ui/common/state/surface_state.dart';
 import 'package:zenith/util/mouse_button_tracker.dart';
 import 'package:zenith/util/pointer_focus_manager.dart';
 
@@ -29,7 +29,7 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
 
   @override
   Widget build(BuildContext context) {
-    Rect inputRegion = ref.watch(zenithSurfaceStateProvider(widget.viewId).select((v) => v.inputRegion));
+    Rect inputRegion = ref.watch(surfaceStatesProvider(widget.viewId).select((v) => v.inputRegion));
 
     return Stack(
       clipBehavior: Clip.none,
@@ -41,61 +41,27 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
           rect: inputRegion,
           child: ArenaListener(
             onPointerDown: (PointerDownEvent event) {
-              () async {
-                var position = event.localPosition + inputRegion.topLeft;
-
-                if (event.kind == PointerDeviceKind.mouse) {
-                  await _pointerMoved(position);
-                  await _sendMouseButtonsToPlatform(event.buttons);
-                  pointerFocusManager.startPotentialDrag();
-                } else if (event.kind == PointerDeviceKind.touch) {
-                  await PlatformApi.touchDown(widget.viewId, event.pointer, position);
-                }
-              }();
+              _onPointerDown(event, inputRegion.topLeft);
               return null;
             },
             onPointerMove: (PointerMoveEvent event, GestureDisposition? disposition) {
               if (disposition == GestureDisposition.rejected) {
                 return;
               }
-              () async {
-                var position = event.localPosition + inputRegion.topLeft;
-
-                if (event.kind == PointerDeviceKind.mouse) {
-                  // If a button is being pressed while another one is already down, it's considered a move event, not a down event.
-                  await _sendMouseButtonsToPlatform(event.buttons);
-                  await _pointerMoved(position);
-                } else if (event.kind == PointerDeviceKind.touch) {
-                  await PlatformApi.touchMotion(event.pointer, position);
-                }
-              }();
+              _onPointerMove(event, inputRegion.topLeft);
               return null;
             },
             onPointerUp: (PointerUpEvent event, GestureDisposition? disposition) {
               if (disposition == GestureDisposition.rejected) {
                 return null;
               }
-              () async {
-                if (event.kind == PointerDeviceKind.mouse) {
-                  await _sendMouseButtonsToPlatform(event.buttons);
-                  pointerFocusManager.stopPotentialDrag();
-                } else if (event.kind == PointerDeviceKind.touch) {
-                  await PlatformApi.touchUp(event.pointer);
-                }
-              }();
+              _onPointerUp(event);
               return GestureDisposition.accepted;
             },
             onPointerCancel: (_, __) {
               return GestureDisposition.rejected;
             },
-            onLose: (PointerEvent lastPointerEvent) async {
-              if (lastPointerEvent.kind == PointerDeviceKind.mouse) {
-                await _sendMouseButtonsToPlatform(0);
-                pointerFocusManager.stopPotentialDrag();
-              } else if (lastPointerEvent.kind == PointerDeviceKind.touch) {
-                await PlatformApi.touchCancel(lastPointerEvent.pointer);
-              }
-            },
+            onLose: _onLoseArena,
             child: Listener(
               onPointerHover: (PointerHoverEvent event) {
                 if (event.kind == PointerDeviceKind.mouse) {
@@ -112,6 +78,48 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
         ),
       ],
     );
+  }
+
+  Future<void> _onPointerDown(PointerEvent event, Offset inputRegionTopLeft) async {
+    var position = event.localPosition + inputRegionTopLeft;
+
+    if (event.kind == PointerDeviceKind.mouse) {
+      await _pointerMoved(position);
+      await _sendMouseButtonsToPlatform(event.buttons);
+      pointerFocusManager.startPotentialDrag();
+    } else if (event.kind == PointerDeviceKind.touch) {
+      await PlatformApi.touchDown(widget.viewId, event.pointer, position);
+    }
+  }
+
+  Future<void> _onPointerMove(PointerEvent event, Offset inputRegionTopLeft) async {
+    var position = event.localPosition + inputRegionTopLeft;
+
+    if (event.kind == PointerDeviceKind.mouse) {
+      // If a button is being pressed while another one is already down, it's considered a move event, not a down event.
+      await _sendMouseButtonsToPlatform(event.buttons);
+      await _pointerMoved(position);
+    } else if (event.kind == PointerDeviceKind.touch) {
+      await PlatformApi.touchMotion(event.pointer, position);
+    }
+  }
+
+  Future<void> _onPointerUp(PointerUpEvent event) async {
+    if (event.kind == PointerDeviceKind.mouse) {
+      await _sendMouseButtonsToPlatform(event.buttons);
+      pointerFocusManager.stopPotentialDrag();
+    } else if (event.kind == PointerDeviceKind.touch) {
+      await PlatformApi.touchUp(event.pointer);
+    }
+  }
+
+  void _onLoseArena(PointerEvent lastPointerEvent) async {
+    if (lastPointerEvent.kind == PointerDeviceKind.mouse) {
+      await _sendMouseButtonsToPlatform(0);
+      pointerFocusManager.stopPotentialDrag();
+    } else if (lastPointerEvent.kind == PointerDeviceKind.touch) {
+      await PlatformApi.touchCancel(lastPointerEvent.pointer);
+    }
   }
 
   Future<void> _sendMouseButtonsToPlatform(int buttons) async {
