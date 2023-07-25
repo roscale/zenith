@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/state/window_stack_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
 
-final windowStackGlobalKey = Provider((ref) => GlobalKey());
+part '../../generated/ui/desktop/window_manager.g.dart';
+
+@Riverpod(keepAlive: true)
+GlobalKey windowStackGlobalKey(WindowStackGlobalKeyRef ref) => GlobalKey();
 
 class WindowManager extends ConsumerStatefulWidget {
   const WindowManager({super.key});
@@ -55,9 +59,9 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
 
             return Stack(
               clipBehavior: Clip.none,
-              key: ref.watch(windowStackGlobalKey),
+              key: ref.watch(windowStackGlobalKeyProvider),
               children: [
-                for (int viewId in tasks) ref.watch(windowWidget(viewId)),
+                for (int viewId in tasks) ref.watch(windowWidgetProvider(viewId)),
                 const PopupStack(),
               ],
             );

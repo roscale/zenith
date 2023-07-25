@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/util/state/root_overlay.dart';
 import 'package:zenith/ui/mobile/power_menu.dart';
 
-part 'power_menu_state.freezed.dart';
+part '../../../generated/ui/mobile/state/power_menu_state.freezed.dart';
 
-final powerMenuStateProvider =
-    StateNotifierProvider<PowerMenuStateNotifier, PowerMenuState>((ref) => PowerMenuStateNotifier(ref));
+part '../../../generated/ui/mobile/state/power_menu_state.g.dart';
 
-class PowerMenuStateNotifier extends StateNotifier<PowerMenuState> {
-  Ref ref;
-
-  PowerMenuStateNotifier(this.ref)
-      : super(
-          PowerMenuState(
-            overlayEntry: OverlayEntry(builder: (_) => const PowerMenu()),
-            overlayEntryInserted: false,
-            shown: false,
-            show: Object(),
-            hide: Object(),
-          ),
-        );
+@Riverpod(keepAlive: true)
+class PowerMenuStateNotifier extends _$PowerMenuStateNotifier {
+  @override
+  PowerMenuState build() {
+    return PowerMenuState(
+      overlayEntry: OverlayEntry(builder: (_) => const PowerMenu()),
+      overlayEntryInserted: false,
+      shown: false,
+      show: Object(),
+      hide: Object(),
+    );
+  }
 
   void show() {
     if (!state.overlayEntryInserted) {

@@ -3,9 +3,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/surface.dart';
 
-part 'surface_state.freezed.dart';
+part '../../../generated/ui/common/state/surface_state.freezed.dart';
 
-part 'surface_state.g.dart';
+part '../../../generated/ui/common/state/surface_state.g.dart';
 
 @Riverpod(keepAlive: true)
 Surface surfaceWidget(SurfaceWidgetRef ref, int viewId) {

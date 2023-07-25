@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/desktop/app_drawer/app_drawer_button.dart';
 import 'package:zenith/util/state/ui_mode_state.dart';
 
-final taskBarHeightProvider = Provider<double>((ref) => 50.0);
+part '../../generated/ui/desktop/task_bar.g.dart';
+
+@Riverpod(keepAlive: true)
+double taskBarHeight(TaskBarHeightRef ref) => 50.0;
 
 class TaskBar extends ConsumerWidget {
   const TaskBar({super.key});

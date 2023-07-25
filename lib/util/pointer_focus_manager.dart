@@ -1,9 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
 
-final pointerFocusManagerProvider = Provider((ref) => PointerFocusManager());
+part '../generated/util/pointer_focus_manager.g.dart';
+
+@Riverpod(keepAlive: true)
+PointerFocusManager pointerFocusManager(PointerFocusManagerRef ref) => PointerFocusManager();
 
 /// The problem:
 /// When moving the pointer between 2 MouseRegions, one would trigger an exit event, and the other one an enter event.

@@ -4,13 +4,20 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/enums.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/mobile/state/mobile_lock_screen_widget_state.dart';
 import 'package:zenith/util/state/lock_screen_state.dart';
 import 'package:zenith/util/state/screen_state.dart';
 
-final _authErrorMessage = StateProvider((ref) => "");
+part '../../generated/ui/mobile/lock_screen.g.dart';
+
+@Riverpod(keepAlive: true)
+class _AuthErrorMessage extends _$AuthErrorMessage {
+  @override
+  String build() => "";
+}
 
 class LockScreen extends ConsumerStatefulWidget {
   const LockScreen({super.key});
@@ -50,7 +57,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStat
   }
 
   void _updateOffset() {
-    ref.read(mobileLockScreenWidgetStateProvider.notifier).offset = _slideAnimation!.value;
+    ref.read(mobileLockScreenStateProvider.notifier).offset = _slideAnimation!.value;
   }
 
   @override
@@ -74,8 +81,8 @@ class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStat
             Image.asset("assets/images/background.jpg", fit: BoxFit.cover),
             Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                final offset = ref.watch(mobileLockScreenWidgetStateProvider.select((v) => v.offset));
-                final slideDistance = ref.watch(mobileLockScreenWidgetStateProvider.select((v) => v.slideDistance));
+                final offset = ref.watch(mobileLockScreenStateProvider.select((v) => v.offset));
+                final slideDistance = ref.watch(mobileLockScreenStateProvider.select((v) => v.slideDistance));
                 double progression = offset / slideDistance;
 
                 const double maxBlurAmount = 30;
@@ -93,13 +100,13 @@ class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStat
             ),
             GestureDetector(
               onPanStart: (DragStartDetails details) {
-                ref.read(mobileLockScreenWidgetStateProvider.notifier).startDrag();
+                ref.read(mobileLockScreenStateProvider.notifier).startDrag();
               },
               onPanUpdate: (DragUpdateDetails details) {
-                ref.read(mobileLockScreenWidgetStateProvider.notifier).drag(-details.delta.dy);
+                ref.read(mobileLockScreenStateProvider.notifier).drag(-details.delta.dy);
               },
               onPanEnd: (DragEndDetails details) {
-                ref.read(mobileLockScreenWidgetStateProvider.notifier).endDrag(details.velocity.pixelsPerSecond.dy);
+                ref.read(mobileLockScreenStateProvider.notifier).endDrag(details.velocity.pixelsPerSecond.dy);
               },
             )
           ],
@@ -109,8 +116,8 @@ class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStat
   }
 
   void _registerListeners() {
-    ref.listen(mobileLockScreenWidgetStateProvider.select((v) => v.dragging), (_, bool dragging) {
-      MobileLockScreenWidgetState state = ref.read(mobileLockScreenWidgetStateProvider);
+    ref.listen(mobileLockScreenStateProvider.select((v) => v.dragging), (_, bool dragging) {
+      MobileLockScreenWidgetState state = ref.read(mobileLockScreenStateProvider);
       double velocity = state.dragVelocity;
 
       if (dragging) {
@@ -154,7 +161,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with TickerProviderStat
     ref.listen(lockScreenStateProvider.select((v) => v.locked), (_, bool locked) {
       if (!locked) {
         _unlockFadeAnimationController.forward().whenComplete(() {
-          ref.read(mobileLockScreenWidgetStateProvider.notifier).removeOverlay();
+          ref.read(mobileLockScreenStateProvider.notifier).removeOverlay();
         });
       } else {
         _unlockFadeAnimationController.reset();
@@ -168,8 +175,8 @@ class ClockAndPinAuthenticationStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    double offset = ref.watch(mobileLockScreenWidgetStateProvider.select((v) => v.offset));
-    double slideDistance = ref.watch(mobileLockScreenWidgetStateProvider.select((v) => v.slideDistance));
+    double offset = ref.watch(mobileLockScreenStateProvider.select((v) => v.offset));
+    double slideDistance = ref.watch(mobileLockScreenStateProvider.select((v) => v.slideDistance));
     double progression = offset / slideDistance;
 
     return Stack(
@@ -338,7 +345,7 @@ class AuthErrorMessage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Text(
-      ref.watch(_authErrorMessage),
+      ref.watch(_authErrorMessageProvider),
       style: const TextStyle(
         color: Colors.white,
         fontSize: 20,
@@ -390,7 +397,7 @@ class KeyPad extends ConsumerWidget {
 
     if (!response.success) {
       controller.clear();
-      ref.read(_authErrorMessage.notifier).state = response.message.isNotEmpty ? response.message : "Wrong PIN";
+      ref.read(_authErrorMessageProvider.notifier).state = response.message.isNotEmpty ? response.message : "Wrong PIN";
     } else {
       ref.read(lockScreenStateProvider.notifier).unlock();
     }
@@ -400,7 +407,7 @@ class KeyPad extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     void enterDigit(String digit) {
       controller.text += digit;
-      ref.read(_authErrorMessage.notifier).state = "";
+      ref.read(_authErrorMessageProvider.notifier).state = "";
     }
 
     return Column(

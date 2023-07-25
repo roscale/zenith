@@ -1,40 +1,24 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/mobile/task_switcher/task.dart';
 import 'package:zenith/ui/mobile/task_switcher/task_switcher.dart';
 
-part 'task_state.freezed.dart';
+part '../../../generated/ui/mobile/state/task_state.freezed.dart';
 
-final taskStateProvider = StateNotifierProvider.family<TaskStateNotifier, TaskState, int>((ref, int viewId) {
-  return TaskStateNotifier();
-});
+part '../../../generated/ui/mobile/state/task_state.g.dart';
 
-final taskPositionProvider = StateProvider.family<double, int>((ref, int viewId) {
-  return 0.0;
-});
-
-final taskVerticalPositionProvider = StateProvider.family<double, int>((ref, int viewId) {
-  return 0.0;
-});
-
-final taskWidgetProvider = StateProvider.family<Widget, int>((ref, int viewId) {
-  return Task(
-    key: GlobalKey(),
-    viewId: viewId,
-    onTap: () => ref.read(taskSwitcherWidgetStateProvider).switchToTask(viewId),
-  );
-});
-
-class TaskStateNotifier extends StateNotifier<TaskState> {
-  TaskStateNotifier()
-      : super(
-          const TaskState(
-            dismissState: TaskDismissState.notDismissed,
-            startDismissAnimation: Object(),
-            cancelDismissAnimation: Object(),
-          ),
-        );
+@Riverpod(keepAlive: true)
+class TaskStateNotifier extends _$TaskStateNotifier {
+  @override
+  TaskState build(int viewId) {
+    return const TaskState(
+      dismissState: TaskDismissState.notDismissed,
+      startDismissAnimation: Object(),
+      cancelDismissAnimation: Object(),
+    );
+  }
 
   set dismissState(TaskDismissState value) => state = state.copyWith(dismissState: value);
 
@@ -44,6 +28,31 @@ class TaskStateNotifier extends StateNotifier<TaskState> {
 
   @override
   TaskState get state => super.state;
+}
+
+@Riverpod(keepAlive: true)
+class TaskPosition extends _$TaskPosition {
+  @override
+  double build(int viewId) => 0.0;
+}
+
+@Riverpod(keepAlive: true)
+class TaskVerticalPosition extends _$TaskVerticalPosition {
+  @override
+  double build(int viewId) => 0.0;
+
+  void update(double Function(double) callback) {
+    super.state = callback(state);
+  }
+}
+
+@Riverpod(keepAlive: true)
+Task taskWidget(TaskWidgetRef ref, int viewId) {
+  return Task(
+    key: GlobalKey(),
+    viewId: viewId,
+    onTap: () => ref.read(taskSwitcherWidgetStateNotifierProvider).switchToTask(viewId),
+  );
 }
 
 @freezed

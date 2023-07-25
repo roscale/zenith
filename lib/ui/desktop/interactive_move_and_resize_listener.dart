@@ -51,7 +51,7 @@ class _InteractiveMoveAndResizeListenerState extends ConsumerState<InteractiveMo
       interactiveMoveSubscription = ref.listenManual(
         xdgToplevelStatesProvider(widget.viewId).select((v) => v.interactiveMoveRequested),
         (_, __) {
-          var windowPosition = ref.read(windowPositionStateProvider(widget.viewId));
+          var windowPosition = ref.read(windowPositionProvider(widget.viewId));
           windowMove.startMove(windowPosition);
 
           // We can start moving the window.

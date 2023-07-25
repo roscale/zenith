@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/app_icon.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
-import 'package:zenith/ui/common/xdg_toplevel_surface.dart';
 import 'package:zenith/ui/mobile/state/task_state.dart';
 import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
 import 'package:zenith/ui/mobile/task_switcher/fitted_window.dart';
@@ -90,7 +89,7 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
         child: Consumer(
           builder: (_, WidgetRef ref, Widget? child) {
             final inOverview = ref.watch(taskSwitcherStateProvider.select((v) => v.inOverview));
-            final dismissState = ref.watch(taskStateProvider(widget.viewId).select((v) => v.dismissState));
+            final dismissState = ref.watch(taskStateNotifierProvider(widget.viewId).select((v) => v.dismissState));
 
             // Doing my best to not change the depth of the tree to avoid rebuilding the whole subtree.
             return IgnorePointer(
@@ -136,8 +135,8 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
 
   void _registerListeners() {
     // Start dismiss animation.
-    ref.listen(taskStateProvider(widget.viewId).select((value) => value.startDismissAnimation), (_, __) async {
-      final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
+    ref.listen(taskStateNotifierProvider(widget.viewId).select((value) => value.startDismissAnimation), (_, __) async {
+      final notifier = ref.read(taskStateNotifierProvider(widget.viewId).notifier);
       TaskDismissState dismissState = notifier.state.dismissState;
 
       if (dismissState != TaskDismissState.notDismissed) {
@@ -148,7 +147,7 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
       // If the task is not destroyed after some time, the dismiss is cancelled.
       Future.delayed(const Duration(milliseconds: 500)).then((_) {
         if (mounted) {
-          ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+          ref.read(taskStateNotifierProvider(widget.viewId).notifier).cancelDismissAnimation();
         }
       });
 
@@ -159,8 +158,8 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
     });
 
     // Cancel dismiss animation.
-    ref.listen(taskStateProvider(widget.viewId).select((value) => value.cancelDismissAnimation), (_, __) {
-      final notifier = ref.read(taskStateProvider(widget.viewId).notifier);
+    ref.listen(taskStateNotifierProvider(widget.viewId).select((value) => value.cancelDismissAnimation), (_, __) {
+      final notifier = ref.read(taskStateNotifierProvider(widget.viewId).notifier);
       notifier.dismissState = TaskDismissState.notDismissed;
       _cancelDismissAnimation();
     });
@@ -177,15 +176,15 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
   void _onVerticalDragEnd(DragEndDetails details) {
     if (details.primaryVelocity! < -1000) {
       PlatformApi.closeView(widget.viewId);
-      ref.read(taskStateProvider(widget.viewId).notifier).startDismissAnimation();
+      ref.read(taskStateNotifierProvider(widget.viewId).notifier).startDismissAnimation();
     } else {
-      ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+      ref.read(taskStateNotifierProvider(widget.viewId).notifier).cancelDismissAnimation();
     }
   }
 
   void _onVerticalDragCancel() {
     if (ref.read(taskSwitcherStateProvider).inOverview) {
-      ref.read(taskStateProvider(widget.viewId).notifier).cancelDismissAnimation();
+      ref.read(taskStateNotifierProvider(widget.viewId).notifier).cancelDismissAnimation();
     }
   }
 

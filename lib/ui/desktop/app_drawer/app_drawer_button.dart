@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_portal/flutter_portal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/desktop/app_drawer/app_drawer.dart';
 import 'package:zenith/ui/desktop/task_bar.dart';
 
-final appDrawerVisibleProvider = StateProvider((ref) => false);
+part '../../../generated/ui/desktop/app_drawer/app_drawer_button.g.dart';
+
+@Riverpod(keepAlive: true)
+class AppDrawerVisible extends _$AppDrawerVisible {
+  @override
+  bool build() => false;
+
+  @override
+  set state(bool value) {
+    super.state = value;
+  }
+
+  void update(bool Function(bool) callback) {
+    super.state = callback(state);
+  }
+}
 
 class AppDrawerButton extends ConsumerWidget {
   const AppDrawerButton({super.key});

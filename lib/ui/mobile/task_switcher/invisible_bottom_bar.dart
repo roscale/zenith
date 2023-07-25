@@ -12,7 +12,7 @@ class InvisibleBottomBar extends ConsumerStatefulWidget {
 
 class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   ScrollDragController? drag;
-  late var tm = ref.read(taskSwitcherWidgetStateProvider);
+  late var tm = ref.read(taskSwitcherWidgetStateNotifierProvider);
   int draggingTask = 0;
 
   @override

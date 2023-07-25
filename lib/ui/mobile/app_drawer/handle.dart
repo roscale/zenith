@@ -9,7 +9,7 @@ class AppDrawerHandle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onPanStart: (DragStartDetails details) {
-        ref.read(appDrawerStateProvider.notifier).update(
+        ref.read(appDrawerNotifierProvider.notifier).update(
               (state) => state.copyWith(
                 dragging: true,
                 offset: state.slideDistance,
@@ -17,7 +17,7 @@ class AppDrawerHandle extends ConsumerWidget {
             );
       },
       onPanEnd: (DragEndDetails details) {
-        ref.read(appDrawerStateProvider.notifier).update(
+        ref.read(appDrawerNotifierProvider.notifier).update(
               (state) => state.copyWith(
                 dragging: false,
                 dragVelocity: details.velocity.pixelsPerSecond.dy,
@@ -25,7 +25,7 @@ class AppDrawerHandle extends ConsumerWidget {
             );
       },
       onPanUpdate: (DragUpdateDetails details) {
-        ref.read(appDrawerStateProvider.notifier).update(
+        ref.read(appDrawerNotifierProvider.notifier).update(
               (state) => state.copyWith(
                 offset: (state.offset + details.delta.dy).clamp(0, state.slideDistance),
               ),

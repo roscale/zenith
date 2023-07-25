@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'window_stack_provider.freezed.dart';
+part '../../../generated/ui/desktop/state/window_stack_provider.freezed.dart';
 
-part 'window_stack_provider.g.dart';
+part '../../../generated/ui/desktop/state/window_stack_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class WindowStack extends _$WindowStack {

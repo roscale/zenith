@@ -3,14 +3,38 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:glissando/glissando.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/mobile/virtual_keyboard/key.dart';
 import 'package:zenith/ui/mobile/virtual_keyboard/layouts.dart';
 
-final keyboardLayoutProvider = StateProvider<KbLayout>((ref) => KbLayouts.en.layout);
-final keyboardIdProvider = Provider<int>((ref) => throw UnimplementedError()); // will be overridden
-final keyboardLayerProvider = StateProvider.autoDispose.family<KbLayerEnum, int>((ref, viewId) => KbLayerEnum.first);
-final keyboardCaseProvider = StateProvider.autoDispose.family<Case, int>((ref, viewId) => Case.lowercase);
-final keyboardKeyWidthProvider = StateProvider.family<double, int>((ref, viewId) => 0);
+part '../../../generated/ui/mobile/virtual_keyboard/virtual_keyboard.g.dart';
+
+@Riverpod(keepAlive: true)
+class KeyboardLayout extends _$KeyboardLayout {
+  @override
+  KbLayout build() => KbLayouts.en.layout;
+}
+
+@Riverpod(keepAlive: true)
+int keyboardId(KeyboardIdRef ref) => throw UnimplementedError(); // will be overridden
+
+@riverpod
+class KeyboardLayer extends _$KeyboardLayer {
+  @override
+  KbLayerEnum build(int viewId) => KbLayerEnum.first;
+}
+
+@riverpod
+class KeyboardCase extends _$KeyboardCase {
+  @override
+  Case build(int viewId) => Case.lowercase;
+}
+
+@Riverpod(keepAlive: true)
+class KeyboardKeyWidth extends _$KeyboardKeyWidth {
+  @override
+  double build(int viewId) => 0.0;
+}
 
 class VirtualKeyboard extends ConsumerWidget {
   final VoidCallback onDismiss;

@@ -160,7 +160,7 @@ void _registerPowerButtonHandler(ProviderContainer container) {
     if (!screenState.on) {
       turnedOn = true;
       screenStateNotifier.turnOn();
-      container.read(powerMenuStateProvider.notifier).removeOverlay();
+      container.read(powerMenuStateNotifierProvider.notifier).removeOverlay();
     } else {
       turnedOn = false;
     }
@@ -171,13 +171,13 @@ void _registerPowerButtonHandler(ProviderContainer container) {
     final screenStateNotifier = container.read(screenStateProvider.notifier);
     if (screenState.on && !turnedOn) {
       screenStateNotifier.lockAndTurnOff();
-      container.read(powerMenuStateProvider.notifier).removeOverlay();
+      container.read(powerMenuStateNotifierProvider.notifier).removeOverlay();
     }
   });
 
   container.listen(keyTrackerProvider(powerKey).select((v) => v.longPress), (_, __) {
-    final state = container.read(powerMenuStateProvider);
-    final notifier = container.read(powerMenuStateProvider.notifier);
+    final state = container.read(powerMenuStateNotifierProvider);
+    final notifier = container.read(powerMenuStateNotifierProvider.notifier);
 
     if (!state.shown) {
       notifier.show();

@@ -2,7 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'virtual_keyboard_state.freezed.dart';
+part '../../../generated/ui/mobile/state/virtual_keyboard_state.freezed.dart';
 
 final virtualKeyboardStateProvider = StateNotifierProvider.autoDispose
     .family<VirtualKeyboardStateNotifier, VirtualKeyboardState, int>((ref, int viewId) {

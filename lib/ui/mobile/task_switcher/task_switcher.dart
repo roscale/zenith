@@ -18,7 +18,7 @@ import 'package:zenith/ui/mobile/state/task_switcher_state.dart';
 import 'package:zenith/ui/mobile/task_switcher/invisible_bottom_bar.dart';
 import 'package:zenith/ui/mobile/task_switcher/task_switcher_scroller.dart';
 
-part 'task_switcher.g.dart';
+part '../../../generated/ui/mobile/task_switcher/task_switcher.g.dart';
 
 @Riverpod(keepAlive: true)
 class TaskList extends _$TaskList {
@@ -52,13 +52,29 @@ class ClosingTaskList extends _$ClosingTaskList {
   void remove(int viewId) => state = state.remove(viewId);
 }
 
-final taskSwitcherWidgetStateProvider = StateProvider((ref) => _TaskSwitcherWidgetState());
+@Riverpod(keepAlive: true)
+class TaskSwitcherWidgetStateNotifier extends _$TaskSwitcherWidgetStateNotifier {
+  @override
+  TaskSwitcherWidgetState build() => TaskSwitcherWidgetState();
+}
 
-final taskSwitcherPositionProvider = StateProvider((ref) => 0.0);
+@Riverpod(keepAlive: true)
+class TaskSwitcherPosition extends _$TaskSwitcherPosition {
+  @override
+  double build() => 0.0;
+}
 
-final _scrollPositionMinScrollExtentProvider = StateProvider((ref) => 0.0);
+@Riverpod(keepAlive: true)
+class _ScrollPositionMinScrollExtent extends _$ScrollPositionMinScrollExtent {
+  @override
+  double build() => 0.0;
+}
 
-final _scrollPositionMaxScrollExtentProvider = StateProvider((ref) => 1.0);
+@Riverpod(keepAlive: true)
+class _ScrollPositionMaxScrollExtent extends _$ScrollPositionMaxScrollExtent {
+  @override
+  double build() => 1.0;
+}
 
 class TaskSwitcher extends ConsumerWidget {
   final double spacing;
@@ -93,10 +109,10 @@ class _TaskSwitcherWidget extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<_TaskSwitcherWidget> createState() => _TaskSwitcherWidgetState();
+  ConsumerState<_TaskSwitcherWidget> createState() => TaskSwitcherWidgetState();
 }
 
-class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
+class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
     with TickerProviderStateMixin
     implements ScrollContext {
   late final ScrollPosition scrollPosition;
@@ -111,7 +127,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   void initState() {
     super.initState();
 
-    Future.microtask(() => ref.read(taskSwitcherWidgetStateProvider.notifier).state = this);
+    Future.microtask(() => ref.read(taskSwitcherWidgetStateNotifierProvider.notifier).state = this);
 
     IList<int> mappedWindows = ref.read(mappedWindowListProvider);
 
@@ -262,6 +278,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
       minScrollExtent,
       minScrollExtent + _computeScrollableExtent(taskCount),
     );
+
     ref.read(_scrollPositionMinScrollExtentProvider.notifier).state = scrollPosition.minScrollExtent;
     ref.read(_scrollPositionMaxScrollExtentProvider.notifier).state = scrollPosition.maxScrollExtent;
   }
@@ -294,7 +311,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   double get _interTaskOffset => taskSwitcherConstraints.maxWidth + widget.spacing;
 
   void _closeTaskInOverview(int viewId) async {
-    ref.read(taskStateProvider(viewId).notifier).startDismissAnimation();
+    ref.read(taskStateNotifierProvider(viewId).notifier).startDismissAnimation();
 
     final tasks = ref.read(taskListProvider);
     int closingTaskIndex = tasks.indexOf(viewId);
@@ -415,7 +432,7 @@ class _TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
     ref.invalidate(taskPositionProvider(viewId));
     ref.invalidate(taskVerticalPositionProvider(viewId));
     ref.invalidate(taskWidgetProvider(viewId));
-    ref.invalidate(taskStateProvider(viewId));
+    ref.invalidate(taskStateNotifierProvider(viewId));
     ref.invalidate(surfaceStatesProvider(viewId));
     ref.invalidate(xdgSurfaceStatesProvider(viewId));
     ref.invalidate(xdgToplevelStatesProvider(viewId));

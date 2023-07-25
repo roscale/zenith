@@ -7,7 +7,7 @@ import 'package:zenith/platform_api.dart';
 import 'package:zenith/util/state/display_brightness_state.dart';
 import 'package:zenith/util/state/lock_screen_state.dart';
 
-part 'screen_state.freezed.dart';
+part '../../generated/util/state/screen_state.freezed.dart';
 
 final screenStateProvider = StateNotifierProvider<ScreenStateNotifier, ScreenState>((ref) {
   return ScreenStateNotifier(ref);

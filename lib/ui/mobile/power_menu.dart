@@ -10,9 +10,9 @@ class PowerMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(powerMenuStateProvider.select((v) => v.shown), (_, bool shown) {
+    ref.listen(powerMenuStateNotifierProvider.select((v) => v.shown), (_, bool shown) {
       if (!shown) {
-        ref.read(powerMenuStateProvider.notifier).removeOverlay();
+        ref.read(powerMenuStateNotifierProvider.notifier).removeOverlay();
       }
     });
 
@@ -22,7 +22,7 @@ class PowerMenu extends ConsumerWidget {
         color: Colors.transparent,
         child: GestureDetector(
           onTap: () {
-            ref.read(powerMenuStateProvider.notifier).hide();
+            ref.read(powerMenuStateNotifierProvider.notifier).hide();
           },
           child: Container(
             color: Colors.black26,

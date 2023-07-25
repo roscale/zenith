@@ -27,7 +27,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onPanDown: (DragDownDetails details) {
-        Offset startPosition = ref.read(windowPositionStateProvider(widget.viewId));
+        Offset startPosition = ref.read(windowPositionProvider(widget.viewId));
         ref.read(windowMoveProvider(widget.viewId).notifier).startMove(startPosition);
       },
       onPanUpdate: (DragUpdateDetails details) {

@@ -1,34 +1,32 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/mobile/lock_screen.dart';
 import 'package:zenith/util/state/lock_screen_state.dart';
 import 'package:zenith/util/state/root_overlay.dart';
 
-part 'mobile_lock_screen_widget_state.freezed.dart';
+part '../../../generated/ui/mobile/state/mobile_lock_screen_widget_state.freezed.dart';
 
-final mobileLockScreenWidgetStateProvider =
-    StateNotifierProvider<MobileLockScreenWidgetStateNotifier, MobileLockScreenWidgetState>(
-        (ref) => MobileLockScreenWidgetStateNotifier(ref));
+part '../../../generated/ui/mobile/state/mobile_lock_screen_widget_state.g.dart';
 
-class MobileLockScreenWidgetStateNotifier extends StateNotifier<MobileLockScreenWidgetState> {
-  final Ref ref;
-
-  MobileLockScreenWidgetStateNotifier(this.ref)
-      : super(
-          MobileLockScreenWidgetState(
-            overlayEntry: OverlayEntry(builder: (_) => const LockScreen()),
-            // The session starts locked. If you change these to false, also modify `initialEntries` of the Overlay widget.
-            overlayEntryInserted: false,
-            dragging: false,
-            dragVelocity: 0.0,
-            offset: 0.0,
-            slideDistance: 300.0,
-          ),
-        ) {
+@Riverpod(keepAlive: true)
+class MobileLockScreenState extends _$MobileLockScreenState {
+  @override
+  MobileLockScreenWidgetState build() {
     ref.listen(lockScreenStateProvider.select((v) => v.lock), (_, __) {
       _lock();
     });
+
+    return MobileLockScreenWidgetState(
+      overlayEntry: OverlayEntry(builder: (_) => const LockScreen()),
+      // The session starts locked. If you change these to false, also modify `initialEntries` of the Overlay widget.
+      overlayEntryInserted: false,
+      dragging: false,
+      dragVelocity: 0.0,
+      offset: 0.0,
+      slideDistance: 300.0,
+    );
   }
 
   void startDrag() {
@@ -58,7 +56,10 @@ class MobileLockScreenWidgetStateNotifier extends StateNotifier<MobileLockScreen
 
   void _lock() {
     if (!state.overlayEntryInserted) {
-      ref.read(rootOverlayKeyProvider).currentState?.insert(state.overlayEntry);
+      ref
+          .read(rootOverlayKeyProvider)
+          .currentState
+          ?.insert(state.overlayEntry);
     }
     state = state.copyWith(
       overlayEntryInserted: true,

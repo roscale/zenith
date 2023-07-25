@@ -7,7 +7,7 @@ import 'package:zenith/ui/common/state/app_drawer.dart';
 import 'package:zenith/ui/desktop/app_drawer/app_drawer_button.dart';
 import 'package:zenith/util/app_launch.dart';
 
-part 'app_grid.g.dart';
+part '../../../generated/ui/desktop/app_drawer/app_grid.g.dart';
 
 @Riverpod(keepAlive: true)
 List<AppEntry> appEntryWidget(AppEntryWidgetRef ref) {

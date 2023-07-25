@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/state/app_drawer.dart';
 import 'package:zenith/ui/common/app_icon.dart';
 import 'package:zenith/ui/mobile/state/app_drawer_state.dart';
 import 'package:zenith/util/app_launch.dart';
 
-final _appWidgetsProvider = Provider<List<Widget>>((ref) {
+part '../../../generated/ui/mobile/app_drawer/app_grid.g.dart';
+
+@Riverpod(keepAlive: true)
+List<Widget> _appWidgets(_AppWidgetsRef ref) {
   return ref.watch(appDrawerFilteredDesktopEntriesProvider).when(
-        data: (List<LocalizedDesktopEntry> desktopEntries) {
-          return [
-            for (var desktopEntry in desktopEntries)
-              AppEntry(desktopEntry: desktopEntry),
-          ];
-        },
-        error: (_, __) => [],
-        loading: () => [],
-      );
-});
+    data: (List<LocalizedDesktopEntry> desktopEntries) {
+      return [
+        for (var desktopEntry in desktopEntries)
+          AppEntry(desktopEntry: desktopEntry),
+      ];
+    },
+    error: (_, __) => [],
+    loading: () => [],
+  );
+}
 
 class AppGrid extends ConsumerStatefulWidget {
   final ScrollController scrollController;
@@ -32,7 +36,7 @@ class _AppGridState extends ConsumerState<AppGrid> {
   @override
   Widget build(BuildContext context) {
     final widgets = ref.watch(_appWidgetsProvider);
-    bool dragging = ref.watch(appDrawerStateProvider.select((value) => value.dragging));
+    bool dragging = ref.watch(appDrawerNotifierProvider.select((value) => value.dragging));
 
     return GridView.builder(
       controller: widget.scrollController,
@@ -57,7 +61,7 @@ class AppEntry extends ConsumerWidget {
     return InkWell(
       onTap: () async {
         if (await launchDesktopEntry(desktopEntry.desktopEntry)) {
-          ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(closePanel: Object()));
+          ref.read(appDrawerNotifierProvider.notifier).update((state) => state.copyWith(closePanel: Object()));
         }
       },
       child: Column(

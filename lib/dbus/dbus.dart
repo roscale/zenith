@@ -1,8 +1,11 @@
 import 'package:dbus/dbus.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-final dbusSystemBusProvider = Provider((ref) {
+part '../generated/dbus/dbus.g.dart';
+
+@Riverpod(keepAlive: true)
+DBusClient dbusSystemBus(DbusSystemBusRef ref) {
   final client = DBusClient.system();
   ref.onDispose(() => client.close());
   return client;
-});
+}

@@ -12,7 +12,7 @@ class MobileUi extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Preload providers.
-    ref.read(mobileLockScreenWidgetStateProvider);
+    ref.read(mobileLockScreenStateProvider);
 
     return Stack(
       clipBehavior: Clip.none,

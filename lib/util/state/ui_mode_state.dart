@@ -1,10 +1,14 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part '../../generated/util/state/ui_mode_state.g.dart';
 
 enum UiMode {
   mobile,
   desktop,
 }
 
-final uiModeStateProvider = StateProvider<UiMode>((ref) {
-  return UiMode.desktop;
-});
+@Riverpod(keepAlive: true)
+class UiModeState extends _$UiModeState {
+  @override
+  UiMode build() => UiMode.desktop;
+}

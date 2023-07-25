@@ -12,7 +12,7 @@ import 'package:zenith/ui/common/state/xdg_popup_state.dart';
 import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 
-part 'platform_api.g.dart';
+part 'generated/platform_api.g.dart';
 
 @Riverpod(keepAlive: true)
 class MappedWindowList extends _$MappedWindowList {
@@ -26,17 +26,17 @@ class MappedWindowList extends _$MappedWindowList {
   void remove(int viewId) => state = state.remove(viewId);
 }
 
-// final mappedWindowListProvider = StateNotifierProvider<StateNotifierList<int>, List<int>>((ref) {
-//   return StateNotifierList<int>();
-// });
+@Riverpod(keepAlive: true)
+class WindowMappedStream extends _$WindowMappedStream {
+  @override
+  Stream<int> build() => PlatformApi.windowMappedController.stream;
+}
 
-final windowMappedStreamProvider = StreamProvider<int>((ref) {
-  return PlatformApi.windowMappedController.stream;
-});
-
-final windowUnmappedStreamProvider = StreamProvider<int>((ref) {
-  return PlatformApi.windowUnmappedController.stream;
-});
+@Riverpod(keepAlive: true)
+class WindowUnmappedStream extends _$WindowUnmappedStream {
+  @override
+  Stream<int> build() => PlatformApi.windowUnmappedController.stream;
+}
 
 class PlatformApi {
   // TODO: These statics are really ugly. I should have a singleton instance in Riverpod.

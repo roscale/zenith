@@ -24,13 +24,13 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
   void initState() {
     super.initState();
     _animationController = AnimationController(duration: const Duration(milliseconds: 200), vsync: this);
-    ref.listenManual(appDrawerStateProvider.select((value) => value.dragging), (bool? previous, bool next) {
+    ref.listenManual(appDrawerNotifierProvider.select((value) => value.dragging), (bool? previous, bool next) {
       if (next) {
         cancelAnimations();
       } else {
-        double dragVelocity = ref.read(appDrawerStateProvider).dragVelocity / 100;
-        double offset = ref.read(appDrawerStateProvider).offset;
-        double slideDistance = ref.read(appDrawerStateProvider).slideDistance;
+        double dragVelocity = ref.read(appDrawerNotifierProvider).dragVelocity / 100;
+        double offset = ref.read(appDrawerNotifierProvider).offset;
+        double slideDistance = ref.read(appDrawerNotifierProvider).slideDistance;
 
         if (dragVelocity.abs() > 5) {
           if (dragVelocity.isNegative) {
@@ -48,7 +48,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
       }
     });
 
-    ref.listenManual(appDrawerStateProvider.select((value) => value.closePanel), (_, __) {
+    ref.listenManual(appDrawerNotifierProvider.select((value) => value.closePanel), (_, __) {
       animateClosing(1);
     });
 
@@ -59,7 +59,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(appDrawerStateProvider.select((value) => value.fullyClosed), (_, bool closed) {
+    ref.listen(appDrawerNotifierProvider.select((value) => value.fullyClosed), (_, bool closed) {
       if (closed) {
         _searchController.clear();
       }
@@ -67,9 +67,9 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
 
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        bool interactable = ref.watch(appDrawerStateProvider.select((value) => value.interactable));
-        double offset = ref.watch(appDrawerStateProvider.select((value) => value.offset));
-        double slideDistance = ref.watch(appDrawerStateProvider.select((value) => value.slideDistance));
+        bool interactable = ref.watch(appDrawerNotifierProvider.select((value) => value.interactable));
+        double offset = ref.watch(appDrawerNotifierProvider.select((value) => value.offset));
+        double slideDistance = ref.watch(appDrawerNotifierProvider.select((value) => value.slideDistance));
 
         return IgnorePointer(
           ignoring: !interactable,
@@ -82,7 +82,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
       child: Consumer(
         builder: (_, WidgetRef ref, Widget? child) {
           return Transform.translate(
-            offset: Offset(0, ref.watch(appDrawerStateProvider.select((value) => value.offset))),
+            offset: Offset(0, ref.watch(appDrawerNotifierProvider.select((value) => value.offset))),
             child: child,
           );
         },
@@ -93,10 +93,10 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
             _velocityTracker.addPosition(e.timeStamp, e.localPosition);
           },
           onPointerMove: (e) {
-            final appDrawerState = ref.read(appDrawerStateProvider);
+            final appDrawerState = ref.read(appDrawerNotifierProvider);
 
             if (appDrawerState.draggable) {
-              ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(
+              ref.read(appDrawerNotifierProvider.notifier).update((state) => state.copyWith(
                 dragging: true,
                 offset: (state.offset + e.localDelta.dy).clamp(0, appDrawerState.slideDistance),
               ));
@@ -109,7 +109,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
             final doesntScroll =
                 _scrollController.position.extentBefore == 0 && _scrollController.position.extentAfter == 0;
 
-            ref.read(appDrawerStateProvider.notifier).update(
+            ref.read(appDrawerNotifierProvider.notifier).update(
                   (state) => state.copyWith(
                 dragging: false,
                 draggable: doesntScroll ? true : false,
@@ -164,20 +164,20 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
   }
 
   void animateOpening(double velocity) {
-    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(interactable: true));
+    ref.read(appDrawerNotifierProvider.notifier).update((state) => state.copyWith(interactable: true));
     cancelAnimations();
     animateTo(0, velocity);
   }
 
   void animateClosing(double velocity) {
-    ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(interactable: false));
+    ref.read(appDrawerNotifierProvider.notifier).update((state) => state.copyWith(interactable: false));
     cancelAnimations();
-    animateTo(ref.read(appDrawerStateProvider).slideDistance, velocity);
+    animateTo(ref.read(appDrawerNotifierProvider).slideDistance, velocity);
   }
 
   void animateTo(double target, double velocity) {
     _slideAnimation = _animationController.drive(Tween(
-      begin: ref.read(appDrawerStateProvider).offset,
+      begin: ref.read(appDrawerNotifierProvider).offset,
       end: target,
     ))
       ..addListener(_updateOffset);
@@ -187,7 +187,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with SingleTickerProvider
   }
 
   void _updateOffset() {
-    ref.read(appDrawerStateProvider.notifier).update(
+    ref.read(appDrawerNotifierProvider.notifier).update(
           (state) => state.copyWith(
             offset: _slideAnimation!.value,
             fullyClosed: _slideAnimation!.value == state.slideDistance,
@@ -227,20 +227,20 @@ class _AppDrawerScrollNotificationListenerState extends ConsumerState<AppDrawerS
           // usual scroll notifications like start, update, and overscroll are not sent anymore.
           final metrics = notification.metrics;
           if (metrics.extentBefore == 0.0 && metrics.extentAfter == 0.0) {
-            ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(draggable: true));
+            ref.read(appDrawerNotifierProvider.notifier).update((state) => state.copyWith(draggable: true));
             return true;
           }
         }
 
         if (notification is ScrollStartNotification) {
           _startDragging = notification.metrics.pixels == 0;
-          ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(draggable: false));
+          ref.read(appDrawerNotifierProvider.notifier).update((state) => state.copyWith(draggable: false));
           return true;
         }
 
         if (notification is OverscrollNotification && _startDragging) {
           if (notification.dragDetails != null && notification.overscroll.isNegative) {
-            ref.read(appDrawerStateProvider.notifier).update((state) => state.copyWith(draggable: true));
+            ref.read(appDrawerNotifierProvider.notifier).update((state) => state.copyWith(draggable: true));
             return true;
           }
         }

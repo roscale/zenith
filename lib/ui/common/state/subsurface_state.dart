@@ -3,9 +3,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/subsurface.dart';
 
-part 'subsurface_state.freezed.dart';
+part '../../../generated/ui/common/state/subsurface_state.freezed.dart';
 
-part 'subsurface_state.g.dart';
+part '../../../generated/ui/common/state/subsurface_state.g.dart';
 
 @Riverpod(keepAlive: true)
 Subsurface subsurfaceWidget(SubsurfaceWidgetRef ref, int viewId) {
