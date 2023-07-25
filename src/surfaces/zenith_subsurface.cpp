@@ -23,12 +23,17 @@ void zenith_subsurface_create(wl_listener* listener, void* data) {
 	auto* zenith_subsurface = new ZenithSubsurface(subsurface, zenith_surface_ref);
 	subsurface->data = zenith_subsurface;
 	server->subsurfaces.insert(std::make_pair(zenith_surface->id, zenith_subsurface));
+
+    // FIXME:
+    // The subsurface map event is not always emitted for some reason. This fixes some Firefox dropdowns (the extensions menu)
+    // that should be visible but are not. This also fixes Gnome 2048 which didn't show the number grid before.
+    ZenithServer::instance()->embedder_state->map_subsurface(zenith_surface->id);
 }
 
 void zenith_subsurface_map(wl_listener* listener, void* data) {
 	ZenithSubsurface* zenith_subsurface = wl_container_of(listener, zenith_subsurface, map);
 	size_t id = zenith_subsurface->zenith_surface->id;
-	ZenithServer::instance()->embedder_state->map_subsurface(id);
+    ZenithServer::instance()->embedder_state->map_subsurface(id);
 }
 
 void zenith_subsurface_unmap(wl_listener* listener, void* data) {
