@@ -19,7 +19,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
-        final disableUserControl = ref.watch(taskSwitcherStateProvider.select((v) => v.disableUserControl));
+        final disableUserControl = ref.watch(taskSwitcherStateNotifierProvider.select((v) => v.disableUserControl));
         return AbsorbPointer(
           absorbing: disableUserControl,
           child: child!,
@@ -61,12 +61,12 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
     if (drag == null) {
       return;
     }
-    final notifier = ref.read(taskSwitcherStateProvider.notifier);
+    final notifier = ref.read(taskSwitcherStateNotifierProvider.notifier);
 
     if (ref.read(taskListProvider).isNotEmpty) {
-      double scale = ref.read(taskSwitcherStateProvider).scale;
+      double scale = ref.read(taskSwitcherStateNotifierProvider).scale;
       notifier.scale = (scale + details.delta.dy / taskSwitcherConstraints.maxHeight * 2).clamp(0.5, 1);
-      scale = ref.read(taskSwitcherStateProvider).scale;
+      scale = ref.read(taskSwitcherStateNotifierProvider).scale;
 
       drag?.update(DragUpdateDetails(
         sourceTimeStamp: details.sourceTimeStamp!,
@@ -110,7 +110,7 @@ class _InvisibleBottomBarState extends ConsumerState<InvisibleBottomBar> {
     } else {
       // Lift finger while standing still.
       int taskInFront = tm.taskPositionToIndex(tm.position);
-      if (taskInFront != draggingTask || ref.read(taskSwitcherStateProvider).scale > 0.9) {
+      if (taskInFront != draggingTask || ref.read(taskSwitcherStateNotifierProvider).scale > 0.9) {
         tm.switchToTaskByIndex(taskInFront);
       } else {
         tm.showOverview();

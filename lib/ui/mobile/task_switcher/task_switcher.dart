@@ -90,7 +90,7 @@ class TaskSwitcher extends ConsumerWidget {
       builder: (BuildContext context, BoxConstraints constraints) {
         taskSwitcherConstraints = constraints;
         Future.microtask(() {
-          ref.read(taskSwitcherStateProvider.notifier).constraintsHaveChanged();
+          ref.read(taskSwitcherStateNotifierProvider.notifier).constraintsHaveChanged();
         });
         return _TaskSwitcherWidget(
           spacing: spacing,
@@ -169,7 +169,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
       });
     });
 
-    PlatformApi.startWindowsMaximized(true);
+    ref.read(platformApiProvider.notifier).startWindowsMaximized(true);
   }
 
   @override
@@ -238,7 +238,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   }
 
   Future<void> _closeTask(int viewId) async {
-    bool inOverview = ref.read(taskSwitcherStateProvider).inOverview;
+    bool inOverview = ref.read(taskSwitcherStateNotifierProvider).inOverview;
     if (inOverview) {
       return _closeTaskInOverview(viewId);
     } else {
@@ -247,7 +247,9 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   }
 
   void _constraintsChanged(BoxConstraints constraints) {
-    PlatformApi.maximizedWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
+    ref
+        .read(platformApiProvider.notifier)
+        .maximizedWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
 
     // addPostFrameCallback needed because riverpod triggers setState which cannot be called during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -380,7 +382,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
 
   void _closeTaskNotInOverview(int viewId) async {
     final tasks = ref.read(taskListProvider);
-    final notifier = ref.read(taskSwitcherStateProvider.notifier);
+    final notifier = ref.read(taskSwitcherStateNotifierProvider.notifier);
 
     int closingTask = tasks.indexOf(viewId);
     int? focusingTask = taskToFocusAfterClosing(closingTask);
@@ -423,7 +425,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
 
   void _destroyTask(int viewId) {
     final textureId = ref.read(surfaceStatesProvider(viewId)).textureId;
-    PlatformApi.unregisterViewTexture(textureId);
+    ref.read(platformApiProvider.notifier).unregisterViewTexture(textureId);
 
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).remove(viewId);
@@ -464,7 +466,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   }
 
   Future<void> switchToTask(int viewId) async {
-    final notifier = ref.read(taskSwitcherStateProvider.notifier);
+    final notifier = ref.read(taskSwitcherStateNotifierProvider.notifier);
     notifier.areAnimationsPlaying = true;
     try {
       await switchToTaskByIndex(ref.read(taskListProvider).indexOf(viewId));
@@ -479,7 +481,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   Future<void> switchToTaskByIndex(int index, {bool zoomOut = false}) async {
     final viewId = ref.read(taskListProvider)[index];
 
-    ref.read(taskSwitcherStateProvider.notifier).inOverview = false;
+    ref.read(taskSwitcherStateNotifierProvider.notifier).inOverview = false;
     ref.read(xdgToplevelStatesProvider(viewId)).focusNode.requestFocus();
 
     stopScaleAnimation();
@@ -494,7 +496,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
       curve: Curves.easeOutCubic,
     );
 
-    final scale = ref.read(taskSwitcherStateProvider).scale;
+    final scale = ref.read(taskSwitcherStateNotifierProvider).scale;
 
     Animatable<double> scaleAnimatable;
     if (zoomOut) {
@@ -515,7 +517,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
       ).chain(CurveTween(curve: Curves.easeOutCubic));
     }
 
-    final notifier = ref.read(taskSwitcherStateProvider.notifier);
+    final notifier = ref.read(taskSwitcherStateNotifierProvider.notifier);
 
     final scaleAnimation = _scaleAnimationController!.drive(scaleAnimatable);
     scaleAnimation.addListener(() => notifier.scale = scaleAnimation.value);
@@ -542,7 +544,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   }
 
   Future<void> showOverview() async {
-    final notifier = ref.read(taskSwitcherStateProvider.notifier);
+    final notifier = ref.read(taskSwitcherStateNotifierProvider.notifier);
     notifier.inOverview = true;
 
     stopScaleAnimation();
@@ -559,7 +561,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
 
     final scaleAnimation = _scaleAnimationController!.drive(
       Tween(
-        begin: ref.read(taskSwitcherStateProvider).scale,
+        begin: ref.read(taskSwitcherStateNotifierProvider).scale,
         end: 0.6,
       ).chain(CurveTween(curve: Curves.easeOutCubic)),
     );

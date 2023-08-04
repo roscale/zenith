@@ -51,7 +51,7 @@ class _QuickSettingsState extends ConsumerState<QuickSettings> {
                     padding: EdgeInsets.zero,
                   ),
                   IconButton(
-                    onPressed: () => ref.read(screenStateProvider.notifier).rotateClockwise(),
+                    onPressed: () => ref.read(screenStateNotifierProvider.notifier).rotateClockwise(),
                     icon: Transform.scale(
                       scaleX: -1,
                       child: const Icon(Icons.screen_rotation, size: 30),
@@ -59,7 +59,7 @@ class _QuickSettingsState extends ConsumerState<QuickSettings> {
                     padding: EdgeInsets.zero,
                   ),
                   IconButton(
-                    onPressed: () => ref.read(screenStateProvider.notifier).rotateCounterclockwise(),
+                    onPressed: () => ref.read(screenStateNotifierProvider.notifier).rotateCounterclockwise(),
                     icon: const Icon(Icons.screen_rotation, size: 30),
                     padding: EdgeInsets.zero,
                   ),

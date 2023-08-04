@@ -23,7 +23,7 @@ class _TaskSwitcherScrollerState extends ConsumerState<TaskSwitcherScroller> {
 
   @override
   Widget build(BuildContext context) {
-    final inOverview = ref.watch(taskSwitcherStateProvider.select((v) => v.inOverview));
+    final inOverview = ref.watch(taskSwitcherStateNotifierProvider.select((v) => v.inOverview));
 
     Map<Type, GestureRecognizerFactory> gestures = inOverview
         ? {
@@ -49,7 +49,7 @@ class _TaskSwitcherScrollerState extends ConsumerState<TaskSwitcherScroller> {
   }
 
   void _handleDragDown(DragDownDetails details) {
-    if (!ref.read(taskSwitcherStateProvider).inOverview) {
+    if (!ref.read(taskSwitcherStateNotifierProvider).inOverview) {
       return;
     }
     assert(_drag == null);
@@ -58,7 +58,7 @@ class _TaskSwitcherScrollerState extends ConsumerState<TaskSwitcherScroller> {
   }
 
   void _handleDragStart(DragStartDetails details) {
-    if (!ref.read(taskSwitcherStateProvider).inOverview) {
+    if (!ref.read(taskSwitcherStateNotifierProvider).inOverview) {
       return;
     }
     // It's possible for _hold to become null between _handleDragDown and
@@ -71,10 +71,10 @@ class _TaskSwitcherScrollerState extends ConsumerState<TaskSwitcherScroller> {
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
-    if (!ref.read(taskSwitcherStateProvider).inOverview) {
+    if (!ref.read(taskSwitcherStateNotifierProvider).inOverview) {
       return;
     }
-    double scale = ref.read(taskSwitcherStateProvider).scale;
+    double scale = ref.read(taskSwitcherStateNotifierProvider).scale;
     // _drag might be null if the drag activity ended and called _disposeDrag.
     assert(_hold == null || _drag == null);
     _drag?.update(DragUpdateDetails(
@@ -89,7 +89,7 @@ class _TaskSwitcherScrollerState extends ConsumerState<TaskSwitcherScroller> {
   void _handleDragEnd(DragEndDetails details) {
     // _drag might be null if the drag activity ended and called _disposeDrag.
     assert(_hold == null || _drag == null);
-    double scale = ref.read(taskSwitcherStateProvider).scale;
+    double scale = ref.read(taskSwitcherStateNotifierProvider).scale;
     _drag?.end(DragEndDetails(
       velocity: Velocity(pixelsPerSecond: details.velocity.pixelsPerSecond / scale),
       primaryVelocity: details.primaryVelocity != null ? details.primaryVelocity! / scale : null,

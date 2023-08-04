@@ -61,7 +61,7 @@ class WindowResize extends _$WindowResize {
       int width = max(1, state.wantedSize.width.toInt());
       int height = max(1, state.wantedSize.height.toInt());
 
-      PlatformApi.resizeWindow(
+      ref.read(platformApiProvider.notifier).resizeWindow(
         viewId,
         width,
         height,
@@ -94,7 +94,7 @@ class WindowResize extends _$WindowResize {
     int width = max(1, state.wantedSize.width.toInt());
     int height = max(1, state.wantedSize.height.toInt());
 
-    PlatformApi.resizeWindow(
+    ref.read(platformApiProvider.notifier).resizeWindow(
       viewId,
       width,
       height,

@@ -1,12 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of '../../../../ui/desktop/state/window_resize_provider.dart';
+part of '../../../../ui/mobile/state/virtual_keyboard_state.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$windowResizeHash() => r'8470126cda7504cd9e09da52240ef174176a72d6';
+String _$virtualKeyboardStateNotifierHash() =>
+    r'92da59f7e63883ea311ccb112e62bb58920c14fd';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -29,35 +30,37 @@ class _SystemHash {
   }
 }
 
-abstract class _$WindowResize extends BuildlessNotifier<ResizerState> {
+abstract class _$VirtualKeyboardStateNotifier
+    extends BuildlessAutoDisposeNotifier<VirtualKeyboardState> {
   late final int viewId;
 
-  ResizerState build(
+  VirtualKeyboardState build(
     int viewId,
   );
 }
 
-/// See also [WindowResize].
-@ProviderFor(WindowResize)
-const windowResizeProvider = WindowResizeFamily();
+/// See also [VirtualKeyboardStateNotifier].
+@ProviderFor(VirtualKeyboardStateNotifier)
+const virtualKeyboardStateNotifierProvider =
+    VirtualKeyboardStateNotifierFamily();
 
-/// See also [WindowResize].
-class WindowResizeFamily extends Family<ResizerState> {
-  /// See also [WindowResize].
-  const WindowResizeFamily();
+/// See also [VirtualKeyboardStateNotifier].
+class VirtualKeyboardStateNotifierFamily extends Family<VirtualKeyboardState> {
+  /// See also [VirtualKeyboardStateNotifier].
+  const VirtualKeyboardStateNotifierFamily();
 
-  /// See also [WindowResize].
-  WindowResizeProvider call(
+  /// See also [VirtualKeyboardStateNotifier].
+  VirtualKeyboardStateNotifierProvider call(
     int viewId,
   ) {
-    return WindowResizeProvider(
+    return VirtualKeyboardStateNotifierProvider(
       viewId,
     );
   }
 
   @override
-  WindowResizeProvider getProviderOverride(
-    covariant WindowResizeProvider provider,
+  VirtualKeyboardStateNotifierProvider getProviderOverride(
+    covariant VirtualKeyboardStateNotifierProvider provider,
   ) {
     return call(
       provider.viewId,
@@ -76,33 +79,35 @@ class WindowResizeFamily extends Family<ResizerState> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'windowResizeProvider';
+  String? get name => r'virtualKeyboardStateNotifierProvider';
 }
 
-/// See also [WindowResize].
-class WindowResizeProvider
-    extends NotifierProviderImpl<WindowResize, ResizerState> {
-  /// See also [WindowResize].
-  WindowResizeProvider(
+/// See also [VirtualKeyboardStateNotifier].
+class VirtualKeyboardStateNotifierProvider
+    extends AutoDisposeNotifierProviderImpl<VirtualKeyboardStateNotifier,
+        VirtualKeyboardState> {
+  /// See also [VirtualKeyboardStateNotifier].
+  VirtualKeyboardStateNotifierProvider(
     this.viewId,
   ) : super.internal(
-          () => WindowResize()..viewId = viewId,
-          from: windowResizeProvider,
-          name: r'windowResizeProvider',
+          () => VirtualKeyboardStateNotifier()..viewId = viewId,
+          from: virtualKeyboardStateNotifierProvider,
+          name: r'virtualKeyboardStateNotifierProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$windowResizeHash,
-          dependencies: WindowResizeFamily._dependencies,
+                  : _$virtualKeyboardStateNotifierHash,
+          dependencies: VirtualKeyboardStateNotifierFamily._dependencies,
           allTransitiveDependencies:
-              WindowResizeFamily._allTransitiveDependencies,
+              VirtualKeyboardStateNotifierFamily._allTransitiveDependencies,
         );
 
   final int viewId;
 
   @override
   bool operator ==(Object other) {
-    return other is WindowResizeProvider && other.viewId == viewId;
+    return other is VirtualKeyboardStateNotifierProvider &&
+        other.viewId == viewId;
   }
 
   @override
@@ -114,8 +119,8 @@ class WindowResizeProvider
   }
 
   @override
-  ResizerState runNotifierBuild(
-    covariant WindowResize notifier,
+  VirtualKeyboardState runNotifierBuild(
+    covariant VirtualKeyboardStateNotifier notifier,
   ) {
     return notifier.build(
       viewId,

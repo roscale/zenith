@@ -111,7 +111,7 @@ class XdgToplevelSurfaceWidgetProvider extends Provider<XdgToplevelSurface> {
   }
 }
 
-String _$xdgToplevelStatesHash() => r'1a8e09bd7297b4ce0c4fd3163abd8f1e212e7a25';
+String _$xdgToplevelStatesHash() => r'3021dbfd26a1518c278877e5bdc41b4bb0e9ba8f';
 
 abstract class _$XdgToplevelStates extends BuildlessNotifier<XdgToplevelState> {
   late final int viewId;

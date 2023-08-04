@@ -29,33 +29,42 @@ class MappedWindowList extends _$MappedWindowList {
 @Riverpod(keepAlive: true)
 class WindowMappedStream extends _$WindowMappedStream {
   @override
-  Stream<int> build() => PlatformApi.windowMappedController.stream;
+  Stream<int> build() => ref.watch(platformApiProvider).windowMappedStream;
+}
+
+@Riverpod(keepAlive: true)
+Stream<dynamic> _textInputEventStreamById(_TextInputEventStreamByIdRef ref, int viewId) {
+  return ref.watch(platformApiProvider).textInputEventsStream.where((event) => event["view_id"] == viewId);
+}
+
+@Riverpod(keepAlive: true)
+Future<TextInputEventType> textInputEventStream(TextInputEventStreamRef ref, int viewId) async {
+  dynamic event = await ref.watch(_textInputEventStreamByIdProvider(viewId).future);
+  switch (event["type"]) {
+    case "enable":
+      return TextInputEnable();
+    case "disable":
+      return TextInputDisable();
+    case "commit":
+      return TextInputCommit();
+    default:
+      throw ArgumentError.value(event["type"], "Must be 'enable', 'disable', or 'commit'", "event['type']");
+  }
 }
 
 @Riverpod(keepAlive: true)
 class WindowUnmappedStream extends _$WindowUnmappedStream {
   @override
-  Stream<int> build() => PlatformApi.windowUnmappedController.stream;
+  Stream<int> build() => ref.watch(platformApiProvider).windowUnmappedStream;
 }
 
-class PlatformApi {
-  // TODO: These statics are really ugly. I should have a singleton instance in Riverpod.
+@Riverpod(keepAlive: true)
+class PlatformApi extends _$PlatformApi {
+  @override
+  PlatformApiState build() => PlatformApiState();
 
-  static late final ProviderContainer ref;
-
-  static final StreamController<dynamic> textInputEventsStreamController = StreamController();
-
-  static final textInputEventsStream = textInputEventsStreamController.stream.asBroadcastStream();
-
-  static const MethodChannel platform = MethodChannel('platform');
-
-  static final windowMappedController = StreamController<int>.broadcast();
-
-  static final windowUnmappedController = StreamController<int>.broadcast();
-
-  static void init(ProviderContainer ref) {
-    PlatformApi.ref = ref;
-    PlatformApi.platform.setMethodCallHandler((call) async {
+  void init() {
+    state.platform.setMethodCallHandler((call) async {
       switch (call.method) {
         case "commit_surface":
           _commitSurface(call.arguments);
@@ -96,48 +105,48 @@ class PlatformApi {
     });
   }
 
-  static Future<void> startupComplete() {
-    return platform.invokeMethod("startup_complete");
+  Future<void> startupComplete() {
+    return state.platform.invokeMethod("startup_complete");
   }
 
-  static Future<void> pointerHoversView(int viewId, Offset position) {
-    return platform.invokeMethod("pointer_hover", {
+  Future<void> pointerHoversView(int viewId, Offset position) {
+    return state.platform.invokeMethod("pointer_hover", {
       "view_id": viewId,
       "x": position.dx,
       "y": position.dy,
     });
   }
 
-  static Future<void> sendMouseButtonEventToView(int button, bool isPressed) {
+  Future<void> sendMouseButtonEventToView(int button, bool isPressed) {
     // One might find surprising that the view id is not sent to the platform. This is because the view id is only sent
     // when the pointer moves, and when a button event happens, the platform already knows which view it hovers.
-    return platform.invokeMethod("mouse_button_event", {
+    return state.platform.invokeMethod("mouse_button_event", {
       "button": button,
       "is_pressed": isPressed,
     });
   }
 
-  static Future<void> pointerExitsView() {
-    return platform.invokeMethod("pointer_exit");
+  Future<void> pointerExitsView() {
+    return state.platform.invokeMethod("pointer_exit");
   }
 
-  static Future<void> activateWindow(int viewId, bool activate) {
-    return platform.invokeMethod('activate_window', [viewId, activate]);
+  Future<void> activateWindow(int viewId, bool activate) {
+    return state.platform.invokeMethod('activate_window', [viewId, activate]);
   }
 
-  static Future<void> changeWindowVisibility(int viewId, bool visible) {
-    return platform.invokeMethod('change_window_visibility', {
+  Future<void> changeWindowVisibility(int viewId, bool visible) {
+    return state.platform.invokeMethod('change_window_visibility', {
       "view_id": viewId,
       "visible": visible,
     });
   }
 
-  static Future<void> unregisterViewTexture(int textureId) {
-    return platform.invokeMethod('unregister_view_texture', textureId);
+  Future<void> unregisterViewTexture(int textureId) {
+    return state.platform.invokeMethod('unregister_view_texture', textureId);
   }
 
-  static Future<void> touchDown(int viewId, int touchId, Offset position) {
-    return platform.invokeMethod('touch_down', {
+  Future<void> touchDown(int viewId, int touchId, Offset position) {
+    return state.platform.invokeMethod('touch_down', {
       "view_id": viewId,
       "touch_id": touchId,
       "x": position.dx,
@@ -145,68 +154,68 @@ class PlatformApi {
     });
   }
 
-  static Future<void> touchMotion(int touchId, Offset position) {
-    return platform.invokeMethod('touch_motion', {
+  Future<void> touchMotion(int touchId, Offset position) {
+    return state.platform.invokeMethod('touch_motion', {
       "touch_id": touchId,
       "x": position.dx,
       "y": position.dy,
     });
   }
 
-  static Future<void> touchUp(int touchId) {
-    return platform.invokeMethod('touch_up', {
+  Future<void> touchUp(int touchId) {
+    return state.platform.invokeMethod('touch_up', {
       "touch_id": touchId,
     });
   }
 
-  static Future<void> touchCancel(int touchId) {
-    return platform.invokeMethod('touch_cancel', {
+  Future<void> touchCancel(int touchId) {
+    return state.platform.invokeMethod('touch_cancel', {
       "touch_id": touchId,
     });
   }
 
-  static Future<void> insertText(int viewId, String text) {
-    return platform.invokeMethod('insert_text', {
+  Future<void> insertText(int viewId, String text) {
+    return state.platform.invokeMethod('insert_text', {
       "view_id": viewId,
       "text": text,
     });
   }
 
-  static Future<void> emulateKeyCode(int viewId, int keyCode) {
-    return platform.invokeMethod('emulate_keycode', {
+  Future<void> emulateKeyCode(int viewId, int keyCode) {
+    return state.platform.invokeMethod('emulate_keycode', {
       "view_id": viewId,
       "keycode": keyCode,
     });
   }
 
-  static Future<void> startWindowsMaximized(bool value) {
-    return platform.invokeMethod("start_windows_maximized", value);
+  Future<void> startWindowsMaximized(bool value) {
+    return state.platform.invokeMethod("start_windows_maximized", value);
   }
 
-  static Future<void> maximizedWindowSize(int width, int height) {
-    return platform.invokeMethod("maximized_window_size", {
+  Future<void> maximizedWindowSize(int width, int height) {
+    return state.platform.invokeMethod("maximized_window_size", {
       "width": width,
       "height": height,
     });
   }
 
-  static Future<void> maximizeWindow(int viewId, bool value) {
-    return platform.invokeMethod("maximize_window", {
+  Future<void> maximizeWindow(int viewId, bool value) {
+    return state.platform.invokeMethod("maximize_window", {
       "view_id": viewId,
       "value": value,
     });
   }
 
-  static Future<void> resizeWindow(int viewId, int width, int height) {
-    return platform.invokeMethod("resize_window", {
+  Future<void> resizeWindow(int viewId, int width, int height) {
+    return state.platform.invokeMethod("resize_window", {
       "view_id": viewId,
       "width": width,
       "height": height,
     });
   }
 
-  static Stream<TextInputEventType> getTextInputEventsForViewId(int viewId) {
-    return PlatformApi.textInputEventsStream.where((event) => event["view_id"] == viewId).map((event) {
+  Stream<TextInputEventType> getTextInputEventsForViewId(int viewId) {
+    return state.textInputEventsStream.where((event) => event["view_id"] == viewId).map((event) {
       switch (event["type"]) {
         case "enable":
           return TextInputEnable();
@@ -220,14 +229,14 @@ class PlatformApi {
     });
   }
 
-  static Future<void> closeView(int viewId) {
-    return platform.invokeMethod("close_window", {
+  Future<void> closeView(int viewId) {
+    return state.platform.invokeMethod("close_window", {
       "view_id": viewId,
     });
   }
 
-  static Future<AuthenticationResponse> unlockSession(String password) async {
-    Map<String, dynamic>? response = await platform.invokeMapMethod("unlock_session", {
+  Future<AuthenticationResponse> unlockSession(String password) async {
+    Map<String, dynamic>? response = await state.platform.invokeMapMethod("unlock_session", {
       "password": password,
     });
     if (response == null) {
@@ -237,13 +246,13 @@ class PlatformApi {
   }
 
   /// The display will not generate frame events anymore if it's disabled, meaning that rendering is stopped.
-  static Future<void> enableDisplay(bool enable) async {
-    return platform.invokeMethod("enable_display", {
+  Future<void> enableDisplay(bool enable) async {
+    return state.platform.invokeMethod("enable_display", {
       "enable": enable,
     });
   }
 
-  static void _commitSurface(dynamic event) {
+  void _commitSurface(dynamic event) {
     int viewId = event["view_id"];
     dynamic surface = event["surface"];
     int role = surface["role"];
@@ -360,7 +369,7 @@ class PlatformApi {
     }
   }
 
-  static void _mapXdgSurface(dynamic event) {
+  void _mapXdgSurface(dynamic event) {
     int viewId = event["view_id"];
 
     XdgSurfaceRole role = ref.read(xdgSurfaceStatesProvider(viewId)).role;
@@ -373,7 +382,7 @@ class PlatformApi {
         break;
       case XdgSurfaceRole.toplevel:
         ref.read(mappedWindowListProvider.notifier).add(viewId);
-        windowMappedController.add(viewId);
+        state.windowMappedSink.add(viewId);
         break;
       case XdgSurfaceRole.popup:
         ref.read(popupStackChildrenProvider.notifier).add(viewId);
@@ -381,7 +390,7 @@ class PlatformApi {
     }
   }
 
-  static void _unmapXdgSurface(dynamic event) async {
+  void _unmapXdgSurface(dynamic event) async {
     int viewId = event["view_id"];
 
     XdgSurfaceRole role = ref.read(xdgSurfaceStatesProvider(viewId)).role;
@@ -393,61 +402,86 @@ class PlatformApi {
         break; // Unreachable.
       case XdgSurfaceRole.toplevel:
         ref.read(mappedWindowListProvider.notifier).remove(viewId);
-        windowUnmappedController.add(viewId);
+        state.windowUnmappedSink.add(viewId);
         break;
       case XdgSurfaceRole.popup:
         await ref.read(xdgPopupStatesProvider(viewId).notifier).animateClosing();
-        PlatformApi.unregisterViewTexture(ref.read(surfaceStatesProvider(viewId)).textureId);
+        unregisterViewTexture(ref.read(surfaceStatesProvider(viewId)).textureId);
         ref.read(popupStackChildrenProvider.notifier).remove(viewId);
         break;
     }
   }
 
-  static void _mapSubsurface(dynamic event) {
+  void _mapSubsurface(dynamic event) {
     int viewId = event["view_id"];
 
     ref.read(subsurfaceStatesProvider(viewId).notifier).map(true);
   }
 
-  static void _unmapSubsurface(dynamic event) {
+  void _unmapSubsurface(dynamic event) {
     int viewId = event["view_id"];
 
     ref.read(subsurfaceStatesProvider(viewId).notifier).map(false);
     ref.invalidate(subsurfaceWidgetProvider(viewId));
   }
 
-  static void _sendTextInputEvent(dynamic event) {
-    textInputEventsStreamController.sink.add(event);
+  void _sendTextInputEvent(dynamic event) {
+    state.textInputEventsSink.add(event);
   }
 
-  static void _interactiveMove(dynamic event) {
+  void _interactiveMove(dynamic event) {
     int viewId = event["view_id"];
     ref.read(xdgToplevelStatesProvider(viewId).notifier).requestInteractiveMove();
   }
 
-  static void _interactiveResize(dynamic event) {
+  void _interactiveResize(dynamic event) {
     int viewId = event["view_id"];
     int edge = event["edge"];
     ResizeEdge resizeEdge = ResizeEdge.fromInt(edge);
     ref.read(xdgToplevelStatesProvider(viewId).notifier).requestInteractiveResize(resizeEdge);
   }
 
-  static void _setTitle(dynamic event) {
+  void _setTitle(dynamic event) {
     int viewId = event["view_id"];
     String title = event["title"];
     ref.read(xdgToplevelStatesProvider(viewId).notifier).setTitle(title);
   }
 
-  static void _setAppId(dynamic event) {
+  void _setAppId(dynamic event) {
     int viewId = event["view_id"];
     String appId = event["app_id"];
     ref.read(xdgToplevelStatesProvider(viewId).notifier).setTitle(appId);
   }
 
-  static Future<void> hideKeyboard(int viewId) {
-    return platform.invokeMethod('hide_keyboard', {
+  Future<void> hideKeyboard(int viewId) {
+    return state.platform.invokeMethod('hide_keyboard', {
       "view_id": viewId,
     });
+  }
+}
+
+class PlatformApiState {
+  final _textInputEventsStreamController = StreamController<dynamic>.broadcast();
+  late final Stream<dynamic> textInputEventsStream;
+  late final Sink<dynamic> textInputEventsSink;
+
+  MethodChannel platform = const MethodChannel('platform');
+
+  final _windowMappedController = StreamController<int>.broadcast();
+  late final Stream<int> windowMappedStream;
+  late final Sink<int> windowMappedSink;
+
+  final _windowUnmappedController = StreamController<int>.broadcast();
+  late final Stream<int> windowUnmappedStream;
+  late final Sink<int> windowUnmappedSink;
+
+  PlatformApiState() {
+    textInputEventsStream = _textInputEventsStreamController.stream;
+    textInputEventsSink = _textInputEventsStreamController.sink;
+    windowMappedStream = _windowMappedController.stream;
+    windowMappedSink = _windowMappedController.sink;
+    windowUnmappedStream = _windowUnmappedController.stream;
+    windowUnmappedSink = _windowUnmappedController.sink;
   }
 }
 

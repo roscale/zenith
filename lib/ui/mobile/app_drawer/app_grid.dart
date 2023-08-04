@@ -10,17 +10,9 @@ import 'package:zenith/util/app_launch.dart';
 part '../../../generated/ui/mobile/app_drawer/app_grid.g.dart';
 
 @Riverpod(keepAlive: true)
-List<Widget> _appWidgets(_AppWidgetsRef ref) {
-  return ref.watch(appDrawerFilteredDesktopEntriesProvider).when(
-    data: (List<LocalizedDesktopEntry> desktopEntries) {
-      return [
-        for (var desktopEntry in desktopEntries)
-          AppEntry(desktopEntry: desktopEntry),
-      ];
-    },
-    error: (_, __) => [],
-    loading: () => [],
-  );
+Future<List<AppEntry>> _appWidgets(_AppWidgetsRef ref) async {
+  final desktopEntries = await ref.watch(appDrawerFilteredDesktopEntriesProvider.future);
+  return desktopEntries.map((desktopEntry) => AppEntry(desktopEntry: desktopEntry)).toList();
 }
 
 class AppGrid extends ConsumerStatefulWidget {
@@ -35,7 +27,12 @@ class AppGrid extends ConsumerStatefulWidget {
 class _AppGridState extends ConsumerState<AppGrid> {
   @override
   Widget build(BuildContext context) {
-    final widgets = ref.watch(_appWidgetsProvider);
+    final widgets = ref.watch(_appWidgetsProvider).maybeWhen(
+          data: (widgets) => widgets,
+          orElse: () => [],
+          skipLoadingOnReload: true,
+        );
+
     bool dragging = ref.watch(appDrawerNotifierProvider.select((value) => value.dragging));
 
     return GridView.builder(

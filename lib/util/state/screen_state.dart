@@ -1,52 +1,28 @@
 import 'dart:ui';
 
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/util/state/display_brightness_state.dart';
 import 'package:zenith/util/state/lock_screen_state.dart';
 
 part '../../generated/util/state/screen_state.freezed.dart';
 
-final screenStateProvider = StateNotifierProvider<ScreenStateNotifier, ScreenState>((ref) {
-  return ScreenStateNotifier(ref);
-});
+part '../../generated/util/state/screen_state.g.dart';
 
-@freezed
-class ScreenState with _$ScreenState {
-  const factory ScreenState({
-    required bool on,
-
-    /// Turn on/off operations have not yet finished.
-    required bool pending,
-
-    /// Rotation expressed in clockwise quarter turns.
-    required int rotation,
-
-    /// The screen size, before rotation.
-    required Size size,
-
-    /// The screen size, after rotation.
-    /// If the physical screen is 500x1000 in portrait and the device is rotated in landscape, this
-    /// variable contains the size 1000x500.
-    required Size rotatedSize,
-  }) = _ScreenState;
-}
-
-class ScreenStateNotifier extends StateNotifier<ScreenState> {
-  final Ref _ref;
-
-  ScreenStateNotifier(this._ref)
-      : super(
-          const ScreenState(
-            on: true,
-            pending: false,
-            size: Size.zero,
-            rotation: 0,
-            rotatedSize: Size.zero,
-          ),
-        );
+@Riverpod(keepAlive: true)
+class ScreenStateNotifier extends _$ScreenStateNotifier {
+  @override
+  ScreenState build() {
+    return const ScreenState(
+      on: true,
+      pending: false,
+      size: Size.zero,
+      rotation: 0,
+      rotatedSize: Size.zero,
+    );
+  }
 
   Future<void> turnOff() async {
     if (!state.on || state.pending) {
@@ -55,8 +31,8 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
 
     state = state.copyWith(pending: true);
 
-    final displayBrightnessState = _ref.read(displayBrightnessStateProvider);
-    final displayBrightnessStateNotifier = _ref.read(displayBrightnessStateProvider.notifier);
+    final displayBrightnessState = ref.read(displayBrightnessStateProvider);
+    final displayBrightnessStateNotifier = ref.read(displayBrightnessStateProvider.notifier);
 
     if (displayBrightnessState.available) {
       displayBrightnessStateNotifier.saveBrightness();
@@ -72,7 +48,7 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
 
         SchedulerBinding.instance.addPostFrameCallback((_) async {
           try {
-            await PlatformApi.enableDisplay(false);
+            await ref.read(platformApiProvider.notifier).enableDisplay(false);
           } catch (_) {}
 
           state = state.copyWith(pending: false);
@@ -84,7 +60,7 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
   }
 
   Future<void> lockAndTurnOff() {
-    _ref.read(lockScreenStateProvider.notifier).lock();
+    ref.read(lockScreenStateProvider.notifier).lock();
     return turnOff();
   }
 
@@ -95,12 +71,12 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
 
     state = state.copyWith(pending: true);
 
-    final displayBrightnessState = _ref.read(displayBrightnessStateProvider);
-    final displayBrightnessStateNotifier = _ref.read(displayBrightnessStateProvider.notifier);
+    final displayBrightnessState = ref.read(displayBrightnessStateProvider);
+    final displayBrightnessStateNotifier = ref.read(displayBrightnessStateProvider.notifier);
 
     if (displayBrightnessState.available) {
       try {
-        await PlatformApi.enableDisplay(true);
+        await ref.read(platformApiProvider.notifier).enableDisplay(true);
 
         SchedulerBinding.instance.addPostFrameCallback((_) async {
           try {
@@ -135,4 +111,25 @@ class ScreenStateNotifier extends StateNotifier<ScreenState> {
   void setRotatedSize(Size rotatedSize) {
     state = state.copyWith(rotatedSize: rotatedSize);
   }
+}
+
+@freezed
+class ScreenState with _$ScreenState {
+  const factory ScreenState({
+    required bool on,
+
+    /// Turn on/off operations have not yet finished.
+    required bool pending,
+
+    /// Rotation expressed in clockwise quarter turns.
+    required int rotation,
+
+    /// The screen size, before rotation.
+    required Size size,
+
+    /// The screen size, after rotation.
+    /// If the physical screen is 500x1000 in portrait and the device is rotated in landscape, this
+    /// variable contains the size 1000x500.
+    required Size rotatedSize,
+  }) = _ScreenState;
 }

@@ -1,12 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
 
 part '../generated/util/pointer_focus_manager.g.dart';
 
 @Riverpod(keepAlive: true)
-PointerFocusManager pointerFocusManager(PointerFocusManagerRef ref) => PointerFocusManager();
+PointerFocusManager pointerFocusManager(PointerFocusManagerRef ref) => PointerFocusManager(ref);
 
 /// The problem:
 /// When moving the pointer between 2 MouseRegions, one would trigger an exit event, and the other one an enter event.
@@ -19,6 +20,10 @@ PointerFocusManager pointerFocusManager(PointerFocusManagerRef ref) => PointerFo
 /// We schedule a asynchronous task for sending an exit event, but if an enter event happens before the next event loop
 /// iteration, we cancel the currently scheduled task, thus the exit event will no longer be sent.
 class PointerFocusManager {
+  final Ref _ref;
+
+  PointerFocusManager(this._ref);
+
   Timer? _pointerExitTimer;
   bool _maybeDragging = false;
   bool _insideSurface = false;
@@ -47,6 +52,6 @@ class PointerFocusManager {
   }
 
   void _scheduleExitEvent() {
-    _pointerExitTimer = Timer(Duration.zero, () => PlatformApi.pointerExitsView());
+    _pointerExitTimer = Timer(Duration.zero, () => _ref.read(platformApiProvider.notifier).pointerExitsView());
   }
 }

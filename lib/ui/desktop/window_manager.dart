@@ -44,14 +44,16 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
       });
     });
 
-    PlatformApi.startWindowsMaximized(false);
+    ref.read(platformApiProvider.notifier).startWindowsMaximized(false);
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        PlatformApi.maximizedWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
+        ref
+            .read(platformApiProvider.notifier)
+            .maximizedWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
 
         return Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {

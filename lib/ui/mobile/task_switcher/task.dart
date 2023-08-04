@@ -54,10 +54,10 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
     return Consumer(
       builder: (_, WidgetRef ref, Widget? child) {
         final position = ref.watch(taskPositionProvider(widget.viewId));
-        ref.watch(taskSwitcherStateProvider.select((v) => v.constraintsChanged));
+        ref.watch(taskSwitcherStateNotifierProvider.select((v) => v.constraintsChanged));
 
         double taskSwitcherPosition = ref.watch(taskSwitcherPositionProvider);
-        double scale = ref.watch(taskSwitcherStateProvider.select((v) => v.scale));
+        double scale = ref.watch(taskSwitcherStateNotifierProvider.select((v) => v.scale));
 
         return Positioned(
           left: scale * (-taskSwitcherPosition + position),
@@ -88,7 +88,7 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
         },
         child: Consumer(
           builder: (_, WidgetRef ref, Widget? child) {
-            final inOverview = ref.watch(taskSwitcherStateProvider.select((v) => v.inOverview));
+            final inOverview = ref.watch(taskSwitcherStateNotifierProvider.select((v) => v.inOverview));
             final dismissState = ref.watch(taskStateNotifierProvider(widget.viewId).select((v) => v.dismissState));
 
             // Doing my best to not change the depth of the tree to avoid rebuilding the whole subtree.
@@ -175,7 +175,7 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
 
   void _onVerticalDragEnd(DragEndDetails details) {
     if (details.primaryVelocity! < -1000) {
-      PlatformApi.closeView(widget.viewId);
+      ref.read(platformApiProvider.notifier).closeView(widget.viewId);
       ref.read(taskStateNotifierProvider(widget.viewId).notifier).startDismissAnimation();
     } else {
       ref.read(taskStateNotifierProvider(widget.viewId).notifier).cancelDismissAnimation();
@@ -183,7 +183,7 @@ class _TaskState extends ConsumerState<Task> with SingleTickerProviderStateMixin
   }
 
   void _onVerticalDragCancel() {
-    if (ref.read(taskSwitcherStateProvider).inOverview) {
+    if (ref.read(taskSwitcherStateNotifierProvider).inOverview) {
       ref.read(taskStateNotifierProvider(widget.viewId).notifier).cancelDismissAnimation();
     }
   }
@@ -218,7 +218,7 @@ class TaskIcon extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AnimatedOpacity(
-      opacity: ref.watch(taskSwitcherStateProvider.select((value) => value.inOverview)) ? 1.0 : 0.0,
+      opacity: ref.watch(taskSwitcherStateNotifierProvider.select((value) => value.inOverview)) ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
       child: Align(

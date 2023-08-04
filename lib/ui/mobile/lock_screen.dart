@@ -187,7 +187,7 @@ class ClockAndPinAuthenticationStack extends ConsumerWidget {
             offset: Offset(0, -offset),
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
-              onDoubleTap: () => ref.read(screenStateProvider.notifier).turnOff(),
+              onDoubleTap: () => ref.read(screenStateNotifierProvider.notifier).turnOff(),
               child: Opacity(
                 opacity: (1.0 - offset / (slideDistance / 2)).clamp(0.0, 1.0),
                 child: const Clock(),
@@ -393,7 +393,7 @@ class KeyPad extends ConsumerWidget {
   const KeyPad({super.key, required this.controller});
 
   void authenticate(WidgetRef ref) async {
-    AuthenticationResponse response = await PlatformApi.unlockSession(controller.text);
+    AuthenticationResponse response = await ref.read(platformApiProvider.notifier).unlockSession(controller.text);
 
     if (!response.success) {
       controller.clear();

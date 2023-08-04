@@ -111,7 +111,7 @@ class _WindowButtons extends ConsumerWidget {
         _WindowButton(
           icon: const Icon(Icons.close),
           iconSize: 18,
-          onPressed: () => PlatformApi.closeView(viewId),
+          onPressed: () => ref.read(platformApiProvider.notifier).closeView(viewId),
         ),
         _WindowButton(
           icon: const RotatedBox(

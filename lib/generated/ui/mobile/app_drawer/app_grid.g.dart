@@ -6,11 +6,11 @@ part of '../../../../ui/mobile/app_drawer/app_grid.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appWidgetsHash() => r'69c8efbc00300d73fb2dd221c668f6bc7d2cda51';
+String _$appWidgetsHash() => r'16e04c5d7539e64863ed6a33bfdf4dcbb834cefe';
 
 /// See also [_appWidgets].
 @ProviderFor(_appWidgets)
-final _appWidgetsProvider = Provider<List<Widget>>.internal(
+final _appWidgetsProvider = FutureProvider<List<AppEntry>>.internal(
   _appWidgets,
   name: r'_appWidgetsProvider',
   debugGetCreateSourceHash:
@@ -19,5 +19,5 @@ final _appWidgetsProvider = Provider<List<Widget>>.internal(
   allTransitiveDependencies: null,
 );
 
-typedef _AppWidgetsRef = ProviderRef<List<Widget>>;
+typedef _AppWidgetsRef = FutureProviderRef<List<AppEntry>>;
 // ignore_for_file: unnecessary_raw_strings, subtype_of_sealed_class, invalid_use_of_internal_member, do_not_use_environment, prefer_const_constructors, public_member_api_docs, avoid_private_typedef_functions

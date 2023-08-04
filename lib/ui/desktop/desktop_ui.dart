@@ -33,9 +33,9 @@ class _DesktopUiState extends ConsumerState<DesktopUi> {
           Overlay(
             initialEntries: [
               OverlayEntry(
-                builder: (_) => Column(
+                builder: (_) => const Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     Expanded(
                       child: WindowManager(),
                     ),
@@ -45,9 +45,6 @@ class _DesktopUiState extends ConsumerState<DesktopUi> {
               ),
             ],
           ),
-          // const RepaintBoundary(
-          //   child: StatusBarWithQuickSettings(),
-          // ),
         ],
       ),
     );

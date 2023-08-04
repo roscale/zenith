@@ -7,6 +7,7 @@ import 'package:zenith/ui/desktop/decorations/with_decorations.dart';
 import 'package:zenith/ui/desktop/interactive_move_and_resize_listener.dart';
 import 'package:zenith/ui/desktop/state/window_move_provider.dart';
 import 'package:zenith/ui/desktop/state/window_resize_provider.dart';
+import 'package:zenith/ui/mobile/state/virtual_keyboard_state.dart';
 
 part '../../generated/ui/desktop/window.g.dart';
 
@@ -58,6 +59,9 @@ class Window extends ConsumerWidget {
         );
       }
     });
+
+    // Initialize the provider because it listens to events from other providers.
+    ref.read(virtualKeyboardStateNotifierProvider(viewId));
 
     return Consumer(
       builder: (BuildContext context, WidgetRef ref, Widget? child) {

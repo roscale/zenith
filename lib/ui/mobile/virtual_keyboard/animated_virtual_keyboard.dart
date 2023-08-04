@@ -67,7 +67,7 @@ class AnimatedVirtualKeyboardState extends ConsumerState<AnimatedVirtualKeyboard
             child: VirtualKeyboard(
               key: key,
               onDismiss: () {
-                ref.read(virtualKeyboardStateProvider(widget.id).notifier).activated = false;
+                ref.read(virtualKeyboardStateNotifierProvider(widget.id).notifier).activated = false;
                 widget.onDismiss();
               },
               onCharacter: widget.onCharacter,
@@ -111,11 +111,11 @@ class AnimatedVirtualKeyboardState extends ConsumerState<AnimatedVirtualKeyboard
   }
 
   void dragKeyboard(double dy) {
-    final notifier = ref.read(virtualKeyboardStateProvider(widget.id).notifier);
-    final state = ref.read(virtualKeyboardStateProvider(widget.id));
+    final notifier = ref.read(virtualKeyboardStateNotifierProvider(widget.id).notifier);
+    final state = ref.read(virtualKeyboardStateNotifierProvider(widget.id));
 
     if (state.activated) {
-      slideAnimationController.value += dy / state.keyboardSize.height;
+      slideAnimationController.value += dy / state.size.height;
       return;
     }
     notifier.activated = true;
@@ -133,16 +133,15 @@ class AnimatedVirtualKeyboardState extends ConsumerState<AnimatedVirtualKeyboard
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<bool>(virtualKeyboardStateProvider(widget.id).select((value) => value.activated), (previous, next) {
+    ref.listen<bool>(virtualKeyboardStateNotifierProvider(widget.id).select((value) => value.activated), (previous, next) {
       next ? animateForward() : animateBackward();
     });
 
     return Consumer(
       builder: (BuildContext context, WidgetRef ref, Widget? child) {
-        final keyboardActivated = ref.watch(virtualKeyboardStateProvider(widget.id).select((v) => v.activated));
-        final keyboardSize = ref.watch(virtualKeyboardStateProvider(widget.id).select((v) => v.keyboardSize));
+        final virtualKeyboard = ref.watch(virtualKeyboardStateNotifierProvider(widget.id));
 
-        if (keyboardActivated && keyboardSize.isEmpty) {
+        if (virtualKeyboard.activated && virtualKeyboard.size.isEmpty) {
           SchedulerBinding.instance.addPostFrameCallback(_determineVirtualKeyboardSize);
         }
 
@@ -168,7 +167,7 @@ class AnimatedVirtualKeyboardState extends ConsumerState<AnimatedVirtualKeyboard
     if (size == null) {
       return;
     }
-    ref.read(virtualKeyboardStateProvider(widget.id).notifier).keyboardSize = size;
+    ref.read(virtualKeyboardStateNotifierProvider(widget.id).notifier).size = size;
   }
 
   OverlayEntry? newKeyboardOverlay() {

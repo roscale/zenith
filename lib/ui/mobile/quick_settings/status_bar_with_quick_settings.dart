@@ -44,7 +44,7 @@ class _StatusBarWithQuickSettingsState extends ConsumerState<StatusBarWithQuickS
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = ref.watch(screenStateProvider.select((v) => v.rotatedSize)).width;
+    double screenWidth = ref.watch(screenStateNotifierProvider.select((v) => v.rotatedSize)).width;
     double width = min(600.0, screenWidth);
     const double height = 300.0;
 

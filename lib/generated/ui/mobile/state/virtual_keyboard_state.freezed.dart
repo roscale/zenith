@@ -17,7 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$VirtualKeyboardState {
   bool get activated => throw _privateConstructorUsedError;
-  Size get keyboardSize => throw _privateConstructorUsedError;
+  Size get size => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $VirtualKeyboardStateCopyWith<VirtualKeyboardState> get copyWith =>
@@ -30,7 +30,7 @@ abstract class $VirtualKeyboardStateCopyWith<$Res> {
           $Res Function(VirtualKeyboardState) then) =
       _$VirtualKeyboardStateCopyWithImpl<$Res, VirtualKeyboardState>;
   @useResult
-  $Res call({bool activated, Size keyboardSize});
+  $Res call({bool activated, Size size});
 }
 
 /// @nodoc
@@ -48,16 +48,16 @@ class _$VirtualKeyboardStateCopyWithImpl<$Res,
   @override
   $Res call({
     Object? activated = null,
-    Object? keyboardSize = null,
+    Object? size = null,
   }) {
     return _then(_value.copyWith(
       activated: null == activated
           ? _value.activated
           : activated // ignore: cast_nullable_to_non_nullable
               as bool,
-      keyboardSize: null == keyboardSize
-          ? _value.keyboardSize
-          : keyboardSize // ignore: cast_nullable_to_non_nullable
+      size: null == size
+          ? _value.size
+          : size // ignore: cast_nullable_to_non_nullable
               as Size,
     ) as $Val);
   }
@@ -71,7 +71,7 @@ abstract class _$$_VirtualKeyboardStateCopyWith<$Res>
       __$$_VirtualKeyboardStateCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool activated, Size keyboardSize});
+  $Res call({bool activated, Size size});
 }
 
 /// @nodoc
@@ -86,16 +86,16 @@ class __$$_VirtualKeyboardStateCopyWithImpl<$Res>
   @override
   $Res call({
     Object? activated = null,
-    Object? keyboardSize = null,
+    Object? size = null,
   }) {
     return _then(_$_VirtualKeyboardState(
       activated: null == activated
           ? _value.activated
           : activated // ignore: cast_nullable_to_non_nullable
               as bool,
-      keyboardSize: null == keyboardSize
-          ? _value.keyboardSize
-          : keyboardSize // ignore: cast_nullable_to_non_nullable
+      size: null == size
+          ? _value.size
+          : size // ignore: cast_nullable_to_non_nullable
               as Size,
     ));
   }
@@ -104,17 +104,16 @@ class __$$_VirtualKeyboardStateCopyWithImpl<$Res>
 /// @nodoc
 
 class _$_VirtualKeyboardState implements _VirtualKeyboardState {
-  const _$_VirtualKeyboardState(
-      {required this.activated, required this.keyboardSize});
+  const _$_VirtualKeyboardState({required this.activated, required this.size});
 
   @override
   final bool activated;
   @override
-  final Size keyboardSize;
+  final Size size;
 
   @override
   String toString() {
-    return 'VirtualKeyboardState(activated: $activated, keyboardSize: $keyboardSize)';
+    return 'VirtualKeyboardState(activated: $activated, size: $size)';
   }
 
   @override
@@ -124,12 +123,11 @@ class _$_VirtualKeyboardState implements _VirtualKeyboardState {
             other is _$_VirtualKeyboardState &&
             (identical(other.activated, activated) ||
                 other.activated == activated) &&
-            (identical(other.keyboardSize, keyboardSize) ||
-                other.keyboardSize == keyboardSize));
+            (identical(other.size, size) || other.size == size));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, activated, keyboardSize);
+  int get hashCode => Object.hash(runtimeType, activated, size);
 
   @JsonKey(ignore: true)
   @override
@@ -142,12 +140,12 @@ class _$_VirtualKeyboardState implements _VirtualKeyboardState {
 abstract class _VirtualKeyboardState implements VirtualKeyboardState {
   const factory _VirtualKeyboardState(
       {required final bool activated,
-      required final Size keyboardSize}) = _$_VirtualKeyboardState;
+      required final Size size}) = _$_VirtualKeyboardState;
 
   @override
   bool get activated;
   @override
-  Size get keyboardSize;
+  Size get size;
   @override
   @JsonKey(ignore: true)
   _$$_VirtualKeyboardStateCopyWith<_$_VirtualKeyboardState> get copyWith =>

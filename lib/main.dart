@@ -19,13 +19,15 @@ void main() {
   // debugRepaintRainbowEnabled = true;
   // debugPrintGestureArenaDiagnostics = true;
   WidgetsFlutterBinding.ensureInitialized();
+  final container = ProviderContainer();
+
+  final platformApi = container.read(platformApiProvider.notifier);
 
   SchedulerBinding.instance.addPostFrameCallback((_) {
-    PlatformApi.startupComplete();
+    platformApi.startupComplete();
   });
 
-  final container = ProviderContainer();
-  PlatformApi.init(container);
+  container.read(platformApiProvider.notifier).init();
 
   _registerLockScreenKeyboardHandler(container);
   _registerPowerButtonHandler(container);
@@ -39,8 +41,8 @@ void main() {
         builder: (context) {
           return Consumer(
             builder: (BuildContext context, WidgetRef ref, Widget? child) {
-              bool screenOn = ref.watch(screenStateProvider.select((v) => v.on));
-              final screenStateNotifier = ref.read(screenStateProvider.notifier);
+              bool screenOn = ref.watch(screenStateNotifierProvider.select((v) => v.on));
+              final screenStateNotifier = ref.read(screenStateNotifierProvider.notifier);
 
               return GestureDetector(
                 onDoubleTap: !screenOn ? () => screenStateNotifier.turnOn() : null,
@@ -70,13 +72,13 @@ class Zenith extends ConsumerWidget {
     return MaterialApp(
       home: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          Future.microtask(() => ref.read(screenStateProvider.notifier).setSize(constraints.biggest));
+          Future.microtask(() => ref.read(screenStateNotifierProvider.notifier).setSize(constraints.biggest));
 
           return RotatedBox(
-            quarterTurns: ref.watch(screenStateProvider.select((v) => v.rotation)),
+            quarterTurns: ref.watch(screenStateNotifierProvider.select((v) => v.rotation)),
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-                Future.microtask(() => ref.read(screenStateProvider.notifier).setRotatedSize(constraints.biggest));
+                Future.microtask(() => ref.read(screenStateNotifierProvider.notifier).setRotatedSize(constraints.biggest));
 
                 return ScrollConfiguration(
                   behavior: const MaterialScrollBehavior().copyWith(
@@ -155,8 +157,8 @@ void _registerPowerButtonHandler(ProviderContainer container) {
   bool turnedOn = false;
 
   container.listen(keyTrackerProvider(powerKey).select((v) => v.down), (_, __) {
-    final screenState = container.read(screenStateProvider);
-    final screenStateNotifier = container.read(screenStateProvider.notifier);
+    final screenState = container.read(screenStateNotifierProvider);
+    final screenStateNotifier = container.read(screenStateNotifierProvider.notifier);
     if (!screenState.on) {
       turnedOn = true;
       screenStateNotifier.turnOn();
@@ -167,8 +169,8 @@ void _registerPowerButtonHandler(ProviderContainer container) {
   });
 
   container.listen(keyTrackerProvider(powerKey).select((v) => v.shortPress), (_, __) {
-    final screenState = container.read(screenStateProvider);
-    final screenStateNotifier = container.read(screenStateProvider.notifier);
+    final screenState = container.read(screenStateNotifierProvider);
+    final screenStateNotifier = container.read(screenStateNotifierProvider.notifier);
     if (screenState.on && !turnedOn) {
       screenStateNotifier.lockAndTurnOff();
       container.read(powerMenuStateNotifierProvider.notifier).removeOverlay();

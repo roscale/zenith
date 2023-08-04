@@ -88,7 +88,7 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
       await _sendMouseButtonsToPlatform(event.buttons);
       pointerFocusManager.startPotentialDrag();
     } else if (event.kind == PointerDeviceKind.touch) {
-      await PlatformApi.touchDown(widget.viewId, event.pointer, position);
+      await ref.read(platformApiProvider.notifier).touchDown(widget.viewId, event.pointer, position);
     }
   }
 
@@ -100,7 +100,7 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
       await _sendMouseButtonsToPlatform(event.buttons);
       await _pointerMoved(position);
     } else if (event.kind == PointerDeviceKind.touch) {
-      await PlatformApi.touchMotion(event.pointer, position);
+      await ref.read(platformApiProvider.notifier).touchMotion(event.pointer, position);
     }
   }
 
@@ -109,7 +109,7 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
       await _sendMouseButtonsToPlatform(event.buttons);
       pointerFocusManager.stopPotentialDrag();
     } else if (event.kind == PointerDeviceKind.touch) {
-      await PlatformApi.touchUp(event.pointer);
+      await ref.read(platformApiProvider.notifier).touchUp(event.pointer);
     }
   }
 
@@ -118,7 +118,7 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
       await _sendMouseButtonsToPlatform(0);
       pointerFocusManager.stopPotentialDrag();
     } else if (lastPointerEvent.kind == PointerDeviceKind.touch) {
-      await PlatformApi.touchCancel(lastPointerEvent.pointer);
+      await ref.read(platformApiProvider.notifier).touchCancel(lastPointerEvent.pointer);
     }
   }
 
@@ -130,10 +130,10 @@ class _ViewInputListenerState extends ConsumerState<ViewInputListener> {
   }
 
   Future<void> _mouseButtonEvent(MouseButtonEvent event) {
-    return PlatformApi.sendMouseButtonEventToView(event.button, event.state == MouseButtonState.pressed);
+    return ref.read(platformApiProvider.notifier).sendMouseButtonEventToView(event.button, event.state == MouseButtonState.pressed);
   }
 
   Future<void> _pointerMoved(Offset position) {
-    return PlatformApi.pointerHoversView(widget.viewId, position);
+    return ref.read(platformApiProvider.notifier).pointerHoversView(widget.viewId, position);
   }
 }

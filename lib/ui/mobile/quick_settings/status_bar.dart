@@ -36,7 +36,7 @@ class _StatusBarState extends ConsumerState<StatusBar> {
       onVerticalDragStart: widget.onVerticalDragStart,
       onVerticalDragUpdate: widget.onVerticalDragUpdate,
       onVerticalDragEnd: widget.onVerticalDragEnd,
-      onDoubleTap: () => ref.read(screenStateProvider.notifier).lockAndTurnOff(),
+      onDoubleTap: () => ref.read(screenStateNotifierProvider.notifier).lockAndTurnOff(),
       child: Container(
         height: MediaQuery.of(context).padding.top,
         color: Colors.black38,

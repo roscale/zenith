@@ -56,17 +56,17 @@ class XdgToplevelStates extends _$XdgToplevelStates {
 
   set visible(bool value) {
     if (value != state.visible) {
-      PlatformApi.changeWindowVisibility(viewId, value);
+      ref.read(platformApiProvider.notifier).changeWindowVisibility(viewId, value);
       state = state.copyWith(visible: value);
     }
   }
 
   void maximize(bool value) {
-    PlatformApi.maximizeWindow(viewId, value);
+    ref.read(platformApiProvider.notifier).maximizeWindow(viewId, value);
   }
 
   void resize(int width, int height) {
-    PlatformApi.resizeWindow(viewId, width, height);
+    ref.read(platformApiProvider.notifier).resizeWindow(viewId, width, height);
   }
 
   void requestInteractiveMove() {

@@ -67,10 +67,11 @@ class _SurfaceFocus extends ConsumerWidget {
             return Focus(
               focusNode: focusNode,
               onFocusChange: (bool focused) {
+                final platformApi = ref.read(platformApiProvider.notifier);
                 if (focused) {
-                  PlatformApi.activateWindow(viewId, true);
+                  platformApi.activateWindow(viewId, true);
                 } else {
-                  PlatformApi.activateWindow(viewId, false);
+                  platformApi.activateWindow(viewId, false);
                 }
               },
               child: child!,
