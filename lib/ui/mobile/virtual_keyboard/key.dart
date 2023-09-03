@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:glissando/glissando.dart';
 
 class VirtualKeyboardKey extends StatefulWidget {
   final double width;
@@ -30,11 +31,11 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
   Timer? longPressTimer;
   Timer? repeatKeyTimer;
 
-  void pointerDown() {
+  void pointerDown(PointerDownEvent event) {
     pointerUp();
     beingPressed.value = true;
 
-    if (widget.repeatOnLongPress) {
+    if (widget.repeatOnLongPress && !event.isGlissandoEvent) {
       longPressTimer = Timer(const Duration(milliseconds: 250), () {
         actuate();
         repeatKeyTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
@@ -112,7 +113,7 @@ class _VirtualKeyboardKeyState extends State<VirtualKeyboardKey> {
     return GestureDetector(
       onDoubleTap: widget.onDoubleTap,
       child: Listener(
-        onPointerDown: (_) => pointerDown(),
+        onPointerDown: (PointerDownEvent event) => pointerDown(event),
         onPointerUp: (_) {
           if (repeatKeyTimer == null) {
             actuate();

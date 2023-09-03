@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="debug_bundle" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="konsole" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$/build/zenith/debug/bundle" PASS_PARENT_ENVS_2="true" PROJECT_NAME="zenith" TARGET_NAME="debug_bundle" CONFIG_NAME="debug_bundle" version="1" RUN_PATH="zenith">
+  <configuration default="false" name="debug_bundle" type="CLionNativeAppRunConfigurationType" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$ProjectFileDir$/build/zenith/debug/bundle" PASS_PARENT_ENVS_2="true" PROJECT_NAME="zenith" TARGET_NAME="debug_bundle" CONFIG_NAME="debug_bundle" version="1" RUN_PATH="zenith">
     <envs>
       <env name="LSAN_OPTIONS" value="suppressions=lsan_suppressions.txt" />
     </envs>

@@ -16,7 +16,9 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$WindowStackState {
-  List<int> get stack => throw _privateConstructorUsedError;
+  IList<int> get stack => throw _privateConstructorUsedError;
+  ISet<int> get animateClosing => throw _privateConstructorUsedError;
+  Size get desktopSize => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $WindowStackStateCopyWith<WindowStackState> get copyWith =>
@@ -29,7 +31,7 @@ abstract class $WindowStackStateCopyWith<$Res> {
           WindowStackState value, $Res Function(WindowStackState) then) =
       _$WindowStackStateCopyWithImpl<$Res, WindowStackState>;
   @useResult
-  $Res call({List<int> stack});
+  $Res call({IList<int> stack, ISet<int> animateClosing, Size desktopSize});
 }
 
 /// @nodoc
@@ -46,12 +48,22 @@ class _$WindowStackStateCopyWithImpl<$Res, $Val extends WindowStackState>
   @override
   $Res call({
     Object? stack = null,
+    Object? animateClosing = null,
+    Object? desktopSize = null,
   }) {
     return _then(_value.copyWith(
       stack: null == stack
           ? _value.stack
           : stack // ignore: cast_nullable_to_non_nullable
-              as List<int>,
+              as IList<int>,
+      animateClosing: null == animateClosing
+          ? _value.animateClosing
+          : animateClosing // ignore: cast_nullable_to_non_nullable
+              as ISet<int>,
+      desktopSize: null == desktopSize
+          ? _value.desktopSize
+          : desktopSize // ignore: cast_nullable_to_non_nullable
+              as Size,
     ) as $Val);
   }
 }
@@ -64,7 +76,7 @@ abstract class _$$_WindowStackStateCopyWith<$Res>
       __$$_WindowStackStateCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<int> stack});
+  $Res call({IList<int> stack, ISet<int> animateClosing, Size desktopSize});
 }
 
 /// @nodoc
@@ -79,12 +91,22 @@ class __$$_WindowStackStateCopyWithImpl<$Res>
   @override
   $Res call({
     Object? stack = null,
+    Object? animateClosing = null,
+    Object? desktopSize = null,
   }) {
     return _then(_$_WindowStackState(
       stack: null == stack
-          ? _value._stack
+          ? _value.stack
           : stack // ignore: cast_nullable_to_non_nullable
-              as List<int>,
+              as IList<int>,
+      animateClosing: null == animateClosing
+          ? _value.animateClosing
+          : animateClosing // ignore: cast_nullable_to_non_nullable
+              as ISet<int>,
+      desktopSize: null == desktopSize
+          ? _value.desktopSize
+          : desktopSize // ignore: cast_nullable_to_non_nullable
+              as Size,
     ));
   }
 }
@@ -92,21 +114,22 @@ class __$$_WindowStackStateCopyWithImpl<$Res>
 /// @nodoc
 
 class _$_WindowStackState extends _WindowStackState {
-  const _$_WindowStackState({required final List<int> stack})
-      : _stack = stack,
-        super._();
+  const _$_WindowStackState(
+      {required this.stack,
+      required this.animateClosing,
+      required this.desktopSize})
+      : super._();
 
-  final List<int> _stack;
   @override
-  List<int> get stack {
-    if (_stack is EqualUnmodifiableListView) return _stack;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_stack);
-  }
+  final IList<int> stack;
+  @override
+  final ISet<int> animateClosing;
+  @override
+  final Size desktopSize;
 
   @override
   String toString() {
-    return 'WindowStackState(stack: $stack)';
+    return 'WindowStackState(stack: $stack, animateClosing: $animateClosing, desktopSize: $desktopSize)';
   }
 
   @override
@@ -114,12 +137,19 @@ class _$_WindowStackState extends _WindowStackState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_WindowStackState &&
-            const DeepCollectionEquality().equals(other._stack, _stack));
+            const DeepCollectionEquality().equals(other.stack, stack) &&
+            const DeepCollectionEquality()
+                .equals(other.animateClosing, animateClosing) &&
+            (identical(other.desktopSize, desktopSize) ||
+                other.desktopSize == desktopSize));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(_stack));
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(stack),
+      const DeepCollectionEquality().hash(animateClosing),
+      desktopSize);
 
   @JsonKey(ignore: true)
   @override
@@ -129,12 +159,18 @@ class _$_WindowStackState extends _WindowStackState {
 }
 
 abstract class _WindowStackState extends WindowStackState {
-  const factory _WindowStackState({required final List<int> stack}) =
-      _$_WindowStackState;
+  const factory _WindowStackState(
+      {required final IList<int> stack,
+      required final ISet<int> animateClosing,
+      required final Size desktopSize}) = _$_WindowStackState;
   const _WindowStackState._() : super._();
 
   @override
-  List<int> get stack;
+  IList<int> get stack;
+  @override
+  ISet<int> get animateClosing;
+  @override
+  Size get desktopSize;
   @override
   @JsonKey(ignore: true)
   _$$_WindowStackStateCopyWith<_$_WindowStackState> get copyWith =>

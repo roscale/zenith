@@ -169,7 +169,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
       });
     });
 
-    ref.read(platformApiProvider.notifier).startWindowsMaximized(true);
+    ref.read(platformApiProvider.notifier).openWindowsMaximized(true);
   }
 
   @override
@@ -425,7 +425,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
 
   void _destroyTask(int viewId) {
     final textureId = ref.read(surfaceStatesProvider(viewId)).textureId;
-    ref.read(platformApiProvider.notifier).unregisterViewTexture(textureId);
+    // ref.read(platformApiProvider.notifier).unregisterViewTexture(textureId);
 
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).remove(viewId);
@@ -608,4 +608,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
 
   @override
   TickerProvider get vsync => this;
+
+  @override
+  double get devicePixelRatio => MediaQuery.devicePixelRatioOf(context);
 }

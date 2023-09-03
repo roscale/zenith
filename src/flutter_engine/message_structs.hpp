@@ -10,6 +10,7 @@ extern "C" {
 }
 
 struct XdgSurfaceCommitMessage {
+	bool mapped;
 	wlr_xdg_surface_role role;
 	/* Visible bounds */
 	int x, y;

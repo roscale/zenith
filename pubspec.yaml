@@ -41,7 +41,7 @@ dependencies:
   dbus: ^0.7.8
   visibility_detector: ^0.4.0+2
   flutter_portal: ^1.1.4
-  glissando: ^0.0.3
+  glissando: ^0.0.4
   arena_listener: ^0.0.1
   fast_immutable_collections: ^9.1.5
 

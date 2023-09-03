@@ -64,7 +64,7 @@ void emulate_keycode(ZenithServer* server,
                      const flutter::MethodCall<>& call,
                      std::unique_ptr<flutter::MethodResult<>>&& result);
 
-void start_windows_maximized(ZenithServer* server,
+void open_windows_maximized(ZenithServer* server,
                              const flutter::MethodCall<>& call,
                              std::unique_ptr<flutter::MethodResult<>>&& result);
 

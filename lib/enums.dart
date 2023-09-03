@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -69,4 +70,8 @@ extension InterleaveExt<T> on Iterable<T> {
       yield it.current;
     }
   }
+}
+
+extension FloorToDouble on Size {
+  Size floorToDouble() => Size(width.floorToDouble(), height.floorToDouble());
 }

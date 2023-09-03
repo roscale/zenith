@@ -185,8 +185,8 @@ void EmbedderState::register_platform_api() {
 				  insert_text(server, call, std::move(result));
 			  } else if (method_name == "emulate_keycode") {
 				  emulate_keycode(server, call, std::move(result));
-			  } else if (method_name == "start_windows_maximized") {
-				  start_windows_maximized(server, call, std::move(result));
+			  } else if (method_name == "open_windows_maximized") {
+				  open_windows_maximized(server, call, std::move(result));
 			  } else if (method_name == "maximized_window_size") {
 				  maximized_window_size(server, call, std::move(result));
 			  } else if (method_name == "unlock_session") {
@@ -292,19 +292,19 @@ void EmbedderState::send_window_metrics(FlutterWindowMetricsEvent metrics) {
 
 void
 EmbedderState::on_vsync(intptr_t baton, uint64_t frame_start_time_nanos, uint64_t frame_target_time_nanos) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([this, baton, frame_start_time_nanos, frame_target_time_nanos] {
 		FlutterEngineOnVsync(engine, baton, frame_start_time_nanos, frame_target_time_nanos);
 	});
 }
 
 void EmbedderState::send_pointer_event(FlutterPointerEvent pointer_event) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([this, pointer_event] {
 		FlutterEngineSendPointerEvent(engine, &pointer_event, 1);
 	});
 }
 
 void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([message, this] {
 		rapidjson::Document json;
 		json.SetObject();
 		json.AddMember("keymap", "linux", json.GetAllocator());
@@ -386,13 +386,13 @@ void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
 }
 
 void EmbedderState::register_external_texture(int64_t id) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([this, id] {
 		FlutterEngineRegisterExternalTexture(engine, id);
 	});
 }
 
 void EmbedderState::mark_external_texture_frame_available(int64_t id) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([this, id] {
 		FlutterEngineMarkExternalTextureFrameAvailable(engine, id);
 	});
 }
@@ -418,7 +418,7 @@ FlutterEngine EmbedderState::get_engine() const {
 }
 
 void EmbedderState::commit_surface(const SurfaceCommitMessage& message) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([message, this] {
 		EncodableList subsurfaces_below{};
 		for (const SubsurfaceParentState& state: message.subsurfaces_below) {
 			subsurfaces_below.emplace_back(EncodableMap{
@@ -461,6 +461,7 @@ void EmbedderState::commit_surface(const SurfaceCommitMessage& message) {
 			map.insert({EncodableValue("xdg_surface"), EncodableValue(EncodableMap{
 				  {EncodableValue("role"),   EncodableValue((int64_t) message.xdg_surface->role)},
 				  {EncodableValue("x"),      EncodableValue(message.xdg_surface->x)},
+				  {EncodableValue("mapped"), EncodableValue(message.xdg_surface->mapped)},
 				  {EncodableValue("y"),      EncodableValue(message.xdg_surface->y)},
 				  {EncodableValue("width"),  EncodableValue(message.xdg_surface->width)},
 				  {EncodableValue("height"), EncodableValue(message.xdg_surface->height)},
@@ -509,7 +510,7 @@ void EmbedderState::commit_surface(const SurfaceCommitMessage& message) {
 }
 
 void EmbedderState::map_xdg_surface(size_t view_id) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([view_id, this] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 		});
@@ -518,7 +519,7 @@ void EmbedderState::map_xdg_surface(size_t view_id) {
 }
 
 void EmbedderState::unmap_xdg_surface(size_t view_id) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([view_id, this] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 		});
@@ -527,7 +528,7 @@ void EmbedderState::unmap_xdg_surface(size_t view_id) {
 }
 
 void EmbedderState::map_subsurface(size_t view_id) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([view_id, this] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 		});
@@ -536,7 +537,7 @@ void EmbedderState::map_subsurface(size_t view_id) {
 }
 
 void EmbedderState::unmap_subsurface(size_t view_id) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([view_id, this] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 		});
@@ -545,7 +546,7 @@ void EmbedderState::unmap_subsurface(size_t view_id) {
 }
 
 void EmbedderState::send_text_input_event(size_t view_id, TextInputEventType event) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([event, view_id, this] {
 		const char* type;
 		switch (event) {
 			case TextInputEventType::enable:
@@ -567,7 +568,7 @@ void EmbedderState::send_text_input_event(size_t view_id, TextInputEventType eve
 }
 
 void EmbedderState::interactive_move(size_t view_id) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([view_id, this] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 		});
@@ -576,7 +577,7 @@ void EmbedderState::interactive_move(size_t view_id) {
 }
 
 void EmbedderState::interactive_resize(size_t view_id, xdg_toplevel_resize_edge edge) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([view_id, edge, this] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 			  {EncodableValue("edge"),    EncodableValue((int64_t) edge)},
@@ -586,7 +587,7 @@ void EmbedderState::interactive_resize(size_t view_id, xdg_toplevel_resize_edge 
 }
 
 void EmbedderState::set_window_title(size_t view_id, const std::string& title) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([view_id, title, this] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 			  {EncodableValue("title"),   EncodableValue(title)},
@@ -596,7 +597,7 @@ void EmbedderState::set_window_title(size_t view_id, const std::string& title) {
 }
 
 void EmbedderState::set_app_id(size_t view_id, const std::string& app_id) {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([view_id, app_id, this] {
 		auto value = std::make_unique<EncodableValue>(EncodableMap{
 			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
 			  {EncodableValue("app_id"),  EncodableValue(app_id)},
@@ -606,7 +607,7 @@ void EmbedderState::set_app_id(size_t view_id, const std::string& app_id) {
 }
 
 void EmbedderState::update_text_editing_state() {
-	callable_queue.enqueue([=] {
+	callable_queue.enqueue([this] {
 		assert(text_input_client.has_value());
 		text_input_client->update_editing_state();
 	});

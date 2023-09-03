@@ -18,6 +18,7 @@ extern "C" {
 }
 
 static size_t next_view_id = 1;
+static size_t next_texture_id = 1;
 
 ZenithSurface::ZenithSurface(wlr_surface* surface) : surface{surface}, id{next_view_id++} {
 	commit.notify = zenith_surface_commit;
@@ -56,17 +57,33 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 	commit_message->view_id = zenith_surface->id;
 
 	SurfaceRole role;
-	if (wlr_surface_is_xdg_surface(surface)) {
+	if (wlr_surface_is_xdg_surface(surface) and wlr_xdg_surface_from_wlr_surface(surface) != nullptr) {
+		// TODO: maybe report a bug in wlroots
+		// This != nullptr check is necessary because when I close the easyeffects window, the compositor crashes.
+		// Apparently, a surface can have the xdg role but have a null xdg surface, which I didn't expect.
 		role = SurfaceRole::XDG_SURFACE;
-	} else if (wlr_surface_is_subsurface(surface)) {
+	} else if (wlr_surface_is_subsurface(surface) and wlr_subsurface_from_wlr_surface(surface) != nullptr) {
 		role = SurfaceRole::SUBSURFACE;
 	} else {
 		role = SurfaceRole::NONE;
 	}
 
+	size_t texture_id;
+	auto it = server->texture_ids.find(zenith_surface->id);
+	if (it != server->texture_ids.end() &&
+	    zenith_surface->old_buffer_width == surface->current.buffer_width &&
+	    zenith_surface->old_buffer_height == surface->current.buffer_height) {
+		texture_id = it->second;
+	} else {
+		texture_id = server->texture_ids[zenith_surface->id] = next_texture_id++;
+	}
+
+	zenith_surface->old_buffer_width = surface->current.buffer_width;
+	zenith_surface->old_buffer_height = surface->current.buffer_height;
+
 	commit_message->surface = {
 		  .role = role,
-		  .texture_id = (int) zenith_surface->id,
+		  .texture_id = (int) texture_id,
 		  .x = surface->sx,
 		  .y = surface->sy,
 		  .width = surface->current.width,
@@ -105,6 +122,7 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 		wlr_xdg_surface* xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
 		wlr_box visible_bounds = xdg_surface_get_visible_bounds(xdg_surface);
 		commit_message->xdg_surface = {
+			  .mapped = xdg_surface->mapped,
 			  .role = xdg_surface->role,
 			  .x = visible_bounds.x,
 			  .y = visible_bounds.y,
@@ -154,6 +172,10 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 	}
 
 	std::shared_ptr<wlr_buffer> scoped_buffer = nullptr;
+
+	// TODO: Revisit the idea of explicit synchronization.
+	// And I need to implement canceling of scheduled commit if the texture of the next one is already ready.
+
 	int wait_for_fd = -1;
 
 	wlr_texture* texture = wlr_surface_get_texture(surface);
@@ -177,8 +199,7 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 			if (fence_fd != -1 && sync != nullptr) {
 				wlr_egl* egl = wlr_gles2_renderer_get_egl(ZenithServer::instance()->renderer);
 				EGLDisplay egl_display = egl->display;
-				scoped_buffer = scoped_wlr_buffer(buffer, [fence_fd, egl_display, sync](
-					  wlr_buffer* buffer) {
+				scoped_buffer = scoped_wlr_buffer(buffer, [fence_fd, egl_display, sync](wlr_buffer* buffer) {
 					eglDestroySyncKHR(egl_display, sync);
 					close(fence_fd);
 				});
@@ -191,17 +212,19 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 
 	commit_message->buffer = scoped_buffer;
 
-	if (wait_for_fd != -1) {
-		schedule_buffer_commit_on_fd(wait_for_fd, std::move(commit_message));
-	} else {
+	(void) wait_for_fd;
+//	if (wait_for_fd != -1) {
+//		schedule_buffer_commit_on_fd(wait_for_fd, std::move(commit_message));
+//	} else {
 		commit_surface(commit_message.get());
-	}
+//	}
 }
 
 void zenith_surface_destroy(wl_listener* listener, void* data) {
 	ZenithSurface* zenith_surface = wl_container_of(listener, zenith_surface, destroy);
 	auto* server = ZenithServer::instance();
-	server->surface_buffer_chains.erase(zenith_surface->id);
+//	server->surface_buffer_chains.erase(zenith_surface->id);
+	size_t id = zenith_surface->id;
 	bool erased = server->surfaces.erase(zenith_surface->id);
 	assert(erased);
 	// TODO: Send destroy to Flutter.
@@ -267,20 +290,30 @@ int extract_fd_from_native_fence(EGLSyncKHR* sync_out) {
 
 void commit_surface(SurfaceCommitMessage* commit_message) {
 	auto* server = ZenithServer::instance();
-	size_t id = commit_message->view_id;
+	if (server->surfaces.count(commit_message->view_id) == 0) {
+		// This function could be called later when the GPU finished rendering surface's texture.
+		// At that point in time, the surface could be destroyed.
+		return;
+	}
+	assert(server->surfaces.count(commit_message->view_id) == 1);
+
+	size_t texture_id = commit_message->surface.texture_id;
 
 	std::shared_ptr<SurfaceBufferChain<wlr_buffer>> buffer_chain;
-	auto it = server->surface_buffer_chains.find(id);
-	if (it == server->surface_buffer_chains.end()) {
+	auto it = server->surface_buffer_chains_tex.find(texture_id);
+	if (it == server->surface_buffer_chains_tex.end()) {
 		buffer_chain = std::make_shared<SurfaceBufferChain<wlr_buffer>>();
-		server->surface_buffer_chains.insert(std::pair(id, buffer_chain));
-		server->embedder_state->register_external_texture((int64_t) id);
+		server->surface_buffer_chains_tex.insert(std::pair(texture_id, buffer_chain));
+//		server->surface_buffer_chains.insert(std::pair(id, buffer_chain));
+		server->embedder_state->register_external_texture((int64_t) texture_id);
+
+		std::cout << "reg " << texture_id << std::endl;
 	} else {
 		buffer_chain = it->second;
 	}
 
 	buffer_chain->commit_buffer(std::move(commit_message->buffer));
-	server->embedder_state->mark_external_texture_frame_available((int64_t) id);
+	server->embedder_state->mark_external_texture_frame_available((int64_t) texture_id);
 	server->embedder_state->commit_surface(*commit_message);
 }
 

@@ -12,7 +12,8 @@ struct ZenithSurface {
 	wlr_surface* surface;
 	size_t id;
 	ZenithTextInput* active_text_input = {};
-
+	int old_buffer_width = -1, old_buffer_height = -1;
+	
 	/* callbacks */
 	wl_listener commit{};
 	wl_listener new_subsurface{};

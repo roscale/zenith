@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_portal/flutter_portal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:zenith/enums.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
+import 'package:zenith/ui/desktop/state/cursor_position_provider.dart';
 import 'package:zenith/ui/desktop/state/window_stack_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
 
@@ -40,11 +43,11 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
 
     ref.listenManual(windowUnmappedStreamProvider, (_, AsyncValue<int> next) {
       next.whenData((int viewId) {
-        windowStackNotifier.remove(viewId);
+        windowStackNotifier.close(viewId);
       });
     });
 
-    ref.read(platformApiProvider.notifier).startWindowsMaximized(false);
+    ref.read(platformApiProvider.notifier).openWindowsMaximized(false);
   }
 
   @override
@@ -55,19 +58,30 @@ class _WindowManagerState extends ConsumerState<WindowManager> {
             .read(platformApiProvider.notifier)
             .maximizedWindowSize(constraints.maxWidth.toInt(), constraints.maxHeight.toInt());
 
-        return Consumer(
-          builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            final tasks = ref.watch(windowStackProvider).windows;
+        Future.microtask(() {
+          ref.read(windowStackProvider.notifier).setDesktopSize(constraints.biggest.floorToDouble());
+        });
 
-            return Stack(
-              clipBehavior: Clip.none,
-              key: ref.watch(windowStackGlobalKeyProvider),
-              children: [
-                for (int viewId in tasks) ref.watch(windowWidgetProvider(viewId)),
-                const PopupStack(),
-              ],
-            );
-          },
+        return PortalTarget(
+          portalFollower: Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerHover: (event) => ref.read(cursorPositionProvider.notifier).state = event.localPosition,
+            onPointerMove: (event) => ref.read(cursorPositionProvider.notifier).state = event.localPosition,
+          ),
+          child: Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              final tasks = ref.watch(windowStackProvider).windows;
+
+              return Stack(
+                clipBehavior: Clip.none,
+                key: ref.watch(windowStackGlobalKeyProvider),
+                children: [
+                  for (int viewId in tasks) ref.watch(windowWidgetProvider(viewId)),
+                  const PopupStack(),
+                ],
+              );
+            },
+          ),
         );
       },
     );

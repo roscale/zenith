@@ -108,7 +108,7 @@ class Zenith extends ConsumerWidget {
                               if (uiMode == UiMode.mobile) const MobileUi(),
                               Overlay(
                                 key: ref.watch(rootOverlayKeyProvider),
-                                initialEntries: [
+                                initialEntries: const [
                                   // ref.read(lockScreenStateProvider).overlayEntry, // Start with the session locked.
                                 ],
                               ),

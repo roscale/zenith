@@ -153,6 +153,8 @@ void unregister_view_texture(ZenithServer* server,
 	server->callable_queue.enqueue([server, texture_id] {
 		std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
 		server->embedder_state->buffer_chains_in_use.erase(texture_id);
+		std::cout << "unreg " << texture_id << std::endl;
+		server->surface_buffer_chains_tex.erase(texture_id);
 	});
 
 	result->Success();
@@ -399,12 +401,12 @@ void emulate_keycode(ZenithServer* server, const flutter::MethodCall<>& call,
 	result->Success();
 }
 
-void start_windows_maximized(ZenithServer* server, const flutter::MethodCall<>& call,
+void open_windows_maximized(ZenithServer* server, const flutter::MethodCall<>& call,
                              std::unique_ptr<flutter::MethodResult<>>&& result) {
 	auto value = std::get<bool>(call.arguments()[0]);
 
 	server->callable_queue.enqueue([server, value] {
-		server->start_windows_maximized = value;
+		server->open_windows_maximized = value;
 	});
 
 	result->Success();

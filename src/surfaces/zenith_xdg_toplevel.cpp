@@ -6,7 +6,7 @@ ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel,
 	  : xdg_toplevel{xdg_toplevel}, zenith_xdg_surface(std::move(zenith_xdg_surface)) {
 
 	auto* server = ZenithServer::instance();
-	if (server->start_windows_maximized) {
+	if (server->open_windows_maximized) {
 		resize(server->max_window_size.width, server->max_window_size.height);
 		maximize(true);
 	}

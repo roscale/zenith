@@ -8,9 +8,6 @@ ZenithXdgSurface::ZenithXdgSurface(wlr_xdg_surface* xdg_surface, std::shared_ptr
 	destroy.notify = zenith_xdg_surface_destroy;
 	wl_signal_add(&xdg_surface->events.destroy, &destroy);
 
-	map.notify = zenith_xdg_surface_map;
-	wl_signal_add(&xdg_surface->events.map, &map);
-
 	unmap.notify = zenith_xdg_surface_unmap;
 	wl_signal_add(&xdg_surface->events.unmap, &unmap);
 }
@@ -40,12 +37,6 @@ void zenith_xdg_surface_create(wl_listener* listener, void* data) {
 			server->xdg_popups.insert(std::make_pair(zenith_surface->id, popup));
 			break;
 	}
-}
-
-void zenith_xdg_surface_map(wl_listener* listener, void* data) {
-	ZenithXdgSurface* zenith_xdg_surface = wl_container_of(listener, zenith_xdg_surface, map);
-	size_t id = zenith_xdg_surface->zenith_surface->id;
-	ZenithServer::instance()->embedder_state->map_xdg_surface(id);
 }
 
 void zenith_xdg_surface_unmap(wl_listener* listener, void* data) {

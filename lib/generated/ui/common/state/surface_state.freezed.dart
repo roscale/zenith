@@ -18,7 +18,8 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$SurfaceState {
   SurfaceRole get role => throw _privateConstructorUsedError;
   int get viewId => throw _privateConstructorUsedError;
-  int get textureId => throw _privateConstructorUsedError;
+  TextureId get textureId => throw _privateConstructorUsedError;
+  TextureId get oldTextureId => throw _privateConstructorUsedError;
   Offset get surfacePosition => throw _privateConstructorUsedError;
   Size get surfaceSize => throw _privateConstructorUsedError;
   double get scale => throw _privateConstructorUsedError;
@@ -44,7 +45,8 @@ abstract class $SurfaceStateCopyWith<$Res> {
   $Res call(
       {SurfaceRole role,
       int viewId,
-      int textureId,
+      TextureId textureId,
+      TextureId oldTextureId,
       Offset surfacePosition,
       Size surfaceSize,
       double scale,
@@ -71,6 +73,7 @@ class _$SurfaceStateCopyWithImpl<$Res, $Val extends SurfaceState>
     Object? role = null,
     Object? viewId = null,
     Object? textureId = null,
+    Object? oldTextureId = null,
     Object? surfacePosition = null,
     Object? surfaceSize = null,
     Object? scale = null,
@@ -92,7 +95,11 @@ class _$SurfaceStateCopyWithImpl<$Res, $Val extends SurfaceState>
       textureId: null == textureId
           ? _value.textureId
           : textureId // ignore: cast_nullable_to_non_nullable
-              as int,
+              as TextureId,
+      oldTextureId: null == oldTextureId
+          ? _value.oldTextureId
+          : oldTextureId // ignore: cast_nullable_to_non_nullable
+              as TextureId,
       surfacePosition: null == surfacePosition
           ? _value.surfacePosition
           : surfacePosition // ignore: cast_nullable_to_non_nullable
@@ -140,7 +147,8 @@ abstract class _$$_SurfaceStateCopyWith<$Res>
   $Res call(
       {SurfaceRole role,
       int viewId,
-      int textureId,
+      TextureId textureId,
+      TextureId oldTextureId,
       Offset surfacePosition,
       Size surfaceSize,
       double scale,
@@ -165,6 +173,7 @@ class __$$_SurfaceStateCopyWithImpl<$Res>
     Object? role = null,
     Object? viewId = null,
     Object? textureId = null,
+    Object? oldTextureId = null,
     Object? surfacePosition = null,
     Object? surfaceSize = null,
     Object? scale = null,
@@ -186,7 +195,11 @@ class __$$_SurfaceStateCopyWithImpl<$Res>
       textureId: null == textureId
           ? _value.textureId
           : textureId // ignore: cast_nullable_to_non_nullable
-              as int,
+              as TextureId,
+      oldTextureId: null == oldTextureId
+          ? _value.oldTextureId
+          : oldTextureId // ignore: cast_nullable_to_non_nullable
+              as TextureId,
       surfacePosition: null == surfacePosition
           ? _value.surfacePosition
           : surfacePosition // ignore: cast_nullable_to_non_nullable
@@ -230,6 +243,7 @@ class _$_SurfaceState implements _SurfaceState {
       {required this.role,
       required this.viewId,
       required this.textureId,
+      required this.oldTextureId,
       required this.surfacePosition,
       required this.surfaceSize,
       required this.scale,
@@ -246,7 +260,9 @@ class _$_SurfaceState implements _SurfaceState {
   @override
   final int viewId;
   @override
-  final int textureId;
+  final TextureId textureId;
+  @override
+  final TextureId oldTextureId;
   @override
   final Offset surfacePosition;
   @override
@@ -280,7 +296,7 @@ class _$_SurfaceState implements _SurfaceState {
 
   @override
   String toString() {
-    return 'SurfaceState(role: $role, viewId: $viewId, textureId: $textureId, surfacePosition: $surfacePosition, surfaceSize: $surfaceSize, scale: $scale, widgetKey: $widgetKey, textureKey: $textureKey, subsurfacesBelow: $subsurfacesBelow, subsurfacesAbove: $subsurfacesAbove, inputRegion: $inputRegion)';
+    return 'SurfaceState(role: $role, viewId: $viewId, textureId: $textureId, oldTextureId: $oldTextureId, surfacePosition: $surfacePosition, surfaceSize: $surfaceSize, scale: $scale, widgetKey: $widgetKey, textureKey: $textureKey, subsurfacesBelow: $subsurfacesBelow, subsurfacesAbove: $subsurfacesAbove, inputRegion: $inputRegion)';
   }
 
   @override
@@ -292,6 +308,8 @@ class _$_SurfaceState implements _SurfaceState {
             (identical(other.viewId, viewId) || other.viewId == viewId) &&
             (identical(other.textureId, textureId) ||
                 other.textureId == textureId) &&
+            (identical(other.oldTextureId, oldTextureId) ||
+                other.oldTextureId == oldTextureId) &&
             (identical(other.surfacePosition, surfacePosition) ||
                 other.surfacePosition == surfacePosition) &&
             (identical(other.surfaceSize, surfaceSize) ||
@@ -315,6 +333,7 @@ class _$_SurfaceState implements _SurfaceState {
       role,
       viewId,
       textureId,
+      oldTextureId,
       surfacePosition,
       surfaceSize,
       scale,
@@ -335,7 +354,8 @@ abstract class _SurfaceState implements SurfaceState {
   const factory _SurfaceState(
       {required final SurfaceRole role,
       required final int viewId,
-      required final int textureId,
+      required final TextureId textureId,
+      required final TextureId oldTextureId,
       required final Offset surfacePosition,
       required final Size surfaceSize,
       required final double scale,
@@ -350,7 +370,9 @@ abstract class _SurfaceState implements SurfaceState {
   @override
   int get viewId;
   @override
-  int get textureId;
+  TextureId get textureId;
+  @override
+  TextureId get oldTextureId;
   @override
   Offset get surfacePosition;
   @override

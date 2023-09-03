@@ -74,7 +74,7 @@ public:
 		  .width = 0,
 		  .height = 0,
 	};
-	bool start_windows_maximized = false;
+	bool open_windows_maximized = false;
 
 	wl_listener new_output{};
 	wl_listener new_surface{};
@@ -100,7 +100,9 @@ public:
 
 	std::unique_ptr<EmbedderState> embedder_state{};
 
-	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain<wlr_buffer>>> surface_buffer_chains{};
+	std::unordered_map<size_t, size_t> texture_ids{};
+	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain<wlr_buffer>>> surface_buffer_chains_tex{};
+//	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain<wlr_buffer>>> surface_buffer_chains{};
 
 	CallableQueue callable_queue{};
 };

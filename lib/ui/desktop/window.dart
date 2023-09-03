@@ -1,30 +1,20 @@
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:zenith/ui/common/state/surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/decorations/with_decorations.dart';
 import 'package:zenith/ui/desktop/interactive_move_and_resize_listener.dart';
+import 'package:zenith/ui/desktop/state/cursor_position_provider.dart';
 import 'package:zenith/ui/desktop/state/window_move_provider.dart';
+import 'package:zenith/ui/desktop/state/window_position_provider.dart';
 import 'package:zenith/ui/desktop/state/window_resize_provider.dart';
+import 'package:zenith/ui/desktop/state/window_stack_provider.dart';
 import 'package:zenith/ui/mobile/state/virtual_keyboard_state.dart';
 
 part '../../generated/ui/desktop/window.g.dart';
-
-@Riverpod(keepAlive: true)
-class WindowPosition extends _$WindowPosition {
-  @override
-  Offset build(int viewId) => Offset.zero;
-
-  @override
-  set state(Offset value) {
-    super.state = value;
-  }
-
-  void update(Offset Function(Offset) callback) {
-    super.state = callback(state);
-  }
-}
 
 @Riverpod(keepAlive: true)
 Window windowWidget(WindowWidgetRef ref, int viewId) {
@@ -34,7 +24,7 @@ Window windowWidget(WindowWidgetRef ref, int viewId) {
   );
 }
 
-class Window extends ConsumerWidget {
+class Window extends ConsumerStatefulWidget {
   final int viewId;
 
   const Window({
@@ -43,43 +33,135 @@ class Window extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(xdgSurfaceStatesProvider(viewId).select((v) => v.visibleBounds), (Rect? previous, Rect? next) {
-      if (previous != null && next != null) {
-        Offset offset = ref.read(windowResizeProvider(viewId).notifier).computeWindowOffset(previous.size, next.size);
-        ref.read(windowPositionProvider(viewId).notifier).update((state) => state + offset);
+  ConsumerState<Window> createState() => _WindowState();
+}
+
+class _WindowState extends ConsumerState<Window> with SingleTickerProviderStateMixin {
+  late var controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+  late var scaleAnimation = Tween(begin: 0.8, end: 1.0).animate(
+    CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    ),
+  );
+  late var opacityAnimation = Tween(begin: 0.0, end: 1.0).animate(
+    CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    ),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    spawnWindowAtCursor();
+    controller.forward();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  void spawnWindowAtCursor() {
+    // FIXME: Sometimes the size is 0.
+    Future.microtask(() {
+      Offset center = ref.read(cursorPositionProvider);
+      Size surfaceSize = ref.read(surfaceStatesProvider(widget.viewId)).surfaceSize;
+      Rect windowRect = Rect.fromCenter(
+        center: center,
+        width: surfaceSize.width,
+        height: surfaceSize.height,
+      );
+
+      Size desktopSize = ref.read(windowStackProvider).desktopSize;// Offset windowPosition = ref.read(windowPositionProvider(widget.viewId));
+      Rect desktopRect = Offset.zero & desktopSize;
+
+      print("w $windowRect d $desktopRect");
+
+      double dx = windowRect.right.clamp(desktopRect.left, desktopRect.right) - windowRect.right;
+      double dy = windowRect.bottom.clamp(desktopRect.top, desktopRect.bottom) - windowRect.bottom;
+      windowRect = windowRect.translate(dx, dy);
+
+      print("w $windowRect d $desktopRect");
+
+      dx = windowRect.left.clamp(desktopRect.left, desktopRect.right) - windowRect.left;
+      dy = windowRect.top.clamp(desktopRect.top, desktopRect.bottom) - windowRect.top;
+      windowRect = windowRect.translate(dx, dy);
+
+      print("w $windowRect d $desktopRect");
+
+      ref.read(windowPositionProvider(widget.viewId).notifier).state = windowRect.topLeft;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(xdgSurfaceStatesProvider(widget.viewId).select((v) => v.visibleBounds), (Rect? previous, Rect next) {
+      if (previous != null) {
+        Offset offset =
+            ref.read(windowResizeProvider(widget.viewId).notifier).computeWindowOffset(previous.size, next.size);
+        ref.read(windowPositionProvider(widget.viewId).notifier).update((state) => state + offset);
       }
     });
 
-    ref.listen(windowMoveProvider(viewId).select((v) => v.movedPosition), (_, Offset? position) {
-      if (position != null) {
-        ref.read(windowPositionProvider(viewId).notifier).state = Offset(
-          position.dx.roundToDouble(),
-          position.dy.roundToDouble(),
-        );
+    ref.listen(windowMoveProvider(widget.viewId).select((v) => v.movedPosition), (_, Offset position) {
+      ref.read(windowPositionProvider(widget.viewId).notifier).state = position;
+    });
+
+    ref.listen(windowStackProvider.select((v) => v.animateClosing), (_, ISet<int> next) async {
+      if (next.contains(widget.viewId)) {
+        await controller.reverse().orCancel;
+        ref.read(windowStackProvider.notifier).remove(widget.viewId);
       }
     });
 
     // Initialize the provider because it listens to events from other providers.
-    ref.read(virtualKeyboardStateNotifierProvider(viewId));
+    ref.read(virtualKeyboardStateNotifierProvider(widget.viewId));
 
     return Consumer(
       builder: (BuildContext context, WidgetRef ref, Widget? child) {
-        final offset = ref.watch(windowPositionProvider(viewId));
+        final offset = ref.watch(windowPositionProvider(widget.viewId));
         return Positioned(
           left: offset.dx,
           top: offset.dy,
-          child: child!,
+          child: IgnorePointer(
+            ignoring: ref.watch(windowStackProvider.select((v) => v.animateClosing)).contains(widget.viewId),
+            child: child!,
+          ),
         );
       },
-      child: WithDecorations(
-        viewId: viewId,
-        child: InteractiveMoveAndResizeListener(
-          viewId: viewId,
-          child: Consumer(
-            builder: (BuildContext context, WidgetRef ref, Widget? child) {
-              return ref.watch(xdgToplevelSurfaceWidgetProvider(viewId));
+      child: AnimatedBuilder(
+        animation: scaleAnimation,
+        builder: (BuildContext context, Widget? child) {
+          return AnimatedBuilder(
+            animation: opacityAnimation,
+            builder: (BuildContext context, Widget? child) {
+              return Opacity(
+                opacity: opacityAnimation.value,
+                child: Transform.scale(
+                  scale: scaleAnimation.value,
+                  transformHitTests: false,
+                  filterQuality: FilterQuality.none,
+                  child: child,
+                ),
+              );
             },
+            child: child,
+          );
+        },
+        child: WithDecorations(
+          viewId: widget.viewId,
+          child: InteractiveMoveAndResizeListener(
+            viewId: widget.viewId,
+            child: Consumer(
+              builder: (BuildContext context, WidgetRef ref, Widget? child) {
+                return ref.watch(xdgToplevelSurfaceWidgetProvider(widget.viewId));
+              },
+            ),
           ),
         ),
       ),

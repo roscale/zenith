@@ -40,7 +40,6 @@ class _SurfaceFocus extends ConsumerWidget {
   final Widget child;
 
   const _SurfaceFocus({
-    super.key,
     required this.viewId,
     required this.child,
   });

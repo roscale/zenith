@@ -30,7 +30,7 @@ class Surface extends ConsumerWidget {
             child: Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
                 Key key = ref.watch(surfaceStatesProvider(viewId).select((v) => v.textureKey));
-                int textureId = ref.watch(surfaceStatesProvider(viewId).select((v) => v.textureId));
+                int textureId = ref.watch(surfaceStatesProvider(viewId).select((v) => v.textureId.value));
 
                 return Texture(
                   key: key,
@@ -55,7 +55,6 @@ class _Subsurfaces extends ConsumerWidget {
   final _SubsurfaceLayer layer;
 
   const _Subsurfaces({
-    super.key,
     required this.viewId,
     required this.layer,
   });

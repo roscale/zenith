@@ -25,8 +25,6 @@ struct ZenithXdgSurface {
  */
 void zenith_xdg_surface_create(wl_listener* listener, void* data);
 
-void zenith_xdg_surface_map(wl_listener* listener, void* data);
-
 void zenith_xdg_surface_unmap(wl_listener* listener, void* data);
 
 void zenith_xdg_surface_destroy(wl_listener* listener, void* data);

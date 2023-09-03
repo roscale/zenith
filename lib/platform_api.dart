@@ -1,11 +1,9 @@
 import 'dart:async';
+import 'dart:ffi' show Finalizable;
 
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/common/state/subsurface_state.dart';
 import 'package:zenith/ui/common/state/surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_popup_state.dart';
@@ -60,6 +58,10 @@ class WindowUnmappedStream extends _$WindowUnmappedStream {
 
 @Riverpod(keepAlive: true)
 class PlatformApi extends _$PlatformApi {
+  late final _textureFinalizer = Finalizer((int textureId) {
+    unregisterViewTexture(textureId);
+  });
+
   @override
   PlatformApiState build() => PlatformApiState();
 
@@ -68,9 +70,6 @@ class PlatformApi extends _$PlatformApi {
       switch (call.method) {
         case "commit_surface":
           _commitSurface(call.arguments);
-          break;
-        case "map_xdg_surface":
-          _mapXdgSurface(call.arguments);
           break;
         case "unmap_xdg_surface":
           _unmapXdgSurface(call.arguments);
@@ -188,8 +187,8 @@ class PlatformApi extends _$PlatformApi {
     });
   }
 
-  Future<void> startWindowsMaximized(bool value) {
-    return state.platform.invokeMethod("start_windows_maximized", value);
+  Future<void> openWindowsMaximized(bool value) {
+    return state.platform.invokeMethod("open_windows_maximized", value);
   }
 
   Future<void> maximizedWindowSize(int width, int height) {
@@ -256,7 +255,16 @@ class PlatformApi extends _$PlatformApi {
     int viewId = event["view_id"];
     dynamic surface = event["surface"];
     int role = surface["role"];
-    int textureId = surface["textureId"];
+
+    TextureId textureId = TextureId(surface["textureId"]);
+    final oldTextureId = ref.read(surfaceStatesProvider(viewId)).textureId;
+    if (textureId == oldTextureId) {
+      textureId = oldTextureId;
+    } else {
+      _textureFinalizer.attach(textureId, textureId.value);
+      // unregisterViewTexture(oldTextureId.value);
+    }
+
     int x = surface["x"];
     int y = surface["y"];
     int width = surface["width"];
@@ -318,6 +326,7 @@ class PlatformApi extends _$PlatformApi {
     if (hasXdgSurface) {
       dynamic xdgSurface = event["xdg_surface"];
       int role = xdgSurface["role"];
+      bool mapped = xdgSurface["mapped"];
       int x = xdgSurface["x"];
       int y = xdgSurface["y"];
       int width = xdgSurface["width"];
@@ -325,6 +334,7 @@ class PlatformApi extends _$PlatformApi {
 
       ref.read(xdgSurfaceStatesProvider(viewId).notifier).commit(
             role: XdgSurfaceRole.values[role],
+            mapped: mapped,
             visibleBounds: Rect.fromLTWH(
               x.toDouble(),
               y.toDouble(),
@@ -369,47 +379,10 @@ class PlatformApi extends _$PlatformApi {
     }
   }
 
-  void _mapXdgSurface(dynamic event) {
-    int viewId = event["view_id"];
-
-    XdgSurfaceRole role = ref.read(xdgSurfaceStatesProvider(viewId)).role;
-
-    switch (role) {
-      case XdgSurfaceRole.none:
-        if (kDebugMode) {
-          assert(false);
-        }
-        break;
-      case XdgSurfaceRole.toplevel:
-        ref.read(mappedWindowListProvider.notifier).add(viewId);
-        state.windowMappedSink.add(viewId);
-        break;
-      case XdgSurfaceRole.popup:
-        ref.read(popupStackChildrenProvider.notifier).add(viewId);
-        break;
-    }
-  }
-
   void _unmapXdgSurface(dynamic event) async {
     int viewId = event["view_id"];
 
-    XdgSurfaceRole role = ref.read(xdgSurfaceStatesProvider(viewId)).role;
-    switch (role) {
-      case XdgSurfaceRole.none:
-        if (kDebugMode) {
-          assert(false);
-        }
-        break; // Unreachable.
-      case XdgSurfaceRole.toplevel:
-        ref.read(mappedWindowListProvider.notifier).remove(viewId);
-        state.windowUnmappedSink.add(viewId);
-        break;
-      case XdgSurfaceRole.popup:
-        await ref.read(xdgPopupStatesProvider(viewId).notifier).animateClosing();
-        unregisterViewTexture(ref.read(surfaceStatesProvider(viewId)).textureId);
-        ref.read(popupStackChildrenProvider.notifier).remove(viewId);
-        break;
-    }
+    ref.read(xdgSurfaceStatesProvider(viewId).notifier).unmap();
   }
 
   void _mapSubsurface(dynamic event) {
@@ -498,4 +471,17 @@ class AuthenticationResponse {
 
   bool success;
   String message;
+}
+
+class TextureId implements Finalizable {
+  final int value;
+
+  TextureId(this.value);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is TextureId && runtimeType == other.runtimeType && value == other.value;
+
+  @override
+  int get hashCode => value.hashCode;
 }

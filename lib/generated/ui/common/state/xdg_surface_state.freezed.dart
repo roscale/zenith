@@ -17,6 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$XdgSurfaceState {
   XdgSurfaceRole get role => throw _privateConstructorUsedError;
+  bool get mapped => throw _privateConstructorUsedError;
   Rect get visibleBounds => throw _privateConstructorUsedError;
   GlobalKey<State<StatefulWidget>> get widgetKey =>
       throw _privateConstructorUsedError;
@@ -35,6 +36,7 @@ abstract class $XdgSurfaceStateCopyWith<$Res> {
   @useResult
   $Res call(
       {XdgSurfaceRole role,
+      bool mapped,
       Rect visibleBounds,
       GlobalKey<State<StatefulWidget>> widgetKey,
       List<int> popups});
@@ -54,6 +56,7 @@ class _$XdgSurfaceStateCopyWithImpl<$Res, $Val extends XdgSurfaceState>
   @override
   $Res call({
     Object? role = null,
+    Object? mapped = null,
     Object? visibleBounds = null,
     Object? widgetKey = null,
     Object? popups = null,
@@ -63,6 +66,10 @@ class _$XdgSurfaceStateCopyWithImpl<$Res, $Val extends XdgSurfaceState>
           ? _value.role
           : role // ignore: cast_nullable_to_non_nullable
               as XdgSurfaceRole,
+      mapped: null == mapped
+          ? _value.mapped
+          : mapped // ignore: cast_nullable_to_non_nullable
+              as bool,
       visibleBounds: null == visibleBounds
           ? _value.visibleBounds
           : visibleBounds // ignore: cast_nullable_to_non_nullable
@@ -89,6 +96,7 @@ abstract class _$$_XdgSurfaceStateCopyWith<$Res>
   @useResult
   $Res call(
       {XdgSurfaceRole role,
+      bool mapped,
       Rect visibleBounds,
       GlobalKey<State<StatefulWidget>> widgetKey,
       List<int> popups});
@@ -106,6 +114,7 @@ class __$$_XdgSurfaceStateCopyWithImpl<$Res>
   @override
   $Res call({
     Object? role = null,
+    Object? mapped = null,
     Object? visibleBounds = null,
     Object? widgetKey = null,
     Object? popups = null,
@@ -115,6 +124,10 @@ class __$$_XdgSurfaceStateCopyWithImpl<$Res>
           ? _value.role
           : role // ignore: cast_nullable_to_non_nullable
               as XdgSurfaceRole,
+      mapped: null == mapped
+          ? _value.mapped
+          : mapped // ignore: cast_nullable_to_non_nullable
+              as bool,
       visibleBounds: null == visibleBounds
           ? _value.visibleBounds
           : visibleBounds // ignore: cast_nullable_to_non_nullable
@@ -133,9 +146,12 @@ class __$$_XdgSurfaceStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_XdgSurfaceState implements _XdgSurfaceState {
+class _$_XdgSurfaceState
+    with DiagnosticableTreeMixin
+    implements _XdgSurfaceState {
   const _$_XdgSurfaceState(
       {required this.role,
+      required this.mapped,
       required this.visibleBounds,
       required this.widgetKey,
       required final List<int> popups})
@@ -143,6 +159,8 @@ class _$_XdgSurfaceState implements _XdgSurfaceState {
 
   @override
   final XdgSurfaceRole role;
+  @override
+  final bool mapped;
   @override
   final Rect visibleBounds;
   @override
@@ -156,8 +174,20 @@ class _$_XdgSurfaceState implements _XdgSurfaceState {
   }
 
   @override
-  String toString() {
-    return 'XdgSurfaceState(role: $role, visibleBounds: $visibleBounds, widgetKey: $widgetKey, popups: $popups)';
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
+    return 'XdgSurfaceState(role: $role, mapped: $mapped, visibleBounds: $visibleBounds, widgetKey: $widgetKey, popups: $popups)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'XdgSurfaceState'))
+      ..add(DiagnosticsProperty('role', role))
+      ..add(DiagnosticsProperty('mapped', mapped))
+      ..add(DiagnosticsProperty('visibleBounds', visibleBounds))
+      ..add(DiagnosticsProperty('widgetKey', widgetKey))
+      ..add(DiagnosticsProperty('popups', popups));
   }
 
   @override
@@ -166,6 +196,7 @@ class _$_XdgSurfaceState implements _XdgSurfaceState {
         (other.runtimeType == runtimeType &&
             other is _$_XdgSurfaceState &&
             (identical(other.role, role) || other.role == role) &&
+            (identical(other.mapped, mapped) || other.mapped == mapped) &&
             (identical(other.visibleBounds, visibleBounds) ||
                 other.visibleBounds == visibleBounds) &&
             (identical(other.widgetKey, widgetKey) ||
@@ -174,8 +205,8 @@ class _$_XdgSurfaceState implements _XdgSurfaceState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, role, visibleBounds, widgetKey,
-      const DeepCollectionEquality().hash(_popups));
+  int get hashCode => Object.hash(runtimeType, role, mapped, visibleBounds,
+      widgetKey, const DeepCollectionEquality().hash(_popups));
 
   @JsonKey(ignore: true)
   @override
@@ -187,12 +218,15 @@ class _$_XdgSurfaceState implements _XdgSurfaceState {
 abstract class _XdgSurfaceState implements XdgSurfaceState {
   const factory _XdgSurfaceState(
       {required final XdgSurfaceRole role,
+      required final bool mapped,
       required final Rect visibleBounds,
       required final GlobalKey<State<StatefulWidget>> widgetKey,
       required final List<int> popups}) = _$_XdgSurfaceState;
 
   @override
   XdgSurfaceRole get role;
+  @override
+  bool get mapped;
   @override
   Rect get visibleBounds;
   @override

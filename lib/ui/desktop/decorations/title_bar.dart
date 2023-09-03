@@ -6,6 +6,7 @@ import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/app_icon.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/state/window_move_provider.dart';
+import 'package:zenith/ui/desktop/state/window_position_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
 
 class TitleBar extends ConsumerStatefulWidget {
@@ -47,7 +48,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
             sigmaY: 3.0,
           ),
           child: Material(
-            color: Colors.white54,
+            color: Colors.grey.shade200.withOpacity(0.5),
             child: Stack(
               children: [
                 _WindowTitle(viewId: widget.viewId),
@@ -72,7 +73,6 @@ class _WindowTitle extends ConsumerWidget {
   final int viewId;
 
   const _WindowTitle({
-    super.key,
     required this.viewId,
   });
 
@@ -99,7 +99,6 @@ class _WindowButtons extends ConsumerWidget {
   final int viewId;
 
   const _WindowButtons({
-    super.key,
     required this.viewId,
   });
 
@@ -140,7 +139,6 @@ class _WindowButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
   const _WindowButton({
-    super.key,
     required this.icon,
     required this.iconSize,
     required this.onPressed,
@@ -166,7 +164,6 @@ class _AppIcon extends ConsumerWidget {
   final int viewId;
 
   const _AppIcon({
-    super.key,
     required this.viewId,
   });
 

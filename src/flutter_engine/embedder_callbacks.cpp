@@ -16,27 +16,27 @@ extern "C" {
 #include <sys/eventfd.h>
 #include <unistd.h>
 
-bool flutter_make_current(void* userdata) {
+auto flutter_make_current(void* userdata) -> bool {
 	auto* state = static_cast<EmbedderState*>(userdata);
 	return wlr_egl_make_current(state->flutter_gl_context);
 }
 
-bool flutter_clear_current(void* userdata) {
+auto flutter_clear_current(void* userdata) -> bool {
 	auto* state = static_cast<EmbedderState*>(userdata);
 	return wlr_egl_unset_current(state->flutter_gl_context);
 }
 
-uint32_t flutter_fbo_callback(void* userdata) {
+auto flutter_fbo_callback(void* userdata) -> uint32_t {
 	return attach_framebuffer();
 }
 
-GLuint attach_framebuffer() {
+auto attach_framebuffer() -> GLuint {
 	ZenithServer* server = ZenithServer::instance();
 	wlr_gles2_buffer* gles2_buffer = server->output->swap_chain->start_write();
 	return gles2_buffer->fbo;
 }
 
-bool flutter_present(void* userdata, const FlutterPresentInfo* present_info) {
+auto flutter_present(void* userdata, const FlutterPresentInfo* present_info) -> bool {
 	// Wait for the buffer to finish rendering before we commit it to the screen.
 	glFinish();
 
@@ -46,7 +46,7 @@ bool flutter_present(void* userdata, const FlutterPresentInfo* present_info) {
 	return success;
 }
 
-bool commit_framebuffer(array_view<FlutterRect> damage) {
+auto commit_framebuffer(array_view<FlutterRect> damage) -> bool {
 	ZenithServer* server = ZenithServer::instance();
 	server->output->swap_chain->end_write(damage);
 	return true;
@@ -57,25 +57,26 @@ void flutter_vsync_callback(void* userdata, intptr_t baton) {
 	state->set_baton(baton);
 }
 
-bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
-                                                FlutterOpenGLTexture* texture_out) {
+auto flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
+                                                FlutterOpenGLTexture* texture_out) -> bool {
 	auto* state = static_cast<EmbedderState*>(userdata);
 	ZenithServer* server = ZenithServer::instance();
-	const int64_t& view_id = texture_id;
 	channel<wlr_gles2_texture_attribs> texture_attribs{};
 
 	server->callable_queue.enqueue([&]() {
 		std::scoped_lock lock(state->buffer_chains_mutex);
 		auto find_client_chain = [&]() -> std::shared_ptr<SurfaceBufferChain<wlr_buffer>> {
-			auto it = state->buffer_chains_in_use.find(view_id);
-			if (it != state->buffer_chains_in_use.end()) {
+//			auto it = state->buffer_chains_in_use.find(view_id);
+//			if (it != state->buffer_chains_in_use.end()) {
+//				return it->second;
+//			}
+			auto it = server->surface_buffer_chains_tex.find(texture_id);
+			if (it != server->surface_buffer_chains_tex.end()) {
+//				state->buffer_chains_in_use[view_id] = it->second;
+//				std::cout << "found" << std::endl;
 				return it->second;
 			}
-			it = server->surface_buffer_chains.find(view_id);
-			if (it != server->surface_buffer_chains.end()) {
-				state->buffer_chains_in_use[view_id] = it->second;
-				return it->second;
-			}
+			std::cout << "Texture id " << texture_id << " not found." << std::endl;
 			return nullptr;
 		};
 
@@ -106,21 +107,25 @@ bool flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 	texture_out->target = attribs.target;
 	texture_out->format = GL_RGBA8;
 	texture_out->name = attribs.tex;
-	texture_out->user_data = (void*) view_id;
+	texture_out->user_data = reinterpret_cast<void*>(texture_id);
 
 	texture_out->destruction_callback = [](void* user_data) {
-		auto* server = ZenithServer::instance();
-		auto view_id = reinterpret_cast<int64_t>(user_data);
-		server->callable_queue.enqueue([=]() {
-			std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
+		auto texture_id = reinterpret_cast<int64_t>(user_data);
 
-			auto& buffer_chains_in_use = server->embedder_state->buffer_chains_in_use;
+		std::cout << "destruct " << texture_id << std::endl;
 
-			auto it = buffer_chains_in_use.find(view_id);
-			if (it != buffer_chains_in_use.end()) {
-				it->second->end_read();
-			}
-		});
+		//		auto* server = ZenithServer::instance();
+//		auto view_id = reinterpret_cast<int64_t>(user_data);
+//		server->callable_queue.enqueue([=]() {
+//			std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
+//
+//			auto& buffer_chains_in_use = server->embedder_state->buffer_chains_in_use;
+//
+//			auto it = buffer_chains_in_use.find(view_id);
+//			if (it != buffer_chains_in_use.end()) {
+//				it->second->end_read();
+//			}
+//		});
 	};
 
 	return true;
@@ -139,7 +144,7 @@ void flutter_platform_message_callback(const FlutterPlatformMessage* message, vo
 	state->message_dispatcher.HandleMessage(*message, [] {}, [] {});
 }
 
-bool flutter_make_resource_current(void* userdata) {
+auto flutter_make_resource_current(void* userdata) -> bool {
 	auto* state = static_cast<EmbedderState*>(userdata);
 	return wlr_egl_make_current(state->flutter_resource_gl_context);
 }
@@ -148,7 +153,7 @@ bool flutter_make_resource_current(void* userdata) {
  * The default rendering is done upside down for some reason.
  * This flips the rendering on the x-axis.
  */
-FlutterTransformation flutter_surface_transformation(void* data) {
+auto flutter_surface_transformation(void* data) -> FlutterTransformation {
 	channel<double> height_chan = {};
 	auto* server = ZenithServer::instance();
 	server->callable_queue.enqueue([server, &height_chan] {
@@ -165,19 +170,18 @@ void flutter_populate_existing_damage(void* user_data, intptr_t fbo_id, FlutterD
 	ZenithServer* server = ZenithServer::instance();
 	array_view<FlutterRect> damage_regions = server->output->swap_chain->get_damage_regions();
 
-	// TODO: Who should free this object? Me or Flutter?
-	// Also, I think Flutter's partial repaint mechanism is not completely implemented.
+	// FIXME: I think Flutter's partial repaint mechanism is not completely implemented.
 	// It only works with one rectangle. If I give it more than one, it just ignores them.
 	// For this reason we just combine all damage regions into one rectangle.
-	auto* union_region = new FlutterRect{};
+	static auto union_region = FlutterRect{};
 	if (damage_regions.size() > 0) {
-		*union_region = damage_regions[0];
+		union_region = damage_regions[0];
 		for (size_t i = 1; i < damage_regions.size(); i++) {
-			*union_region = rect_union(*union_region, damage_regions[i]);
+			union_region = rect_union(union_region, damage_regions[i]);
 		}
 	}
 
 	existing_damage->struct_size = sizeof(FlutterDamage);
 	existing_damage->num_rects = 1;
-	existing_damage->damage = union_region;
+	existing_damage->damage = &union_region;
 }

@@ -37,6 +37,7 @@ class AppDrawerButton extends ConsumerWidget {
       ),
       child: PortalTarget(
         visible: ref.watch(appDrawerVisibleProvider),
+        closeDuration: const Duration(milliseconds: 200),
         portalFollower: const Padding(
           padding: EdgeInsets.only(bottom: 10),
           child: AppDrawer(),

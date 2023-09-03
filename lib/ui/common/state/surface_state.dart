@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/surface.dart';
 
 part '../../../generated/ui/common/state/surface_state.freezed.dart';
-
 part '../../../generated/ui/common/state/surface_state.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -20,7 +20,8 @@ class SurfaceState with _$SurfaceState {
   const factory SurfaceState({
     required SurfaceRole role,
     required int viewId,
-    required int textureId,
+    required TextureId textureId,
+    required TextureId oldTextureId,
     required Offset surfacePosition,
     required Size surfaceSize,
     required double scale,
@@ -39,7 +40,8 @@ class SurfaceStates extends _$SurfaceStates {
     return SurfaceState(
       role: SurfaceRole.none,
       viewId: viewId,
-      textureId: -1,
+      textureId: TextureId(-1),
+      oldTextureId: TextureId(-1),
       surfacePosition: Offset.zero,
       surfaceSize: Size.zero,
       scale: 1,
@@ -53,7 +55,7 @@ class SurfaceStates extends _$SurfaceStates {
 
   void commit({
     required SurfaceRole role,
-    required int textureId,
+    required TextureId textureId,
     required Offset surfacePosition,
     required Size surfaceSize,
     required double scale,
@@ -61,9 +63,19 @@ class SurfaceStates extends _$SurfaceStates {
     required List<int> subsurfacesAbove,
     required Rect inputRegion,
   }) {
+    if (state.oldTextureId != textureId && state.oldTextureId != state.textureId) {
+      final platform = ref.read(platformApiProvider.notifier);
+      final id = state.oldTextureId.value;
+      // Only unregister after the frame is rendered to avoid flickering.
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        platform.unregisterViewTexture(id);
+      });
+    }
+
     state = state.copyWith(
       role: role,
       textureId: textureId,
+      oldTextureId: state.textureId,
       surfacePosition: surfacePosition,
       surfaceSize: surfaceSize,
       scale: scale,
