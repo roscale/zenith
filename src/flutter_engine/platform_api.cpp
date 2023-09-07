@@ -151,10 +151,10 @@ void unregister_view_texture(ZenithServer* server,
 	FlutterEngineUnregisterExternalTexture(server->embedder_state->get_engine(), (int64_t) texture_id);
 
 	server->callable_queue.enqueue([server, texture_id] {
-		std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
-		server->embedder_state->buffer_chains_in_use.erase(texture_id);
+//		std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
+//		server->embedder_state->buffer_chains_in_use.erase(texture_id);
 		std::cout << "unreg " << texture_id << std::endl;
-		server->surface_buffer_chains_tex.erase(texture_id);
+		server->surface_buffer_chains.erase(texture_id);
 	});
 
 	result->Success();

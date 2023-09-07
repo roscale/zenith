@@ -66,10 +66,13 @@ class SurfaceStates extends _$SurfaceStates {
     if (state.oldTextureId != textureId && state.oldTextureId != state.textureId) {
       final platform = ref.read(platformApiProvider.notifier);
       final id = state.oldTextureId.value;
-      // Only unregister after the frame is rendered to avoid flickering.
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        platform.unregisterViewTexture(id);
-      });
+      if (id != -1) {
+        // Only unregister after the frame is rendered to avoid flickering.
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          print("post frame unreg $id");
+          platform.unregisterViewTexture(id);
+        });
+      }
     }
 
     state = state.copyWith(

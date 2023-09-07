@@ -391,6 +391,12 @@ void EmbedderState::register_external_texture(int64_t id) {
 	});
 }
 
+void EmbedderState::unregister_external_texture(int64_t id) {
+	callable_queue.enqueue([this, id] {
+		FlutterEngineUnregisterExternalTexture(engine, id);
+	});
+}
+
 void EmbedderState::mark_external_texture_frame_available(int64_t id) {
 	callable_queue.enqueue([this, id] {
 		FlutterEngineMarkExternalTextureFrameAvailable(engine, id);
@@ -610,5 +616,14 @@ void EmbedderState::update_text_editing_state() {
 	callable_queue.enqueue([this] {
 		assert(text_input_client.has_value());
 		text_input_client->update_editing_state();
+	});
+}
+
+void EmbedderState::destroy_surface(size_t view_id) {
+	callable_queue.enqueue([view_id, this] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+		});
+		platform_method_channel->InvokeMethod("destroy_surface", std::move(value));
 	});
 }

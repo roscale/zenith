@@ -6,7 +6,7 @@
 bool is_main_thread();
 
 template<class T>
-T* SurfaceBufferChain<T>::start_read() {
+auto SurfaceBufferChain<T>::start_read() -> T* {
 	assert(is_main_thread());
 	render_buffer = newest_buffer;
 	return render_buffer.get();

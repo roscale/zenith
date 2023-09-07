@@ -11,7 +11,7 @@ struct SurfaceBufferChain {
 	std::shared_ptr<T> render_buffer = {};
 	std::shared_ptr<T> newest_buffer = {};
 
-	[[nodiscard]] T* start_read();
+	[[nodiscard]] auto start_read() -> T*;
 
 	void end_read();
 

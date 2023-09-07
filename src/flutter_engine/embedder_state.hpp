@@ -42,6 +42,8 @@ struct EmbedderState {
 
 	void register_external_texture(int64_t id);
 
+	void unregister_external_texture(int64_t id);
+
 	void mark_external_texture_frame_available(int64_t id);
 
 	void commit_surface(const SurfaceCommitMessage& message);
@@ -65,6 +67,8 @@ struct EmbedderState {
 	void set_app_id(size_t view_id, const std::string& app_id);
 
 	void update_text_editing_state();
+
+	void destroy_surface(size_t view_id);
 
 	/*
 	 * The following fields have to be public because they are used by Flutter engine callbacks,

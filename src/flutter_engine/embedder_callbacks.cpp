@@ -63,6 +63,9 @@ auto flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 	ZenithServer* server = ZenithServer::instance();
 	channel<wlr_gles2_texture_attribs> texture_attribs{};
 
+	std::cout << state->buffer_chains_in_use.size() << std::endl;
+	std::cout << "start render " << texture_id << std::endl;
+
 	server->callable_queue.enqueue([&]() {
 		std::scoped_lock lock(state->buffer_chains_mutex);
 		auto find_client_chain = [&]() -> std::shared_ptr<SurfaceBufferChain<wlr_buffer>> {
@@ -70,9 +73,9 @@ auto flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 //			if (it != state->buffer_chains_in_use.end()) {
 //				return it->second;
 //			}
-			auto it = server->surface_buffer_chains_tex.find(texture_id);
-			if (it != server->surface_buffer_chains_tex.end()) {
-//				state->buffer_chains_in_use[view_id] = it->second;
+			auto it = server->surface_buffer_chains.find(texture_id);
+			if (it != server->surface_buffer_chains.end()) {
+				state->buffer_chains_in_use[texture_id] = it->second;
 //				std::cout << "found" << std::endl;
 				return it->second;
 			}
@@ -112,20 +115,23 @@ auto flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 	texture_out->destruction_callback = [](void* user_data) {
 		auto texture_id = reinterpret_cast<int64_t>(user_data);
 
-		std::cout << "destruct " << texture_id << std::endl;
+		std::cout << "end render " << texture_id << std::endl;
 
-		//		auto* server = ZenithServer::instance();
+		auto* server = ZenithServer::instance();
 //		auto view_id = reinterpret_cast<int64_t>(user_data);
-//		server->callable_queue.enqueue([=]() {
-//			std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
+		server->callable_queue.enqueue([server, texture_id]() {
+			std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
 //
-//			auto& buffer_chains_in_use = server->embedder_state->buffer_chains_in_use;
-//
+			auto& buffer_chains_in_use = server->embedder_state->buffer_chains_in_use;
+			auto& chain = buffer_chains_in_use.at(texture_id);
+			chain->end_read();
+
+			buffer_chains_in_use.erase(texture_id);
 //			auto it = buffer_chains_in_use.find(view_id);
 //			if (it != buffer_chains_in_use.end()) {
 //				it->second->end_read();
 //			}
-//		});
+		});
 	};
 
 	return true;

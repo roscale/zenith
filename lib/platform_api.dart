@@ -59,6 +59,7 @@ class WindowUnmappedStream extends _$WindowUnmappedStream {
 @Riverpod(keepAlive: true)
 class PlatformApi extends _$PlatformApi {
   late final _textureFinalizer = Finalizer((int textureId) {
+    print("finalize $textureId");
     unregisterViewTexture(textureId);
   });
 
@@ -94,6 +95,9 @@ class PlatformApi extends _$PlatformApi {
           break;
         case "set_app_id":
           _setAppId(call.arguments);
+          break;
+        case "destroy_surface":
+          _destroy_surface(call.arguments);
           break;
         default:
           throw PlatformException(
@@ -262,6 +266,7 @@ class PlatformApi extends _$PlatformApi {
       textureId = oldTextureId;
     } else {
       _textureFinalizer.attach(textureId, textureId.value);
+      print("attach finalizer ${textureId.value}");
       // unregisterViewTexture(oldTextureId.value);
     }
 
@@ -424,6 +429,14 @@ class PlatformApi extends _$PlatformApi {
     int viewId = event["view_id"];
     String appId = event["app_id"];
     ref.read(xdgToplevelStatesProvider(viewId).notifier).setTitle(appId);
+  }
+
+  void _destroy_surface(dynamic event) async {
+    int viewId = event["view_id"];
+    // TODO: Find a better way. Maybe store subscriptions in a list.
+    // 3 sec is more than enough for any close animations.
+    await Future.delayed(const Duration(seconds: 3));
+    ref.invalidate(surfaceStatesProvider(viewId));
   }
 
   Future<void> hideKeyboard(int viewId) {

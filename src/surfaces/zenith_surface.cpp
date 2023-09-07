@@ -227,7 +227,8 @@ void zenith_surface_destroy(wl_listener* listener, void* data) {
 	size_t id = zenith_surface->id;
 	bool erased = server->surfaces.erase(zenith_surface->id);
 	assert(erased);
-	// TODO: Send destroy to Flutter.
+
+	server->embedder_state->destroy_surface(id);
 }
 
 int extract_sync_fd_from_dma_buf(wlr_buffer* buffer, const wlr_dmabuf_attributes& dmabuf_attributes) {
@@ -300,10 +301,16 @@ void commit_surface(SurfaceCommitMessage* commit_message) {
 	size_t texture_id = commit_message->surface.texture_id;
 
 	std::shared_ptr<SurfaceBufferChain<wlr_buffer>> buffer_chain;
-	auto it = server->surface_buffer_chains_tex.find(texture_id);
-	if (it == server->surface_buffer_chains_tex.end()) {
+	auto it = server->surface_buffer_chains.find(texture_id);
+	if (it == server->surface_buffer_chains.end()) {
+//		buffer_chain = {new SurfaceBufferChain<wlr_buffer>(), [texture_id](SurfaceBufferChain<wlr_buffer>* chain) {
+//			std::cout << "free " << texture_id << std::endl;
+//			ZenithServer::instance()->embedder_state->unregister_external_texture(texture_id);
+//			delete chain;
+//		}};
+
 		buffer_chain = std::make_shared<SurfaceBufferChain<wlr_buffer>>();
-		server->surface_buffer_chains_tex.insert(std::pair(texture_id, buffer_chain));
+		server->surface_buffer_chains.insert(std::pair(texture_id, buffer_chain));
 //		server->surface_buffer_chains.insert(std::pair(id, buffer_chain));
 		server->embedder_state->register_external_texture((int64_t) texture_id);
 
