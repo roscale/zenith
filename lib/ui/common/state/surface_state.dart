@@ -69,7 +69,6 @@ class SurfaceStates extends _$SurfaceStates {
       if (id != -1) {
         // Only unregister after the frame is rendered to avoid flickering.
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          print("post frame unreg $id");
           platform.unregisterViewTexture(id);
         });
       }

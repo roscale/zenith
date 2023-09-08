@@ -59,7 +59,6 @@ class WindowUnmappedStream extends _$WindowUnmappedStream {
 @Riverpod(keepAlive: true)
 class PlatformApi extends _$PlatformApi {
   late final _textureFinalizer = Finalizer((int textureId) {
-    print("finalize $textureId");
     unregisterViewTexture(textureId);
   });
 
@@ -266,8 +265,6 @@ class PlatformApi extends _$PlatformApi {
       textureId = oldTextureId;
     } else {
       _textureFinalizer.attach(textureId, textureId.value);
-      print("attach finalizer ${textureId.value}");
-      // unregisterViewTexture(oldTextureId.value);
     }
 
     int x = surface["x"];

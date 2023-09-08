@@ -41,7 +41,6 @@ class WindowStack extends _$WindowStack {
 
   void remove(int viewId) {
     assert(state.stack.contains(viewId));
-    assert(state.animateClosing.contains(viewId));
     state = state.copyWith(
       stack: state.stack.remove(viewId),
       animateClosing: state.animateClosing.remove(viewId),

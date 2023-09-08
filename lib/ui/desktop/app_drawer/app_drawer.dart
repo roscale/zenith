@@ -29,6 +29,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateM
       reverseCurve: Curves.easeInCubic,
     ),
   );
+  var focusScopeNode = FocusScopeNode();
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateM
   @override
   void dispose() {
     controller.dispose();
+    focusScopeNode.dispose();
     super.dispose();
   }
 
@@ -47,52 +49,60 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateM
     ref.listen(appDrawerVisibleProvider, (_, bool next) async {
       if (next) {
         controller.forward();
+        focusScopeNode.requestFocus();
       } else {
         controller.reverse();
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          focusScopeNode.unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
+        });
       }
     });
 
-    return AnimatedBuilder(
-      animation: slideAnimation,
-      builder: (BuildContext context, Widget? child) {
-        return AnimatedBuilder(
-          animation: opacityAnimation,
-          builder: (BuildContext context, Widget? child) {
-            return Opacity(
-              opacity: opacityAnimation.value,
-              child: Transform.translate(
-                offset: Offset(0.0, slideAnimation.value),
-                transformHitTests: false,
-                filterQuality: FilterQuality.none,
-                child: child,
+    return FocusScope(
+      node: focusScopeNode,
+      // canRequestFocus: ref.watch(appDrawerVisibleProvider),
+      child: AnimatedBuilder(
+        animation: slideAnimation,
+        builder: (BuildContext context, Widget? child) {
+          return AnimatedBuilder(
+            animation: opacityAnimation,
+            builder: (BuildContext context, Widget? child) {
+              return Opacity(
+                opacity: opacityAnimation.value,
+                child: Transform.translate(
+                  offset: Offset(0.0, slideAnimation.value),
+                  transformHitTests: false,
+                  filterQuality: FilterQuality.none,
+                  child: child,
+                ),
+              );
+            },
+            child: child,
+          );
+        },
+        child: SizedBox(
+          width: 600,
+          height: 600,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: 10,
+                sigmaY: 10,
               ),
-            );
-          },
-          child: child,
-        );
-      },
-      child: SizedBox(
-        width: 600,
-        height: 600,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: 10,
-              sigmaY: 10,
-            ),
-            child: Container(
-              color: Colors.white54,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(30, 30, 30, 10),
-                    child: _AppDrawerTextField(),
-                  ),
-                  const Expanded(
-                    child: AppGrid(),
-                  ),
-                ],
+              child: Container(
+                color: Colors.white54,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(30, 30, 30, 10),
+                      child: _AppDrawerTextField(),
+                    ),
+                    const Expanded(
+                      child: AppGrid(),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

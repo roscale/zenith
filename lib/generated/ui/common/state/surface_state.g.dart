@@ -110,7 +110,7 @@ class SurfaceWidgetProvider extends Provider<Surface> {
   }
 }
 
-String _$surfaceStatesHash() => r'90a4ff46259be2269e777f0a808849f9bac76c59';
+String _$surfaceStatesHash() => r'1d369b23fd1240d4b2bd941a3f4079705debf932';
 
 abstract class _$SurfaceStates extends BuildlessNotifier<SurfaceState> {
   late final int viewId;

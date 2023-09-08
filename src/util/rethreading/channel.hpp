@@ -4,7 +4,7 @@
 #include <condition_variable>
 
 /*
- * A channel for sending a single value.
+ * A channel for sending a single value across threads.
  */
 template<typename T>
 class channel {

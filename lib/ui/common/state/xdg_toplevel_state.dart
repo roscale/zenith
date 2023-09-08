@@ -37,6 +37,15 @@ class XdgToplevelStates extends _$XdgToplevelStates {
   XdgToplevelState build(int viewId) {
     final focusNode = FocusNode();
 
+    focusNode.addListener(() {
+      final platformApi = ref.read(platformApiProvider.notifier);
+      if (focusNode.hasFocus) {
+        platformApi.activateWindow(viewId, true);
+      } else {
+        platformApi.activateWindow(viewId, false);
+      }
+    });
+
     // Cannot access `state` inside onDispose.
     ref.onDispose(() {
       focusNode.dispose();

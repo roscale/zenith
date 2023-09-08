@@ -122,6 +122,19 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 		wlr_xdg_surface* xdg_surface = wlr_xdg_surface_from_wlr_surface(surface);
 		wlr_box visible_bounds = xdg_surface_get_visible_bounds(xdg_surface);
 		commit_message->xdg_surface = {
+			  // Wlroots actually provides a map signal to which I could register a callback,
+			  // but it has been unreliable in my experience.
+			  //
+			  // Some Firefox popups weren't visible because I never received a map event
+			  // for those surfaces even though they were mapped.
+			  //
+			  // In addition, this helps avoid inconsistent state on the Flutter side
+			  // because this mapped property is sent atomically with the other surface state.
+			  //
+			  // If the mapped property were to be sent as a different message after sending the
+			  // other state, I think Flutter could choose to deserialize the first message before
+			  // rendering the first frame, and the second message before rendering the next frame,
+			  // so it would be rendering based on an inconsistent state.
 			  .mapped = xdg_surface->mapped,
 			  .role = xdg_surface->role,
 			  .x = visible_bounds.x,

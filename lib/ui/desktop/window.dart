@@ -67,7 +67,6 @@ class _WindowState extends ConsumerState<Window> with SingleTickerProviderStateM
   }
 
   void spawnWindowAtCursor() {
-    // FIXME: Sometimes the size is 0.
     Future.microtask(() {
       Offset center = ref.read(cursorPositionProvider);
       Size surfaceSize = ref.read(surfaceStatesProvider(widget.viewId)).surfaceSize;
@@ -80,19 +79,13 @@ class _WindowState extends ConsumerState<Window> with SingleTickerProviderStateM
       Size desktopSize = ref.read(windowStackProvider).desktopSize;// Offset windowPosition = ref.read(windowPositionProvider(widget.viewId));
       Rect desktopRect = Offset.zero & desktopSize;
 
-      print("w $windowRect d $desktopRect");
-
       double dx = windowRect.right.clamp(desktopRect.left, desktopRect.right) - windowRect.right;
       double dy = windowRect.bottom.clamp(desktopRect.top, desktopRect.bottom) - windowRect.bottom;
       windowRect = windowRect.translate(dx, dy);
 
-      print("w $windowRect d $desktopRect");
-
       dx = windowRect.left.clamp(desktopRect.left, desktopRect.right) - windowRect.left;
       dy = windowRect.top.clamp(desktopRect.top, desktopRect.bottom) - windowRect.top;
       windowRect = windowRect.translate(dx, dy);
-
-      print("w $windowRect d $desktopRect");
 
       ref.read(windowPositionProvider(widget.viewId).notifier).state = windowRect.topLeft;
     });
@@ -114,6 +107,10 @@ class _WindowState extends ConsumerState<Window> with SingleTickerProviderStateM
 
     ref.listen(windowStackProvider.select((v) => v.animateClosing), (_, ISet<int> next) async {
       if (next.contains(widget.viewId)) {
+        ref
+            .read(xdgToplevelStatesProvider(widget.viewId))
+            .focusNode
+            .unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
         await controller.reverse().orCancel;
         ref.read(windowStackProvider.notifier).remove(widget.viewId);
       }

@@ -303,7 +303,7 @@ void insert_text(ZenithServer* server, const flutter::MethodCall<>& call,
 	if (view_id == 0) {
 		// Text field focused in the compositor, not an application.
 		server->embedder_state->callable_queue.enqueue([server, text] {
-			auto& client = server->embedder_state->text_input_client;
+			auto& client = server->embedder_state->current_text_input_client;
 			if (client.has_value()) {
 				client->add_text(text);
 			}
@@ -365,7 +365,7 @@ void emulate_keycode(ZenithServer* server, const flutter::MethodCall<>& call,
 		// Text field focused in the compositor, not an application.
 		server->embedder_state->callable_queue.enqueue([server, keycode] {
 			auto& embedder_state = server->embedder_state;
-			auto& client = embedder_state->text_input_client;
+			auto& client = embedder_state->current_text_input_client;
 			if (client.has_value()) {
 				switch (keycode) {
 					case 14:
@@ -475,7 +475,7 @@ void hide_keyboard(ZenithServer* server, const flutter::MethodCall<>& call,
 	size_t view_id = args[flutter::EncodableValue("view_id")].LongValue();
 
 	server->embedder_state->callable_queue.enqueue([=]() {
-		auto& client = server->embedder_state->text_input_client;
+		auto& client = server->embedder_state->current_text_input_client;
 		if (view_id == 0 && client.has_value()) {
 			client->close_connection();
 		}

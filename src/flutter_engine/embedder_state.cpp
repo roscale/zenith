@@ -253,7 +253,7 @@ void EmbedderState::register_platform_api() {
 				  std::string input_action = {config["inputAction"].GetString(),
 				                              config["inputAction"].GetStringLength()};
 
-				  text_input_client.emplace(*text_input_method_channel, transaction, input_action);
+				  current_text_input_client.emplace(*text_input_method_channel, transaction, input_action);
 
 			  } else if (method_name == "TextInput.setEditingState") {
 				  auto object = call.arguments()->GetObject();
@@ -267,10 +267,10 @@ void EmbedderState::register_platform_api() {
 					    object["selectionBase"].GetInt64(),
 					    object["selectionExtent"].GetInt64()
 				  );
-				  text_input_client->set_editing_state(text, composing_range, selection);
+				  current_text_input_client->set_editing_state(text, composing_range, selection);
 
 			  } else if (method_name == "TextInput.clearClient") {
-				  text_input_client = std::nullopt;
+				  current_text_input_client = std::nullopt;
 
 			  } else if (method_name == "TextInput.show") {
 				  send_text_input_event(0, TextInputEventType::enable);
@@ -351,7 +351,7 @@ void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
 				return;
 			}
 
-			if (!text_input_client.has_value() && message.state != KeyboardKeyState::repeat) {
+			if (!current_text_input_client.has_value() && message.state != KeyboardKeyState::repeat) {
 				ZenithServer::instance()->callable_queue.enqueue([message] {
 					uint32_t wlr_state = message.state == KeyboardKeyState::press ? WL_KEYBOARD_KEY_STATE_PRESSED
 					                                                              : WL_KEYBOARD_KEY_STATE_RELEASED;
@@ -363,21 +363,21 @@ void EmbedderState::send_key_event(const KeyboardKeyEventMessage& message) {
 				return;
 			}
 
-			if (!text_input_client.has_value() || message.state == KeyboardKeyState::release) {
+			if (!current_text_input_client.has_value() || message.state == KeyboardKeyState::release) {
 				return;
 			}
 
 			switch (message.keysym) {
 				case XKB_KEY_Return:
 				case XKB_KEY_KP_Enter: {
-					text_input_client->enter();
+					current_text_input_client->enter();
 					break;
 				}
 				default: {
 					static char buffer[64];
 					size_t bytes_written = xkb_keysym_to_utf8(message.keysym, buffer, sizeof(buffer));
 					if (bytes_written != 0) {
-						text_input_client->add_text(buffer);
+						current_text_input_client->add_text(buffer);
 					}
 				}
 			}
@@ -614,8 +614,8 @@ void EmbedderState::set_app_id(size_t view_id, const std::string& app_id) {
 
 void EmbedderState::update_text_editing_state() {
 	callable_queue.enqueue([this] {
-		assert(text_input_client.has_value());
-		text_input_client->update_editing_state();
+		assert(current_text_input_client.has_value());
+		current_text_input_client->update_editing_state();
 	});
 }
 

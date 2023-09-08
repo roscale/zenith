@@ -4,7 +4,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
-import 'package:zenith/ui/common/state/surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_popup_state.dart';
 
 part '../../../generated/ui/common/state/xdg_surface_state.freezed.dart';
