@@ -61,4 +61,9 @@ class XdgPopupStates extends _$XdgPopupStates {
     state = state.copyWith(isClosing: true);
     return state.animationsKey.currentState?.controller.reverse();
   }
+
+  void dispose() {
+    ref.invalidate(popupWidgetProvider(viewId));
+    ref.invalidate(xdgPopupStatesProvider(viewId));
+  }
 }

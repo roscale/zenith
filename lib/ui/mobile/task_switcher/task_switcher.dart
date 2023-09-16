@@ -7,11 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
-import 'package:zenith/ui/common/state/subsurface_state.dart';
-import 'package:zenith/ui/common/state/surface_state.dart';
 import 'package:zenith/ui/common/state/tasks_provider.dart';
-import 'package:zenith/ui/common/state/xdg_popup_state.dart';
-import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/mobile/app_drawer/handle.dart';
 import 'package:zenith/ui/mobile/state/task_state.dart';
@@ -427,16 +423,7 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).remove(viewId);
 
-    ref.invalidate(xdgToplevelSurfaceWidgetProvider(viewId));
-    ref.invalidate(taskPositionProvider(viewId));
-    ref.invalidate(taskVerticalPositionProvider(viewId));
-    ref.invalidate(taskWidgetProvider(viewId));
-    ref.invalidate(taskStateNotifierProvider(viewId));
-    ref.invalidate(surfaceStatesProvider(viewId));
-    ref.invalidate(xdgSurfaceStatesProvider(viewId));
-    ref.invalidate(xdgToplevelStatesProvider(viewId));
-    ref.invalidate(xdgPopupStatesProvider(viewId));
-    ref.invalidate(subsurfaceStatesProvider(viewId));
+    ref.read(taskStateNotifierProvider(viewId).notifier).dispose();
   }
 
   int? taskToFocusAfterClosing(int closingTaskIndex) {

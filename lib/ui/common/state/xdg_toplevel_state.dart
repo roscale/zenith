@@ -36,7 +36,6 @@ class XdgToplevelStates extends _$XdgToplevelStates {
   @override
   XdgToplevelState build(int viewId) {
     final focusNode = FocusNode();
-
     focusNode.addListener(() {
       final platformApi = ref.read(platformApiProvider.notifier);
       if (focusNode.hasFocus) {
@@ -46,8 +45,8 @@ class XdgToplevelStates extends _$XdgToplevelStates {
       }
     });
 
-    // Cannot access `state` inside onDispose.
     ref.onDispose(() {
+      // Access focusNode and not state.focusNode because we cannot access `state` inside onDispose.
       focusNode.dispose();
     });
 
@@ -106,6 +105,11 @@ class XdgToplevelStates extends _$XdgToplevelStates {
     state = state.copyWith(
       appId: appId,
     );
+  }
+
+  void dispose() {
+    ref.invalidate(xdgToplevelSurfaceWidgetProvider(viewId));
+    ref.invalidate(xdgToplevelStatesProvider(viewId));
   }
 }
 

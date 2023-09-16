@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
+import 'package:zenith/ui/common/state/subsurface_state.dart';
+import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 import 'package:zenith/ui/common/surface.dart';
 
 part '../../../generated/ui/common/state/surface_state.freezed.dart';
@@ -85,6 +87,23 @@ class SurfaceStates extends _$SurfaceStates {
       subsurfacesAbove: subsurfacesAbove,
       inputRegion: inputRegion,
     );
+  }
+
+  void dispose() {
+    // Cascading dispose of all surface roles.
+    switch (state.role) {
+      case SurfaceRole.xdgSurface:
+        ref.read(xdgSurfaceStatesProvider(viewId).notifier).dispose();
+        break;
+      case SurfaceRole.subsurface:
+        ref.read(subsurfaceStatesProvider(viewId).notifier).dispose();
+        break;
+      case SurfaceRole.none:
+        break;
+    }
+
+    ref.invalidate(surfaceWidgetProvider(viewId));
+    ref.invalidate(surfaceStatesProvider(viewId));
   }
 }
 

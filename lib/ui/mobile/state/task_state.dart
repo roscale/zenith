@@ -27,6 +27,13 @@ class TaskStateNotifier extends _$TaskStateNotifier {
 
   @override
   TaskState get state => super.state;
+
+  void dispose() {
+    ref.invalidate(taskPositionProvider(viewId));
+    ref.invalidate(taskVerticalPositionProvider(viewId));
+    ref.invalidate(taskWidgetProvider(viewId));
+    ref.invalidate(taskStateNotifierProvider(viewId));
+  }
 }
 
 @Riverpod(keepAlive: true)

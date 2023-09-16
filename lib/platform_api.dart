@@ -386,9 +386,7 @@ class PlatformApi extends _$PlatformApi {
 
   void _unmapSubsurface(dynamic event) {
     int viewId = event["view_id"];
-
     ref.read(subsurfaceStatesProvider(viewId).notifier).map(false);
-    ref.invalidate(subsurfaceWidgetProvider(viewId));
   }
 
   void _sendTextInputEvent(dynamic event) {
@@ -424,7 +422,7 @@ class PlatformApi extends _$PlatformApi {
     // TODO: Find a better way. Maybe store subscriptions in a list.
     // 3 sec is more than enough for any close animations.
     await Future.delayed(const Duration(seconds: 3));
-    ref.invalidate(surfaceStatesProvider(viewId));
+    ref.read(surfaceStatesProvider(viewId).notifier).dispose();
   }
 
   Future<void> hideKeyboard(int viewId) {

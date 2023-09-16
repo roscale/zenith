@@ -4,7 +4,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/subsurface.dart';
 
 part '../../../generated/ui/common/state/subsurface_state.freezed.dart';
-
 part '../../../generated/ui/common/state/subsurface_state.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -46,5 +45,10 @@ class SubsurfaceStates extends _$SubsurfaceStates {
     state = state.copyWith(
       mapped: value,
     );
+  }
+
+  void dispose() {
+    ref.invalidate(subsurfaceWidgetProvider(viewId));
+    ref.invalidate(subsurfaceStatesProvider(viewId));
   }
 }

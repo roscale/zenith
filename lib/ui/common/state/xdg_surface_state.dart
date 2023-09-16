@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/common/state/xdg_popup_state.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 
 part '../../../generated/ui/common/state/xdg_surface_state.freezed.dart';
 part '../../../generated/ui/common/state/xdg_surface_state.g.dart';
@@ -116,6 +117,20 @@ class XdgSurfaceStates extends _$XdgSurfaceStates {
       for (int id in state.popups)
         if (id != viewId) id
     ]);
+  }
+
+  void dispose() {
+    switch (state.role) {
+      case XdgSurfaceRole.toplevel:
+        ref.read(xdgToplevelStatesProvider(viewId).notifier).dispose();
+        break;
+      case XdgSurfaceRole.popup:
+        ref.read(xdgPopupStatesProvider(viewId).notifier).dispose();
+        break;
+      case XdgSurfaceRole.none:
+        break;
+    }
+    ref.invalidate(xdgSurfaceStatesProvider(viewId));
   }
 }
 
