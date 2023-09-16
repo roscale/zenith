@@ -107,10 +107,6 @@ class _WindowState extends ConsumerState<Window> with SingleTickerProviderStateM
 
     ref.listen(windowStackProvider.select((v) => v.animateClosing), (_, ISet<int> next) async {
       if (next.contains(widget.viewId)) {
-        ref
-            .read(xdgToplevelStatesProvider(widget.viewId))
-            .focusNode
-            .unfocus(disposition: UnfocusDisposition.previouslyFocusedChild);
         await controller.reverse().orCancel;
         ref.read(windowStackProvider.notifier).remove(widget.viewId);
       }

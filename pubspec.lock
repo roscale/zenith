@@ -194,10 +194,18 @@ packages:
     source: hosted
     version: "3.0.3"
   custom_lint:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: custom_lint
       sha256: "3ce36c04d30c60cde295588c6185b3f9800e6c18f6670a7ffdb3d5eab39bb942"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
+  custom_lint_builder:
+    dependency: transitive
+    description:
+      name: custom_lint_builder
+      sha256: "73d09c9848e9f6d5c3e0a1809eac841a8d7ea123d0849feefa040e1ad60b6d06"
       url: "https://pub.dev"
     source: hosted
     version: "0.4.0"
@@ -350,6 +358,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.1"
+  hotreloader:
+    dependency: transitive
+    description:
+      name: hotreloader
+      sha256: "728c0613556c1d153f7e7f4a367cffacc3f5a677d7f6497a1c2b35add4e6dacf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.6"
   http:
     dependency: transitive
     description:
@@ -558,6 +574,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.3"
+  riverpod_lint:
+    dependency: "direct dev"
+    description:
+      name: riverpod_lint
+      sha256: "17ad319914ac6863c64524e598913c0f17e30688aca8f5b7509e96d6e372d493"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
   rxdart:
     dependency: transitive
     description:
@@ -707,6 +731,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.4.0+2"
+  vm_service:
+    dependency: transitive
+    description:
+      name: vm_service
+      sha256: c538be99af830f478718b51630ec1b6bee5e74e52c8a802d328d9e71d35d2583
+      url: "https://pub.dev"
+    source: hosted
+    version: "11.10.0"
   watcher:
     dependency: transitive
     description:

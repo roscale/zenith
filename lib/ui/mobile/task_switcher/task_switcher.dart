@@ -9,6 +9,7 @@ import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
 import 'package:zenith/ui/common/state/subsurface_state.dart';
 import 'package:zenith/ui/common/state/surface_state.dart';
+import 'package:zenith/ui/common/state/tasks_provider.dart';
 import 'package:zenith/ui/common/state/xdg_popup_state.dart';
 import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
@@ -127,9 +128,10 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   void initState() {
     super.initState();
 
+    // Put the state of this widget in a provider so that the invisible bottom bar can call its methods.
     Future.microtask(() => ref.read(taskSwitcherWidgetStateNotifierProvider.notifier).state = this);
 
-    IList<int> mappedWindows = ref.read(mappedWindowListProvider);
+    IList<int> mappedWindows = ref.read(tasksProvider).tasks;
 
     double lastPosition = ref.read(taskSwitcherPositionProvider);
     double minScrollExtent = 0;
@@ -168,8 +170,6 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
         chain = chain.then((_) => _closeTask(viewId));
       });
     });
-
-    ref.read(platformApiProvider.notifier).openWindowsMaximized(true);
   }
 
   @override
@@ -424,9 +424,6 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   }
 
   void _destroyTask(int viewId) {
-    final textureId = ref.read(surfaceStatesProvider(viewId)).textureId;
-    // ref.read(platformApiProvider.notifier).unregisterViewTexture(textureId);
-
     ref.read(taskListProvider.notifier).remove(viewId);
     ref.read(closingTaskListProvider.notifier).remove(viewId);
 

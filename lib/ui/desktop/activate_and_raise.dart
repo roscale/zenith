@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/ui/common/state/tasks_provider.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
-import 'package:zenith/ui/desktop/state/window_stack_provider.dart';
 
 class ActivateAndRaise extends ConsumerWidget {
   final int viewId;
@@ -18,7 +18,7 @@ class ActivateAndRaise extends ConsumerWidget {
     return Listener(
       onPointerDown: (_) {
         ref.read(xdgToplevelStatesProvider(viewId)).focusNode.requestFocus();
-        ref.read(windowStackProvider.notifier).raise(viewId);
+        ref.read(tasksProvider.notifier).putInFront(viewId);
       },
       child: child,
     );

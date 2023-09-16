@@ -5,7 +5,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/enums.dart';
 import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/popup_stack.dart';
-import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 import 'package:zenith/ui/desktop/state/cursor_position_provider.dart';
 import 'package:zenith/ui/desktop/state/window_stack_provider.dart';
 import 'package:zenith/ui/desktop/window.dart';
@@ -23,33 +22,6 @@ class WindowManager extends ConsumerStatefulWidget {
 }
 
 class _WindowManagerState extends ConsumerState<WindowManager> {
-  @override
-  void initState() {
-    super.initState();
-
-    var windowStackNotifier = ref.read(windowStackProvider.notifier);
-    var tasks = ref.read(mappedWindowListProvider);
-
-    Future.microtask(() {
-      windowStackNotifier.set(tasks);
-    });
-
-    ref.listenManual(windowMappedStreamProvider, (_, AsyncValue<int> next) {
-      next.whenData((int viewId) {
-        windowStackNotifier.add(viewId);
-        ref.read(xdgToplevelStatesProvider(viewId)).focusNode.requestFocus();
-      });
-    });
-
-    ref.listenManual(windowUnmappedStreamProvider, (_, AsyncValue<int> next) {
-      next.whenData((int viewId) {
-        windowStackNotifier.close(viewId);
-      });
-    });
-
-    ref.read(platformApiProvider.notifier).openWindowsMaximized(false);
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(

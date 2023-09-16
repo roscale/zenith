@@ -7,7 +7,6 @@ import 'package:zenith/ui/desktop/manual_pan_gesture_recognizer.dart';
 import 'package:zenith/ui/desktop/state/window_move_provider.dart';
 import 'package:zenith/ui/desktop/state/window_position_provider.dart';
 import 'package:zenith/ui/desktop/state/window_resize_provider.dart';
-import 'package:zenith/ui/desktop/window.dart';
 
 class InteractiveMoveAndResizeListener extends ConsumerStatefulWidget {
   final int viewId;

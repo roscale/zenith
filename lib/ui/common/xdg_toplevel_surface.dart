@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:zenith/platform_api.dart';
 import 'package:zenith/ui/common/state/surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 

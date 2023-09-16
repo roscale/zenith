@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:ffi' show Finalizable;
 
-import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/ui/common/state/subsurface_state.dart';
 import 'package:zenith/ui/common/state/surface_state.dart';
+import 'package:zenith/ui/common/state/tasks_provider.dart';
 import 'package:zenith/ui/common/state/xdg_popup_state.dart';
 import 'package:zenith/ui/common/state/xdg_surface_state.dart';
 import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
@@ -13,21 +13,15 @@ import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 part 'generated/platform_api.g.dart';
 
 @Riverpod(keepAlive: true)
-class MappedWindowList extends _$MappedWindowList {
-  @override
-  IList<int> build() {
-    return IList();
-  }
-
-  void add(int viewId) => state = state.add(viewId);
-
-  void remove(int viewId) => state = state.remove(viewId);
-}
-
-@Riverpod(keepAlive: true)
 class WindowMappedStream extends _$WindowMappedStream {
   @override
   Stream<int> build() => ref.watch(platformApiProvider).windowMappedStream;
+}
+
+@Riverpod(keepAlive: true)
+class WindowUnmappedStream extends _$WindowUnmappedStream {
+  @override
+  Stream<int> build() => ref.watch(platformApiProvider).windowUnmappedStream;
 }
 
 @Riverpod(keepAlive: true)
@@ -51,12 +45,6 @@ Future<TextInputEventType> textInputEventStream(TextInputEventStreamRef ref, int
 }
 
 @Riverpod(keepAlive: true)
-class WindowUnmappedStream extends _$WindowUnmappedStream {
-  @override
-  Stream<int> build() => ref.watch(platformApiProvider).windowUnmappedStream;
-}
-
-@Riverpod(keepAlive: true)
 class PlatformApi extends _$PlatformApi {
   late final _textureFinalizer = Finalizer((int textureId) {
     unregisterViewTexture(textureId);
@@ -66,6 +54,8 @@ class PlatformApi extends _$PlatformApi {
   PlatformApiState build() => PlatformApiState();
 
   void init() {
+    ref.read(tasksProvider);
+
     state.platform.setMethodCallHandler((call) async {
       switch (call.method) {
         case "commit_surface":
@@ -96,7 +86,7 @@ class PlatformApi extends _$PlatformApi {
           _setAppId(call.arguments);
           break;
         case "destroy_surface":
-          _destroy_surface(call.arguments);
+          _destroySurface(call.arguments);
           break;
         default:
           throw PlatformException(
@@ -351,6 +341,7 @@ class PlatformApi extends _$PlatformApi {
         int parentId = xdgPopup["parent_id"];
         int x = xdgPopup["x"];
         int y = xdgPopup["y"];
+        // TODO: What to do with these?
         int width = xdgPopup["width"];
         int height = xdgPopup["height"];
 
@@ -428,7 +419,7 @@ class PlatformApi extends _$PlatformApi {
     ref.read(xdgToplevelStatesProvider(viewId).notifier).setTitle(appId);
   }
 
-  void _destroy_surface(dynamic event) async {
+  void _destroySurface(dynamic event) async {
     int viewId = event["view_id"];
     // TODO: Find a better way. Maybe store subscriptions in a list.
     // 3 sec is more than enough for any close animations.

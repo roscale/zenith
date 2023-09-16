@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
 import 'package:jovial_svg/jovial_svg.dart';
 import 'package:zenith/ui/common/state/desktop_entries.dart';
+import 'package:zenith/ui/common/state/xdg_toplevel_state.dart';
 
 class AppIconByPath extends StatelessWidget {
   final String? path;
@@ -98,5 +99,20 @@ class AppIconById extends ConsumerWidget {
           },
           orElse: () => const SizedBox(),
         );
+  }
+}
+
+class AppIconByViewId extends ConsumerWidget {
+  final int viewId;
+
+  const AppIconByViewId({
+    super.key,
+    required this.viewId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    String appId = ref.watch(xdgToplevelStatesProvider(viewId).select((v) => v.appId));
+    return AppIconById(id: appId);
   }
 }

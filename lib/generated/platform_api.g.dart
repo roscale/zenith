@@ -195,22 +195,6 @@ class TextInputEventStreamProvider extends FutureProvider<TextInputEventType> {
   }
 }
 
-String _$mappedWindowListHash() => r'9e99ef4b404610400dae4d1f79c5eff6674737d2';
-
-/// See also [MappedWindowList].
-@ProviderFor(MappedWindowList)
-final mappedWindowListProvider =
-    NotifierProvider<MappedWindowList, IList<int>>.internal(
-  MappedWindowList.new,
-  name: r'mappedWindowListProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$mappedWindowListHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$MappedWindowList = Notifier<IList<int>>;
 String _$windowMappedStreamHash() =>
     r'406e042fd1cca4b6529cf742bdffe5b4ccdd8c1d';
 
@@ -245,7 +229,7 @@ final windowUnmappedStreamProvider =
 );
 
 typedef _$WindowUnmappedStream = StreamNotifier<int>;
-String _$platformApiHash() => r'5bff9872da479dddcf0af5f97142e9589134fc46';
+String _$platformApiHash() => r'8a13e6816b0f8e4d764d6e517f70c4fd6ee40eb6';
 
 /// See also [PlatformApi].
 @ProviderFor(PlatformApi)

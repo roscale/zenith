@@ -45,7 +45,7 @@ class XdgSurfaceStates extends _$XdgSurfaceStates {
         }
         break;
       case XdgSurfaceRole.toplevel:
-        ref.read(mappedWindowListProvider.notifier).add(viewId);
+        // ref.read(mappedWindowListProvider.notifier).add(viewId);
         ref.read(platformApiProvider).windowMappedSink.add(viewId);
         break;
       case XdgSurfaceRole.popup:
@@ -65,7 +65,7 @@ class XdgSurfaceStates extends _$XdgSurfaceStates {
         }
         break; // Unreachable.
       case XdgSurfaceRole.toplevel:
-        ref.read(mappedWindowListProvider.notifier).remove(viewId);
+        // ref.read(mappedWindowListProvider.notifier).remove(viewId);
         ref.read(platformApiProvider).windowUnmappedSink.add(viewId);
         break;
       case XdgSurfaceRole.popup:

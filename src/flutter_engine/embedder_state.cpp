@@ -70,6 +70,12 @@ void EmbedderState::configure_and_run_engine() {
 	config.open_gl.fbo_callback = flutter_fbo_callback;
 	config.open_gl.gl_external_texture_frame_callback = flutter_gl_external_texture_frame_callback;
 	config.open_gl.make_resource_current = flutter_make_resource_current;
+	// Force Flutter to ask for another framebuffer any time it wants to draw.
+	// We have a swapchain, so when Flutter finishes a frame, it's going to be shown on the screen.
+	// If Flutter begins to render the next frame in the same framebuffer, visual glitches are going
+	// to appear on the screen.
+	// This makes sure that when Flutter asks for another framebuffer, we are providing one that is
+	// unused.
 	config.open_gl.fbo_reset_after_present = true;
 	config.open_gl.surface_transformation = flutter_surface_transformation;
 	config.open_gl.populate_existing_damage = flutter_populate_existing_damage;

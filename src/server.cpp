@@ -192,7 +192,6 @@ void ZenithServer::run(const char* startup_command) {
 
 	embedder_state = std::make_unique<EmbedderState>(flutter_gl_context, flutter_resource_gl_context);
 
-	// Run the engine.
 	embedder_state->run_engine();
 
 	if (!wlr_backend_start(backend)) {

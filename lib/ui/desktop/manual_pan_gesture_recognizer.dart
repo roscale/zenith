@@ -188,12 +188,6 @@ abstract class DragGestureRecognizer extends OneSequenceGestureRecognizer {
   int? _initialButtons;
   Matrix4? _lastTransform;
 
-  /// Distance moved in the global coordinate space of the screen in drag direction.
-  ///
-  /// If drag is only allowed along a defined axis, this value may be negative to
-  /// differentiate the direction of the drag.
-  late double _globalDistanceMoved;
-
   /// Determines if a gesture is a fling or not based on velocity.
   ///
   /// A fling calls its gesture end callback with a velocity, allowing the
@@ -234,7 +228,6 @@ abstract class DragGestureRecognizer extends OneSequenceGestureRecognizer {
       _state = _DragState.possible;
       _initialPosition = OffsetPair(global: event.position, local: event.localPosition);
       _pendingDragOffset = OffsetPair.zero;
-      _globalDistanceMoved = 0.0;
       _lastPendingEventTimestamp = event.timeStamp;
       _lastTransform = event.transform;
       _checkDown();
@@ -304,17 +297,6 @@ abstract class DragGestureRecognizer extends OneSequenceGestureRecognizer {
         _pendingDragOffset += OffsetPair(local: localDelta, global: delta);
         _lastPendingEventTimestamp = event.timeStamp;
         _lastTransform = event.transform;
-        final Offset movedLocally = _getDeltaForDetails(localDelta);
-        final Matrix4? localToGlobalTransform = event.transform == null ? null : Matrix4.tryInvert(event.transform!);
-        _globalDistanceMoved += PointerEvent.transformDeltaViaPositions(
-                    transform: localToGlobalTransform,
-                    untransformedDelta: movedLocally,
-                    untransformedEndPosition: localPosition)
-                .distance *
-            (_getPrimaryValueFromOffset(movedLocally) ?? 1).sign;
-        // if (_hasSufficientGlobalDistanceToAccept(event.kind, gestureSettings?.touchSlop)) {
-        //   resolve(GestureDisposition.accepted);
-        // }
       }
     }
     if (event is PointerUpEvent || event is PointerCancelEvent || event is PointerPanZoomEndEvent) {
