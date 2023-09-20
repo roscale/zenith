@@ -147,14 +147,21 @@ void unregister_view_texture(ZenithServer* server,
                              std::unique_ptr<flutter::MethodResult<>>&& result) {
 
 	size_t texture_id = call.arguments()[0].LongValue();
-
-	FlutterEngineUnregisterExternalTexture(server->embedder_state->get_engine(), (int64_t) texture_id);
-
 	server->callable_queue.enqueue([server, texture_id] {
-//		std::scoped_lock lock(server->embedder_state->buffer_chains_mutex);
-//		server->embedder_state->buffer_chains_in_use.erase(texture_id);
-		std::cout << "unreg " << texture_id << std::endl;
+		assert(server->surface_id_per_texture_id.count(texture_id) == 1);
 		server->surface_buffer_chains.erase(texture_id);
+
+		size_t view_id = server->surface_id_per_texture_id.at(texture_id);
+		server->surface_id_per_texture_id.erase(texture_id);
+
+		auto& texture_ids = server->texture_ids_per_surface_id.at(view_id);
+		auto it = std::find(texture_ids.begin(), texture_ids.end(), texture_id);
+		assert(it != texture_ids.end());
+		texture_ids.erase(it);
+
+		if (texture_ids.empty()) {
+			server->texture_ids_per_surface_id.erase(view_id);
+		}
 	});
 
 	result->Success();

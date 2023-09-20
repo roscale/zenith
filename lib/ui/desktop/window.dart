@@ -105,8 +105,9 @@ class _WindowState extends ConsumerState<Window> with SingleTickerProviderStateM
       ref.read(windowPositionProvider(widget.viewId).notifier).state = position;
     });
 
-    ref.listen(windowStackProvider.select((v) => v.animateClosing), (_, ISet<int> next) async {
-      if (next.contains(widget.viewId)) {
+    ref.listen(windowStackProvider.select((v) => v.animateClosing), (ISet<int>? previous, ISet<int> next) async {
+      previous ??= ISet();
+      if (!previous.contains(widget.viewId) && next.contains(widget.viewId)) {
         await controller.reverse().orCancel;
         ref.read(windowStackProvider.notifier).remove(widget.viewId);
       }

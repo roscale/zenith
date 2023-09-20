@@ -81,10 +81,6 @@ struct EmbedderState {
 	wlr_egl* flutter_gl_context = nullptr;
 	wlr_egl* flutter_resource_gl_context = nullptr;
 
-	// Keeps alive surface buffers, even after the surfaces are destroyed.
-	// This allows Flutter to play closing animations on surfaces that don't exist anymore.
-	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain<wlr_buffer>>> buffer_chains_in_use = {};
-
 	// A function queue tied to the event loop.
 	CallableQueue callable_queue;
 	wl_event_loop* event_loop;

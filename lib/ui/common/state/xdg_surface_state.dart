@@ -45,12 +45,18 @@ class XdgSurfaceStates extends _$XdgSurfaceStates {
           assert(false);
         }
         break;
+
       case XdgSurfaceRole.toplevel:
-        // ref.read(mappedWindowListProvider.notifier).add(viewId);
         ref.read(platformApiProvider).windowMappedSink.add(viewId);
         break;
+
       case XdgSurfaceRole.popup:
-        ref.read(popupStackChildrenProvider.notifier).add(viewId);
+        bool widgetExists = ref.read(xdgPopupStatesProvider(viewId)).animationsKey.currentWidget != null;
+        if (widgetExists) {
+          ref.read(xdgPopupStatesProvider(viewId).notifier).cancelClosingAnimation();
+        } else {
+          ref.read(popupStackChildrenProvider.notifier).add(viewId);
+        }
         break;
     }
   }
@@ -64,14 +70,15 @@ class XdgSurfaceStates extends _$XdgSurfaceStates {
         if (kDebugMode) {
           assert(false);
         }
-        break; // Unreachable.
+        break;
+
       case XdgSurfaceRole.toplevel:
-        // ref.read(mappedWindowListProvider.notifier).remove(viewId);
         ref.read(platformApiProvider).windowUnmappedSink.add(viewId);
         break;
+
       case XdgSurfaceRole.popup:
+        // This future will never complete if the animation is canceled.
         await ref.read(xdgPopupStatesProvider(viewId).notifier).animateClosing();
-        // unregisterViewTexture(ref.read(surfaceStatesProvider(viewId)).textureId);
         ref.read(popupStackChildrenProvider.notifier).remove(viewId);
         break;
     }

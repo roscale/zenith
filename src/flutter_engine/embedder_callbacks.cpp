@@ -59,18 +59,38 @@ void flutter_vsync_callback(void* userdata, intptr_t baton) {
 
 auto flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_id, size_t width, size_t height,
                                                 FlutterOpenGLTexture* texture_out) -> bool {
-	auto* state = static_cast<EmbedderState*>(userdata);
 	ZenithServer* server = ZenithServer::instance();
 	channel<wlr_gles2_texture_attribs> texture_attribs{};
 
-	server->callable_queue.enqueue([&]() {
+	server->callable_queue.enqueue([texture_id, &texture_attribs]() {
+		ZenithServer* server = ZenithServer::instance();
+
 		auto find_client_chain = [&]() -> std::shared_ptr<SurfaceBufferChain<wlr_buffer>> {
 			auto it = server->surface_buffer_chains.find(texture_id);
 			if (it != server->surface_buffer_chains.end()) {
-				state->buffer_chains_in_use[texture_id] = it->second;
+				size_t view_id = server->surface_id_per_texture_id.at(texture_id);
+				auto& texture_ids = server->texture_ids_per_surface_id.at(view_id);
+				// Always keep 2 textures alive for tiling animations.
+				// The current one and the previous one.
+				while (!texture_ids.empty()) {
+					if (texture_ids.at(0) == (size_t) texture_id) {
+						break;
+					}
+					if (texture_ids.size() >= 2 && texture_ids.at(1) == (size_t) texture_id) {
+						break;
+					}
+
+					size_t first = *texture_ids.begin();
+					texture_ids.erase(texture_ids.begin());
+					assert(server->surface_buffer_chains.count(first) == 1);
+					server->surface_buffer_chains.erase(first);
+					assert(server->surface_id_per_texture_id.count(first) == 1);
+					server->surface_id_per_texture_id.erase(first);
+
+					server->embedder_state->unregister_external_texture(first);
+				}
 				return it->second;
 			}
-			std::cout << "Texture id " << texture_id << " not found.\n";
 			return nullptr;
 		};
 
@@ -108,11 +128,10 @@ auto flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 
 		auto* server = ZenithServer::instance();
 		server->callable_queue.enqueue([server, texture_id]() {
-			auto& buffer_chains_in_use = server->embedder_state->buffer_chains_in_use;
-			auto& chain = buffer_chains_in_use.at(texture_id);
-			chain->end_read();
-
-			buffer_chains_in_use.erase(texture_id);
+			auto it = server->surface_buffer_chains.find(texture_id);
+			if (it != server->surface_buffer_chains.end()) {
+				it->second->end_read();
+			}
 		});
 	};
 

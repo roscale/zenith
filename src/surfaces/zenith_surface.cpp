@@ -69,13 +69,16 @@ void zenith_surface_commit(wl_listener* listener, void* data) {
 	}
 
 	size_t texture_id;
-	auto it = server->texture_ids.find(zenith_surface->id);
-	if (it != server->texture_ids.end() &&
+	auto it = server->texture_ids_per_surface_id.find(zenith_surface->id);
+	if (it != server->texture_ids_per_surface_id.end() &&
 	    zenith_surface->old_buffer_width == surface->current.buffer_width &&
 	    zenith_surface->old_buffer_height == surface->current.buffer_height) {
-		texture_id = it->second;
+		assert(!it->second.empty());
+		texture_id = it->second.back();
 	} else {
-		texture_id = server->texture_ids[zenith_surface->id] = next_texture_id++;
+		texture_id = next_texture_id++;
+		server->surface_id_per_texture_id[texture_id] = zenith_surface->id;
+		server->texture_ids_per_surface_id[zenith_surface->id].push_back(texture_id);
 	}
 
 	zenith_surface->old_buffer_width = surface->current.buffer_width;
@@ -316,18 +319,9 @@ void commit_surface(SurfaceCommitMessage* commit_message) {
 	std::shared_ptr<SurfaceBufferChain<wlr_buffer>> buffer_chain;
 	auto it = server->surface_buffer_chains.find(texture_id);
 	if (it == server->surface_buffer_chains.end()) {
-//		buffer_chain = {new SurfaceBufferChain<wlr_buffer>(), [texture_id](SurfaceBufferChain<wlr_buffer>* chain) {
-//			std::cout << "free " << texture_id << std::endl;
-//			ZenithServer::instance()->embedder_state->unregister_external_texture(texture_id);
-//			delete chain;
-//		}};
-
 		buffer_chain = std::make_shared<SurfaceBufferChain<wlr_buffer>>();
 		server->surface_buffer_chains.insert(std::pair(texture_id, buffer_chain));
-//		server->surface_buffer_chains.insert(std::pair(id, buffer_chain));
 		server->embedder_state->register_external_texture((int64_t) texture_id);
-
-		std::cout << "reg " << texture_id << std::endl;
 	} else {
 		buffer_chain = it->second;
 	}

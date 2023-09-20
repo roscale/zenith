@@ -46,12 +46,18 @@ Future<TextInputEventType> textInputEventStream(TextInputEventStreamRef ref, int
 
 @Riverpod(keepAlive: true)
 class PlatformApi extends _$PlatformApi {
-  late final _textureFinalizer = Finalizer((int textureId) {
+  late final textureFinalizer = Finalizer((int textureId) async {
+    // It's possible for a render pass to be late and to use a texture id, even if the object
+    // is no longer in memory. Give a generous interval of time for any renders using this texture
+    // to finalize.
+    await Future.delayed(const Duration(seconds: 1));
     unregisterViewTexture(textureId);
   });
 
   @override
-  PlatformApiState build() => PlatformApiState();
+  PlatformApiState build() {
+    return PlatformApiState();
+  }
 
   void init() {
     ref.read(tasksProvider);
@@ -249,12 +255,18 @@ class PlatformApi extends _$PlatformApi {
     dynamic surface = event["surface"];
     int role = surface["role"];
 
-    TextureId textureId = TextureId(surface["textureId"]);
-    final oldTextureId = ref.read(surfaceStatesProvider(viewId)).textureId;
-    if (textureId == oldTextureId) {
-      textureId = oldTextureId;
+    int textureIdInt = surface["textureId"];
+    // TODO: Don't remove the late keyword even if it still compiles !
+    // If you remove it, it will run correctly in debug mode but not in release mode.
+    // I should make a minimum reproducible example and file a bug.
+    late TextureId textureId;
+
+    TextureId currentTextureId = ref.read(surfaceStatesProvider(viewId)).textureId;
+    if (textureIdInt == currentTextureId.value) {
+      textureId = currentTextureId;
     } else {
-      _textureFinalizer.attach(textureId, textureId.value);
+      textureId = TextureId(textureIdInt);
+      textureFinalizer.attach(textureId, textureId.value, detach: textureId);
     }
 
     int x = surface["x"];
@@ -479,7 +491,7 @@ class TextureId implements Finalizable {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is TextureId && runtimeType == other.runtimeType && value == other.value;
+      identical(this, other) || (other is TextureId && runtimeType == other.runtimeType && value == other.value);
 
   @override
   int get hashCode => value.hashCode;

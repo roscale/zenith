@@ -43,7 +43,9 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 # Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-ASAN := -g -fno-omit-frame-pointer -fsanitize=address
+ASAN := -Og -g3 -fno-omit-frame-pointer -fsanitize=address
+FASTEST := -Ofast
+
 WARNINGS := -Wall -Wextra -Werror \
 			-Wno-unused-parameter -Wno-unused-variable -Wno-invalid-offsetof -Wno-unknown-pragmas
 
@@ -57,12 +59,14 @@ COMMON_CPPFLAGS := $(INC_FLAGS) \
 
 DEBUG_CPPFLAGS := $(COMMON_CPPFLAGS) -DDEBUG $(ASAN)
 PROFILE_CPPFLAGS := $(COMMON_CPPFLAGS) -DPROFILE -g
-RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) -O2 -g
+#RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) $(ASAN)
+RELEASE_CPPFLAGS := $(COMMON_CPPFLAGS) $(FASTEST)
 
 COMMON_LDFLAGS := -lwayland-server -lxkbcommon -lpixman-1 -linput -lwlroots -lepoxy -lGLESv2 -lEGL -lGL -lpam -ldrm -lpixman-1 -L. -L$(DEPS_DIR)
 DEBUG_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_debug $(ASAN)
 PROFILE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_profile
-RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release
+#RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release $(ASAN)
+RELEASE_LDFLAGS := $(COMMON_LDFLAGS) -lflutter_engine_release $(FASTEST)
 
 ENGINE_REVISION := $(shell flutter --version | grep Engine | awk '{print $$NF}')
 

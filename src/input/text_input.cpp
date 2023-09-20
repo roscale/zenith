@@ -33,9 +33,13 @@ void ZenithTextInput::enter(wlr_surface* surface) const {
 }
 
 void ZenithTextInput::leave() const {
-	if (wlr_text_input->current_enabled and wlr_text_input->focused_surface != nullptr) {
+	if (wlr_text_input->focused_surface == nullptr) {
+		return;
+	}
+	if (wlr_text_input->current_enabled) {
 		disable();
 	}
+	assert(wlr_text_input->focused_surface != nullptr);
 	wlr_text_input_v3_send_leave(wlr_text_input);
 }
 
@@ -48,7 +52,6 @@ void ZenithTextInput::disable() const {
 
 void text_input_create_handle(wl_listener* listener, void* data) {
 	ZenithServer* server = wl_container_of(listener, server, new_text_input);
-
 	auto* wlr_text_input = static_cast<wlr_text_input_v3*>(data);
 	auto text_input = new ZenithTextInput(wlr_text_input);
 	server->text_inputs.insert(text_input);

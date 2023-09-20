@@ -205,8 +205,6 @@ void output_destroy(wl_listener* listener, void* data) {
 	int width, height;
 	wlr_output_effective_resolution(server->output->wlr_output, &width, &height);
 
-	std::cout << "width " << width << " height " << height << std::endl;
-
 	FlutterWindowMetricsEvent window_metrics = {};
 	window_metrics.struct_size = sizeof(FlutterWindowMetricsEvent);
 	window_metrics.width = server->output->wlr_output->width;
@@ -223,7 +221,6 @@ bool ZenithOutput::enable() {
 	wlr_output_set_mode(wlr_output, mode);
 
 	if (!wlr_output_commit(wlr_output)) {
-		std::cout << "commit failed" << std::endl;
 		return false;
 	}
 
@@ -234,7 +231,6 @@ bool ZenithOutput::enable() {
 bool ZenithOutput::disable() const {
 	wlr_output_enable(wlr_output, false);
 	if (!wlr_output_commit(wlr_output)) {
-		std::cout << "commit failed" << std::endl;
 		return false;
 	}
 	return true;

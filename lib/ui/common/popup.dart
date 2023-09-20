@@ -9,9 +9,9 @@ class Popup extends StatelessWidget {
   final int viewId;
 
   const Popup({
-    required Key key,
+    super.key,
     required this.viewId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

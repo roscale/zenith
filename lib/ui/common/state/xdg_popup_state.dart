@@ -57,9 +57,15 @@ class XdgPopupStates extends _$XdgPopupStates {
     state = state.copyWith(position: value);
   }
 
-  FutureOr animateClosing() {
+  Future? animateClosing() async {
     state = state.copyWith(isClosing: true);
-    return state.animationsKey.currentState?.controller.reverse();
+    await state.animationsKey.currentState?.controller.reverse();
+    state = state.copyWith(isClosing: false);
+  }
+
+  TickerFuture? cancelClosingAnimation() {
+    state = state.copyWith(isClosing: false);
+    return state.animationsKey.currentState?.controller.forward();
   }
 
   void dispose() {

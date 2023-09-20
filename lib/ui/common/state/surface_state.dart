@@ -65,21 +65,25 @@ class SurfaceStates extends _$SurfaceStates {
     required List<int> subsurfacesAbove,
     required Rect inputRegion,
   }) {
-    if (state.oldTextureId != textureId && state.oldTextureId != state.textureId) {
-      final platform = ref.read(platformApiProvider.notifier);
-      final id = state.oldTextureId.value;
-      if (id != -1) {
-        // Only unregister after the frame is rendered to avoid flickering.
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          platform.unregisterViewTexture(id);
-        });
+    final platform = ref.read(platformApiProvider.notifier);
+
+    assert(textureId != state.oldTextureId);
+
+    TextureId oldTexture = state.oldTextureId;
+    TextureId currentTexture = state.textureId;
+
+    if (textureId != currentTexture) {
+      if (oldTexture.value != -1) {
+        platform.textureFinalizer.detach(oldTexture);
       }
+      oldTexture = currentTexture;
+      currentTexture = textureId;
     }
 
     state = state.copyWith(
       role: role,
-      textureId: textureId,
-      oldTextureId: state.textureId,
+      textureId: currentTexture,
+      oldTextureId: oldTexture,
       surfacePosition: surfacePosition,
       surfaceSize: surfaceSize,
       scale: scale,
@@ -103,6 +107,11 @@ class SurfaceStates extends _$SurfaceStates {
     }
 
     ref.invalidate(surfaceWidgetProvider(viewId));
+
+    // This refresh seems very redundant but it's actually needed.
+    // Without refresh, the state persists in memory and if a Finalizer attaches to an object
+    // inside the state, it will never call its finalization callback.
+    final _ = ref.refresh(surfaceStatesProvider(viewId));
     ref.invalidate(surfaceStatesProvider(viewId));
   }
 }

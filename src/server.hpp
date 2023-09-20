@@ -100,9 +100,9 @@ public:
 
 	std::unique_ptr<EmbedderState> embedder_state{};
 
-	std::unordered_map<size_t, size_t> texture_ids{};
 	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain<wlr_buffer>>> surface_buffer_chains{};
-//	std::unordered_map<size_t, std::shared_ptr<SurfaceBufferChain<wlr_buffer>>> surface_buffer_chains{};
+	std::unordered_map<size_t, size_t> surface_id_per_texture_id{};
+	std::unordered_map<size_t, std::vector<size_t>> texture_ids_per_surface_id{};
 
 	CallableQueue callable_queue{};
 };
