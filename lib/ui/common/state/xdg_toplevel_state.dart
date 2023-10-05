@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -28,6 +30,7 @@ class XdgToplevelState with _$XdgToplevelState {
     required ToplevelDecoration decoration,
     required String title,
     required String appId,
+    required Tiling? tilingRequested,
   }) = _XdgToplevelState;
 }
 
@@ -59,6 +62,7 @@ class XdgToplevelStates extends _$XdgToplevelStates {
       decoration: ToplevelDecoration.none,
       title: "",
       appId: "",
+      tilingRequested: null,
     );
   }
 
@@ -67,6 +71,12 @@ class XdgToplevelStates extends _$XdgToplevelStates {
       ref.read(platformApiProvider.notifier).changeWindowVisibility(viewId, value);
       state = state.copyWith(visible: value);
     }
+  }
+
+  void requestMaximize(bool maximize) {
+    state = state.copyWith(
+      tilingRequested: maximize ? Tiling.maximized : Tiling.none,
+    );
   }
 
   void maximize(bool value) {
@@ -170,4 +180,9 @@ enum ToplevelDecoration {
         return none;
     }
   }
+}
+
+enum Tiling {
+  none,
+  maximized,
 }

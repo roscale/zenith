@@ -49,12 +49,12 @@ public:
 };
 
 /*
- * This event is forwarded by the cursor when a pointer emits a _relative_ pointer motion event (i.e. a delta).
+ * The cursor forwards this event when a pointer emits a _relative_ pointer motion event (i.e. a delta).
  */
 void server_cursor_motion(wl_listener* listener, void* data);
 
 /*
- * This event is forwarded by the cursor when a pointer emits an _absolute_
+ * The cursor forwards this event when a pointer emits an _absolute_
  * motion event, from 0..1 on each axis. This happens, for example, when
  * wlroots is running under a Wayland window rather than KMS+DRM, and you
  * move the mouse over the window. You could enter the window from any edge,
@@ -64,17 +64,17 @@ void server_cursor_motion(wl_listener* listener, void* data);
 void server_cursor_motion_absolute(wl_listener* listener, void* data);
 
 /*
- * This event is forwarded by the cursor when a pointer emits a button event.
+ * The cursor forwards this event when a pointer emits a button event.
  */
 void server_cursor_button(wl_listener* listener, void* data);
 
 /*
- * This event is forwarded by the cursor when a pointer emits an axis event, for example when you move the scroll wheel.
+ * The cursor forwards this event when a pointer emits an axis event, for example when you move the scroll wheel.
  */
 void server_cursor_axis(wl_listener* listener, void* data);
 
 /*
- * This event is forwarded by the cursor when a pointer emits a frame
+ * The cursor forwards this event when a pointer emits a frame
  * event. Frame events are sent after regular pointer events to group
  * multiple events together. For instance, two axis events may happen at the
  * same time, in which case a frame event won't be sent in between.

@@ -6,7 +6,7 @@ part of '../../../../ui/desktop/state/window_stack_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$windowStackHash() => r'1d5481e093ed5af35469b4a2a024bf8ed7ce0844';
+String _$windowStackHash() => r'895a038f2ad802370d1f537a464beb475be65991';
 
 /// See also [WindowStack].
 @ProviderFor(WindowStack)

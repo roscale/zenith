@@ -15,6 +15,7 @@ struct ZenithXdgToplevel {
 	bool visible = true;
 
 	/* callbacks */
+	wl_listener request_maximize = {};
 	wl_listener request_fullscreen = {};
 	wl_listener request_move = {};
 	wl_listener request_resize = {};
@@ -27,6 +28,8 @@ struct ZenithXdgToplevel {
 
 	void resize(size_t width, size_t height) const;
 };
+
+void zenith_xdg_toplevel_request_maximize(wl_listener* listener, void* data);
 
 void zenith_xdg_toplevel_request_fullscreen(wl_listener* listener, void* data);
 

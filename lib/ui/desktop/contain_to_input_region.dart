@@ -17,7 +17,7 @@ class ContainToInputRegion extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     Rect inputRegion = ref.watch(surfaceStatesProvider(viewId).select((v) => v.inputRegion));
 
-    return RectOverflowBox(
+    return CropOverflowBox(
       rect: inputRegion,
       child: child,
     );

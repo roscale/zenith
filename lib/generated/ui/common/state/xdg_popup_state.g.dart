@@ -110,7 +110,7 @@ class PopupWidgetProvider extends Provider<Popup> {
   }
 }
 
-String _$xdgPopupStatesHash() => r'810154c85c24b28a71c8a187e909c9523897b67c';
+String _$xdgPopupStatesHash() => r'21bc9d8c0b8e062e6c78cffe58f2d68182aad623';
 
 abstract class _$XdgPopupStates extends BuildlessNotifier<XdgPopupState> {
   late final int viewId;

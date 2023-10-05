@@ -34,7 +34,6 @@ class Surface extends ConsumerWidget {
 
                 return Texture(
                   key: key,
-                  filterQuality: FilterQuality.medium,
                   textureId: textureId,
                 );
               },

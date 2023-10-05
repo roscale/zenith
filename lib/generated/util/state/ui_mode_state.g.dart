@@ -6,7 +6,7 @@ part of '../../../util/state/ui_mode_state.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$uiModeStateHash() => r'7979659bbaa3ebcfa00ec0bc44817d4ca00851f8';
+String _$uiModeStateHash() => r'70d8e40b4fcb84b1fd151764fda1c0ed6f3e793d';
 
 /// See also [UiModeState].
 @ProviderFor(UiModeState)

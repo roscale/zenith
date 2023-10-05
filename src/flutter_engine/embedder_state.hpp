@@ -66,6 +66,8 @@ struct EmbedderState {
 
 	void set_app_id(size_t view_id, const std::string& app_id);
 
+	void request_maximize(size_t view_id, bool maximize);
+
 	void update_text_editing_state();
 
 	void destroy_surface(size_t view_id);

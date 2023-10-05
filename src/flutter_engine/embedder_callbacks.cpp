@@ -27,10 +27,6 @@ auto flutter_clear_current(void* userdata) -> bool {
 }
 
 auto flutter_fbo_callback(void* userdata) -> uint32_t {
-	return attach_framebuffer();
-}
-
-auto attach_framebuffer() -> GLuint {
 	ZenithServer* server = ZenithServer::instance();
 	wlr_gles2_buffer* gles2_buffer = server->output->swap_chain->start_write();
 	return gles2_buffer->fbo;
@@ -40,15 +36,9 @@ auto flutter_present(void* userdata, const FlutterPresentInfo* present_info) -> 
 	// Wait for the buffer to finish rendering before we commit it to the screen.
 	glFinish();
 
-	array_view<FlutterRect> frame_damage(present_info->frame_damage.damage, present_info->frame_damage.num_rects);
-
-	bool success = commit_framebuffer(frame_damage);
-	return success;
-}
-
-auto commit_framebuffer(array_view<FlutterRect> damage) -> bool {
 	ZenithServer* server = ZenithServer::instance();
-	server->output->swap_chain->end_write(damage);
+	array_view<FlutterRect> frame_damage(present_info->frame_damage.damage, present_info->frame_damage.num_rects);
+	server->output->swap_chain->end_write(frame_damage);
 	return true;
 }
 
@@ -102,7 +92,7 @@ auto flutter_gl_external_texture_frame_callback(void* userdata, int64_t texture_
 		}
 
 		wlr_buffer* buffer = client_chain->start_read();
-		assert(buffer != nullptr);
+		assert(buffer != nullptr); // TODO: crashes here
 
 		wlr_texture* texture = wlr_client_buffer_get(buffer)->texture;
 		assert(texture != nullptr);

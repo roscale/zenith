@@ -25,6 +25,7 @@ mixin _$XdgToplevelState {
   ToplevelDecoration get decoration => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get appId => throw _privateConstructorUsedError;
+  Tiling? get tilingRequested => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $XdgToplevelStateCopyWith<XdgToplevelState> get copyWith =>
@@ -45,7 +46,8 @@ abstract class $XdgToplevelStateCopyWith<$Res> {
       ResizeEdgeObject interactiveResizeRequested,
       ToplevelDecoration decoration,
       String title,
-      String appId});
+      String appId,
+      Tiling? tilingRequested});
 }
 
 /// @nodoc
@@ -69,6 +71,7 @@ class _$XdgToplevelStateCopyWithImpl<$Res, $Val extends XdgToplevelState>
     Object? decoration = null,
     Object? title = null,
     Object? appId = null,
+    Object? tilingRequested = freezed,
   }) {
     return _then(_value.copyWith(
       visible: null == visible
@@ -102,6 +105,10 @@ class _$XdgToplevelStateCopyWithImpl<$Res, $Val extends XdgToplevelState>
           ? _value.appId
           : appId // ignore: cast_nullable_to_non_nullable
               as String,
+      tilingRequested: freezed == tilingRequested
+          ? _value.tilingRequested
+          : tilingRequested // ignore: cast_nullable_to_non_nullable
+              as Tiling?,
     ) as $Val);
   }
 }
@@ -122,7 +129,8 @@ abstract class _$$_XdgToplevelStateCopyWith<$Res>
       ResizeEdgeObject interactiveResizeRequested,
       ToplevelDecoration decoration,
       String title,
-      String appId});
+      String appId,
+      Tiling? tilingRequested});
 }
 
 /// @nodoc
@@ -144,6 +152,7 @@ class __$$_XdgToplevelStateCopyWithImpl<$Res>
     Object? decoration = null,
     Object? title = null,
     Object? appId = null,
+    Object? tilingRequested = freezed,
   }) {
     return _then(_$_XdgToplevelState(
       visible: null == visible
@@ -177,6 +186,10 @@ class __$$_XdgToplevelStateCopyWithImpl<$Res>
           ? _value.appId
           : appId // ignore: cast_nullable_to_non_nullable
               as String,
+      tilingRequested: freezed == tilingRequested
+          ? _value.tilingRequested
+          : tilingRequested // ignore: cast_nullable_to_non_nullable
+              as Tiling?,
     ));
   }
 }
@@ -192,7 +205,8 @@ class _$_XdgToplevelState implements _XdgToplevelState {
       required this.interactiveResizeRequested,
       required this.decoration,
       required this.title,
-      required this.appId});
+      required this.appId,
+      required this.tilingRequested});
 
   @override
   final bool visible;
@@ -210,10 +224,12 @@ class _$_XdgToplevelState implements _XdgToplevelState {
   final String title;
   @override
   final String appId;
+  @override
+  final Tiling? tilingRequested;
 
   @override
   String toString() {
-    return 'XdgToplevelState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey, focusNode: $focusNode, interactiveMoveRequested: $interactiveMoveRequested, interactiveResizeRequested: $interactiveResizeRequested, decoration: $decoration, title: $title, appId: $appId)';
+    return 'XdgToplevelState(visible: $visible, virtualKeyboardKey: $virtualKeyboardKey, focusNode: $focusNode, interactiveMoveRequested: $interactiveMoveRequested, interactiveResizeRequested: $interactiveResizeRequested, decoration: $decoration, title: $title, appId: $appId, tilingRequested: $tilingRequested)';
   }
 
   @override
@@ -235,7 +251,9 @@ class _$_XdgToplevelState implements _XdgToplevelState {
             (identical(other.decoration, decoration) ||
                 other.decoration == decoration) &&
             (identical(other.title, title) || other.title == title) &&
-            (identical(other.appId, appId) || other.appId == appId));
+            (identical(other.appId, appId) || other.appId == appId) &&
+            (identical(other.tilingRequested, tilingRequested) ||
+                other.tilingRequested == tilingRequested));
   }
 
   @override
@@ -248,7 +266,8 @@ class _$_XdgToplevelState implements _XdgToplevelState {
       interactiveResizeRequested,
       decoration,
       title,
-      appId);
+      appId,
+      tilingRequested);
 
   @JsonKey(ignore: true)
   @override
@@ -266,7 +285,8 @@ abstract class _XdgToplevelState implements XdgToplevelState {
       required final ResizeEdgeObject interactiveResizeRequested,
       required final ToplevelDecoration decoration,
       required final String title,
-      required final String appId}) = _$_XdgToplevelState;
+      required final String appId,
+      required final Tiling? tilingRequested}) = _$_XdgToplevelState;
 
   @override
   bool get visible;
@@ -284,6 +304,8 @@ abstract class _XdgToplevelState implements XdgToplevelState {
   String get title;
   @override
   String get appId;
+  @override
+  Tiling? get tilingRequested;
   @override
   @JsonKey(ignore: true)
   _$$_XdgToplevelStateCopyWith<_$_XdgToplevelState> get copyWith =>

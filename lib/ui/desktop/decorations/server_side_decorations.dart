@@ -5,22 +5,22 @@ import 'package:zenith/ui/desktop/contain_to_visible_bounds.dart';
 import 'package:zenith/ui/desktop/decorations/title_bar.dart';
 import 'package:zenith/ui/desktop/with_resize_handles.dart';
 
-class ServerSideDecorations extends ConsumerWidget {
+class ServerSideDecorations extends StatelessWidget {
+  static const double borderWidth = 10;
+
   final int viewId;
   final Widget child;
-  final double borderWidth;
   final double cornerWidth;
 
   const ServerSideDecorations({
     super.key,
     required this.viewId,
     required this.child,
-    this.borderWidth = 10,
     this.cornerWidth = 30,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ActivateAndRaise(
       viewId: viewId,
       child: WithResizeHandles(

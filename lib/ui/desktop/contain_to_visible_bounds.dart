@@ -17,7 +17,7 @@ class ContainToVisibleBounds extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     Rect visibleBounds = ref.watch(xdgSurfaceStatesProvider(viewId).select((value) => value.visibleBounds));
 
-    return RectOverflowBox(
+    return CropOverflowBox(
       rect: visibleBounds,
       child: child,
     );

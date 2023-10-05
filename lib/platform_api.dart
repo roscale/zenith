@@ -91,6 +91,9 @@ class PlatformApi extends _$PlatformApi {
         case "set_app_id":
           _setAppId(call.arguments);
           break;
+        case "request_maximize":
+          _requestMaximize(call.arguments);
+          break;
         case "destroy_surface":
           _destroySurface(call.arguments);
           break;
@@ -427,6 +430,13 @@ class PlatformApi extends _$PlatformApi {
     int viewId = event["view_id"];
     String appId = event["app_id"];
     ref.read(xdgToplevelStatesProvider(viewId).notifier).setTitle(appId);
+  }
+
+  void _requestMaximize(dynamic event) {
+    int viewId = event["view_id"];
+    bool maximize = event["maximize"];
+    // Do not couple windowStateProvider here.
+    ref.read(xdgToplevelStatesProvider(viewId).notifier).requestMaximize(maximize);
   }
 
   void _destroySurface(dynamic event) async {

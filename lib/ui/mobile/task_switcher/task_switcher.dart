@@ -90,6 +90,7 @@ class TaskSwitcher extends ConsumerWidget {
           ref.read(taskSwitcherStateNotifierProvider.notifier).constraintsHaveChanged();
         });
         return _TaskSwitcherWidget(
+          storageContext: context,
           spacing: spacing,
         );
       },
@@ -98,10 +99,12 @@ class TaskSwitcher extends ConsumerWidget {
 }
 
 class _TaskSwitcherWidget extends ConsumerStatefulWidget {
+  final BuildContext storageContext;
   final double spacing;
 
   const _TaskSwitcherWidget({
     Key? key,
+    required this.storageContext,
     required this.spacing,
   }) : super(key: key);
 
@@ -112,6 +115,7 @@ class _TaskSwitcherWidget extends ConsumerStatefulWidget {
 class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
     with TickerProviderStateMixin
     implements ScrollContext {
+
   late final ScrollPosition scrollPosition;
 
   double get position => scrollPosition.pixels;
@@ -588,11 +592,13 @@ class TaskSwitcherWidgetState extends ConsumerState<_TaskSwitcherWidget>
   void setSemanticsActions(Set<SemanticsAction> actions) {}
 
   @override
-  BuildContext get storageContext => context;
+  BuildContext get storageContext => widget.storageContext;
 
   @override
   TickerProvider get vsync => this;
 
   @override
-  double get devicePixelRatio => MediaQuery.devicePixelRatioOf(context);
+  double get devicePixelRatio {
+    return MediaQuery.maybeDevicePixelRatioOf(storageContext) ?? View.of(storageContext).devicePixelRatio;
+  }
 }

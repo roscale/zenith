@@ -30,13 +30,6 @@ T* SwapChain<T>::start_write() {
 }
 
 template<class T>
-array_view<FlutterRect> SwapChain<T>::get_damage_regions() {
-	std::scoped_lock lock(mutex);
-	auto& damage = write_buffer->damage_regions;
-	return array_view<FlutterRect>(damage.data(), damage.size());
-}
-
-template<class T>
 void SwapChain<T>::end_write(array_view<FlutterRect> damage) {
 	std::scoped_lock lock(mutex);
 	write_buffer->damage_regions = std::vector(damage.begin(), damage.end());
@@ -58,6 +51,13 @@ T* SwapChain<T>::start_read() {
 		new_buffer_available = false;
 	}
 	return read_buffer_1->buffer.get();
+}
+
+template<class T>
+array_view<FlutterRect> SwapChain<T>::get_damage_regions() {
+	std::scoped_lock lock(mutex);
+	auto& damage = write_buffer->damage_regions;
+	return array_view<FlutterRect>(damage.data(), damage.size());
 }
 
 template<class T>

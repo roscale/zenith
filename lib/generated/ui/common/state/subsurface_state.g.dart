@@ -110,7 +110,7 @@ class SubsurfaceWidgetProvider extends Provider<Subsurface> {
   }
 }
 
-String _$subsurfaceStatesHash() => r'b09a159e031bbb79d6d3cc03b96708225e84d2aa';
+String _$subsurfaceStatesHash() => r'4f9acc62d958c409876790f543760795dd38c5dd';
 
 abstract class _$SubsurfaceStates extends BuildlessNotifier<SubsurfaceState> {
   late final int viewId;

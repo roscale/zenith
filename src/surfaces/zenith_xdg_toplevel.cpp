@@ -11,6 +11,9 @@ ZenithXdgToplevel::ZenithXdgToplevel(wlr_xdg_toplevel* xdg_toplevel,
 		maximize(true);
 	}
 
+	request_maximize.notify = zenith_xdg_toplevel_request_maximize;
+	wl_signal_add(&xdg_toplevel->events.request_maximize, &request_maximize);
+
 	request_fullscreen.notify = zenith_xdg_toplevel_request_fullscreen;
 	wl_signal_add(&xdg_toplevel->events.request_fullscreen, &request_fullscreen);
 
@@ -76,6 +79,19 @@ void ZenithXdgToplevel::maximize(bool value) const {
 
 void ZenithXdgToplevel::resize(size_t width, size_t height) const {
 	wlr_xdg_toplevel_set_size(xdg_toplevel->base, width, height);
+}
+
+void zenith_xdg_toplevel_request_maximize(wl_listener* listener, void* data) {
+	ZenithXdgToplevel* zenith_xdg_toplevel = wl_container_of(listener, zenith_xdg_toplevel, request_maximize);
+	size_t id = zenith_xdg_toplevel->zenith_xdg_surface->zenith_surface->id;
+	bool maximized = zenith_xdg_toplevel->xdg_toplevel->requested.maximized;
+	if (maximized) {
+		wlr_xdg_toplevel_set_size(zenith_xdg_toplevel->zenith_xdg_surface->xdg_surface, 1500, 1500);
+	} else {
+		wlr_xdg_toplevel_set_size(zenith_xdg_toplevel->zenith_xdg_surface->xdg_surface, 600, 600);
+	}
+	wlr_xdg_toplevel_set_maximized(zenith_xdg_toplevel->zenith_xdg_surface->xdg_surface, maximized);
+	ZenithServer::instance()->embedder_state->request_maximize(id, maximized);
 }
 
 void zenith_xdg_toplevel_request_fullscreen(wl_listener* listener, void* data) {

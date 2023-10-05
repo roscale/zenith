@@ -110,7 +110,7 @@ class TaskWidgetProvider extends Provider<Task> {
   }
 }
 
-String _$taskStateNotifierHash() => r'e59ad3f9a565d1f85cf6b9993bfe0a29abd85338';
+String _$taskStateNotifierHash() => r'e471d5b2f87ec17f9d4ea2786d580abc3cf1b0c2';
 
 abstract class _$TaskStateNotifier extends BuildlessNotifier<TaskState> {
   late final int viewId;

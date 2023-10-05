@@ -10,11 +10,7 @@ bool flutter_clear_current(void* userdata);
 
 bool flutter_present(void* userdata, const FlutterPresentInfo* present_info);
 
-bool commit_framebuffer(array_view<FlutterRect> view);
-
 uint32_t flutter_fbo_callback(void* userdata);
-
-GLuint attach_framebuffer();
 
 void flutter_vsync_callback(void* userdata, intptr_t baton);
 

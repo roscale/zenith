@@ -72,7 +72,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateM
                 child: Transform.translate(
                   offset: Offset(0.0, slideAnimation.value),
                   transformHitTests: false,
-                  filterQuality: FilterQuality.none,
                   child: child,
                 ),
               );

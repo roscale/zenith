@@ -618,6 +618,16 @@ void EmbedderState::set_app_id(size_t view_id, const std::string& app_id) {
 	});
 }
 
+void EmbedderState::request_maximize(size_t view_id, bool maximize) {
+	callable_queue.enqueue([view_id, maximize, this] {
+		auto value = std::make_unique<EncodableValue>(EncodableMap{
+			  {EncodableValue("view_id"), EncodableValue((int64_t) view_id)},
+			  {EncodableValue("maximize"),  EncodableValue(maximize)},
+		});
+		platform_method_channel->InvokeMethod("request_maximize", std::move(value));
+	});
+}
+
 void EmbedderState::update_text_editing_state() {
 	callable_queue.enqueue([this] {
 		assert(current_text_input_client.has_value());
