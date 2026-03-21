@@ -2,6 +2,8 @@
 
 A wlroots-based Wayland compositor that uses Flutter for rendering.
 
+Master's thesis: https://matheo.uliege.be/handle/2268.2/19580
+
 Video demonstration: https://youtu.be/3Zh7Tk4oWo0
 
 <p float="middle">
